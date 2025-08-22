@@ -66,12 +66,13 @@ CREATE TABLE projects (
 - Tailwind CSS styling
 - Basic form handling with Remix actions
 
-#### Week 4: Collaborative Rulebook Editor Foundation
+#### Week 4: Custom Rich Text Editor Foundation
 **Implement:**
-1. CodeMirror integration for markdown editing
-2. Basic rulebook model (attached to projects)
-3. Simple save/load functionality
-4. Version history (basic)
+1. Custom rich text editor engine (built from scratch)
+2. Game-specific content blocks (components, mechanics, examples)
+3. Real-time collaborative editing with operational transformation
+4. Smart formatting and game-aware features
+5. Basic version control and change tracking
 
 ### Phase 2: Core Features (Weeks 5-8)
 
@@ -87,11 +88,11 @@ CREATE TABLE projects (
 3. Milestone funding mechanics
 4. Simple escrow system
 
-#### Week 7: Real-time Collaboration
-1. WebSocket server setup
-2. Real-time rulebook editing (basic operational transformation)
-3. Live cursors and user presence
-4. Simple conflict resolution
+#### Week 7: Advanced Editor Features
+1. Component linking system (rules ↔ game pieces)
+2. Rule dependency mapping and visualization
+3. Playtesting note integration
+4. Smart export system (PDF, print-ready, web)
 
 #### Week 8: Webhook System (MVP)
 1. Basic webhook endpoint registration
@@ -135,8 +136,8 @@ cd budget-zero
 
 # Essential dependencies
 npm install @supabase/supabase-js @stripe/stripe-js
-npm install @codemirror/view @codemirror/state @codemirror/lang-markdown
 npm install @headlessui/react @heroicons/react tailwindcss
+npm install yjs y-websocket y-prosemirror prosemirror-state prosemirror-view
 npm install --save-dev prisma @types/node
 ```
 
