@@ -1,0 +1,34 @@
+{
+  "name": "budget-zero",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    
+    "db:setup": "psql -d budgetzero_dev -f database/schema.sql",
+    "db:reset": "dropdb --if-exists budgetzero_dev && createdb budgetzero_dev && npm run db:setup",
+    "db:migrate": "psql -d budgetzero_dev -f database/migrations/latest.sql",
+    "db:seed": "psql -d budgetzero_dev -f database/seed.sql",
+    "db:console": "psql budgetzero_dev",
+    
+    "postgres:start": "brew services start postgresql@14",
+    "postgres:stop": "brew services stop postgresql@14",
+    "postgres:restart": "brew services restart postgresql@14",
+    
+    "setup": "npm install && npm run postgres:start && npm run db:setup",
+    "reset": "npm run db:reset && npm run db:seed",
+    
+    "lint": "tsc --noEmit",
+    "format": "prettier --write src/",
+    "clean": "rm -rf dist node_modules/.vite",
+    
+    "start": "npm run postgres:start && npm run dev"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3",
+    "vite": "^7.1.2"
+  }
+}

@@ -249,10 +249,17 @@ User {
     avatar_url?: string
     location?: string
     website?: string
+    invited_by_user_id?: string  // Track who invited this user
+    invited_by_code?: string  // The specific invite code used
     professions: UserProfession[]
     portfolio_items: PortfolioItem[]
     created_at: date
     updated_at: date
+    
+    // Relationships
+    invite_stats?: UserInviteStats
+    sent_invites: Invite[]
+    received_rewards: InviteReward[]
 }
 
 UserProfession {
@@ -599,19 +606,57 @@ DownloadLink {
 // Invite system entities
 Invite {
     id: string
-    code: string  // Unique invite code
+    code: string  // Short, memorable invite codes
     inviter_id: string
     inviter: User
-    invitee_email?: string  // Optional - can be claimed by anyone if null
-    invitee_id?: string  // Set when invite is used
-    invite_type: 'Creator' | 'Contributor' | 'General'
-    max_uses: number  // Usually 1, but can be higher for special invites
-    current_uses: number
-    status: 'Active' | 'Used' | 'Expired' | 'Revoked'
+    invite_type: 'Creator' | 'Contributor' | 'General' | 'VIP'
+    max_uses: number  // How many times this code can be used
+    current_uses: number  // How many times it's been used
+    status: 'Active' | 'Exhausted' | 'Expired' | 'Revoked'
     expires_at?: date
-    claimed_at?: date
-    metadata?: any  // Additional data like special permissions
+    last_used_at?: date
+    metadata?: any  // Extra data like special permissions, rewards
     created_at: date
+    
+    // Relationships
+    usages: InviteUsage[]
+    rewards: InviteReward[]
+}
+
+InviteUsage {
+    id: string
+    invite_id: string
+    inviter_id: string  // Denormalized for faster queries
+    invitee_id: string  // Who used the invite
+    invitee_email: string  // Email at time of signup
+    used_at: date
+    ip_address?: string  // For fraud detection
+    user_agent?: string  // For analytics
+}
+
+InviteReward {
+    id: string
+    user_id: string
+    invite_usage_id?: string
+    reward_type: 'InviteCredits' | 'PlatformCredits' | 'Badge' | 'FeatureAccess'
+    reward_value?: number  // Amount of credits, days of access, etc.
+    reward_data?: any  // Additional reward metadata
+    status: 'Pending' | 'Granted' | 'Revoked'
+    granted_at?: date
+    expires_at?: date
+    created_at: date
+}
+
+UserInviteStats {
+    user_id: string
+    total_invites_sent: number
+    total_invites_used: number
+    successful_signups: number  // Users who completed onboarding
+    active_invitees: number  // Invitees still active (30+ days)
+    invite_credits_earned: number  // Total credits from invites
+    invite_level: number  // Gamification level
+    last_invite_sent_at?: date
+    updated_at: date
 }
 
 InviteRequest {
@@ -1087,7 +1132,9 @@ PlatformSettings {
 
 ## 9. Technical Architecture
 
-### Design Philosophy & User Interface
+**All technical implementation details, code examples, and architectural decisions are documented in [BUILD_ROADMAP.md](BUILD_ROADMAP.md).**
+
+### Design Philosophy
 
 **Minimalist Design Principles**
 - **White Space First**: Generous spacing between elements to reduce cognitive load
@@ -1096,95 +1143,48 @@ PlatformSettings {
 - **Subtle Interactions**: Hover states and micro-animations enhance, never distract
 - **Progressive Disclosure**: Show only essential information, reveal details on demand
 
-**Navigation Architecture - "Web of Connections"**
-```
-User Profile → Projects → Milestones → Contributors → Assets
-     ↓             ↓           ↓            ↓          ↓
-Portfolio → Collaborations → Discussions → Networks → Resources
-     ↓             ↓           ↓            ↓          ↓
-Skills → Recommendations → Comments → Connections → History
-```
+**Navigation Philosophy - "Web of Connections"**
+- **User-Centric**: Every page connects logically to user goals
+- **Contextual**: Related information is always one click away
+- **Progressive**: Complex features revealed as users need them
+- **Collaborative**: Easy transitions between individual and team views
 
-### Frontend Stack
-- **Remix** - Full-stack React framework with SSR/SSG capabilities
-- **TypeScript** - Type safety across the entire application
-- **Tailwind CSS** - Utility-first CSS framework for rapid UI development
-- **Radix UI** - Accessible component primitives
-- **React Hook Form** - Form management with validation
-- **Framer Motion** - Animation library for enhanced UX
+### Core Technical Principles
 
-### Backend & Infrastructure (Migration-Ready Architecture)
+**Performance First**
+- Lightning-fast page loads and interactions
+- Minimal JavaScript bundles
+- GPU-accelerated animations where beneficial
+- Progressive enhancement over complexity
 
-**Database Layer**
-- **PostgreSQL** - Direct connection using standard SQL queries (not Supabase SDK)
-- **Database Abstraction**: Custom query builder/ORM wrapper for easy migration
-- **Connection Pooling**: PgBouncer or similar for efficient connection management
-- **Migration Scripts**: Standard SQL migrations independent of Supabase
+**Zero Vendor Lock-in**
+- Standard web technologies and protocols
+- Database-agnostic architecture
+- Migration-ready from day one
+- No proprietary APIs or services
 
-**Authentication (Vendor-Agnostic)**
-- **Custom JWT Implementation**: Using standard libraries (jsonwebtoken, jose)
-- **Database Sessions**: User sessions stored in PostgreSQL, not Supabase Auth
-- **OAuth Providers**: Direct integration with Google, GitHub, Discord (not through Supabase)
-- **Password Hashing**: bcrypt or Argon2 for security
+**Local-First Development**
+- Full offline development capability
+- No external dependencies during development
+- Production deployment flexibility
+- Cost optimization through smart architecture choices
 
-**File Storage (Multi-Provider)**
-- **Storage Abstraction Layer**: Custom interface supporting multiple providers
-- **Initial**: Supabase Storage for development/early growth
-- **Migration Path**: AWS S3, Google Cloud Storage, or self-hosted MinIO
-- **CDN Integration**: CloudFlare or AWS CloudFront for global delivery
+**Data Portability & Freedom**
+- Complete data export capabilities
+- Webhook integration for third-party platforms
+- No vendor lock-in architecture
+- User owns all their content and assets
 
-**Serverless Functions**
-- **Vercel Functions**: Platform-native serverless (easily portable)
-- **Standard Node.js**: No Supabase-specific APIs or dependencies
-- **Background Jobs**: Bull/Redis queue system for complex processing
+**Multi-Platform Access**
+- Responsive web application
+- Mobile-optimized experience
+- Offline capabilities where beneficial
+- Cross-device synchronization
 
-### Payment Processing
-- **Stripe Connect** - Multi-party payment platform for creator payouts, contributor compensation, platform fees, and escrow functionality
-- **Stripe Webhooks** - Real-time payment status updates
+**Implementation Details**
 
-### Third-Party Integrations
-- **The Gamecrafter API** - Print-on-demand and prototype publishing
-- **AWS S3** - Additional file storage for large assets
-- **SendGrid** - Transactional emails and notifications
-- **Cloudinary** - Image processing and optimization
+All technical specifications, code examples, database schemas, API designs, and implementation details are documented in [BUILD_ROADMAP.md](BUILD_ROADMAP.md).
 
-### Webhook Integration System (Data Portability & Anti-Lock-in)
-
-**Complete Data Freedom Philosophy**
-- **No Platform Lock-in**: Users can export all their data and assets at any time
-- **Real-time Sync**: Webhook events for every project change, asset update, and milestone completion
-- **Third-Party Integration**: Direct connection to Shopify, WooCommerce, Etsy, or any custom platform
-- **Asset Delivery**: Secure webhook delivery of all digital files and metadata
-- **Custom Endpoints**: User-defined webhook URLs with authentication and retry logic
-
-**Webhook Event Types**
-- **Project Events**: Creation, updates, status changes, completion
-- **Milestone Events**: Funding progress, completion, new milestones added
-- **Asset Events**: New uploads, version updates, file changes
-- **Marketplace Events**: Product listings, sales, downloads
-- **Collaboration Events**: Team member changes, permission updates
-- **Payment Events**: Contributions received, payouts processed
-
-### Mobile Strategy
-- **React Native App**: Cross-platform mobile app for iOS and Android
-- **Progressive Web App (PWA)**: Mobile-optimized web experience with offline capabilities
-- **Push Notifications**: Real-time alerts for project updates, funding milestones, and messages
-- **Mobile Payments**: Apple Pay and Google Pay integration for contributions
-
-### Migration-Ready Technical Implementation
-
-**Database Abstraction Layer**
-```typescript
-// Custom database interface - easily swappable
-interface DatabaseClient {
-  query<T>(sql: string, params?: any[]): Promise<T[]>;
-  queryOne<T>(sql: string, params?: any[]): Promise<T | null>;
-  transaction<T>(callback: (client: DatabaseClient) => Promise<T>): Promise<T>;
-}
-
-// PostgreSQL implementation (works with Supabase or any PostgreSQL)
-class PostgreSQLClient implements DatabaseClient {
-  constructor(private connectionString: string) {}
   
   async query<T>(sql: string, params?: any[]): Promise<T[]> {
     // Use pg library directly, not Supabase SDK
@@ -1353,13 +1353,14 @@ class RealtimeService {
 }
 ```
 
-**Collaborative Rulebook Editor Implementation**
+**Collaborative Rulebook Editor Implementation (Vanilla TypeScript + ProseMirror)**
 ```typescript
-// Real-time collaborative editing using Operational Transformation
-import { EditorView } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
-import { markdown } from '@codemirror/lang-markdown';
-import { oneDark } from '@codemirror/theme-one-dark';
+// Real-time collaborative editing using Yjs CRDT + ProseMirror
+import { EditorState } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { Schema } from 'prosemirror-model';
+import * as Y from 'yjs';
+import { ySyncPlugin, yCursorPlugin } from 'y-prosemirror';
 
 interface RulebookOperation {
   type: 'insert' | 'delete' | 'retain';
@@ -1381,20 +1382,46 @@ class CollaborativeRulebookEditor {
     this.rulebookId = rulebookId;
     this.userId = userId;
     
-    // Initialize CodeMirror editor with markdown support
-    this.editorView = new EditorView({
+    // Initialize ProseMirror editor with game-specific schema
+    const gameSchema = new Schema({
+      nodes: {
+        doc: { content: 'block+' },
+        paragraph: { content: 'inline*', group: 'block' },
+        text: { group: 'inline' },
+        // Game-specific nodes
+        gameComponent: {
+          content: 'inline*',
+          group: 'block',
+          attrs: { componentType: { default: 'card' }, quantity: { default: 1 } }
+        },
+        ruleMechanic: {
+          content: 'inline*', 
+          group: 'block',
+          attrs: { complexity: { default: 'simple' } }
+        }
+      },
+      marks: {
+        strong: {},
+        em: {},
+        ruleReference: { attrs: { targetSection: {} } }
+      }
+    });
+    
+    // Create Yjs document for collaboration
+    const ydoc = new Y.Doc();
+    const yXmlFragment = ydoc.getXmlFragment('prosemirror');
+    
+    this.editorView = new EditorView(container, {
       state: EditorState.create({
-        extensions: [
-          markdown(),
-          oneDark,
-          EditorView.updateListener.of((update) => {
-            if (update.docChanged) {
-              this.handleDocumentChange(update);
-            }
-          })
+        schema: gameSchema,
+        plugins: [
+          ySyncPlugin(yXmlFragment),
+          yCursorPlugin(this.provider.awareness),
+          // Custom game design plugins
+          componentLinkingPlugin(),
+          ruleValidationPlugin()
         ]
-      }),
-      parent: container
+      })
     });
     
     this.connectWebSocket();
@@ -2031,7 +2058,7 @@ class ShopifyIntegration {
 **Month 2: Core Platform**
 - [ ] Milestone creation and management system
 - [ ] Basic funding and contribution functionality
-- [ ] Collaborative rulebook editor foundation (CodeMirror integration)
+- [ ] Custom rich text editor with ProseMirror + WebGPU animations
 - [ ] Rulebook templates for different game types
 - [ ] Comment system for projects and milestones
 - [ ] User dashboard and project management interface

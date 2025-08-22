@@ -1,0 +1,91 @@
+/**
+ * Budget Zero App Layout Styles
+ * Clean CSS-first approach using design tokens
+ * 
+ * This file contains app-specific layout styles.
+ * Component styles are in components.css
+ * Utility classes are in utilities.css
+ * Animations are in animations.css
+ */
+
+/* === APP-SPECIFIC LAYOUT === */
+
+/* Main app container */
+.app {
+  min-height: 100vh;
+  background-color: var(--color-white);
+}
+
+/* App header */
+.app-header {
+  background-color: var(--color-white);
+  border-bottom: 1px solid var(--color-gray-200);
+  box-shadow: var(--shadow-sm);
+}
+
+/* App main content */
+.app-main {
+  flex: 1;
+  padding: var(--space-6) 0;
+}
+
+/* App footer */
+.app-footer {
+  background-color: var(--color-gray-50);
+  border-top: 1px solid var(--color-gray-200);
+  padding: var(--space-8) 0;
+  margin-top: auto;
+}
+
+/* === PAGE LAYOUTS === */
+
+/* Landing page */
+.landing-page {
+  text-align: center;
+  padding: var(--space-16) 0;
+}
+
+/* Dashboard layout */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: var(--space-6);
+  min-height: calc(100vh - 64px);
+}
+
+.dashboard-sidebar {
+  background-color: var(--color-gray-50);
+  border-right: 1px solid var(--color-gray-200);
+  padding: var(--space-6);
+}
+
+.dashboard-content {
+  padding: var(--space-6);
+}
+
+/* === RESPONSIVE LAYOUT === */
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--color-gray-200);
+  }
+  
+  .landing-page {
+    padding: var(--space-8) 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-main {
+    padding: var(--space-4) 0;
+  }
+  
+  .dashboard-content {
+    padding: var(--space-4);
+  }
+}
