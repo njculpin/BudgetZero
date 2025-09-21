@@ -1,0 +1,8 @@
+export { AuthPage } from './AuthPage'
+export { LandingPage } from './LandingPage'
+export { ProjectsPage } from './ProjectsPage'
+export { DiscoverPage } from './DiscoverPage'
+export { CollaborationsPage } from './CollaborationsPage'
+export { MarketplacePage } from './MarketplacePage'
+export { Dashboard } from './Dashboard'
+export { ProjectDetailPage } from './ProjectDetailPage'
