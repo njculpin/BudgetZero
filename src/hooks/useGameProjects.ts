@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getGameProjects, createGameProject, type GameProject } from '../lib/supabase'
+import { getGameProjects, createGameProject, updateGameProject, deleteGameProject, type GameProject } from '../lib/supabase'
 
 export function useGameProjects(userId?: string) {
   return useQuery({
@@ -27,6 +27,33 @@ export function useCreateGameProject() {
       queryClient.invalidateQueries({ queryKey: ['gameProjects'] })
       queryClient.invalidateQueries({ queryKey: ['userGameProjects', data.creator_id] })
       queryClient.setQueryData(['userGameProjects', data.creator_id], (old: GameProject[] = []) => [data, ...old])
+    },
+  })
+}
+
+export function useUpdateGameProject() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Omit<GameProject, 'id' | 'created_at' | 'updated_at' | 'creator_id'>> }) =>
+      updateGameProject(id, updates),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['gameProjects'] })
+      queryClient.invalidateQueries({ queryKey: ['userGameProjects', data.creator_id] })
+      queryClient.invalidateQueries({ queryKey: ['gameProject', data.id] })
+    },
+  })
+}
+
+export function useDeleteGameProject() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: deleteGameProject,
+    onSuccess: (_, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ['gameProjects'] })
+      queryClient.invalidateQueries({ queryKey: ['userGameProjects'] })
+      queryClient.removeQueries({ queryKey: ['gameProject', deletedId] })
     },
   })
 }

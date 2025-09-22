@@ -163,6 +163,28 @@ export const mockApi = {
     mockGameProjects.unshift(newProject)
     return newProject
   },
+  updateGameProject: async (id: string, updates: Partial<Omit<GameProject, 'id' | 'created_at' | 'updated_at' | 'creator_id'>>): Promise<GameProject> => {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const projectIndex = mockGameProjects.findIndex(p => p.id === id)
+    if (projectIndex === -1) {
+      throw new Error('Project not found')
+    }
+    const updatedProject: GameProject = {
+      ...mockGameProjects[projectIndex],
+      ...updates,
+      updated_at: new Date().toISOString()
+    }
+    mockGameProjects[projectIndex] = updatedProject
+    return updatedProject
+  },
+  deleteGameProject: async (id: string): Promise<void> => {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const projectIndex = mockGameProjects.findIndex(p => p.id === id)
+    if (projectIndex === -1) {
+      throw new Error('Project not found')
+    }
+    mockGameProjects.splice(projectIndex, 1)
+  },
 
   // Milestones
   getMilestones: async (projectId: string): Promise<Milestone[]> => {

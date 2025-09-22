@@ -1,29 +1,48 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardBody, CardFooter } from '../ui'
 import { Button } from '../ui'
 import { Input } from '../ui'
-import { useCreateGameProject } from '../../hooks/useGameProjects'
+import { useCreateGameProject, useUpdateGameProject } from '../../hooks/useGameProjects'
 import { useAuth } from '../../hooks/useAuth'
 import type { GameProject } from '../../lib/supabase'
 
 interface GameProjectFormProps {
   onClose: () => void
   onSuccess?: (project: GameProject) => void
+  project?: GameProject // For edit mode
 }
 
-export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
+export function GameProjectForm({ onClose, onSuccess, project }: GameProjectFormProps) {
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: 'board-game' as GameProject['category'],
-    target_audience: '',
-    estimated_players: '',
-    estimated_playtime: '',
+    name: project?.name || '',
+    description: project?.description || '',
+    category: project?.category || 'board-game' as GameProject['category'],
+    target_audience: project?.target_audience || '',
+    estimated_players: project?.estimated_players || '',
+    estimated_playtime: project?.estimated_playtime || '',
   })
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
   const { data: user } = useAuth()
   const createProjectMutation = useCreateGameProject()
+  const updateProjectMutation = useUpdateGameProject()
+
+  const isEditing = !!project
+  const mutation = isEditing ? updateProjectMutation : createProjectMutation
+
+  // Update form data when project prop changes
+  useEffect(() => {
+    if (project) {
+      setFormData({
+        name: project.name,
+        description: project.description,
+        category: project.category,
+        target_audience: project.target_audience,
+        estimated_players: project.estimated_players,
+        estimated_playtime: project.estimated_playtime,
+      })
+    }
+  }, [project])
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
@@ -57,25 +76,40 @@ export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm() || !user || createProjectMutation.isPending) return
+    if (!validateForm() || !user || mutation.isPending) return
 
     try {
-      const projectData = {
-        ...formData,
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        target_audience: formData.target_audience.trim(),
-        estimated_players: formData.estimated_players.trim(),
-        estimated_playtime: formData.estimated_playtime.trim(),
-        creator_id: user.id,
-        status: 'idea' as const,
+      let result: GameProject
+
+      if (isEditing && project) {
+        const updates = {
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+          category: formData.category,
+          target_audience: formData.target_audience.trim(),
+          estimated_players: formData.estimated_players.trim(),
+          estimated_playtime: formData.estimated_playtime.trim(),
+        }
+        result = await updateProjectMutation.mutateAsync({ id: project.id, updates })
+      } else {
+        const projectData = {
+          ...formData,
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+          target_audience: formData.target_audience.trim(),
+          estimated_players: formData.estimated_players.trim(),
+          estimated_playtime: formData.estimated_playtime.trim(),
+          creator_id: user.id,
+          status: 'idea' as const,
+        }
+        result = await createProjectMutation.mutateAsync(projectData)
       }
 
-      const project = await createProjectMutation.mutateAsync(projectData)
-      onSuccess?.(project)
+      onSuccess?.(result)
       onClose()
-    } catch (error: any) {
-      setErrors({ form: error.message || 'An error occurred while creating the project' })
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : `An error occurred while ${isEditing ? 'updating' : 'creating'} the project`
+      setErrors({ form: errorMessage })
     }
   }
 
@@ -103,9 +137,12 @@ export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
       <div style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}>
         <Card>
           <CardHeader>
-            <h2>Create New Game Project</h2>
+            <h2>{isEditing ? 'Edit Game Project' : 'Create New Game Project'}</h2>
             <p style={{ color: 'var(--color-gray-600)', fontSize: 'var(--font-size-sm)', marginTop: '0.5rem' }}>
-              Start your collaborative tabletop game development journey. This will be the foundation for your milestone-driven project.
+              {isEditing
+                ? 'Update your game project details to keep contributors informed and aligned.'
+                : 'Start your collaborative tabletop game development journey. This will be the foundation for your milestone-driven project.'
+              }
             </p>
           </CardHeader>
           <CardBody>
@@ -130,7 +167,7 @@ export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 error={errors.name}
                 placeholder="e.g., Mystic Realms, Space Traders, Dragon's Quest"
-                disabled={createProjectMutation.isPending}
+                disabled={mutation.isPending}
               />
 
               <div className="input-field">
@@ -142,7 +179,7 @@ export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
                   value={formData.category}
                   onChange={(e) => handleInputChange('category', e.target.value)}
                   className="input"
-                  disabled={createProjectMutation.isPending}
+                  disabled={mutation.isPending}
                 >
                   <option value="board-game">Board Game</option>
                   <option value="card-game">Card Game</option>
@@ -163,7 +200,7 @@ export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
                   className="input"
                   style={{ minHeight: '120px', resize: 'vertical' }}
                   placeholder="Describe your game concept, core mechanics, theme, and what makes it unique. This will help attract the right contributors..."
-                  disabled={createProjectMutation.isPending}
+                  disabled={mutation.isPending}
                 />
                 {errors.description && (
                   <span className="input-field__error">{errors.description}</span>
@@ -183,7 +220,7 @@ export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
                 onChange={(e) => handleInputChange('target_audience', e.target.value)}
                 error={errors.target_audience}
                 placeholder="e.g., Families with children 8+, Strategy gamers, D&D enthusiasts"
-                disabled={createProjectMutation.isPending}
+                disabled={mutation.isPending}
               />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}>
@@ -193,7 +230,7 @@ export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
                   onChange={(e) => handleInputChange('estimated_players', e.target.value)}
                   error={errors.estimated_players}
                   placeholder="e.g., 2-4 players, 1-6 players"
-                  disabled={createProjectMutation.isPending}
+                  disabled={mutation.isPending}
                 />
 
                 <Input
@@ -202,7 +239,7 @@ export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
                   onChange={(e) => handleInputChange('estimated_playtime', e.target.value)}
                   error={errors.estimated_playtime}
                   placeholder="e.g., 30-45 minutes, 2-3 hours"
-                  disabled={createProjectMutation.isPending}
+                  disabled={mutation.isPending}
                 />
               </div>
             </form>
@@ -212,16 +249,19 @@ export function GameProjectForm({ onClose, onSuccess }: GameProjectFormProps) {
               <Button
                 variant="secondary"
                 onClick={onClose}
-                disabled={createProjectMutation.isPending}
+                disabled={mutation.isPending}
               >
                 Cancel
               </Button>
               <Button
                 variant="primary"
                 onClick={handleSubmit}
-                disabled={createProjectMutation.isPending}
+                disabled={mutation.isPending}
               >
-                {createProjectMutation.isPending ? 'Creating...' : 'Create Project'}
+                {mutation.isPending
+                  ? (isEditing ? 'Updating...' : 'Creating...')
+                  : (isEditing ? 'Update Project' : 'Create Project')
+                }
               </Button>
             </div>
           </CardFooter>

@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Button } from '../ui'
-import { Card, CardHeader, CardBody } from '../ui'
 import { useRulebookVersions } from '../../hooks/useRulebooks'
 import { RulebookVersion } from '../../lib/supabase'
 

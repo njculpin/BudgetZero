@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase, getCurrentUser } from '../lib/supabase'
-import { RealtimeChannel } from '@supabase/supabase-js'
+import { RealtimeChannel, User } from '@supabase/supabase-js'
 
 export interface CollaboratorPresence {
   user_id: string
@@ -27,7 +27,7 @@ export function useRulebookCollaboration(projectId: string, rulebookId?: string)
   const [recentChanges, setRecentChanges] = useState<RulebookChange[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const channelRef = useRef<RealtimeChannel | null>(null)
-  const userRef = useRef<any>(null)
+  const userRef = useRef<User | null>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {

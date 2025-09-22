@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { RulebookTemplate, getAllTemplates, getTemplatesByCategory } from '../../utils/rulebookTemplates'
 import { Button } from '../ui'
 import { Card, CardHeader, CardBody } from '../ui'

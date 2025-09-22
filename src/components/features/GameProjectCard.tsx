@@ -1,4 +1,3 @@
-import React from 'react'
 import { Card, CardHeader, CardBody } from '../ui'
 import { Button } from '../ui'
 import type { GameProject } from '../../lib/supabase'
@@ -63,7 +62,7 @@ export function GameProjectCard({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--spacing-md)' }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: '0.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }} id={`project-${project.id}-title`}>
                 {project.name}
               </h3>
               <span style={{
@@ -73,7 +72,7 @@ export function GameProjectCard({
                 fontSize: 'var(--font-size-xs)',
                 fontWeight: '500',
                 color: 'var(--color-gray-600)'
-              }}>
+              }} aria-label={`Category: ${getCategoryLabel(project.category)}`}>
                 {getCategoryLabel(project.category)}
               </span>
             </div>
@@ -85,13 +84,13 @@ export function GameProjectCard({
                 gap: '0.25rem',
                 fontSize: 'var(--font-size-sm)',
                 color: getStatusColor(project.status)
-              }}>
+              }} aria-label={`Status: ${getStatusLabel(project.status)}`}>
                 <div style={{
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
                   backgroundColor: getStatusColor(project.status)
-                }} />
+                }} aria-hidden="true" />
                 {getStatusLabel(project.status)}
               </span>
             </div>
@@ -117,6 +116,7 @@ export function GameProjectCard({
                   variant="secondary"
                   size="small"
                   onClick={() => onEdit(project)}
+                  aria-label={`Edit ${project.name} project`}
                 >
                   Edit
                 </Button>
@@ -126,6 +126,7 @@ export function GameProjectCard({
                   variant="error"
                   size="small"
                   onClick={() => onDelete(project)}
+                  aria-label={`Delete ${project.name} project`}
                 >
                   Delete
                 </Button>
@@ -187,6 +188,7 @@ export function GameProjectCard({
               variant="primary"
               size="small"
               onClick={() => onView(project)}
+              aria-label={`View ${project.name} project details`}
             >
               View Project
             </Button>

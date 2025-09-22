@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Button } from '../ui'
-import { Card, CardHeader, CardBody } from '../ui'
 import { exportRulebookToPDF, getExportableElement, cleanupExportElement, PDFExportOptions } from '../../utils/pdfExport'
 
 interface PDFExportDialogProps {
@@ -116,7 +115,7 @@ export function PDFExportDialog({
     headings.forEach((heading, index) => {
       const level = parseInt(heading.tagName.charAt(1))
       const text = heading.textContent || ''
-      const indent = '  '.repeat(level - 1)
+      const _indent = '  '.repeat(level - 1)
 
       tocItems.push(`
         <div style="

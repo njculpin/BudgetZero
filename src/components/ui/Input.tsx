@@ -15,6 +15,7 @@ export function Input({
   ...props
 }: InputProps) {
   const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`
+  const errorId = error ? `${inputId}-error` : undefined
   const baseClass = 'input'
   const sizeClass = size !== 'medium' ? `${baseClass}--${size}` : ''
   const errorClass = error ? `${baseClass}--error` : ''
@@ -31,9 +32,11 @@ export function Input({
         {...props}
         id={inputId}
         className={fullClassName}
+        aria-invalid={error ? 'true' : 'false'}
+        aria-describedby={errorId}
       />
       {error && (
-        <span className="input-field__error">
+        <span id={errorId} className="input-field__error" role="alert">
           {error}
         </span>
       )}

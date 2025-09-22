@@ -4,10 +4,18 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run dev:full",
+    "dev:full": "lsof -ti:5173 | xargs kill -9 2>/dev/null || true && npm run supabase:start && npm run supabase:reset && npm run types:generate && (sleep 3 && npm run open:browsers &) && vite",
+    "dev:simple": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:status": "supabase status",
+    "types:generate": "supabase gen types typescript --local --schema public > src/types/supabase.ts",
+    "open:browsers": "open -a 'Google Chrome' http://localhost:5173 http://127.0.0.1:55324"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^4.0.2",
@@ -41,10 +49,12 @@
     "@tanstack/router-vite-plugin": "^1.131.49",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
+    "eslint-plugin-unused-imports": "^4.2.0",
     "globals": "^15.9.0",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",

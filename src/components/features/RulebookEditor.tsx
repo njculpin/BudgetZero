@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Table } from '@tiptap/extension-table'
@@ -23,14 +23,6 @@ import { useRulebookCollaboration } from '../../hooks/useRulebookCollaboration'
 import { CollaborationIndicators } from './CollaborationIndicators'
 import { RulebookVersion } from '../../lib/supabase'
 
-// Debounce utility function
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
-  let timeout: NodeJS.Timeout
-  return ((...args: any[]) => {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => func(...args), wait)
-  }) as T
-}
 
 interface RulebookEditorProps {
   projectId: string
@@ -48,13 +40,14 @@ export function RulebookEditor({
   gameCategory
 }: RulebookEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
-  const [isExporting, setIsExporting] = useState(false)
+  const [_isExporting, _setIsExporting] = useState(false)
   const [showTemplateSelector, setShowTemplateSelector] = useState(false)
   const [showVersionHistory, setShowVersionHistory] = useState(false)
   const [showPDFDialog, setShowPDFDialog] = useState(false)
   const [showSharingDialog, setShowSharingDialog] = useState(false)
   const [rulebookTitle, setRulebookTitle] = useState('')
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const saveTimeoutRef = useRef<NodeJS.Timeout>()
 
   const { data: user } = useAuth()
   const { data: rulebook, isLoading: rulebookLoading } = useRulebook(projectId)
@@ -66,10 +59,10 @@ export function RulebookEditor({
     collaborators,
     recentChanges,
     isConnected,
-    broadcastContentChange,
+    broadcastContentChange: _broadcastContentChange,
     broadcastCursorMove,
     broadcastTypingStart,
-    broadcastTypingStop
+    broadcastTypingStop: _broadcastTypingStop
   } = useRulebookCollaboration(projectId, rulebook?.id)
   const editor = useEditor({
     extensions: [
@@ -141,16 +134,22 @@ export function RulebookEditor({
 
   // Debounced auto-save function
   const debouncedSave = useCallback(
-    debounce(async (content: string) => {
-      if (!editable || !user) return
-
-      try {
-        await saveRulebook(rulebookTitle || 'Untitled Rulebook', content)
-        setLastSaved(new Date())
-      } catch (error) {
-        console.error('Auto-save failed:', error)
+    (content: string) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
       }
-    }, 2000),
+
+      saveTimeoutRef.current = setTimeout(async () => {
+        if (!editable || !user) return
+
+        try {
+          await saveRulebook(rulebookTitle || 'Untitled Rulebook', content)
+          setLastSaved(new Date())
+        } catch (error) {
+          console.error('Auto-save failed:', error)
+        }
+      }, 2000)
+    },
     [saveRulebook, rulebookTitle, editable, user]
   )
 
@@ -188,10 +187,10 @@ export function RulebookEditor({
     }
   }
 
-  const exportToPDF = async () => {
+  const _exportToPDF = async () => {
     if (!editorRef.current || !editor) return
 
-    setIsExporting(true)
+    _setIsExporting(true)
     try {
       const exportElement = getExportableElement(editorRef.current)
       await exportRulebookToPDF(exportElement, {
@@ -206,7 +205,7 @@ export function RulebookEditor({
       console.error('Error exporting PDF:', error)
       alert('Failed to export PDF. Please try again.')
     } finally {
-      setIsExporting(false)
+      _setIsExporting(false)
     }
   }
 

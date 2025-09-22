@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, CardBody, CardFooter } from '../ui'
 import { Button } from '../ui'
-import { Input } from '../ui'
 import { useApplyAsContributor } from '../../hooks/useContributors'
 import { useAuth } from '../../hooks/useAuth'
 import type { Contributor } from '../../lib/supabase'
@@ -78,8 +77,9 @@ export function ContributorApplicationForm({
       await applyMutation.mutateAsync(applicationData)
       onSuccess?.()
       onClose()
-    } catch (error: any) {
-      setErrors({ form: error.message || 'An error occurred while submitting your application' })
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while submitting your application'
+      setErrors({ form: errorMessage })
     }
   }
 

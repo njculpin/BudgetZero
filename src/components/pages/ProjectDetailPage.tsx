@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { Card, CardHeader, CardBody } from '../ui'
 import { Button } from '../ui'
@@ -6,7 +6,7 @@ import { MilestoneCard } from '../features'
 import { MilestoneForm } from '../forms'
 import { ContributorApplicationForm } from '../forms'
 import { RulebookEditor } from '../features'
-import { useAuth, useSignOut } from '../../hooks/useAuth'
+import { useAuth } from '../../hooks/useAuth'
 import { useGameProjects } from '../../hooks/useGameProjects'
 import { useMilestones } from '../../hooks/useMilestones'
 import { useContributors } from '../../hooks/useContributors'
@@ -15,7 +15,6 @@ export function ProjectDetailPage() {
   const { projectId } = useParams({ from: '/projects/$projectId' })
   const navigate = useNavigate()
   const { data: user } = useAuth()
-  const signOutMutation = useSignOut()
 
   const [showMilestoneForm, setShowMilestoneForm] = useState(false)
   const [showApplicationForm, setShowApplicationForm] = useState(false)
@@ -31,15 +30,6 @@ export function ProjectDetailPage() {
 
   const isOwner = user?.id === project?.creator_id
   const hasApplied = contributors?.some(c => c.user_id === user?.id)
-
-  const handleSignOut = async () => {
-    try {
-      await signOutMutation.mutateAsync()
-      navigate({ to: '/' })
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
 
   if (!project) {
     return (
@@ -83,96 +73,6 @@ export function ProjectDetailPage() {
 
   return (
     <div className="dashboard">
-      <aside className="dashboard__sidebar">
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2>Budget Zero</h2>
-          {user?.email && (
-            <p style={{
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--color-gray-600)',
-              marginTop: '0.25rem'
-            }}>
-              {user.email}
-            </p>
-          )}
-        </div>
-        <nav>
-          <ul className="nav">
-            <li className="nav__item">
-              <a
-                href="#"
-                className="nav__link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  navigate({ to: '/dashboard' })
-                }}
-              >
-                Dashboard
-              </a>
-            </li>
-            <li className="nav__item">
-              <a
-                href="#"
-                className="nav__link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  navigate({ to: '/projects' })
-                }}
-              >
-                My Projects
-              </a>
-            </li>
-            <li className="nav__item">
-              <a
-                href="#"
-                className="nav__link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  navigate({ to: '/discover' })
-                }}
-              >
-                Discover
-              </a>
-            </li>
-            <li className="nav__item">
-              <a
-                href="#"
-                className="nav__link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  navigate({ to: '/collaborations' })
-                }}
-              >
-                Collaborations
-              </a>
-            </li>
-            <li className="nav__item">
-              <a
-                href="#"
-                className="nav__link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  navigate({ to: '/marketplace' })
-                }}
-              >
-                Marketplace
-              </a>
-            </li>
-          </ul>
-        </nav>
-        <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-          <Button
-            variant="secondary"
-            size="small"
-            onClick={handleSignOut}
-            disabled={signOutMutation.isPending}
-            style={{ width: '100%' }}
-          >
-            {signOutMutation.isPending ? 'Signing out...' : 'Sign Out'}
-          </Button>
-        </div>
-      </aside>
-
       <main className="dashboard__main">
         <div className="container">
           <div style={{ marginBottom: '2rem' }}>

@@ -1,86 +1,13 @@
-import React from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Card, CardHeader, CardBody } from '../ui'
 import { Button } from '../ui'
-import { useAuth, useSignOut } from '../../hooks/useAuth'
+import { DashboardLayout } from '../layouts'
 
 export function Dashboard() {
   const navigate = useNavigate()
-  const { data: user } = useAuth()
-  const signOutMutation = useSignOut()
-
-  const handleSignOut = async () => {
-    try {
-      await signOutMutation.mutateAsync()
-      navigate({ to: '/' })
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
 
   return (
-    <div className="dashboard">
-      <aside className="dashboard__sidebar">
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2>Budget Zero</h2>
-          {user?.email && (
-            <p style={{
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--color-gray-600)',
-              marginTop: '0.25rem'
-            }}>
-              {user.email}
-            </p>
-          )}
-        </div>
-        <nav>
-          <ul className="nav">
-            <li className="nav__item">
-              <a href="#" className="nav__link nav__link--active">
-                Dashboard
-              </a>
-            </li>
-            <li className="nav__item">
-              <a
-                href="#"
-                className="nav__link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  navigate({ to: '/projects' })
-                }}
-              >
-                Projects
-              </a>
-            </li>
-            <li className="nav__item">
-              <a href="#" className="nav__link">
-                Collaborations
-              </a>
-            </li>
-            <li className="nav__item">
-              <a href="#" className="nav__link">
-                Marketplace
-              </a>
-            </li>
-            <li className="nav__item">
-              <a href="#" className="nav__link">
-                Settings
-              </a>
-            </li>
-          </ul>
-        </nav>
-        <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-          <Button
-            variant="secondary"
-            size="small"
-            onClick={handleSignOut}
-            disabled={signOutMutation.isPending}
-            style={{ width: '100%' }}
-          >
-            {signOutMutation.isPending ? 'Signing out...' : 'Sign Out'}
-          </Button>
-        </div>
-      </aside>
+    <DashboardLayout currentPage="dashboard">
       <main className="dashboard__main">
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -152,6 +79,6 @@ export function Dashboard() {
           </Card>
         </div>
       </main>
-    </div>
+    </DashboardLayout>
   )
 }

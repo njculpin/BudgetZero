@@ -3,19 +3,22 @@ import { useNavigate } from '@tanstack/react-router'
 import { Card, CardHeader, CardBody } from '../ui'
 import { Button } from '../ui'
 import { Input } from '../ui'
-import { useSignIn, useSignUp, useAuth } from '../../hooks/useAuth'
+import { useSignIn, useSignUp, useAuth, useSignInWithMagicLink } from '../../hooks/useAuth'
 
 export function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false)
+  const [useMagicLink, setUseMagicLink] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [magicLinkSent, setMagicLinkSent] = useState(false)
 
   const navigate = useNavigate()
   const { data: user } = useAuth()
   const signInMutation = useSignIn()
   const signUpMutation = useSignUp()
+  const magicLinkMutation = useSignInWithMagicLink()
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -33,14 +36,16 @@ export function AuthPage() {
       newErrors.email = 'Email is invalid'
     }
 
-    if (!password) {
-      newErrors.password = 'Password is required'
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
-    }
+    if (!useMagicLink) {
+      if (!password) {
+        newErrors.password = 'Password is required'
+      } else if (password.length < 6) {
+        newErrors.password = 'Password must be at least 6 characters'
+      }
 
-    if (isSignUp && password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match'
+      if (isSignUp && password !== confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match'
+      }
     }
 
     setErrors(newErrors)
@@ -53,19 +58,25 @@ export function AuthPage() {
     if (!validateForm()) return
 
     try {
-      if (isSignUp) {
-        await signUpMutation.mutateAsync({ email, password })
-        alert('Check your email for a confirmation link!')
+      if (useMagicLink) {
+        await magicLinkMutation.mutateAsync({ email })
+        setMagicLinkSent(true)
       } else {
-        await signInMutation.mutateAsync({ email, password })
-        navigate({ to: '/dashboard' })
+        if (isSignUp) {
+          await signUpMutation.mutateAsync({ email, password })
+          alert('Check your email for a confirmation link!')
+        } else {
+          await signInMutation.mutateAsync({ email, password })
+          navigate({ to: '/dashboard' })
+        }
       }
-    } catch (error: any) {
-      setErrors({ form: error.message || 'An error occurred' })
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      setErrors({ form: errorMessage })
     }
   }
 
-  const isLoading = signInMutation.isPending || signUpMutation.isPending
+  const isLoading = signInMutation.isPending || signUpMutation.isPending || magicLinkMutation.isPending
 
   return (
     <div className="app">
@@ -105,17 +116,34 @@ export function AuthPage() {
                 disabled={isLoading}
               />
 
-              <Input
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                error={errors.password}
-                placeholder="Enter your password"
-                disabled={isLoading}
-              />
+              {/* Magic Link Toggle */}
+              <div style={{ marginBottom: 'var(--spacing-md)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={useMagicLink}
+                    onChange={(e) => setUseMagicLink(e.target.checked)}
+                    disabled={isLoading}
+                  />
+                  <span style={{ fontSize: 'var(--font-size-sm)' }}>
+                    Use magic link (passwordless sign in)
+                  </span>
+                </label>
+              </div>
 
-              {isSignUp && (
+              {!useMagicLink && (
+                <Input
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  error={errors.password}
+                  placeholder="Enter your password"
+                  disabled={isLoading}
+                />
+              )}
+
+              {isSignUp && !useMagicLink && (
                 <Input
                   label="Confirm Password"
                   type="password"
@@ -127,37 +155,59 @@ export function AuthPage() {
                 />
               )}
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="large"
-                disabled={isLoading}
-                style={{ width: '100%', marginBottom: 'var(--spacing-md)' }}
-              >
-                {isLoading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
-              </Button>
-
-              <div style={{ textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp)
-                    setErrors({})
-                    setPassword('')
-                    setConfirmPassword('')
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--color-primary)',
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                  }}
+              {magicLinkSent ? (
+                <div style={{
+                  padding: 'var(--spacing-md)',
+                  backgroundColor: '#f0f9ff',
+                  border: '1px solid #0ea5e9',
+                  borderRadius: 'var(--border-radius)',
+                  color: '#0369a1',
+                  marginBottom: 'var(--spacing-md)',
+                  textAlign: 'center'
+                }}>
+                  <h3 style={{ margin: '0 0 var(--spacing-xs) 0' }}>Check your email!</h3>
+                  <p style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>
+                    We've sent a magic link to <strong>{email}</strong>. Click the link to sign in.
+                  </p>
+                </div>
+              ) : (
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="large"
                   disabled={isLoading}
+                  style={{ width: '100%', marginBottom: 'var(--spacing-md)' }}
                 >
-                  {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-                </button>
-              </div>
+                  {isLoading ? 'Loading...' : (
+                    useMagicLink ? 'Send Magic Link' : (isSignUp ? 'Create Account' : 'Sign In')
+                  )}
+                </Button>
+              )}
+
+              {!useMagicLink && (
+                <div style={{ textAlign: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSignUp(!isSignUp)
+                      setErrors({})
+                      setPassword('')
+                      setConfirmPassword('')
+                      setMagicLinkSent(false)
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--color-primary)',
+                      cursor: 'pointer',
+                      textDecoration: 'underline'
+                    }}
+                    disabled={isLoading}
+                  >
+                    {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+                  </button>
+                </div>
+              )}
             </form>
           </CardBody>
         </Card>

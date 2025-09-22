@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Button } from '../ui'
-import { Card, CardHeader, CardBody } from '../ui'
 
 interface RulebookSharingDialogProps {
   projectId: string

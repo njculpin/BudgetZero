@@ -55,3 +55,18 @@ export function useSignUp() {
     },
   })
 }
+
+export function useSignInWithMagicLink() {
+  return useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      })
+      if (error) throw error
+      return data
+    },
+  })
+}

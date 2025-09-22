@@ -78,8 +78,9 @@ export function MilestoneForm({ projectId, onClose, onSuccess }: MilestoneFormPr
       const milestone = await createMilestoneMutation.mutateAsync(milestoneData)
       onSuccess?.(milestone)
       onClose()
-    } catch (error: any) {
-      setErrors({ form: error.message || 'An error occurred while creating the milestone' })
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while creating the milestone'
+      setErrors({ form: errorMessage })
     }
   }
 

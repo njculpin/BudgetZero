@@ -139,6 +139,41 @@ export const createGameProject = async (project: Omit<GameProject, 'id' | 'creat
   return data
 }
 
+export const updateGameProject = async (
+  id: string,
+  updates: Partial<Omit<GameProject, 'id' | 'created_at' | 'updated_at' | 'creator_id'>>
+) => {
+  if (isDevelopmentMode) {
+    return mockApi.updateGameProject(id, updates)
+  }
+
+  const { data, error } = await supabase
+    .from('game_projects')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export const deleteGameProject = async (id: string) => {
+  if (isDevelopmentMode) {
+    return mockApi.deleteGameProject(id)
+  }
+
+  const { error } = await supabase
+    .from('game_projects')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
 export const getMilestones = async (projectId: string) => {
   if (isDevelopmentMode) {
     return mockApi.getMilestones(projectId)

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Card, CardHeader, CardBody } from '../ui'
 import { Button } from '../ui'
@@ -6,29 +6,53 @@ import { GameProjectCard } from '../features'
 import { GameProjectForm } from '../forms'
 import { DashboardLayout } from '../layouts'
 import { useAuth } from '../../hooks/useAuth'
-import { useUserGameProjects } from '../../hooks/useGameProjects'
+import { useUserGameProjects, useDeleteGameProject } from '../../hooks/useGameProjects'
 import { GameProject } from '../../lib/supabase'
 import './ProjectsPage.css'
 
 export function ProjectsPage() {
   const [showProjectForm, setShowProjectForm] = useState(false)
+  const [editingProject, setEditingProject] = useState<GameProject | null>(null)
   const navigate = useNavigate()
   const { data: user } = useAuth()
   const { data: projects, isLoading, refetch } = useUserGameProjects(user?.id)
+  const deleteProjectMutation = useDeleteGameProject()
 
   const handleViewProject = (project: GameProject) => {
     navigate({ to: `/projects/${project.id}` })
   }
 
   const handleEditProject = (project: GameProject) => {
-    // TODO: Implement edit functionality
-    console.log('Edit project:', project)
+    setEditingProject(project)
+    setShowProjectForm(true)
   }
 
-  const handleDeleteProject = (project: GameProject) => {
-    // TODO: Implement delete functionality
-    if (confirm(`Are you sure you want to delete "${project.name}"?`)) {
-      console.log('Delete project:', project)
+  const handleDeleteProject = async (project: GameProject) => {
+    if (confirm(`Are you sure you want to delete "${project.name}"? This action cannot be undone.`)) {
+      try {
+        await deleteProjectMutation.mutateAsync(project.id)
+        refetch()
+      } catch (error) {
+        console.error('Failed to delete project:', error)
+        alert('Failed to delete the project. Please try again.')
+      }
+    }
+  }
+
+  const handleFormClose = () => {
+    setShowProjectForm(false)
+    setEditingProject(null)
+  }
+
+  const handleFormSuccess = (project: GameProject) => {
+    refetch()
+    if (editingProject) {
+      // After editing, stay on projects page
+      setShowProjectForm(false)
+      setEditingProject(null)
+    } else {
+      // After creating, navigate to the new project
+      navigate({ to: `/projects/${project.id}` })
     }
   }
 
@@ -99,11 +123,9 @@ export function ProjectsPage() {
 
       {showProjectForm && (
         <GameProjectForm
-          onClose={() => setShowProjectForm(false)}
-          onSuccess={(project) => {
-            refetch()
-            navigate({ to: `/projects/${project.id}` })
-          }}
+          project={editingProject || undefined}
+          onClose={handleFormClose}
+          onSuccess={handleFormSuccess}
         />
       )}
     </DashboardLayout>

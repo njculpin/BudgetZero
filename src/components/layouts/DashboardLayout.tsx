@@ -35,23 +35,24 @@ export function DashboardLayout({ children, currentPage }: DashboardLayoutProps)
 
   return (
     <div className="dashboard">
-      <aside className="dashboard__sidebar">
+      <aside className="dashboard__sidebar" role="navigation" aria-label="Application sidebar">
         <div className="dashboard__brand">
-          <h2>Budget Zero</h2>
+          <h1>Budget Zero</h1>
           {user?.email && (
-            <p className="dashboard__user-email">
+            <p className="dashboard__user-email" aria-label={`Signed in as ${user.email}`}>
               {user.email}
             </p>
           )}
         </div>
 
-        <nav>
-          <ul className="nav">
+        <nav aria-label="Main navigation">
+          <ul className="nav" role="list">
             {navItems.map(({ key, label, to }) => (
               <li key={key} className="nav__item">
                 <Link
                   to={to}
                   className={`nav__link ${currentPage === key ? 'nav__link--active' : ''}`}
+                  aria-current={currentPage === key ? 'page' : undefined}
                 >
                   {label}
                 </Link>
@@ -65,13 +66,14 @@ export function DashboardLayout({ children, currentPage }: DashboardLayoutProps)
             variant="secondary"
             onClick={handleSignOut}
             disabled={signOutMutation.isPending}
+            aria-label="Sign out of your account"
           >
             {signOutMutation.isPending ? 'Signing out...' : 'Sign Out'}
           </Button>
         </div>
       </aside>
 
-      <main className="dashboard__main">
+      <main className="dashboard__main" role="main" aria-label="Main content">
         {children}
       </main>
     </div>

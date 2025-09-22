@@ -1,4 +1,3 @@
-import React from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Card, CardHeader, CardBody } from '../ui'
 import { Button } from '../ui'
@@ -97,43 +96,6 @@ export function MarketplacePage() {
               </CardBody>
             </Card>
           )}
-
-          {/* Featured Section */}
-          <div style={{ marginTop: '3rem' }}>
-            <h2 style={{ marginBottom: '1rem' }}>How It Works</h2>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: 'var(--spacing-lg)'
-            }}>
-              <Card>
-                <CardBody>
-                  <h3 style={{ color: 'var(--color-primary)', marginBottom: '0.5rem' }}>1. Create</h3>
-                  <p style={{ color: 'var(--color-gray-600)', fontSize: 'var(--font-size-sm)' }}>
-                    Start with your game idea and collaborate with illustrators, writers, and designers through our milestone system.
-                  </p>
-                </CardBody>
-              </Card>
-
-              <Card>
-                <CardBody>
-                  <h3 style={{ color: 'var(--color-primary)', marginBottom: '0.5rem' }}>2. Develop</h3>
-                  <p style={{ color: 'var(--color-gray-600)', fontSize: 'var(--font-size-sm)' }}>
-                    Work together to create professional game assets, rules, and artwork through funded milestones.
-                  </p>
-                </CardBody>
-              </Card>
-
-              <Card>
-                <CardBody>
-                  <h3 style={{ color: 'var(--color-primary)', marginBottom: '0.5rem' }}>3. Publish</h3>
-                  <p style={{ color: 'var(--color-gray-600)', fontSize: 'var(--font-size-sm)' }}>
-                    Release your completed game in our marketplace with automatic revenue sharing among all contributors.
-                  </p>
-                </CardBody>
-              </Card>
-            </div>
-          </div>
       </div>
     </DashboardLayout>
   )
