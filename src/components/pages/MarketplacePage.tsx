@@ -1,18 +1,90 @@
+import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Card, CardHeader, CardBody } from '../ui'
 import { Button } from '../ui'
 import { DashboardLayout } from '../layouts'
 import { useGameProjects } from '../../hooks/useGameProjects'
+import { useRoleBasedProjects } from '../../hooks/useRoleBasedProjects'
+import { useAuth } from '../../hooks/useAuth'
+import { useErrorHandler } from '../../contexts/ErrorContext'
 import { GameProjectCard } from '../features'
+import type { GameProject } from '../../lib/supabase'
+import { mergeProjectContent } from '../../lib/supabase'
+import type { ProjectWithRoles } from '../../types/roles'
 
 export function MarketplacePage() {
   const navigate = useNavigate()
+  const { data: user } = useAuth()
   const { data: publishedProjects, isLoading } = useGameProjects()
+  const { data: userProjects = [] } = useRoleBasedProjects()
+  const { addError } = useErrorHandler()
+  const [showProjectSelector, setShowProjectSelector] = useState<{
+    isOpen: boolean
+    selectedMarketplaceProject?: GameProject
+  }>({ isOpen: false })
 
   // Filter only published/completed projects for the marketplace
   const marketplaceProjects = publishedProjects?.filter(
     project => project.status === 'published' || project.status === 'completed'
   ) || []
+
+  // Handle adding marketplace item to user's project
+  const handleAddToProject = (marketplaceProject: GameProject) => {
+    if (!user) {
+      addError('Please sign in to add items to your projects', 'error')
+      return
+    }
+
+    if (userProjects.length === 0) {
+      addError('You need to create a project first before adding marketplace items', 'warning')
+      navigate({ to: '/projects/new' })
+      return
+    }
+
+    // Open project selector modal
+    setShowProjectSelector({
+      isOpen: true,
+      selectedMarketplaceProject: marketplaceProject
+    })
+  }
+
+  // Handle requesting to add to project (for items requiring permission)
+  const handleRequestToAdd = (marketplaceProject: GameProject) => {
+    if (!user) {
+      addError('Please sign in to request collaboration', 'error')
+      return
+    }
+
+    // TODO: Implement collaboration request system
+    addError(`Collaboration request sent for "${marketplaceProject.name}"`, 'success')
+  }
+
+  // Handle project selection for adding marketplace item
+  const handleProjectSelection = async (targetProject: ProjectWithRoles) => {
+    if (!showProjectSelector.selectedMarketplaceProject) return
+
+    try {
+      // Perform the actual project merging
+      await mergeProjectContent(
+        targetProject.id,
+        showProjectSelector.selectedMarketplaceProject.id,
+        'content_merge'
+      )
+
+      addError(
+        `Successfully added content from "${showProjectSelector.selectedMarketplaceProject.name}" to "${targetProject.name}"`,
+        'success'
+      )
+
+      setShowProjectSelector({ isOpen: false })
+    } catch (error) {
+      console.error('Project merge error:', error)
+      addError(
+        `Failed to add content from "${showProjectSelector.selectedMarketplaceProject.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      )
+    }
+  }
 
   return (
     <DashboardLayout currentPage="marketplace">
@@ -51,14 +123,25 @@ export function MarketplacePage() {
               gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
               gap: 'var(--spacing-lg)'
             }}>
-              {marketplaceProjects.map((project) => (
-                <GameProjectCard
-                  key={project.id}
-                  project={project}
-                  onView={(project) => navigate({ to: `/marketplace/${project.id}` })}
-                  showOwnerActions={false}
-                />
-              ))}
+              {marketplaceProjects.map((project) => {
+                // Determine if user can directly add or needs to request
+                const isOwner = user && project.creator_id === user.id
+                const canDirectlyAdd = user && !isOwner
+                const shouldShowRequestOption = false // TODO: Implement when collaboration system is ready
+
+                return (
+                  <GameProjectCard
+                    key={project.id}
+                    project={project}
+                    onView={(project) => navigate({ to: `/marketplace/${project.id}` })}
+                    onAddToProject={canDirectlyAdd ? handleAddToProject : undefined}
+                    onRequestToAdd={shouldShowRequestOption ? handleRequestToAdd : undefined}
+                    showOwnerActions={false}
+                    showCollaborationActions={!!user && !isOwner}
+                    mode="marketplace"
+                  />
+                )
+              })}
             </div>
           ) : (
             <Card>
@@ -96,6 +179,84 @@ export function MarketplacePage() {
               </CardBody>
             </Card>
           )}
+
+        {/* Project Selector Modal */}
+        {showProjectSelector.isOpen && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <Card style={{ maxWidth: '500px', margin: 'var(--spacing-md)' }}>
+              <CardHeader>
+                <h3>Add to Project</h3>
+                <p style={{ color: 'var(--color-muted-foreground)', fontSize: 'var(--font-size-sm)', margin: '0.5rem 0 0 0' }}>
+                  Select which project to add "{showProjectSelector.selectedMarketplaceProject?.name}" to:
+                </p>
+              </CardHeader>
+              <CardBody>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                  {userProjects.map((project) => (
+                    <button
+                      key={project.id}
+                      onClick={() => handleProjectSelection(project)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: 'var(--spacing-md)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 'var(--border-radius)',
+                        backgroundColor: 'transparent',
+                        cursor: 'pointer',
+                        transition: 'all var(--transition-base)',
+                        textAlign: 'left'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-accent)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div>
+                        <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>
+                          {project.name}
+                        </div>
+                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-muted-foreground)' }}>
+                          Your role: {project.my_roles[0]?.replace('-', ' ')} • {project.team_size} members
+                        </div>
+                      </div>
+                      <div style={{ color: 'var(--color-primary)' }}>
+                        →
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-lg)' }}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowProjectSelector({ isOpen: false })}
+                    style={{ flex: 1 }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => navigate({ to: '/projects/new' })}
+                    style={{ flex: 1 }}
+                  >
+                    Create New Project
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )

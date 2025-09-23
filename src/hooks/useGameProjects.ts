@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getGameProjects, createGameProject, updateGameProject, deleteGameProject, type GameProject } from '../lib/supabase'
+import { getGameProjects, getGameProject, createGameProject, updateGameProject, deleteGameProject, type GameProject } from '../lib/supabase'
 
 export function useGameProjects(userId?: string) {
   return useQuery({
@@ -14,6 +14,15 @@ export function useUserGameProjects(userId: string | undefined) {
     queryKey: ['userGameProjects', userId],
     queryFn: () => getGameProjects(userId!),
     enabled: !!userId,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useGameProject(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ['gameProject', projectId],
+    queryFn: () => getGameProject(projectId!),
+    enabled: !!projectId,
     staleTime: 30 * 1000,
   })
 }

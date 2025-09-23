@@ -1,0 +1,66 @@
+.editor-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns, 12), 1fr);
+  gap: var(--spacing-sm);
+  min-height: 400px;
+  padding: var(--spacing-lg);
+  transition: all var(--transition-base);
+}
+
+.editor-grid--visible {
+  background-image:
+    linear-gradient(to right, var(--color-gray-200) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-gray-200) 1px, transparent 1px);
+  background-size: var(--column-width) 24px;
+}
+
+.editor-grid--drop-active {
+  background-color: var(--color-primary-light);
+}
+
+.grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns, 12), 1fr);
+  gap: var(--spacing-sm);
+  pointer-events: none;
+  z-index: 10;
+  padding: var(--spacing-lg);
+}
+
+.grid-column {
+  border: 1px dashed var(--color-primary);
+  background-color: var(--color-primary-light);
+  opacity: 0.3;
+  border-radius: var(--border-radius-sm);
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 1024px) {
+  .editor-grid {
+    --grid-columns: 8;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .editor-grid {
+    --grid-columns: 4;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .editor-grid {
+    --grid-columns: 2;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+  }
+}

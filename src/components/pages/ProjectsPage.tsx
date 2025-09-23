@@ -19,7 +19,9 @@ export function ProjectsPage() {
   const deleteProjectMutation = useDeleteGameProject()
 
   const handleViewProject = (project: GameProject) => {
-    navigate({ to: `/projects/${project.id}` })
+    console.log('handleViewProject called with project:', project)
+    console.log('Navigating to:', `/project/${project.id}`)
+    navigate({ to: `/project/${project.id}` })
   }
 
   const handleEditProject = (project: GameProject) => {
@@ -52,7 +54,7 @@ export function ProjectsPage() {
       setEditingProject(null)
     } else {
       // After creating, navigate to the new project
-      navigate({ to: `/projects/${project.id}` })
+      navigate({ to: `/project/${project.id}` })
     }
   }
 

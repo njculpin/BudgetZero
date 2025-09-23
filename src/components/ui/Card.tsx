@@ -40,7 +40,7 @@ export function CardHeader({ children, className = '' }: CardHeaderProps) {
 
 export function CardBody({ children, className = '', style }: CardBodyProps) {
   return (
-    <div className={`card__body ${className}`.trim()} style={style}>
+    <div className={`card__content ${className}`.trim()} style={style}>
       {children}
     </div>
   )

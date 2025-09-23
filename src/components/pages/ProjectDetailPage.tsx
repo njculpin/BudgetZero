@@ -6,13 +6,15 @@ import { MilestoneCard } from '../features'
 import { MilestoneForm } from '../forms'
 import { ContributorApplicationForm } from '../forms'
 import { RulebookEditor } from '../features'
+import { DashboardLayout } from '../layouts'
 import { useAuth } from '../../hooks/useAuth'
-import { useGameProjects } from '../../hooks/useGameProjects'
+import { useErrorHandler } from '../../contexts/ErrorContext'
+import { useGameProject } from '../../hooks/useGameProjects'
 import { useMilestones } from '../../hooks/useMilestones'
 import { useContributors } from '../../hooks/useContributors'
 
 export function ProjectDetailPage() {
-  const { projectId } = useParams({ from: '/projects/$projectId' })
+  const { projectId } = useParams({ from: '/project/$projectId' })
   const navigate = useNavigate()
   const { data: user } = useAuth()
 
@@ -20,21 +22,65 @@ export function ProjectDetailPage() {
   const [showApplicationForm, setShowApplicationForm] = useState(false)
   const [activeTab, setActiveTab] = useState<'milestones' | 'rulebook'>('milestones')
 
-  // Get project data
-  const { data: allProjects } = useGameProjects()
-  const project = allProjects?.find(p => p.id === projectId)
+  // Get project data - with explicit enabled condition
+  const { data: project, isLoading: isProjectLoading, error: projectError } = useGameProject(projectId)
 
-  // Get milestones and contributors
+  // Get milestones and contributors - only if we have a valid projectId
   const { data: milestones, refetch: refetchMilestones } = useMilestones(projectId)
   const { data: contributors } = useContributors(projectId)
 
   const isOwner = user?.id === project?.creator_id
   const hasApplied = contributors?.some(c => c.user_id === user?.id)
 
+  // Handle error state using ErrorContext
+  if (projectError) {
+    const { addError } = useErrorHandler()
+    addError(
+      `Failed to load project: ${projectError.message}`,
+      'error',
+      {
+        label: 'Back to Projects',
+        handler: () => navigate({ to: '/projects' })
+      }
+    )
+    return (
+      <DashboardLayout currentPage="projects">
+        <div className="container">
+          <Card>
+            <CardBody>
+              <div className="flex flex-col items-center justify-center gap-4 py-8">
+                <p className="text-destructive">Unable to load project</p>
+                <Button variant="primary" onClick={() => navigate({ to: '/projects' })}>
+                  Back to Projects
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (isProjectLoading) {
+    return (
+      <DashboardLayout currentPage="projects">
+        <div className="container">
+          <Card>
+            <CardBody>
+              <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                <p>Loading project...</p>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
   if (!project) {
     return (
-      <div className="app">
-        <div className="container" style={{ paddingTop: '4rem' }}>
+      <DashboardLayout currentPage="projects">
+        <div className="container">
           <Card>
             <CardBody>
               <div style={{ textAlign: 'center', padding: '2rem 0' }}>
@@ -46,7 +92,7 @@ export function ProjectDetailPage() {
             </CardBody>
           </Card>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
@@ -61,152 +107,93 @@ export function ProjectDetailPage() {
     return labels[category] || category
   }
 
-  const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      'idea': 'var(--color-gray-500)',
-      'in-development': 'var(--color-primary)',
-      'completed': 'var(--color-success)',
-      'published': 'var(--color-success)'
-    }
-    return colors[status] || 'var(--color-gray-500)'
-  }
 
   return (
-    <div className="dashboard">
-      <main className="dashboard__main">
-        <div className="container">
-          <div style={{ marginBottom: '2rem' }}>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={() => navigate({ to: '/projects' })}
-              style={{ marginBottom: '1rem' }}
-            >
-              ← Back to Projects
-            </Button>
+    <DashboardLayout currentPage="projects">
+      <div className="container">
+        <div className="mb-8">
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={() => navigate({ to: '/projects' })}
+            className="mb-4"
+          >
+            ← Back to Projects
+          </Button>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--spacing-lg)' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: '0.5rem' }}>
-                  <h1 style={{ margin: 0 }}>{project.name}</h1>
-                  <span style={{
-                    padding: '0.25rem 0.5rem',
-                    backgroundColor: '#f3f4f6',
-                    borderRadius: 'var(--border-radius-sm)',
-                    fontSize: 'var(--font-size-sm)',
-                    fontWeight: '500',
-                    color: 'var(--color-gray-600)'
-                  }}>
-                    {getCategoryLabel(project.category)}
-                  </span>
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    padding: '0.25rem 0.5rem',
-                    backgroundColor: '#f3f4f6',
-                    borderRadius: 'var(--border-radius-sm)',
-                    fontSize: 'var(--font-size-sm)',
-                    fontWeight: '500',
-                    color: getStatusColor(project.status)
-                  }}>
-                    <div style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      backgroundColor: getStatusColor(project.status)
-                    }} />
-                    {project.status.charAt(0).toUpperCase() + project.status.slice(1).replace('-', ' ')}
-                  </span>
-                </div>
-                <p style={{ color: 'var(--color-gray-600)', fontSize: 'var(--font-size-base)', marginBottom: '1rem' }}>
-                  {project.description}
-                </p>
-                <div style={{ display: 'flex', gap: 'var(--spacing-lg)', fontSize: 'var(--font-size-sm)', color: 'var(--color-gray-600)' }}>
-                  <span><strong>Players:</strong> {project.estimated_players}</span>
-                  <span><strong>Playtime:</strong> {project.estimated_playtime}</span>
-                  <span><strong>Audience:</strong> {project.target_audience}</span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                {isOwner && (
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowMilestoneForm(true)}
-                  >
-                    Add Milestone
-                  </Button>
-                )}
-                {!isOwner && !hasApplied && (
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowApplicationForm(true)}
-                  >
-                    Apply as Contributor
-                  </Button>
-                )}
-                {hasApplied && (
-                  <Button variant="secondary" disabled>
-                    Application Submitted
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Tab Navigation */}
-          <div style={{
-            borderBottom: '1px solid var(--color-gray-200)',
-            marginBottom: '2rem'
-          }}>
-            <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-              <button
-                onClick={() => setActiveTab('milestones')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 'var(--spacing-md) 0',
-                  fontSize: 'var(--font-size-lg)',
-                  fontWeight: '600',
-                  color: activeTab === 'milestones' ? 'var(--color-primary)' : 'var(--color-gray-600)',
-                  borderBottom: activeTab === 'milestones' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-base)'
-                }}
-              >
-                Milestones
-              </button>
-              <button
-                onClick={() => setActiveTab('rulebook')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 'var(--spacing-md) 0',
-                  fontSize: 'var(--font-size-lg)',
-                  fontWeight: '600',
-                  color: activeTab === 'rulebook' ? 'var(--color-primary)' : 'var(--color-gray-600)',
-                  borderBottom: activeTab === 'rulebook' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-base)'
-                }}
-              >
-                Rulebook
-              </button>
-            </div>
-          </div>
-
-          {/* Milestones Section */}
-          {activeTab === 'milestones' && (
+          <div className="flex justify-between items-start gap-6">
             <div>
-              <h2 style={{ marginBottom: '1.5rem' }}>Project Milestones</h2>
+              <div className="flex items-center gap-2 mb-2">
+                <h1 className="m-0 text-primary text-xl">📋 {project.name} - Project Details</h1>
+                <span className="badge badge--gray">
+                  {getCategoryLabel(project.category)}
+                </span>
+                <span className={`status-badge status-badge--${project.status}`}>
+                  <div className="status-badge__dot" />
+                  {project.status.charAt(0).toUpperCase() + project.status.slice(1).replace('-', ' ')}
+                </span>
+              </div>
+              <p className="text-gray-600 text-base mb-4">
+                {project.description}
+              </p>
+              <div className="flex gap-6 text-sm text-gray-600">
+                <span><strong>Players:</strong> {project.estimated_players}</span>
+                <span><strong>Playtime:</strong> {project.estimated_playtime}</span>
+                <span><strong>Audience:</strong> {project.target_audience}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              {isOwner && (
+                <Button
+                  variant="primary"
+                  onClick={() => setShowMilestoneForm(true)}
+                >
+                  Add Milestone
+                </Button>
+              )}
+              {!isOwner && !hasApplied && (
+                <Button
+                  variant="primary"
+                  onClick={() => setShowApplicationForm(true)}
+                >
+                  Apply as Contributor
+                </Button>
+              )}
+              {hasApplied && (
+                <Button variant="secondary" disabled>
+                  Application Submitted
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="tab-nav">
+          <div className="tab-nav__list">
+            <button
+              onClick={() => setActiveTab('milestones')}
+              className={`tab-nav__button ${activeTab === 'milestones' ? 'tab-nav__button--active' : ''}`}
+            >
+              Milestones
+            </button>
+            <button
+              onClick={() => setActiveTab('rulebook')}
+              className={`tab-nav__button ${activeTab === 'rulebook' ? 'tab-nav__button--active' : ''}`}
+            >
+              Rulebook
+            </button>
+          </div>
+        </div>
+
+        {/* Milestones Section */}
+        {activeTab === 'milestones' && (
+          <div>
+            <h2 className="mb-6">Project Milestones</h2>
 
             {milestones && milestones.length > 0 ? (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-                gap: 'var(--spacing-lg)'
-              }}>
+              <div className="grid grid-auto-fill-400 gap-6">
                 {milestones.map((milestone) => (
                   <MilestoneCard
                     key={milestone.id}
@@ -224,8 +211,8 @@ export function ProjectDetailPage() {
                   <h3>No Milestones Yet</h3>
                 </CardHeader>
                 <CardBody>
-                  <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-                    <p style={{ color: 'var(--color-gray-600)', marginBottom: '1.5rem' }}>
+                  <div className="text-center p-8">
+                    <p className="text-gray-600 mb-6">
                       {isOwner
                         ? "This project doesn't have any milestones yet. Create your first milestone to start attracting contributors and funding."
                         : "This project doesn't have any milestones yet. Check back later as the creator develops their roadmap."
@@ -243,87 +230,75 @@ export function ProjectDetailPage() {
                 </CardBody>
               </Card>
             )}
+          </div>
+        )}
+
+        {/* Rulebook Section */}
+        {activeTab === 'rulebook' && (
+          <div>
+            <h2 className="mb-6">Game Rulebook</h2>
+            <Card>
+              <CardBody className="p-0">
+                <RulebookEditor
+                  projectId={projectId}
+                  gameCategory={project?.category}
+                  editable={isOwner}
+                  onUpdate={(content) => {
+                    console.log('Rulebook updated:', content)
+                  }}
+                />
+              </CardBody>
+            </Card>
+          </div>
+        )}
+
+        {/* Contributors Section */}
+        {contributors && contributors.length > 0 && (
+          <div className="mt-12">
+            <h2 className="mb-6">Contributors ({contributors.length})</h2>
+            <div className="grid grid-auto-fill-250 gap-4">
+              {contributors.map((contributor) => (
+                <Card key={contributor.id}>
+                  <CardBody>
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="m-0 text-base">
+                        {contributor.role.charAt(0).toUpperCase() + contributor.role.slice(1).replace('-', ' ')}
+                      </h4>
+                      <span className={`badge ${contributor.status === 'accepted' ? 'badge--success' : 'badge--warning'}`}>
+                        {contributor.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 m-0">
+                      {contributor.compensation_type.charAt(0).toUpperCase() + contributor.compensation_type.slice(1)} compensation
+                    </p>
+                  </CardBody>
+                </Card>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Rulebook Section */}
-          {activeTab === 'rulebook' && (
-            <div>
-              <h2 style={{ marginBottom: '1.5rem' }}>Game Rulebook</h2>
-              <Card>
-                <CardBody style={{ padding: 0 }}>
-                  <RulebookEditor
-                    projectId={projectId}
-                    gameCategory={project?.category}
-                    editable={isOwner}
-                    onUpdate={(content) => {
-                      console.log('Rulebook updated:', content)
-                    }}
-                  />
-                </CardBody>
-              </Card>
-            </div>
-          )}
+        {showMilestoneForm && (
+          <MilestoneForm
+            projectId={projectId}
+            onClose={() => setShowMilestoneForm(false)}
+            onSuccess={() => {
+              refetchMilestones()
+            }}
+          />
+        )}
 
-          {/* Contributors Section */}
-          {contributors && contributors.length > 0 && (
-            <div style={{ marginTop: '3rem' }}>
-              <h2 style={{ marginBottom: '1.5rem' }}>Contributors ({contributors.length})</h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                gap: 'var(--spacing-md)'
-              }}>
-                {contributors.map((contributor) => (
-                  <Card key={contributor.id}>
-                    <CardBody>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <h4 style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>
-                          {contributor.role.charAt(0).toUpperCase() + contributor.role.slice(1).replace('-', ' ')}
-                        </h4>
-                        <span style={{
-                          padding: '0.125rem 0.375rem',
-                          backgroundColor: contributor.status === 'accepted' ? 'var(--color-success)' : 'var(--color-warning)',
-                          color: 'white',
-                          borderRadius: 'var(--border-radius-sm)',
-                          fontSize: 'var(--font-size-xs)',
-                          fontWeight: '500'
-                        }}>
-                          {contributor.status}
-                        </span>
-                      </div>
-                      <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-gray-600)', margin: 0 }}>
-                        {contributor.compensation_type.charAt(0).toUpperCase() + contributor.compensation_type.slice(1)} compensation
-                      </p>
-                    </CardBody>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
-
-      {showMilestoneForm && (
-        <MilestoneForm
-          projectId={projectId}
-          onClose={() => setShowMilestoneForm(false)}
-          onSuccess={() => {
-            refetchMilestones()
-          }}
-        />
-      )}
-
-      {showApplicationForm && (
-        <ContributorApplicationForm
-          projectId={projectId}
-          onClose={() => setShowApplicationForm(false)}
-          onSuccess={() => {
-            setShowApplicationForm(false)
-            // Could refetch contributors here
-          }}
-        />
-      )}
-    </div>
+        {showApplicationForm && (
+          <ContributorApplicationForm
+            projectId={projectId}
+            onClose={() => setShowApplicationForm(false)}
+            onSuccess={() => {
+              setShowApplicationForm(false)
+              // Could refetch contributors here
+            }}
+          />
+        )}
+      </div>
+    </DashboardLayout>
   )
 }

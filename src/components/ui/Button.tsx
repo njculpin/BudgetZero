@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error'
+  variant?: 'default' | 'primary' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link' | 'success' | 'warning' | 'error'
   size?: 'small' | 'medium' | 'large'
   disabled?: boolean
   onClick?: ((e: React.FormEvent) => void | Promise<void>) | ((e: React.MouseEvent) => void | Promise<void>) | (() => void | Promise<void> | boolean)
@@ -17,7 +17,7 @@ interface ButtonProps {
 }
 
 export function Button({
-  variant = 'primary',
+  variant = 'default',
   size = 'medium',
   disabled = false,
   onClick,

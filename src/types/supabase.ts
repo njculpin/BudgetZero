@@ -9,6 +9,115 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      block_templates: {
+        Row: {
+          category: string | null
+          content: Json
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          project_id: string
+          style_config: Json | null
+          tags: string[] | null
+          type: Database["public"]["Enums"]["block_type"]
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          content?: Json
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          project_id: string
+          style_config?: Json | null
+          tags?: string[] | null
+          type: Database["public"]["Enums"]["block_type"]
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          content?: Json
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          project_id?: string
+          style_config?: Json | null
+          tags?: string[] | null
+          type?: Database["public"]["Enums"]["block_type"]
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "block_templates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "game_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_blocks: {
+        Row: {
+          content: Json
+          created_at: string | null
+          grid_position: Json | null
+          id: string
+          is_template: boolean | null
+          order_index: number
+          page_id: string
+          style_config: Json | null
+          template_category: string | null
+          template_name: string | null
+          type: Database["public"]["Enums"]["block_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          content?: Json
+          created_at?: string | null
+          grid_position?: Json | null
+          id?: string
+          is_template?: boolean | null
+          order_index?: number
+          page_id: string
+          style_config?: Json | null
+          template_category?: string | null
+          template_name?: string | null
+          type: Database["public"]["Enums"]["block_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          grid_position?: Json | null
+          id?: string
+          is_template?: boolean | null
+          order_index?: number
+          page_id?: string
+          style_config?: Json | null
+          template_category?: string | null
+          template_name?: string | null
+          type?: Database["public"]["Enums"]["block_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_blocks_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "project_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contributors: {
         Row: {
           application_message: string | null
@@ -65,6 +174,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      creator_profiles: {
+        Row: {
+          availability_status:
+            | Database["public"]["Enums"]["availability_status"]
+            | null
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string
+          experience_level:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          id: string
+          location: string | null
+          portfolio_links: string[] | null
+          preferred_project_types: string[] | null
+          rate_range: string | null
+          skills: string[] | null
+          specialties: string[] | null
+          time_zone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          availability_status?:
+            | Database["public"]["Enums"]["availability_status"]
+            | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name: string
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          id?: string
+          location?: string | null
+          portfolio_links?: string[] | null
+          preferred_project_types?: string[] | null
+          rate_range?: string | null
+          skills?: string[] | null
+          specialties?: string[] | null
+          time_zone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          availability_status?:
+            | Database["public"]["Enums"]["availability_status"]
+            | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          id?: string
+          location?: string | null
+          portfolio_links?: string[] | null
+          preferred_project_types?: string[] | null
+          rate_range?: string | null
+          skills?: string[] | null
+          specialties?: string[] | null
+          time_zone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       game_assets: {
         Row: {
@@ -218,6 +396,41 @@ export type Database = {
           },
         ]
       }
+      page_collaboration: {
+        Row: {
+          cursor_position: Json | null
+          id: string
+          is_editing: boolean | null
+          last_seen: string | null
+          page_id: string
+          user_id: string
+        }
+        Insert: {
+          cursor_position?: Json | null
+          id?: string
+          is_editing?: boolean | null
+          last_seen?: string | null
+          page_id: string
+          user_id: string
+        }
+        Update: {
+          cursor_position?: Json | null
+          id?: string
+          is_editing?: boolean | null
+          last_seen?: string | null
+          page_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_collaboration_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "project_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -244,6 +457,241 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      project_contributions: {
+        Row: {
+          asset_id: string | null
+          block_id: string | null
+          contribution_type: string
+          contributor_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          page_id: string | null
+          project_id: string
+        }
+        Insert: {
+          asset_id?: string | null
+          block_id?: string | null
+          contribution_type: string
+          contributor_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          page_id?: string | null
+          project_id: string
+        }
+        Update: {
+          asset_id?: string | null
+          block_id?: string | null
+          contribution_type?: string
+          contributor_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          page_id?: string | null
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_contributions_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "content_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contributions_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "project_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contributions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "game_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_merges: {
+        Row: {
+          id: string
+          merge_reason: string | null
+          merge_type: string | null
+          merged_at: string | null
+          merged_by: string
+          merged_project_id: string
+          parent_project_id: string
+        }
+        Insert: {
+          id?: string
+          merge_reason?: string | null
+          merge_type?: string | null
+          merged_at?: string | null
+          merged_by: string
+          merged_project_id: string
+          parent_project_id: string
+        }
+        Update: {
+          id?: string
+          merge_reason?: string | null
+          merge_type?: string | null
+          merged_at?: string | null
+          merged_by?: string
+          merged_project_id?: string
+          parent_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_merges_merged_project_id_fkey"
+            columns: ["merged_project_id"]
+            isOneToOne: false
+            referencedRelation: "game_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_merges_parent_project_id_fkey"
+            columns: ["parent_project_id"]
+            isOneToOne: false
+            referencedRelation: "game_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_pages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_archived: boolean | null
+          last_edited_by: string | null
+          order_index: number
+          section_id: string
+          template_type:
+            | Database["public"]["Enums"]["page_template_type"]
+            | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_archived?: boolean | null
+          last_edited_by?: string | null
+          order_index?: number
+          section_id: string
+          template_type?:
+            | Database["public"]["Enums"]["page_template_type"]
+            | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_archived?: boolean | null
+          last_edited_by?: string | null
+          order_index?: number
+          section_id?: string
+          template_type?:
+            | Database["public"]["Enums"]["page_template_type"]
+            | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_pages_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "project_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_roles: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          permissions: Json | null
+          project_id: string
+          role: Database["public"]["Enums"]["contributor_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          permissions?: Json | null
+          project_id: string
+          role: Database["public"]["Enums"]["contributor_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          permissions?: Json | null
+          project_id?: string
+          role?: Database["public"]["Enums"]["contributor_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_roles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "game_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_sections: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_archived: boolean | null
+          name: string
+          order_index: number
+          project_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_archived?: boolean | null
+          name: string
+          order_index?: number
+          project_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_archived?: boolean | null
+          name?: string
+          order_index?: number
+          project_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_sections_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "game_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rulebook_versions: {
         Row: {
@@ -335,7 +783,41 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_default_project_structure: {
+        Args: { p_project_id: string }
+        Returns: undefined
+      }
+      get_default_role_permissions: {
+        Args: { role_name: Database["public"]["Enums"]["contributor_role"] }
+        Returns: Json
+      }
+      get_project_merge_history: {
+        Args: { project_id: string }
+        Returns: {
+          merge_id: string
+          merge_reason: string
+          merge_type: string
+          merged_at: string
+          merged_by_email: string
+          source_project_name: string
+        }[]
+      }
+      merge_project_content: {
+        Args: {
+          merge_type?: string
+          source_project_id: string
+          target_project_id: string
+        }
+        Returns: string
+      }
+      migrate_existing_rulebooks: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      migrate_to_role_based_projects: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       asset_status: "draft" | "review" | "approved" | "rejected"
@@ -346,6 +828,21 @@ export type Database = {
         | "audio"
         | "video"
         | "other"
+      availability_status: "available" | "limited" | "unavailable"
+      block_type:
+        | "paragraph"
+        | "heading"
+        | "list"
+        | "quote"
+        | "image"
+        | "table"
+        | "divider"
+        | "rule_snippet"
+        | "component_definition"
+        | "stat_block"
+        | "example_play"
+        | "designer_note"
+        | "template"
       compensation_type: "equity" | "fixed" | "royalty" | "credit" | "hybrid"
       contributor_role:
         | "illustrator"
@@ -354,8 +851,19 @@ export type Database = {
         | "graphic-designer"
         | "game-designer"
         | "playtester"
+        | "project-lead"
+        | "business-developer"
+        | "publisher"
       contributor_status: "applied" | "accepted" | "active" | "completed"
+      experience_level: "beginner" | "intermediate" | "advanced" | "expert"
       milestone_status: "planning" | "funding" | "in-progress" | "completed"
+      page_template_type:
+        | "blank"
+        | "rules_section"
+        | "component_spec"
+        | "quick_start"
+        | "playtesting_notes"
+        | "design_rationale"
       project_category:
         | "board-game"
         | "card-game"
@@ -492,6 +1000,22 @@ export const Constants = {
     Enums: {
       asset_status: ["draft", "review", "approved", "rejected"],
       asset_type: ["image", "3d-model", "document", "audio", "video", "other"],
+      availability_status: ["available", "limited", "unavailable"],
+      block_type: [
+        "paragraph",
+        "heading",
+        "list",
+        "quote",
+        "image",
+        "table",
+        "divider",
+        "rule_snippet",
+        "component_definition",
+        "stat_block",
+        "example_play",
+        "designer_note",
+        "template",
+      ],
       compensation_type: ["equity", "fixed", "royalty", "credit", "hybrid"],
       contributor_role: [
         "illustrator",
@@ -500,9 +1024,21 @@ export const Constants = {
         "graphic-designer",
         "game-designer",
         "playtester",
+        "project-lead",
+        "business-developer",
+        "publisher",
       ],
       contributor_status: ["applied", "accepted", "active", "completed"],
+      experience_level: ["beginner", "intermediate", "advanced", "expert"],
       milestone_status: ["planning", "funding", "in-progress", "completed"],
+      page_template_type: [
+        "blank",
+        "rules_section",
+        "component_spec",
+        "quick_start",
+        "playtesting_notes",
+        "design_rationale",
+      ],
       project_category: [
         "board-game",
         "card-game",

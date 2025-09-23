@@ -7,7 +7,11 @@ interface GameProjectCardProps {
   onEdit?: (project: GameProject) => void
   onView?: (project: GameProject) => void
   onDelete?: (project: GameProject) => void
+  onAddToProject?: (project: GameProject) => void
+  onRequestToAdd?: (project: GameProject) => void
   showOwnerActions?: boolean
+  showCollaborationActions?: boolean
+  mode?: 'owner' | 'marketplace' | 'discovery'
 }
 
 export function GameProjectCard({
@@ -15,7 +19,11 @@ export function GameProjectCard({
   onEdit,
   onView,
   onDelete,
-  showOwnerActions = false
+  onAddToProject,
+  onRequestToAdd,
+  showOwnerActions = false,
+  showCollaborationActions = false,
+  mode = 'owner'
 }: GameProjectCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -183,16 +191,46 @@ export function GameProjectCard({
             Created {formatDate(project.created_at)}
           </p>
 
-          {onView && (
-            <Button
-              variant="primary"
-              size="small"
-              onClick={() => onView(project)}
-              aria-label={`View ${project.name} project details`}
-            >
-              View Project
-            </Button>
-          )}
+          <div style={{ display: 'flex', gap: 'var(--spacing-xs)', alignItems: 'center' }}>
+            {/* Collaboration Actions for Marketplace */}
+            {showCollaborationActions && mode === 'marketplace' && (
+              <>
+                {onAddToProject && (
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={() => onAddToProject(project)}
+                    aria-label={`Add ${project.name} to your project`}
+                    title="Add this to one of your projects"
+                  >
+                    ➕ Add to Project
+                  </Button>
+                )}
+                {onRequestToAdd && (
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={() => onRequestToAdd(project)}
+                    aria-label={`Request to add ${project.name} to a project`}
+                    title="Request permission to add this to a project"
+                  >
+                    🤝 Request to Add
+                  </Button>
+                )}
+              </>
+            )}
+
+            {onView && (
+              <Button
+                variant="primary"
+                size="small"
+                onClick={() => onView(project)}
+                aria-label={`View ${project.name} project details`}
+              >
+                {mode === 'marketplace' ? 'View Details' : 'View Project'}
+              </Button>
+            )}
+          </div>
         </div>
       </CardBody>
     </Card>

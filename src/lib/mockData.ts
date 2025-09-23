@@ -67,6 +67,20 @@ export const mockGameProjects: GameProject[] = [
     concept_art_url: null,
     created_at: '2023-11-15T08:00:00Z',
     updated_at: '2024-01-12T11:20:00Z'
+  },
+  {
+    id: '97c88d11-d376-4073-9da5-43d84b0dc841',
+    name: 'Test Project',
+    description: 'A test project for routing verification.',
+    category: 'board-game',
+    status: 'in-development',
+    creator_id: 'mock-user-1',
+    target_audience: 'Adults',
+    estimated_players: '2-4 players',
+    estimated_playtime: '60 minutes',
+    concept_art_url: null,
+    created_at: '2024-01-20T10:00:00Z',
+    updated_at: '2024-01-22T14:30:00Z'
   }
 ]
 
@@ -134,13 +148,22 @@ export const mockRulebooks: Rulebook[] = [
   }
 ]
 
-// Development mode flag
-export const isDevelopmentMode = !import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL === 'https://your-project.supabase.co'
+// Development mode flag - force real database usage since Supabase is properly configured
+export const isDevelopmentMode = false // Force using real Supabase database for persistence
+
+// Debug logging for development mode
+if (typeof window !== 'undefined') {
+  console.log('Development Mode Config:', {
+    isDevelopmentMode,
+    supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+    reason: isDevelopmentMode ? 'Using mock data' : 'Using real Supabase'
+  })
+}
 
 // Mock API functions
 export const mockApi = {
   // Auth functions
-  getCurrentUser: async () => mockUser,
+  getCurrentUser: async () => null, // Disabled auto-login - user must authenticate properly
   signOut: async () => {},
 
   // Game Projects
@@ -150,6 +173,14 @@ export const mockApi = {
       return mockGameProjects.filter(p => p.creator_id === userId)
     }
     return mockGameProjects
+  },
+  getGameProject: async (projectId: string): Promise<GameProject> => {
+    await new Promise(resolve => setTimeout(resolve, 300)) // Simulate network delay
+    const project = mockGameProjects.find(p => p.id === projectId)
+    if (!project) {
+      throw new Error(`Project with id ${projectId} not found`)
+    }
+    return project
   },
 
   createGameProject: async (project: Omit<GameProject, 'id' | 'created_at' | 'updated_at'>): Promise<GameProject> => {

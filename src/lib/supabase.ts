@@ -1,115 +1,51 @@
 import { createClient } from '@supabase/supabase-js'
-import { isDevelopmentMode, mockApi } from './mockData'
+import type { Database } from '../types/supabase'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
-// Database types
-export interface GameProject {
-  id: string
-  name: string
-  description: string
-  category: 'board-game' | 'card-game' | 'rpg' | 'miniature-game' | 'other'
-  status: 'idea' | 'in-development' | 'completed' | 'published'
-  creator_id: string
-  target_audience: string
-  estimated_players: string
-  estimated_playtime: string
-  concept_art_url?: string
-  created_at: string
-  updated_at: string
-}
+// Use generated database types
+export type GameProject = Database['public']['Tables']['game_projects']['Row']
+export type GameProjectInsert = Database['public']['Tables']['game_projects']['Insert']
+export type GameProjectUpdate = Database['public']['Tables']['game_projects']['Update']
 
-export interface Milestone {
-  id: string
-  project_id: string
-  name: string
-  description: string
-  funding_goal: number
-  current_funding: number
-  deliverables: string[]
-  timeline_weeks: number
-  required_skills: string[]
-  status: 'planning' | 'funding' | 'in-progress' | 'completed'
-  created_at: string
-  deadline?: string
-}
+export type Milestone = Database['public']['Tables']['milestones']['Row']
+export type MilestoneInsert = Database['public']['Tables']['milestones']['Insert']
+export type MilestoneUpdate = Database['public']['Tables']['milestones']['Update']
 
-export interface Contributor {
-  id: string
-  user_id: string
-  project_id: string
-  milestone_id?: string
-  role: 'illustrator' | '3d-modeler' | 'writer' | 'graphic-designer' | 'game-designer' | 'playtester'
-  compensation_type: 'equity' | 'fixed' | 'royalty' | 'credit' | 'hybrid'
-  compensation_details: string
-  status: 'applied' | 'accepted' | 'active' | 'completed'
-  application_message?: string
-  portfolio_links: string[]
-  created_at: string
-}
+export type Contributor = Database['public']['Tables']['contributors']['Row']
+export type ContributorInsert = Database['public']['Tables']['contributors']['Insert']
+export type ContributorUpdate = Database['public']['Tables']['contributors']['Update']
 
-export interface GameAsset {
-  id: string
-  project_id: string
-  contributor_id: string
-  name: string
-  type: 'image' | '3d-model' | 'document' | 'audio' | 'video' | 'other'
-  file_url: string
-  file_size: number
-  version: number
-  status: 'draft' | 'review' | 'approved' | 'rejected'
-  created_at: string
-}
+export type GameAsset = Database['public']['Tables']['game_assets']['Row']
+export type GameAssetInsert = Database['public']['Tables']['game_assets']['Insert']
+export type GameAssetUpdate = Database['public']['Tables']['game_assets']['Update']
 
-export interface Rulebook {
-  id: string
-  project_id: string
-  title: string
-  content: string
-  version: number
-  template_id?: string
-  last_edited_by: string
-  is_published: boolean
-  created_at: string
-  updated_at: string
-}
+export type Rulebook = Database['public']['Tables']['rulebooks']['Row']
+export type RulebookInsert = Database['public']['Tables']['rulebooks']['Insert']
+export type RulebookUpdate = Database['public']['Tables']['rulebooks']['Update']
 
-export interface RulebookVersion {
-  id: string
-  rulebook_id: string
-  content: string
-  version: number
-  edited_by: string
-  change_summary?: string
-  created_at: string
-}
+export type RulebookVersion = Database['public']['Tables']['rulebook_versions']['Row']
+export type RulebookVersionInsert = Database['public']['Tables']['rulebook_versions']['Insert']
+export type RulebookVersionUpdate = Database['public']['Tables']['rulebook_versions']['Update']
 
 // Auth helper functions
 export const getCurrentUser = async () => {
-  if (isDevelopmentMode) {
-    return mockApi.getCurrentUser()
-  }
+  // Always use real Supabase auth, even in development mode
   const { data: { user } } = await supabase.auth.getUser()
   return user
 }
 
 export const signOut = async () => {
-  if (isDevelopmentMode) {
-    return mockApi.signOut()
-  }
+  // Always use real Supabase auth, even in development mode
   const { error } = await supabase.auth.signOut()
   if (error) throw error
 }
 
 // Database helper functions
 export const getGameProjects = async (userId?: string) => {
-  if (isDevelopmentMode) {
-    return mockApi.getGameProjects(userId)
-  }
-
   let query = supabase
     .from('game_projects')
     .select('*')
@@ -124,11 +60,18 @@ export const getGameProjects = async (userId?: string) => {
   return data
 }
 
-export const createGameProject = async (project: Omit<GameProject, 'id' | 'created_at' | 'updated_at'>) => {
-  if (isDevelopmentMode) {
-    return mockApi.createGameProject(project)
-  }
+export const getGameProject = async (projectId: string) => {
+  const { data, error } = await supabase
+    .from('game_projects')
+    .select('*')
+    .eq('id', projectId)
+    .single()
 
+  if (error) throw error
+  return data
+}
+
+export const createGameProject = async (project: GameProjectInsert) => {
   const { data, error } = await supabase
     .from('game_projects')
     .insert(project)
@@ -141,12 +84,8 @@ export const createGameProject = async (project: Omit<GameProject, 'id' | 'creat
 
 export const updateGameProject = async (
   id: string,
-  updates: Partial<Omit<GameProject, 'id' | 'created_at' | 'updated_at' | 'creator_id'>>
+  updates: GameProjectUpdate
 ) => {
-  if (isDevelopmentMode) {
-    return mockApi.updateGameProject(id, updates)
-  }
-
   const { data, error } = await supabase
     .from('game_projects')
     .update({
@@ -162,10 +101,6 @@ export const updateGameProject = async (
 }
 
 export const deleteGameProject = async (id: string) => {
-  if (isDevelopmentMode) {
-    return mockApi.deleteGameProject(id)
-  }
-
   const { error } = await supabase
     .from('game_projects')
     .delete()
@@ -175,10 +110,6 @@ export const deleteGameProject = async (id: string) => {
 }
 
 export const getMilestones = async (projectId: string) => {
-  if (isDevelopmentMode) {
-    return mockApi.getMilestones(projectId)
-  }
-
   const { data, error } = await supabase
     .from('milestones')
     .select('*')
@@ -189,11 +120,7 @@ export const getMilestones = async (projectId: string) => {
   return data
 }
 
-export const createMilestone = async (milestone: Omit<Milestone, 'id' | 'created_at'>) => {
-  if (isDevelopmentMode) {
-    return mockApi.createMilestone(milestone)
-  }
-
+export const createMilestone = async (milestone: MilestoneInsert) => {
   const { data, error } = await supabase
     .from('milestones')
     .insert(milestone)
@@ -205,10 +132,6 @@ export const createMilestone = async (milestone: Omit<Milestone, 'id' | 'created
 }
 
 export const getContributors = async (projectId: string) => {
-  if (isDevelopmentMode) {
-    return mockApi.getContributors(projectId)
-  }
-
   const { data, error } = await supabase
     .from('contributors')
     .select(`
@@ -228,10 +151,6 @@ export const getContributors = async (projectId: string) => {
 
 // Rulebook helper functions
 export const getRulebook = async (projectId: string) => {
-  if (isDevelopmentMode) {
-    return mockApi.getRulebook(projectId)
-  }
-
   const { data, error } = await supabase
     .from('rulebooks')
     .select('*')
@@ -242,11 +161,7 @@ export const getRulebook = async (projectId: string) => {
   return data
 }
 
-export const createRulebook = async (rulebook: Omit<Rulebook, 'id' | 'created_at' | 'updated_at'>) => {
-  if (isDevelopmentMode) {
-    return mockApi.createRulebook(rulebook)
-  }
-
+export const createRulebook = async (rulebook: RulebookInsert) => {
   const { data, error } = await supabase
     .from('rulebooks')
     .insert({
@@ -263,12 +178,8 @@ export const createRulebook = async (rulebook: Omit<Rulebook, 'id' | 'created_at
 
 export const updateRulebook = async (
   id: string,
-  updates: Partial<Pick<Rulebook, 'title' | 'content' | 'template_id' | 'last_edited_by' | 'is_published'>>
+  updates: RulebookUpdate
 ) => {
-  if (isDevelopmentMode) {
-    return mockApi.updateRulebook(id, updates)
-  }
-
   const { data, error } = await supabase
     .from('rulebooks')
     .update({
@@ -284,10 +195,6 @@ export const updateRulebook = async (
 }
 
 export const getRulebookVersions = async (rulebookId: string) => {
-  if (isDevelopmentMode) {
-    return mockApi.getRulebookVersions(rulebookId)
-  }
-
   const { data, error } = await supabase
     .from('rulebook_versions')
     .select('*')
@@ -298,11 +205,7 @@ export const getRulebookVersions = async (rulebookId: string) => {
   return data
 }
 
-export const createRulebookVersion = async (version: Omit<RulebookVersion, 'id' | 'created_at'>) => {
-  if (isDevelopmentMode) {
-    return mockApi.createRulebookVersion(version)
-  }
-
+export const createRulebookVersion = async (version: RulebookVersionInsert) => {
   const { data, error } = await supabase
     .from('rulebook_versions')
     .insert({
@@ -311,6 +214,63 @@ export const createRulebookVersion = async (version: Omit<RulebookVersion, 'id' 
     })
     .select()
     .single()
+
+  if (error) throw error
+  return data
+}
+
+// Role-based project queries
+export const getUserProjectsWithRoles = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('game_projects')
+    .select(`
+      *,
+      project_roles!inner (
+        role,
+        permissions,
+        is_active,
+        joined_at
+      )
+    `)
+    .eq('project_roles.user_id', userId)
+    .eq('project_roles.is_active', true)
+    .order('updated_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export const getProjectTeamSize = async (projectId: string) => {
+  const { count, error } = await supabase
+    .from('project_roles')
+    .select('*', { count: 'exact', head: true })
+    .eq('project_id', projectId)
+    .eq('is_active', true)
+
+  if (error) throw error
+  return count || 0
+}
+
+// Project merging functions
+export const mergeProjectContent = async (
+  targetProjectId: string,
+  sourceProjectId: string,
+  mergeType: 'full_merge' | 'content_merge' | 'asset_merge' = 'content_merge'
+) => {
+  const { data, error } = await supabase.rpc('merge_project_content', {
+    target_project_id: targetProjectId,
+    source_project_id: sourceProjectId,
+    merge_type: mergeType
+  })
+
+  if (error) throw error
+  return data
+}
+
+export const getProjectMergeHistory = async (projectId: string) => {
+  const { data, error } = await supabase.rpc('get_project_merge_history', {
+    project_id: projectId
+  })
 
   if (error) throw error
   return data
