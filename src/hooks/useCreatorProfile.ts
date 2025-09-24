@@ -61,12 +61,16 @@ export function useUpdateCreatorProfile() {
         if (error) throw error
         return data
       } else {
-        // Create new profile
+        // Create new profile with minimal required data
         const { data, error } = await supabase
           .from('creator_profiles')
           .insert({
             user_id: user.id,
             display_name: user.email?.split('@')[0] || 'Creator',
+            specialties: [],
+            experience_level: 'intermediate',
+            availability_status: 'available',
+            skills: [],
             ...profileData
           } as CreatorProfileInsert)
           .select()
@@ -87,8 +91,8 @@ export function useUpdateCreatorProfile() {
 export function useCreatorProfiles(filters?: {
   skills?: string[]
   specialties?: string[]
-  experience_level?: string[]
-  availability_status?: string[]
+  experience_level?: Array<Database['public']['Enums']['experience_level']>
+  availability_status?: Array<Database['public']['Enums']['availability_status']>
   project_types?: string[]
 }) {
   return useQuery({
@@ -118,13 +122,13 @@ export function useCreatorProfiles(filters?: {
 
       if (filters?.skills?.length) {
         filteredData = filteredData.filter(profile =>
-          profile.skills && filters.skills!.some(skill => profile.skills.includes(skill))
+          profile.skills && filters.skills!.some(skill => profile.skills!.includes(skill))
         )
       }
 
       if (filters?.specialties?.length) {
         filteredData = filteredData.filter(profile =>
-          profile.specialties && filters.specialties!.some(specialty => profile.specialties.includes(specialty))
+          profile.specialties && filters.specialties!.some(specialty => profile.specialties!.includes(specialty))
         )
       }
 
