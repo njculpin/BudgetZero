@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { MainLayout } from '@/components/layouts/main-layout';
 import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import {
@@ -51,10 +52,16 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     notFound();
   }
 
+  const breadcrumbs = [
+    { label: 'My Projects', href: '/projects' },
+    { label: project.title }
+  ];
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+    <MainLayout user={user} breadcrumbs={breadcrumbs}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold text-slate-900">{project.title}</h1>
@@ -278,6 +285,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { GameProjectService } from '@/lib/services/game-projects';
 import { EditorPageClient } from '@/components/editor/editor-page-client';
+import { MainLayout } from '@/components/layouts/main-layout';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -48,10 +49,16 @@ export default async function EditorPage({ params }: EditorPageProps) {
     console.error('Error fetching rulebook:', rulebookError);
   }
 
+  const breadcrumbs = [
+    { label: 'My Projects', href: '/projects' },
+    { label: project.title, href: `/projects/${project.slug}` },
+    { label: 'Editor' }
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="bg-white border-b px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between p-6">
+    <MainLayout user={user} breadcrumbs={breadcrumbs}>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/projects/${project.slug}`}>
@@ -75,15 +82,13 @@ export default async function EditorPage({ params }: EditorPageProps) {
             </Button>
           </div>
         </div>
-      </div>
 
-      <div className="py-8">
         <EditorPageClient
           project={project}
           rulebook={rulebook}
           canEdit={canEdit}
         />
       </div>
-    </div>
+    </MainLayout>
   );
 }

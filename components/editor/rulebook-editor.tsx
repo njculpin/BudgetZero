@@ -10,9 +10,12 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { SectionManager, RulebookSection } from './section-manager';
 import {
   Bold,
   Italic,
+  Underline,
+  Strikethrough,
   List,
   ListOrdered,
   Quote,
@@ -25,16 +28,23 @@ import {
   Save,
   Eye,
   Users,
-  CheckCircle
+  CheckCircle,
+  Code,
+  Minus,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Type
 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 
 interface RulebookEditorProps {
   initialContent?: any;
-  onSave?: (content: any) => Promise<void>;
-  onContentChange?: (content: any) => void;
+  onSave?: (content: any, sections?: RulebookSection[]) => Promise<void>;
+  onContentChange?: (content: any, sections?: RulebookSection[]) => void;
   isReadOnly?: boolean;
   projectTitle?: string;
+  initialSections?: RulebookSection[];
 }
 
 export function RulebookEditor({
@@ -42,11 +52,19 @@ export function RulebookEditor({
   onSave,
   onContentChange,
   isReadOnly = false,
-  projectTitle = "Untitled Project"
+  projectTitle = "Untitled Project",
+  initialSections
 }: RulebookEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isPreview, setIsPreview] = useState(false);
+  const [sections, setSections] = useState<RulebookSection[]>(initialSections || [
+    { id: 'overview', title: 'Overview', type: 'section', isVisible: true, isExpanded: true, order: 0, children: [] },
+    { id: 'components', title: 'Components', type: 'section', isVisible: true, isExpanded: true, order: 1, children: [] },
+    { id: 'setup', title: 'Setup', type: 'section', isVisible: true, isExpanded: true, order: 2, children: [] },
+    { id: 'gameplay', title: 'How to Play', type: 'section', isVisible: true, isExpanded: true, order: 3, children: [] },
+  ]);
+  const [activeSection, setActiveSection] = useState<RulebookSection | undefined>(sections[0]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -125,7 +143,7 @@ export function RulebookEditor({
     editable: !isReadOnly && !isPreview,
     onUpdate: ({ editor }) => {
       if (onContentChange) {
-        onContentChange(editor.getJSON());
+        onContentChange(editor.getJSON(), sections);
       }
     },
   });
@@ -135,14 +153,14 @@ export function RulebookEditor({
 
     setIsSaving(true);
     try {
-      await onSave(editor.getJSON());
+      await onSave(editor.getJSON(), sections);
       setLastSaved(new Date());
     } catch (error) {
       console.error('Error saving:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [editor, onSave]);
+  }, [editor, onSave, sections]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -184,8 +202,37 @@ export function RulebookEditor({
       .run();
   };
 
+  const insertHorizontalRule = () => {
+    editor.chain().focus().setHorizontalRule().run();
+  };
+
+  const handleSectionSelect = (section: RulebookSection) => {
+    setActiveSection(section);
+    // Focus the editor when selecting a section
+    editor?.chain().focus().run();
+  };
+
+  const handleSectionsChange = (newSections: RulebookSection[]) => {
+    setSections(newSections);
+    if (onContentChange) {
+      onContentChange(editor?.getJSON(), newSections);
+    }
+  };
+
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="w-full h-screen flex gap-6">
+      {/* Sidebar for section management */}
+      <div className="w-80 flex-shrink-0">
+        <SectionManager
+          sections={sections}
+          activeSection={activeSection}
+          onSectionsChange={handleSectionsChange}
+          onSectionSelect={handleSectionSelect}
+        />
+      </div>
+
+      {/* Main editor area */}
+      <div className="flex-1 space-y-6 min-w-0">
       {/* Toolbar */}
       <Card className="p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -302,6 +349,34 @@ export function RulebookEditor({
                       <p>Italic (Ctrl+I)</p>
                     </TooltipContent>
                   </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={editor.isActive('strike') ? "secondary" : "ghost"}
+                        size="sm"
+                        onClick={() => editor.chain().focus().toggleStrike().run()}
+                      >
+                        <Strikethrough className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Strikethrough</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={editor.isActive('code') ? "secondary" : "ghost"}
+                        size="sm"
+                        onClick={() => editor.chain().focus().toggleCode().run()}
+                      >
+                        <Code className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Inline Code</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
 
                 <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1 mr-2">
@@ -328,13 +403,36 @@ export function RulebookEditor({
                   </Button>
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={addTable}
-                >
-                  <TableIcon className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1 mr-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={addTable}
+                      >
+                        <TableIcon className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Insert Table</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={insertHorizontalRule}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Horizontal Rule</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </>
             )}
           </div>
@@ -378,6 +476,8 @@ export function RulebookEditor({
           />
         </div>
       </Card>
+        </div>
+      </div>
     </div>
   );
 }
