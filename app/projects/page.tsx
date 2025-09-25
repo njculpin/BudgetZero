@@ -3,6 +3,7 @@ import { GameProjectService } from '@/lib/services/game-projects';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { MainLayout } from '@/components/layouts/main-layout';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
@@ -19,30 +20,31 @@ export default async function ProjectsPage() {
 
   if (result.error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
+      <MainLayout user={user} breadcrumbs={[{ label: 'My Projects' }]}>
+        <Card className="p-12 text-center">
           <p className="text-red-600">Error loading projects: {result.error}</p>
-        </div>
-      </div>
+        </Card>
+      </MainLayout>
     );
   }
 
   const projects = result.data?.data || [];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">My Projects</h1>
-          <p className="text-slate-600 mt-2">Manage your tabletop game projects</p>
+    <MainLayout user={user} breadcrumbs={[{ label: 'My Projects' }]}>
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">My Projects</h1>
+            <p className="text-slate-600 mt-2">Manage your tabletop game projects</p>
+          </div>
+          <Button asChild>
+            <Link href="/">Create New Project</Link>
+          </Button>
         </div>
-        <Button asChild>
-          <Link href="/">Create New Project</Link>
-        </Button>
-      </div>
 
       {projects.length === 0 ? (
-        <div className="text-center py-12">
+        <Card className="p-12 text-center">
           <div className="max-w-md mx-auto space-y-4">
             <h3 className="text-lg font-semibold text-slate-900">No projects yet</h3>
             <p className="text-slate-600">
@@ -52,7 +54,7 @@ export default async function ProjectsPage() {
               <Link href="/">Create Your First Project</Link>
             </Button>
           </div>
-        </div>
+        </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
@@ -112,6 +114,7 @@ export default async function ProjectsPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </MainLayout>
   );
 }
