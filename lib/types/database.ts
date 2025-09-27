@@ -166,6 +166,7 @@ export interface Rulebook {
   project_id: string;
   title: string;
   content: any; // TipTap JSON content
+  sections?: any[]; // Document structure sections
   version: number;
   is_published: boolean;
   word_count: number;

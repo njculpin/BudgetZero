@@ -39,16 +39,22 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+export interface RulebookPage {
+  id: string;
+  title: string;
+  order: number;
+  isVisible?: boolean;
+  isExpanded?: boolean;
+  sections: RulebookSection[];
+}
+
 export interface RulebookSection {
   id: string;
   title: string;
-  type: 'section' | 'page';
   content?: any;
-  isVisible?: boolean;
-  isExpanded?: boolean;
-  parentId?: string;
   order: number;
-  children?: RulebookSection[];
+  pageId: string;
+  isVisible?: boolean;
 }
 
 interface SortableItemProps {
@@ -116,16 +122,18 @@ function SortableItem({
     >
       <div
         className={cn(
-          "flex items-center gap-2 p-2 rounded-md transition-colors",
+          "flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer",
           "hover:bg-muted/50",
           isActive && "bg-muted border-l-4 border-primary",
           depth > 0 && "ml-4"
         )}
+        onClick={() => onSelect(section)}
       >
         <div
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+          onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="w-3 h-3 text-muted-foreground" />
         </div>
@@ -135,7 +143,10 @@ function SortableItem({
             variant="ghost"
             size="sm"
             className="w-6 h-6 p-0"
-            onClick={() => onToggleExpanded(section.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpanded(section.id);
+            }}
           >
             {section.isExpanded ? (
               <ChevronDown className="w-3 h-3" />
@@ -164,10 +175,9 @@ function SortableItem({
           ) : (
             <span
               className={cn(
-                "text-sm font-medium truncate cursor-pointer",
+                "text-sm font-medium truncate",
                 !section.isVisible && "opacity-50 line-through"
               )}
-              onClick={() => onSelect(section)}
             >
               {section.title}
             </span>
@@ -179,7 +189,10 @@ function SortableItem({
             variant="ghost"
             size="sm"
             className="w-6 h-6 p-0"
-            onClick={() => onToggleVisibility(section.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleVisibility(section.id);
+            }}
           >
             {section.isVisible ? (
               <Eye className="w-3 h-3" />
@@ -191,7 +204,10 @@ function SortableItem({
             variant="ghost"
             size="sm"
             className="w-6 h-6 p-0"
-            onClick={() => setIsEditing(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
           >
             <Edit2 className="w-3 h-3" />
           </Button>
@@ -199,7 +215,10 @@ function SortableItem({
             variant="ghost"
             size="sm"
             className="w-6 h-6 p-0 text-destructive hover:text-destructive"
-            onClick={() => onDelete(section.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(section.id);
+            }}
           >
             <Trash2 className="w-3 h-3" />
           </Button>
