@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { GameProjectService } from '@/lib/services/game-projects';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { MainLayout } from '@/components/layouts/main-layout';
@@ -20,12 +20,13 @@ import {
 } from 'lucide-react';
 
 interface ProjectDetailPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  const { slug } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -34,7 +35,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   }
 
   const gameProjectService = new GameProjectService(supabase);
-  const result = await gameProjectService.getProjectBySlug(params.slug);
+  const result = await gameProjectService.getProjectBySlug(slug);
 
   if (result.error || !result.data) {
     notFound();

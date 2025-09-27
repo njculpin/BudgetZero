@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { RulebookEditor } from './rulebook-editor';
+import { SimpleEditor } from './simple-editor';
 import { createClient } from '@/lib/supabase/client';
 import { GameProject, Rulebook } from '@/lib/types/database';
 
@@ -54,7 +54,7 @@ export function EditorPageClient({ project, rulebook, canEdit }: EditorPageClien
   };
 
   return (
-    <RulebookEditor
+    <SimpleEditor
       initialContent={rulebook?.content}
       projectTitle={project.title}
       isReadOnly={!canEdit}

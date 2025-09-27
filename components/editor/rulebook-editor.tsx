@@ -1,50 +1,30 @@
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableHeader } from '@tiptap/extension-table-header';
-import { TableCell } from '@tiptap/extension-table-cell';
-import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { SectionManager, RulebookSection } from './section-manager';
+import { PageSectionManager, RulebookPage, RulebookSection } from './page-section-manager';
+import { SectionEditor } from './section-editor';
+import { ComponentLibrary } from './component-library';
+import { ReusableComponent } from './reusable-component';
 import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  List,
-  ListOrdered,
-  Quote,
-  Redo,
-  Undo,
-  Heading1,
-  Heading2,
-  Heading3,
-  Table as TableIcon,
   Save,
   Eye,
   Users,
   CheckCircle,
-  Code,
-  Minus,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Type
+  ChevronRight,
+  FileText,
+  Layers
 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 
 interface RulebookEditorProps {
   initialContent?: any;
-  onSave?: (content: any, sections?: RulebookSection[]) => Promise<void>;
-  onContentChange?: (content: any, sections?: RulebookSection[]) => void;
+  onSave?: (content: any, pages?: RulebookPage[], components?: ReusableComponent[]) => Promise<void>;
+  onContentChange?: (content: any, pages?: RulebookPage[]) => void;
   isReadOnly?: boolean;
   projectTitle?: string;
-  initialSections?: RulebookSection[];
+  initialPages?: RulebookPage[];
+  initialComponents?: ReusableComponent[];
 }
 
 export function RulebookEditor({
@@ -53,114 +33,74 @@ export function RulebookEditor({
   onContentChange,
   isReadOnly = false,
   projectTitle = "Untitled Project",
-  initialSections
+  initialPages,
+  initialComponents
 }: RulebookEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isPreview, setIsPreview] = useState(false);
-  const [sections, setSections] = useState<RulebookSection[]>(initialSections || [
-    { id: 'overview', title: 'Overview', type: 'section', isVisible: true, isExpanded: true, order: 0, children: [] },
-    { id: 'components', title: 'Components', type: 'section', isVisible: true, isExpanded: true, order: 1, children: [] },
-    { id: 'setup', title: 'Setup', type: 'section', isVisible: true, isExpanded: true, order: 2, children: [] },
-    { id: 'gameplay', title: 'How to Play', type: 'section', isVisible: true, isExpanded: true, order: 3, children: [] },
-  ]);
-  const [activeSection, setActiveSection] = useState<RulebookSection | undefined>(sections[0]);
+  const [pages, setPages] = useState<RulebookPage[]>(initialPages || []);
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
-        },
-      }),
-      Table.configure({
-        resizable: true,
-      }),
-      TableRow,
-      TableHeader,
-      TableCell,
-      Placeholder.configure({
-        placeholder: ({ node }) => {
-          if (node.type.name === 'heading') {
-            return 'Write a heading...';
-          }
-          return 'Start writing your game rules...';
-        },
-      }),
-    ],
-    content: initialContent || {
-      type: 'doc',
-      content: [
-        {
-          type: 'heading',
-          attrs: { level: 1 },
-          content: [{ type: 'text', text: projectTitle }]
-        },
-        {
-          type: 'heading',
-          attrs: { level: 2 },
-          content: [{ type: 'text', text: 'Overview' }]
-        },
-        {
-          type: 'paragraph',
-          content: [{ type: 'text', text: 'Describe your game here...' }]
-        },
-        {
-          type: 'heading',
-          attrs: { level: 2 },
-          content: [{ type: 'text', text: 'Components' }]
-        },
-        {
-          type: 'bulletList',
-          content: [
-            {
-              type: 'listItem',
-              content: [{ type: 'paragraph', content: [{ type: 'text', text: 'List your game components' }] }]
-            }
-          ]
-        },
-        {
-          type: 'heading',
-          attrs: { level: 2 },
-          content: [{ type: 'text', text: 'Setup' }]
-        },
-        {
-          type: 'paragraph',
-          content: [{ type: 'text', text: 'Explain how to set up the game...' }]
-        },
-        {
-          type: 'heading',
-          attrs: { level: 2 },
-          content: [{ type: 'text', text: 'How to Play' }]
-        },
-        {
-          type: 'paragraph',
-          content: [{ type: 'text', text: 'Describe the gameplay...' }]
-        },
-      ]
-    },
-    editable: !isReadOnly && !isPreview,
-    onUpdate: ({ editor }) => {
-      if (onContentChange) {
-        onContentChange(editor.getJSON(), sections);
-      }
-    },
-  });
+  // Get all sections from all pages for easier access
+  const allSections = pages.flatMap(page => page.sections);
+  const [activeSection, setActiveSection] = useState<RulebookSection | undefined>(allSections[0]);
+
+  // Component library state
+  const [components, setComponents] = useState<ReusableComponent[]>(initialComponents || []);
+
+  // Handle content changes from individual section editors
+  const handleSectionContentChange = useCallback((sectionId: string, content: any) => {
+    const updatedPages = pages.map(page => ({
+      ...page,
+      sections: page.sections.map(section =>
+        section.id === sectionId
+          ? { ...section, content }
+          : section
+      )
+    }));
+    setPages(updatedPages);
+    if (onContentChange) {
+      onContentChange(content, updatedPages);
+    }
+  }, [pages, onContentChange]);
 
   const handleSave = useCallback(async () => {
-    if (!editor || !onSave) return;
+    if (!onSave) return;
 
     setIsSaving(true);
     try {
-      await onSave(editor.getJSON(), sections);
+      // Compile all section content into one document organized by pages
+      const allContent = {
+        type: 'doc',
+        content: pages.flatMap(page => [
+          {
+            type: 'heading',
+            attrs: { level: 1 },
+            content: [{ type: 'text', text: page.title }]
+          },
+          ...page.sections.flatMap(section =>
+            section.content?.content || [
+              {
+                type: 'heading',
+                attrs: { level: 2 },
+                content: [{ type: 'text', text: section.title }]
+              },
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: 'Start writing content for this section...' }]
+              }
+            ]
+          )
+        ])
+      };
+      await onSave(allContent, pages, components);
       setLastSaved(new Date());
     } catch (error) {
       console.error('Error saving:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [editor, onSave, sections]);
+  }, [onSave, pages, components]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -186,297 +126,277 @@ export function RulebookEditor({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleSave]);
 
-  if (!editor) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div>Loading editor...</div>
-      </div>
-    );
-  }
-
-  const addTable = () => {
-    editor
-      .chain()
-      .focus()
-      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-      .run();
-  };
-
-  const insertHorizontalRule = () => {
-    editor.chain().focus().setHorizontalRule().run();
-  };
-
   const handleSectionSelect = (section: RulebookSection) => {
+    console.log('Section selected:', section.title, section.id);
     setActiveSection(section);
-    // Focus the editor when selecting a section
-    editor?.chain().focus().run();
   };
 
-  const handleSectionsChange = (newSections: RulebookSection[]) => {
-    setSections(newSections);
+  const handlePagesChange = (newPages: RulebookPage[]) => {
+    setPages(newPages);
     if (onContentChange) {
-      onContentChange(editor?.getJSON(), newSections);
+      // With multiple editors, we pass the compiled content from all pages and sections
+      const allContent = {
+        type: 'doc',
+        content: newPages.flatMap(page => [
+          {
+            type: 'heading',
+            attrs: { level: 1 },
+            content: [{ type: 'text', text: page.title }]
+          },
+          ...page.sections.flatMap(section =>
+            section.content?.content || [
+              {
+                type: 'heading',
+                attrs: { level: 2 },
+                content: [{ type: 'text', text: section.title }]
+              },
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: 'Start writing content for this section...' }]
+              }
+            ]
+          )
+        ])
+      };
+      onContentChange(allContent, newPages);
     }
   };
 
+  // Component library handlers
+  const handleCreateComponent = useCallback((componentData: Omit<ReusableComponent, 'id' | 'metadata'>) => {
+    const newComponent: ReusableComponent = {
+      ...componentData,
+      id: `comp-${Date.now()}`,
+      metadata: {
+        createdAt: new Date(),
+        usageCount: 0,
+        tags: []
+      }
+    };
+    setComponents(prev => [...prev, newComponent]);
+  }, []);
+
+  const handleInsertComponent = useCallback((component: ReusableComponent) => {
+    if (activeSection) {
+      // Call the insertion method for the active section
+      const insertMethod = (window as any)[`insertIntoSection_${activeSection.id}`];
+      if (insertMethod) {
+        insertMethod(
+          component.id,
+          component.type,
+          component.title,
+          component.content,
+          component.settings
+        );
+      } else {
+        console.warn('No active section editor found for insertion');
+      }
+    } else {
+      console.warn('No active section selected for component insertion');
+    }
+  }, [activeSection]);
+
+  const handleEditComponent = useCallback((id: string, updates: Partial<ReusableComponent>) => {
+    setComponents(prev => prev.map(comp =>
+      comp.id === id ? { ...comp, ...updates } : comp
+    ));
+  }, []);
+
+  const handleDeleteComponent = useCallback((id: string) => {
+    setComponents(prev => prev.filter(comp => comp.id !== id));
+  }, []);
+
+  const handleDuplicateComponent = useCallback((component: ReusableComponent) => {
+    const duplicated: ReusableComponent = {
+      ...component,
+      id: `comp-${Date.now()}`,
+      title: `${component.title} (Copy)`,
+      metadata: {
+        ...component.metadata,
+        createdAt: new Date(),
+        usageCount: 0
+      }
+    };
+    setComponents(prev => [...prev, duplicated]);
+  }, []);
+
   return (
-    <div className="w-full h-screen flex gap-6">
-      {/* Sidebar for section management */}
+    <div className="w-full flex gap-6 min-h-[calc(100vh-200px)]">
+      {/* Sidebar for page and section management */}
       <div className="w-80 flex-shrink-0">
-        <SectionManager
-          sections={sections}
+        <PageSectionManager
+          pages={pages}
           activeSection={activeSection}
-          onSectionsChange={handleSectionsChange}
+          onPagesChange={handlePagesChange}
           onSectionSelect={handleSectionSelect}
         />
       </div>
 
       {/* Main editor area */}
       <div className="flex-1 space-y-6 min-w-0">
-      {/* Toolbar */}
-      <Card className="p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1 mr-2">
-              <Button
-                variant={isPreview ? "outline" : "default"}
-                size="sm"
-                onClick={() => {
-                  setIsPreview(false);
-                  editor.setEditable(true);
-                }}
-              >
-                Edit
-              </Button>
-              <Button
-                variant={isPreview ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setIsPreview(true);
-                  editor.setEditable(false);
-                }}
-              >
-                <Eye className="w-4 h-4 mr-1" />
-                Preview
-              </Button>
+        {/* Simple toolbar */}
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {activeSection ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <FileText className="h-4 w-4" />
+                    <span>
+                      {pages.find(p => p.sections.some(s => s.id === activeSection.id))?.title || 'Page'}
+                    </span>
+                    <ChevronRight className="h-3 w-3" />
+                    <Layers className="h-4 w-4 text-primary" />
+                    <span className="text-primary font-medium">{activeSection.title}</span>
+                  </div>
+                  <div className="ml-2 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md border">
+                    Editing
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-muted-foreground">
+                    Select a section to edit
+                  </h2>
+                </div>
+              )}
             </div>
-
-            {!isPreview && (
-              <>
-                <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1 mr-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => editor.chain().focus().undo().run()}
-                        disabled={!editor.can().undo()}
-                      >
-                        <Undo className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Undo (Ctrl+Z)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => editor.chain().focus().redo().run()}
-                        disabled={!editor.can().redo()}
-                      >
-                        <Redo className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Redo (Ctrl+Y)</p>
-                    </TooltipContent>
-                  </Tooltip>
+            <div className="flex items-center gap-2">
+              {lastSaved && (
+                <div className="flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3 text-green-500" />
+                  <span className="text-xs text-muted-foreground">
+                    Saved {lastSaved.toLocaleTimeString()}
+                  </span>
                 </div>
-
-                <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1 mr-2">
-                  <Button
-                    variant={editor.isActive('heading', { level: 1 }) ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                  >
-                    <Heading1 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={editor.isActive('heading', { level: 2 }) ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                  >
-                    <Heading2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={editor.isActive('heading', { level: 3 }) ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                  >
-                    <Heading3 className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1 mr-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={editor.isActive('bold') ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => editor.chain().focus().toggleBold().run()}
-                      >
-                        <Bold className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Bold (Ctrl+B)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={editor.isActive('italic') ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => editor.chain().focus().toggleItalic().run()}
-                      >
-                        <Italic className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Italic (Ctrl+I)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={editor.isActive('strike') ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => editor.chain().focus().toggleStrike().run()}
-                      >
-                        <Strikethrough className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Strikethrough</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={editor.isActive('code') ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => editor.chain().focus().toggleCode().run()}
-                      >
-                        <Code className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Inline Code</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-
-                <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1 mr-2">
-                  <Button
-                    variant={editor.isActive('bulletList') ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleBulletList().run()}
-                  >
-                    <List className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={editor.isActive('orderedList') ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                  >
-                    <ListOrdered className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={editor.isActive('blockquote') ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                  >
-                    <Quote className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1 mr-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={addTable}
-                      >
-                        <TableIcon className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Insert Table</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={insertHorizontalRule}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Horizontal Rule</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {lastSaved && (
-              <div className="flex items-center gap-1">
-                <CheckCircle className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-muted-foreground">
-                  Saved {lastSaved.toLocaleTimeString()}
-                </span>
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-            >
-              <Users className="w-4 h-4 mr-1" />
-              Share
-            </Button>
-            {onSave && (
+              )}
               <Button
-                onClick={handleSave}
-                disabled={isSaving}
+                variant="ghost"
                 size="sm"
               >
-                <Save className="w-4 h-4 mr-1" />
-                {isSaving ? 'Saving...' : 'Save'}
+                <Users className="w-4 h-4 mr-1" />
+                Share
               </Button>
-            )}
+              {onSave && (
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  size="sm"
+                >
+                  <Save className="w-4 h-4 mr-1" />
+                  {isSaving ? 'Saving...' : 'Save'}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      {/* Editor */}
-      <Card className="min-h-[600px]">
-        <div className="p-6">
-          <EditorContent
-            editor={editor}
-            className={`prose prose-slate prose-headings:font-bold prose-h1:text-3xl prose-h1:border-b prose-h1:pb-3 prose-h1:mb-6 prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-table:text-sm prose-table:border-collapse prose-th:bg-muted prose-th:font-semibold prose-th:p-3 prose-td:p-3 prose-td:border-b prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/30 prose-blockquote:pl-4 prose-blockquote:italic prose-strong:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:rounded max-w-none ${isPreview ? 'prose-lg' : ''}`}
+        {/* Section editors */}
+        {allSections.map((section) => (
+          <SectionEditor
+            key={section.id}
+            section={section}
+            onContentChange={handleSectionContentChange}
+            isReadOnly={isReadOnly}
+            isVisible={activeSection?.id === section.id}
+            onInsertComponent={(componentId, componentType, componentTitle, componentContent, componentSettings) => {
+              // This is handled through the window method approach
+            }}
           />
-        </div>
-      </Card>
-        </div>
+        ))}
+
+        {pages.length === 0 ? (
+          <Card className="flex-1 min-h-[500px] flex items-center justify-center border-2 border-dashed border-muted-foreground/20 hover:border-muted-foreground/40 transition-colors">
+            <div className="text-center max-w-lg p-8">
+              <div className="mb-6">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <FileText className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-semibold text-foreground mb-3 tracking-tight">
+                  Welcome to your new rulebook
+                </h3>
+                <p className="text-muted-foreground leading-relaxed mb-6">
+                  Create your first page to start organizing your game rules. Pages help structure your content and can contain multiple sections for different topics.
+                </p>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div className="bg-muted/30 rounded-lg p-4 text-left">
+                  <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center font-bold">1</span>
+                    Create your first page
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Click "Add Page" in the sidebar to create a new page for your rulebook.</p>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-4 text-left">
+                  <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center font-bold">2</span>
+                    Add sections to organize content
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Break your page into logical sections like "Game Overview" or "Setup Instructions".</p>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-4 text-left">
+                  <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center font-bold">3</span>
+                    Start writing and formatting
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Use the rich text editor with keyboard shortcuts like Ctrl+B for bold or ? for help.</p>
+                </div>
+              </div>
+
+              <div className="text-sm text-muted-foreground/80 bg-blue-50/50 border border-blue-200 rounded-lg p-4">
+                <p className="font-medium text-blue-900 mb-2">💡 Pro tip:</p>
+                <p className="text-blue-800">Common page types include: Game Overview, Components, Setup, Gameplay Rules, Victory Conditions, and Reference.</p>
+              </div>
+            </div>
+          </Card>
+        ) : !activeSection ? (
+          <Card className="flex-1 min-h-[500px] flex items-center justify-center border-0 shadow-none bg-muted/5">
+            <div className="text-center max-w-lg p-8">
+              <div className="mb-6">
+                <div className="mx-auto w-12 h-12 bg-gradient-to-br from-green-100 to-green-50 rounded-full flex items-center justify-center mb-4">
+                  <Layers className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="text-xl font-medium text-foreground/80 mb-3 tracking-tight">
+                  Ready to start writing
+                </h3>
+                <p className="text-muted-foreground leading-relaxed mb-6">
+                  Choose a section from the sidebar to begin crafting your rulebook content. Each section focuses on a specific aspect of your game.
+                </p>
+              </div>
+
+              <div className="bg-muted/20 rounded-lg p-4 text-left">
+                <h4 className="font-medium text-sm mb-2 text-foreground">Available sections:</h4>
+                <div className="space-y-1">
+                  {pages.map(page => page.sections.map(section => (
+                    <button
+                      key={section.id}
+                      onClick={() => setActiveSection(section)}
+                      className="w-full text-left px-2 py-1 text-sm rounded hover:bg-muted/50 transition-colors flex items-center gap-2"
+                    >
+                      <Layers className="h-3 w-3 text-green-600" />
+                      <span>{page.title}</span>
+                      <ChevronRight className="h-3 w-3" />
+                      <span className="text-muted-foreground">{section.title}</span>
+                    </button>
+                  )))}
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : null}
+      </div>
+
+      {/* Component Library Panel */}
+      <div className="w-80 flex-shrink-0">
+        <ComponentLibrary
+          components={components}
+          onCreateComponent={handleCreateComponent}
+          onInsertComponent={handleInsertComponent}
+          onEditComponent={handleEditComponent}
+          onDeleteComponent={handleDeleteComponent}
+          onDuplicateComponent={handleDuplicateComponent}
+        />
       </div>
     </div>
   );
