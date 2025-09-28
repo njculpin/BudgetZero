@@ -1,10 +1,10 @@
 {
-  "name": "Workshop",
+  "name": "BudgetZero",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "kill-port": "npx kill-port 3000",
-    "dev": "npx kill-port 3000 && supabase start && next dev --turbopack --port 3000 & sleep 2 && open http://127.0.0.1:54324",
+    "dev": "npx kill-port 3000 && supabase start && next dev --turbopack --port 3000",
     "dev:simple": "npx kill-port 3000 && next dev --turbopack --port 3000",
     "build": "next build --turbopack",
     "start": "next start",

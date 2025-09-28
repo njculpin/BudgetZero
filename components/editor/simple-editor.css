@@ -38,7 +38,8 @@
   line-height: 1.6;
 }
 
-.ProseMirror ul, .ProseMirror ol {
+.ProseMirror ul,
+.ProseMirror ol {
   margin-bottom: 1rem;
   padding-left: 1.5rem;
 }
@@ -187,13 +188,17 @@
   z-index: 2;
   position: absolute;
   content: "";
-  left: 0; right: 0; top: 0; bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   background: rgba(59, 130, 246, 0.2);
   pointer-events: none;
 }
 
 /* Enhanced list styling */
-.ProseMirror ul, .ProseMirror ol {
+.ProseMirror ul,
+.ProseMirror ol {
   margin-bottom: 1rem;
   padding-left: 1.5rem;
 }
@@ -202,7 +207,10 @@
   margin-bottom: 0.25rem;
 }
 
-.ProseMirror ul ul, .ProseMirror ol ol, .ProseMirror ul ol, .ProseMirror ol ul {
+.ProseMirror ul ul,
+.ProseMirror ol ol,
+.ProseMirror ul ol,
+.ProseMirror ol ul {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }

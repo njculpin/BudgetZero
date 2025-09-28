@@ -1,10 +1,16 @@
-import { createClient } from '@/lib/supabase/server';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MainLayout } from '@/components/layouts/main-layout';
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MainLayout } from "@/components/layouts/main-layout";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Users,
   Plus,
@@ -14,27 +20,31 @@ import {
   Settings,
   Activity,
   Calendar,
-  MessageSquare
-} from 'lucide-react';
+  MessageSquare,
+} from "lucide-react";
 
 export default async function TeamsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login');
+    redirect("/auth/login");
   }
 
   // TODO: Implement team fetching when collaboration features are built
   const teams = []; // Placeholder for future implementation
 
   return (
-    <MainLayout user={user} breadcrumbs={[{ label: 'Teams' }]}>
+    <MainLayout user={user} breadcrumbs={[{ label: "Teams" }]}>
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Teams</h1>
-            <p className="text-slate-600 mt-2">Manage your collaborative teams and invitations</p>
+            <p className="text-slate-600 mt-2">
+              Manage your collaborative teams and invitations
+            </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline">
@@ -66,7 +76,9 @@ export default async function TeamsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Active Projects</p>
+                  <p className="text-sm font-medium text-slate-600">
+                    Active Projects
+                  </p>
                   <p className="text-2xl font-bold">0</p>
                 </div>
                 <Activity className="w-8 h-8 text-green-500" />
@@ -78,7 +90,9 @@ export default async function TeamsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Pending Invites</p>
+                  <p className="text-sm font-medium text-slate-600">
+                    Pending Invites
+                  </p>
                   <p className="text-2xl font-bold">0</p>
                 </div>
                 <Mail className="w-8 h-8 text-blue-500" />
@@ -90,7 +104,9 @@ export default async function TeamsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Team Members</p>
+                  <p className="text-sm font-medium text-slate-600">
+                    Team Members
+                  </p>
                   <p className="text-2xl font-bold">0</p>
                 </div>
                 <UserPlus className="w-8 h-8 text-purple-500" />
@@ -104,9 +120,12 @@ export default async function TeamsPage() {
             <div className="max-w-lg mx-auto space-y-6">
               <Users className="w-20 h-20 text-slate-300 mx-auto" />
               <div className="space-y-2">
-                <h3 className="text-2xl font-semibold text-slate-900">Start Collaborating</h3>
+                <h3 className="text-2xl font-semibold text-slate-900">
+                  Start Collaborating
+                </h3>
                 <p className="text-slate-600">
-                  Teams allow you to collaborate with other creators on game projects. Create or join a team to get started.
+                  Teams allow you to collaborate with other creators on game
+                  projects. Create or join a team to get started.
                 </p>
               </div>
 
@@ -117,7 +136,8 @@ export default async function TeamsPage() {
                       <Crown className="w-8 h-8 text-blue-500" />
                       <h4 className="font-semibold">Create a Team</h4>
                       <p className="text-sm text-slate-600">
-                        Lead your own team and invite collaborators to work on your game projects.
+                        Lead your own team and invite collaborators to work on
+                        your game projects.
                       </p>
                     </div>
                   </Card>
@@ -127,7 +147,8 @@ export default async function TeamsPage() {
                       <UserPlus className="w-8 h-8 text-green-500" />
                       <h4 className="font-semibold">Join a Team</h4>
                       <p className="text-sm text-slate-600">
-                        Accept invitations or request to join existing teams with your skills.
+                        Accept invitations or request to join existing teams
+                        with your skills.
                       </p>
                     </div>
                   </Card>
@@ -146,7 +167,9 @@ export default async function TeamsPage() {
               </div>
 
               <div className="pt-6 border-t">
-                <h4 className="font-semibold mb-3">What you can do with teams:</h4>
+                <h4 className="font-semibold mb-3">
+                  What you can do with teams:
+                </h4>
                 <div className="grid md:grid-cols-3 gap-4 text-sm text-slate-600">
                   <div className="flex items-center gap-2">
                     <Activity className="w-4 h-4 text-green-500" />
@@ -178,19 +201,31 @@ export default async function TeamsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex-col space-y-2"
+              >
                 <Users className="w-6 h-6" />
                 <span>Find Collaborators</span>
               </Button>
-              <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex-col space-y-2"
+              >
                 <Mail className="w-6 h-6" />
                 <span>Send Invitations</span>
               </Button>
-              <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex-col space-y-2"
+              >
                 <Calendar className="w-6 h-6" />
                 <span>Schedule Meeting</span>
               </Button>
-              <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex-col space-y-2"
+              >
                 <Activity className="w-6 h-6" />
                 <span>View Activity</span>
               </Button>

@@ -1,27 +1,20 @@
-'use client';
+"use client";
 
-import { NodeViewWrapper } from '@tiptap/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  AlertCircle,
-  Info,
-  Zap,
-  Trash2,
-  Copy,
-  Edit2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ReusableComponent } from './reusable-component';
+import { NodeViewWrapper } from "@tiptap/react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle, Info, Zap, Trash2, Copy, Edit2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ReusableComponent } from "./reusable-component";
 
 interface ComponentNodeViewProps {
   node: {
     attrs: {
       componentId: string;
-      componentType: ReusableComponent['type'];
+      componentType: ReusableComponent["type"];
       componentTitle: string;
       componentContent: string;
-      componentSettings: ReusableComponent['settings'];
+      componentSettings: ReusableComponent["settings"];
     };
   };
   deleteNode: () => void;
@@ -31,26 +24,31 @@ interface ComponentNodeViewProps {
 const componentTypeConfig = {
   reminder: {
     icon: AlertCircle,
-    defaultBackground: 'bg-blue-50/50',
-    defaultBorder: 'border-l-4 border-blue-400',
-    label: 'Reminder'
+    defaultBackground: "bg-blue-50/50",
+    defaultBorder: "border-l-4 border-blue-400",
+    label: "Reminder",
   },
   mechanic: {
     icon: Zap,
-    defaultBackground: 'bg-amber-50/50',
-    defaultBorder: 'border-l-4 border-amber-400',
-    label: 'Game Mechanic'
+    defaultBackground: "bg-amber-50/50",
+    defaultBorder: "border-l-4 border-amber-400",
+    label: "Game Mechanic",
   },
   callout: {
     icon: Info,
-    defaultBackground: 'bg-slate-50/50',
-    defaultBorder: 'border-l-4 border-slate-400',
-    label: 'Callout'
-  }
+    defaultBackground: "bg-slate-50/50",
+    defaultBorder: "border-l-4 border-slate-400",
+    label: "Callout",
+  },
 };
 
-export function ComponentNodeView({ node, deleteNode, selected }: ComponentNodeViewProps) {
-  const { componentType, componentTitle, componentContent, componentSettings } = node.attrs;
+export function ComponentNodeView({
+  node,
+  deleteNode,
+  selected,
+}: ComponentNodeViewProps) {
+  const { componentType, componentTitle, componentContent, componentSettings } =
+    node.attrs;
   const config = componentTypeConfig[componentType];
   const IconComponent = config.icon;
 
@@ -58,10 +56,10 @@ export function ComponentNodeView({ node, deleteNode, selected }: ComponentNodeV
     <NodeViewWrapper className="my-4">
       <div
         className={cn(
-          'group relative p-4 rounded-md border',
+          "group relative p-4 rounded-md border",
           config.defaultBackground,
           config.defaultBorder,
-          selected && 'ring-2 ring-primary/20'
+          selected && "ring-2 ring-primary/20",
         )}
       >
         {/* Component Actions */}

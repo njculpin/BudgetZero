@@ -1,19 +1,25 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { createClient } from '@/lib/supabase/client';
-import { GameProjectService } from '@/lib/services/game-projects';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client";
+import { GameProjectService } from "@/lib/services/game-projects";
 
 const QuickProjectSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
+  title: z.string().min(1, "Title is required").max(100, "Title too long"),
 });
 
 type QuickProjectFormData = z.infer<typeof QuickProjectSchema>;
@@ -44,7 +50,7 @@ export function QuickProjectForm({ userId }: QuickProjectFormProps) {
         title: data.title,
         description: `A new tabletop game project: ${data.title}`,
         is_public: false, // Start private
-        license_type: 'free',
+        license_type: "free",
         tags: [],
       });
 
@@ -58,8 +64,8 @@ export function QuickProjectForm({ userId }: QuickProjectFormProps) {
         router.push(`/projects/${result.data.slug}/editor`);
       }
     } catch (error) {
-      console.error('Error creating project:', error);
-      alert('Failed to create project');
+      console.error("Error creating project:", error);
+      alert("Failed to create project");
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +86,7 @@ export function QuickProjectForm({ userId }: QuickProjectFormProps) {
             <Input
               id="title"
               placeholder="Enter your game title..."
-              {...register('title')}
+              {...register("title")}
               disabled={isLoading}
             />
             {errors.title && (
@@ -88,12 +94,8 @@ export function QuickProjectForm({ userId }: QuickProjectFormProps) {
             )}
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Creating Project...' : 'Start Building'}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Creating Project..." : "Start Building"}
           </Button>
         </form>
       </CardContent>

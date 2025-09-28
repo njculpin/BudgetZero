@@ -1,13 +1,19 @@
-import { createClient } from '@/lib/supabase/server';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { MainLayout } from '@/components/layouts/main-layout';
-import { redirect } from 'next/navigation';
+import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { MainLayout } from "@/components/layouts/main-layout";
+import { redirect } from "next/navigation";
 import {
   User,
   Bell,
@@ -15,24 +21,30 @@ import {
   CreditCard,
   Trash2,
   Save,
-  AlertTriangle
-} from 'lucide-react';
+  AlertTriangle,
+} from "lucide-react";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login');
+    redirect("/auth/login");
   }
 
   return (
-    <MainLayout user={user} breadcrumbs={[{ label: 'Settings' }]}>
+    <MainLayout user={user} breadcrumbs={[{ label: "Settings" }]}>
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Account Settings</h1>
-            <p className="text-slate-600 mt-2">Manage your account preferences and security</p>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Account Settings
+            </h1>
+            <p className="text-slate-600 mt-2">
+              Manage your account preferences and security
+            </p>
           </div>
         </div>
 
@@ -41,19 +53,35 @@ export default async function SettingsPage() {
           <div className="space-y-2">
             <h3 className="font-semibold text-slate-900 px-2">Settings</h3>
             <nav className="space-y-1">
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                size="sm"
+              >
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </Button>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                size="sm"
+              >
                 <Bell className="w-4 h-4 mr-2" />
                 Notifications
               </Button>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                size="sm"
+              >
                 <Shield className="w-4 h-4 mr-2" />
                 Privacy & Security
               </Button>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                size="sm"
+              >
                 <CreditCard className="w-4 h-4 mr-2" />
                 Billing
               </Button>
@@ -79,7 +107,7 @@ export default async function SettingsPage() {
                     <Label htmlFor="full_name">Full Name</Label>
                     <Input
                       id="full_name"
-                      defaultValue={user.user_metadata?.full_name || ''}
+                      defaultValue={user.user_metadata?.full_name || ""}
                       placeholder="Your full name"
                     />
                   </div>
@@ -88,7 +116,7 @@ export default async function SettingsPage() {
                     <Input
                       id="email"
                       type="email"
-                      defaultValue={user.email || ''}
+                      defaultValue={user.email || ""}
                       disabled
                       className="bg-slate-50"
                     />
@@ -107,10 +135,7 @@ export default async function SettingsPage() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      placeholder="City, Country"
-                    />
+                    <Input id="location" placeholder="City, Country" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="website">Website</Label>
@@ -144,7 +169,9 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label>Email Notifications</Label>
-                    <p className="text-sm text-slate-600">Receive emails about your projects and collaborations</p>
+                    <p className="text-sm text-slate-600">
+                      Receive emails about your projects and collaborations
+                    </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -154,7 +181,9 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label>Project Updates</Label>
-                    <p className="text-sm text-slate-600">Get notified when collaborators make changes</p>
+                    <p className="text-sm text-slate-600">
+                      Get notified when collaborators make changes
+                    </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -164,7 +193,9 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label>Team Invitations</Label>
-                    <p className="text-sm text-slate-600">Receive notifications for team invitations</p>
+                    <p className="text-sm text-slate-600">
+                      Receive notifications for team invitations
+                    </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -174,7 +205,9 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label>Marketing Updates</Label>
-                    <p className="text-sm text-slate-600">Occasional updates about new features and platform news</p>
+                    <p className="text-sm text-slate-600">
+                      Occasional updates about new features and platform news
+                    </p>
                   </div>
                   <Switch />
                 </div>
@@ -196,7 +229,9 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label>Public Profile</Label>
-                    <p className="text-sm text-slate-600">Make your profile visible to other creators</p>
+                    <p className="text-sm text-slate-600">
+                      Make your profile visible to other creators
+                    </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -206,7 +241,9 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label>Show Email</Label>
-                    <p className="text-sm text-slate-600">Display your email address on your public profile</p>
+                    <p className="text-sm text-slate-600">
+                      Display your email address on your public profile
+                    </p>
                   </div>
                   <Switch />
                 </div>
@@ -216,14 +253,8 @@ export default async function SettingsPage() {
                 <div className="space-y-2">
                   <Label>Change Password</Label>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Input
-                      type="password"
-                      placeholder="Current password"
-                    />
-                    <Input
-                      type="password"
-                      placeholder="New password"
-                    />
+                    <Input type="password" placeholder="Current password" />
+                    <Input type="password" placeholder="New password" />
                   </div>
                   <Button variant="outline" size="sm">
                     Update Password

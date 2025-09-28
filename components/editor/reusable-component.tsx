@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   AlertCircle,
   Settings,
@@ -28,13 +28,13 @@ import {
   Trash2,
   Bookmark,
   Info,
-  Zap
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+  Zap,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface ReusableComponent {
   id: string;
-  type: 'reminder' | 'mechanic' | 'callout';
+  type: "reminder" | "mechanic" | "callout";
   title: string;
   content: string;
   settings: {
@@ -63,22 +63,22 @@ interface ReusableComponentDisplayProps {
 const componentTypeConfig = {
   reminder: {
     icon: AlertCircle,
-    defaultBackground: 'bg-blue-50/50',
-    defaultBorder: 'border-l-4 border-blue-400',
-    label: 'Reminder'
+    defaultBackground: "bg-blue-50/50",
+    defaultBorder: "border-l-4 border-blue-400",
+    label: "Reminder",
   },
   mechanic: {
     icon: Zap,
-    defaultBackground: 'bg-amber-50/50',
-    defaultBorder: 'border-l-4 border-amber-400',
-    label: 'Game Mechanic'
+    defaultBackground: "bg-amber-50/50",
+    defaultBorder: "border-l-4 border-amber-400",
+    label: "Game Mechanic",
   },
   callout: {
     icon: Info,
-    defaultBackground: 'bg-slate-50/50',
-    defaultBorder: 'border-l-4 border-slate-400',
-    label: 'Callout'
-  }
+    defaultBackground: "bg-slate-50/50",
+    defaultBorder: "border-l-4 border-slate-400",
+    label: "Callout",
+  },
 };
 
 export function ReusableComponentDisplay({
@@ -96,11 +96,11 @@ export function ReusableComponentDisplay({
   return (
     <Card
       className={cn(
-        'relative p-4 cursor-pointer transition-all duration-200',
+        "relative p-4 cursor-pointer transition-all duration-200",
         config.defaultBackground,
         config.defaultBorder,
-        isSelected && 'ring-2 ring-primary/20',
-        isEditing && 'border-dashed border-primary/30'
+        isSelected && "ring-2 ring-primary/20",
+        isEditing && "border-dashed border-primary/30",
       )}
       onClick={onSelect}
     >
@@ -170,7 +170,7 @@ export function ReusableComponentDisplay({
             <span>Used {component.metadata.usageCount} times</span>
           </div>
           <div className="flex items-center gap-1">
-            {component.metadata.tags.map(tag => (
+            {component.metadata.tags.map((tag) => (
               <Badge key={tag} variant="outline" className="text-xs">
                 {tag}
               </Badge>
@@ -184,21 +184,26 @@ export function ReusableComponentDisplay({
 
 interface CreateComponentDialogProps {
   trigger: React.ReactNode;
-  onCreateComponent: (component: Omit<ReusableComponent, 'id' | 'metadata'>) => void;
+  onCreateComponent: (
+    component: Omit<ReusableComponent, "id" | "metadata">,
+  ) => void;
 }
 
-export function CreateComponentDialog({ trigger, onCreateComponent }: CreateComponentDialogProps) {
+export function CreateComponentDialog({
+  trigger,
+  onCreateComponent,
+}: CreateComponentDialogProps) {
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<ReusableComponent['type']>('reminder');
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [type, setType] = useState<ReusableComponent["type"]>("reminder");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
   const [showTitle, setShowTitle] = useState(true);
-  const [tags, setTags] = useState('');
+  const [tags, setTags] = useState("");
 
   const handleCreate = () => {
     if (!title.trim() || !content.trim()) return;
 
-    const component: Omit<ReusableComponent, 'id' | 'metadata'> = {
+    const component: Omit<ReusableComponent, "id" | "metadata"> = {
       type,
       title: title.trim(),
       content: content.trim(),
@@ -207,25 +212,23 @@ export function CreateComponentDialog({ trigger, onCreateComponent }: CreateComp
         backgroundColor: componentTypeConfig[type].defaultBackground,
         borderColor: componentTypeConfig[type].defaultBorder,
         icon: componentTypeConfig[type].icon.name,
-      }
+      },
     };
 
     onCreateComponent(component);
 
     // Reset form
-    setTitle('');
-    setContent('');
-    setTags('');
+    setTitle("");
+    setContent("");
+    setTags("");
     setShowTitle(true);
-    setType('reminder');
+    setType("reminder");
     setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create Reusable Component</DialogTitle>
@@ -233,7 +236,12 @@ export function CreateComponentDialog({ trigger, onCreateComponent }: CreateComp
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-1 block">Type</label>
-            <Select value={type} onValueChange={(value: ReusableComponent['type']) => setType(value)}>
+            <Select
+              value={type}
+              onValueChange={(value: ReusableComponent["type"]) =>
+                setType(value)
+              }
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -280,7 +288,9 @@ export function CreateComponentDialog({ trigger, onCreateComponent }: CreateComp
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Tags (comma-separated)</label>
+            <label className="text-sm font-medium mb-1 block">
+              Tags (comma-separated)
+            </label>
             <Input
               value={tags}
               onChange={(e) => setTags(e.target.value)}
@@ -296,14 +306,19 @@ export function CreateComponentDialog({ trigger, onCreateComponent }: CreateComp
               onChange={(e) => setShowTitle(e.target.checked)}
               className="rounded"
             />
-            <label htmlFor="showTitle" className="text-sm">Show title in component</label>
+            <label htmlFor="showTitle" className="text-sm">
+              Show title in component
+            </label>
           </div>
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={!title.trim() || !content.trim()}>
+            <Button
+              onClick={handleCreate}
+              disabled={!title.trim() || !content.trim()}
+            >
               Create Component
             </Button>
           </div>

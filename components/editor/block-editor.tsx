@@ -3,13 +3,8 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import { Dropcursor } from "@tiptap/extension-dropcursor";
-import { Gapcursor } from "@tiptap/extension-gapcursor";
 import { SyncedBlock } from "./extensions/synced-block";
-import { Underline } from "@tiptap/extension-underline";
-import { Strike } from "@tiptap/extension-strike";
 import { Highlight } from "@tiptap/extension-highlight";
-import { Link } from "@tiptap/extension-link";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -86,6 +81,13 @@ export function BlockEditor({
         heading: {
           levels: [1, 2, 3],
         },
+        dropcursor: {
+          color: "#3b82f6",
+          width: 2,
+        },
+        link: {
+          openOnClick: false,
+        },
       }),
       Placeholder.configure({
         placeholder: ({ node }) => {
@@ -95,18 +97,8 @@ export function BlockEditor({
           return "Type '/' for commands";
         },
       }),
-      Dropcursor.configure({
-        color: "#3b82f6",
-        width: 2,
-      }),
-      Gapcursor,
       SyncedBlock,
-      Underline,
-      Strike,
       Highlight,
-      Link.configure({
-        openOnClick: false,
-      }),
       TextStyle,
     ],
     content: initialContent || {
@@ -199,7 +191,7 @@ export function BlockEditor({
 
       return { pos, blockIndex, node: doc.child(blockIndex) };
     },
-    [editor]
+    [editor],
   );
 
   // Handle drop with improved position calculation
@@ -208,7 +200,9 @@ export function BlockEditor({
       e.preventDefault();
       if (!editor) return;
 
-      console.log("Drop event triggered");
+      console.log("🎯 Drop event triggered");
+      console.log("🎯 Drop target:", e.target);
+      console.log("🎯 Drop coordinates:", e.clientX, e.clientY);
 
       // Clean up visual indicators immediately
       document.querySelectorAll(".drag-over").forEach((el) => {
@@ -334,7 +328,7 @@ export function BlockEditor({
         console.error("Error moving block:", error);
       }
     },
-    [editor]
+    [editor],
   );
 
   // Handle mouse events for block hovering
@@ -349,7 +343,7 @@ export function BlockEditor({
         setHoveredBlock(blockElement);
       }
     },
-    [hoveredBlock, isReadOnly]
+    [hoveredBlock, isReadOnly],
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -364,22 +358,61 @@ export function BlockEditor({
       // Focus block controls with Ctrl/Cmd + Shift + H
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "H") {
         e.preventDefault();
-        const focusedElement = document.activeElement;
-        const blockElement = focusedElement?.closest(
-          ".ProseMirror > *"
-        ) as Element;
 
-        if (blockElement) {
-          setHoveredBlock(blockElement);
-          // Focus the first control button
-          setTimeout(() => {
-            const firstButton = document.querySelector(
-              '[role="toolbar"] button'
-            );
-            if (firstButton instanceof HTMLElement) {
-              firstButton.focus();
+        // First, try to get the current cursor position in the editor
+        if (editor && editor.isFocused) {
+          const { from } = editor.state.selection;
+          const resolvedPos = editor.state.doc.resolve(from);
+
+          // Find the block node that contains the cursor
+          let blockPos = from;
+          for (let d = resolvedPos.depth; d > 0; d--) {
+            if (resolvedPos.node(d).isBlock) {
+              blockPos = resolvedPos.before(d);
+              break;
             }
-          }, 0);
+          }
+
+          // Find the corresponding DOM element
+          try {
+            const domPos = editor.view.domAtPos(blockPos);
+            const blockElement = domPos.node.nodeType === Node.ELEMENT_NODE
+              ? domPos.node as Element
+              : (domPos.node.parentElement?.closest('.ProseMirror > *') as Element);
+
+            if (blockElement) {
+              setHoveredBlock(blockElement);
+              // Focus the first control button after the controls are rendered
+              setTimeout(() => {
+                const firstButton = document.querySelector(
+                  '[role="toolbar"] button',
+                );
+                if (firstButton instanceof HTMLElement) {
+                  firstButton.focus();
+                }
+              }, 50); // Slightly longer delay to ensure DOM update
+            }
+          } catch (error) {
+            console.warn("Could not determine block element for keyboard shortcut:", error);
+          }
+        } else {
+          // Fallback: try to find focused element's parent block
+          const focusedElement = document.activeElement;
+          const blockElement = focusedElement?.closest(
+            ".ProseMirror > *",
+          ) as Element;
+
+          if (blockElement) {
+            setHoveredBlock(blockElement);
+            setTimeout(() => {
+              const firstButton = document.querySelector(
+                '[role="toolbar"] button',
+              );
+              if (firstButton instanceof HTMLElement) {
+                firstButton.focus();
+              }
+            }, 50);
+          }
         }
       }
 
@@ -393,13 +426,18 @@ export function BlockEditor({
         }
       }
     },
-    [hoveredBlock, isReadOnly, editor]
+    [hoveredBlock, isReadOnly, editor],
   );
 
   // Handle dragover with improved target detection
   const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
     e.dataTransfer!.dropEffect = "move";
+
+    // Add subtle logging (less frequent)
+    if (Math.random() < 0.1) { // Only log 10% of dragover events to avoid spam
+      console.log("🔄 Drag over event");
+    }
 
     const target = e.target as Element;
     const proseMirrorEl = editorRef.current?.querySelector(".ProseMirror");
@@ -477,11 +515,23 @@ export function BlockEditor({
     const editorElement = editorRef.current;
     if (!editorElement) return;
 
+    console.log("🔧 Setting up drag and drop event listeners on:", editorElement);
+
     editorElement.addEventListener("mousemove", handleMouseMove);
     editorElement.addEventListener("mouseleave", handleMouseLeave);
     editorElement.addEventListener("drop", handleDrop);
     editorElement.addEventListener("dragover", handleDragOver);
     document.addEventListener("keydown", handleKeyDown);
+
+    // Also add listeners to the document for broader coverage
+    document.addEventListener("dragover", (e) => {
+      console.log("📡 Document dragover event");
+      e.preventDefault(); // Allow drop
+    });
+
+    document.addEventListener("drop", (e) => {
+      console.log("📡 Document drop event");
+    });
 
     return () => {
       editorElement.removeEventListener("mousemove", handleMouseMove);
@@ -489,6 +539,10 @@ export function BlockEditor({
       editorElement.removeEventListener("drop", handleDrop);
       editorElement.removeEventListener("dragover", handleDragOver);
       document.removeEventListener("keydown", handleKeyDown);
+
+      // Clean up document listeners
+      document.removeEventListener("dragover", (e) => e.preventDefault());
+      document.removeEventListener("drop", (e) => console.log("📡 Document drop event"));
     };
   }, [
     handleMouseMove,
@@ -642,7 +696,6 @@ export function BlockEditor({
           type: "syncedBlock",
           attrs: {
             syncId,
-            isOriginal: true,
             lastSynced: new Date().toISOString(),
           },
           content: [blockContent],
@@ -657,14 +710,21 @@ export function BlockEditor({
 
   // Handle drag start with improved data handling
   const handleDragStart = (e: React.DragEvent, blockElement: Element) => {
-    console.log("Drag start triggered on:", blockElement);
+    console.log("🚀 Drag start triggered on:", blockElement);
+    console.log("🚀 Event details:", e.type, e.currentTarget);
 
     if (!editor) {
-      console.log("No editor available");
+      console.log("❌ No editor available");
       return;
     }
 
+    // Critical: Set up data transfer properly
     e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.dropEffect = "move";
+
+    // Ensure we don't prevent the drag operation
+    e.stopPropagation(); // Prevent TipTap from interfering
+
     setSelectedBlock(blockElement);
 
     try {
@@ -677,7 +737,7 @@ export function BlockEditor({
       // Set drag data
       e.dataTransfer.setData(
         "application/x-block-data",
-        JSON.stringify({ draggedElement: true }) // Simple marker since we can't serialize DOM elements
+        JSON.stringify({ draggedElement: true }), // Simple marker since we can't serialize DOM elements
       );
 
       // Store the actual element reference globally for the drop handler
@@ -875,23 +935,33 @@ export function BlockEditor({
 
         {/* Drag handle */}
         <div
-          className="h-8 w-8 p-1 opacity-70 hover:opacity-100 focus:opacity-100 cursor-grab active:cursor-grabbing flex items-center justify-center rounded hover:bg-gray-100 select-none"
+          className="h-8 w-8 p-1 opacity-70 hover:opacity-100 focus:opacity-100 cursor-grab active:cursor-grabbing flex items-center justify-center rounded hover:bg-gray-100 drag-handle"
           draggable={true}
           onDragStart={(e) => {
+            console.log("🎮 Drag handle onDragStart fired");
             handleDragStart(e, hoveredBlock);
           }}
           onDragEnd={(e) => {
+            console.log("🎮 Drag handle onDragEnd fired");
             handleDragEnd(hoveredBlock);
           }}
           onMouseDown={(e) => {
-            // Prevent text selection when starting drag
-            e.preventDefault();
+            console.log("🎮 Drag handle onMouseDown fired");
+            // Don't prevent default here as it blocks drag initiation
+            // Just stop event from bubbling to avoid editor interactions
+            e.stopPropagation();
           }}
           title="Drag to move block"
           role="button"
           tabIndex={0}
           aria-label="Drag to reorder this block"
-          style={{ touchAction: "none" }} // Prevent touch scrolling
+          style={{
+            touchAction: "none",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none"
+          }}
         >
           <GripVertical className="h-4 w-4 pointer-events-none" />
         </div>
@@ -916,11 +986,42 @@ export function BlockEditor({
         {/* Floating Toolbar */}
         <FloatingToolbar />
 
+        {/* Drag and Drop Test Area */}
+        <div className="max-w-4xl mx-auto pl-12 pr-8 py-2">
+          <div className="flex gap-4 p-4 bg-gray-50 rounded-lg mb-4">
+            <div
+              className="w-20 h-20 bg-blue-200 border-2 border-blue-400 rounded flex items-center justify-center cursor-grab active:cursor-grabbing"
+              draggable={true}
+              onDragStart={(e) => {
+                console.log("🧪 Test drag start");
+                e.dataTransfer.setData("text/plain", "test");
+              }}
+              onDragEnd={() => console.log("🧪 Test drag end")}
+            >
+              Drag Me
+            </div>
+            <div
+              className="w-40 h-20 bg-green-200 border-2 border-green-400 rounded flex items-center justify-center border-dashed"
+              onDragOver={(e) => {
+                e.preventDefault();
+                console.log("🧪 Test drag over");
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                console.log("🧪 Test drop");
+              }}
+            >
+              Drop Zone
+            </div>
+          </div>
+        </div>
+
         {/* Editor */}
         <div className="max-w-4xl mx-auto pl-12 pr-8 py-8">
           <EditorContent
             editor={editor}
             className="min-h-[500px] leading-relaxed text-base block-editor"
+            style={{ pointerEvents: 'auto' }} // Ensure drag events can be received
           />
         </div>
 

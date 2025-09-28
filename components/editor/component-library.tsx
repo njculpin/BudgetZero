@@ -1,29 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   ReusableComponent,
   ReusableComponentDisplay,
-  CreateComponentDialog
-} from './reusable-component';
-import {
-  Plus,
-  Search,
-  Filter,
-  Bookmark,
-  Clock,
-  Hash
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+  CreateComponentDialog,
+} from "./reusable-component";
+import { Plus, Search, Filter, Bookmark, Clock, Hash } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ComponentLibraryProps {
   components: ReusableComponent[];
-  onCreateComponent: (component: Omit<ReusableComponent, 'id' | 'metadata'>) => void;
+  onCreateComponent: (
+    component: Omit<ReusableComponent, "id" | "metadata">,
+  ) => void;
   onInsertComponent: (component: ReusableComponent) => void;
   onEditComponent: (id: string, updates: Partial<ReusableComponent>) => void;
   onDeleteComponent: (id: string) => void;
@@ -38,14 +33,19 @@ export function ComponentLibrary({
   onDeleteComponent,
   onDuplicateComponent,
 }: ComponentLibraryProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedComponent, setSelectedComponent] = useState<string | null>(
+    null,
+  );
 
   // Filter components based on search only
-  const filteredComponents = components.filter(component => {
-    const matchesSearch = component.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         component.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         component.metadata.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredComponents = components.filter((component) => {
+    const matchesSearch =
+      component.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      component.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      component.metadata.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
 
     return matchesSearch;
   });
@@ -55,7 +55,9 @@ export function ComponentLibrary({
     .sort((a, b) => b.metadata.usageCount - a.metadata.usageCount)
     .slice(0, 5);
 
-  const handleCreateComponent = (componentData: Omit<ReusableComponent, 'id' | 'metadata'>) => {
+  const handleCreateComponent = (
+    componentData: Omit<ReusableComponent, "id" | "metadata">,
+  ) => {
     onCreateComponent(componentData);
   };
 
@@ -64,8 +66,8 @@ export function ComponentLibrary({
     onEditComponent(component.id, {
       metadata: {
         ...component.metadata,
-        usageCount: component.metadata.usageCount + 1
-      }
+        usageCount: component.metadata.usageCount + 1,
+      },
     });
     onInsertComponent(component);
   };
@@ -119,14 +121,16 @@ export function ComponentLibrary({
               Recently Used
             </h3>
             <div className="space-y-2">
-              {recentComponents.slice(0, 3).map(component => (
+              {recentComponents.slice(0, 3).map((component) => (
                 <div
                   key={component.id}
                   className="p-2 bg-muted/30 rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => handleInsertComponent(component)}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{component.title}</span>
+                    <span className="text-sm font-medium">
+                      {component.title}
+                    </span>
                     <Badge variant="secondary" className="text-xs">
                       {component.metadata.usageCount}
                     </Badge>
@@ -165,9 +169,13 @@ function ComponentGrid({
       <div className="text-center py-8 text-muted-foreground">
         <Hash className="h-12 w-12 mx-auto mb-4 opacity-20" />
         <h3 className="font-medium text-foreground mb-2">No components yet</h3>
-        <p className="text-sm mb-4">Create reusable components to speed up your writing</p>
+        <p className="text-sm mb-4">
+          Create reusable components to speed up your writing
+        </p>
         <div className="space-y-2 text-xs text-left bg-muted/30 p-3 rounded-md">
-          <p><span className="font-medium">Examples:</span></p>
+          <p>
+            <span className="font-medium">Examples:</span>
+          </p>
           <p>• Reminder boxes for important rules</p>
           <p>• Game mechanic explanations</p>
           <p>• Setup instructions</p>
@@ -178,17 +186,19 @@ function ComponentGrid({
 
   return (
     <div className="space-y-3 max-h-[400px] overflow-y-auto">
-      {components.map(component => (
+      {components.map((component) => (
         <div key={component.id} className="relative group">
           <ReusableComponentDisplay
             component={component}
             isSelected={selectedComponent === component.id}
-            onSelect={() => onSelectComponent(
-              selectedComponent === component.id ? null : component.id
-            )}
+            onSelect={() =>
+              onSelectComponent(
+                selectedComponent === component.id ? null : component.id,
+              )
+            }
             onEdit={() => {
               // TODO: Implement edit dialog
-              console.log('Edit component:', component.id);
+              console.log("Edit component:", component.id);
             }}
             onDuplicate={() => onDuplicateComponent(component)}
             onDelete={() => onDeleteComponent(component.id)}
