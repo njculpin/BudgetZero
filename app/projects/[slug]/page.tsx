@@ -257,16 +257,18 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             </CardContent>
           </Card>
 
-          {/* Collaborators */}
+          {/* Team & Activity */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                Team
+                Team & Activity
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {/* Team Members */}
               <div className="space-y-3">
+                <h4 className="text-sm font-medium text-slate-900">Contributors</h4>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                     <span className="text-sm font-medium text-primary">
@@ -277,10 +279,48 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                     <p className="text-sm font-medium">
                       {project.creator.full_name || project.creator.email}
                     </p>
-                    <p className="text-xs text-slate-500">Creator</p>
+                    <p className="text-xs text-slate-500">Creator • Active today</p>
                   </div>
                 </div>
                 {/* TODO: Add collaborators when available */}
+              </div>
+
+              <Separator />
+
+              {/* Recent Activity */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-slate-900">Recent Activity</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start gap-2 text-slate-600">
+                    <Edit3 className="w-3 h-3 mt-1 text-blue-500" />
+                    <div>
+                      <span className="font-medium">Rulebook updated</span>
+                      <p className="text-xs text-slate-500">2 hours ago</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 text-slate-600">
+                    <Calendar className="w-3 h-3 mt-1 text-green-500" />
+                    <div>
+                      <span className="font-medium">Project created</span>
+                      <p className="text-xs text-slate-500">{new Date(project.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Indicators */}
+              <Separator />
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-slate-900">Progress</h4>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-600">Completion</span>
+                    <span className="text-slate-900 font-medium">25%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

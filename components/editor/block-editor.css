@@ -1,0 +1,251 @@
+/* Block Editor Styles */
+.block-editor .ProseMirror {
+  outline: none;
+}
+
+.block-editor .ProseMirror > * {
+  position: relative;
+  margin: 4px 0;
+  padding: 4px 0;
+  transition: background-color 0.1s ease;
+}
+
+.block-editor .ProseMirror > *:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+.block-editor .ProseMirror > *.ProseMirror-selectednode {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+}
+
+.block-editor .ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.block-editor .ProseMirror h1,
+.block-editor .ProseMirror h2,
+.block-editor .ProseMirror h3 {
+  font-weight: 600;
+  margin: 8px 0 4px 0;
+}
+
+.block-editor .ProseMirror h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.block-editor .ProseMirror h2 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.block-editor .ProseMirror h3 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.block-editor .ProseMirror p {
+  margin: 4px 0;
+  line-height: 1.6;
+}
+
+.block-editor .ProseMirror ul,
+.block-editor .ProseMirror ol {
+  margin: 8px 0;
+  padding-left: 1.5rem;
+}
+
+.block-editor .ProseMirror li {
+  margin: 2px 0;
+}
+
+/* Block hover states */
+.block-editor .ProseMirror > *:hover::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: rgba(59, 130, 246, 0.5);
+  border-radius: 1px;
+  z-index: 1;
+}
+
+/* Drag and drop styles */
+.block-editor .ProseMirror .drag-over {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-radius: 4px;
+}
+
+.block-editor .ProseMirror .dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.block-editor .ProseMirror .block-selected {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+/* Drag preview styles */
+.drag-preview {
+  background: white !important;
+  border: 2px solid #3b82f6 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transform: rotate(2deg) !important;
+}
+
+/* Plus button hover area - positioned in the left padding area */
+.block-editor .ProseMirror > *::after {
+  content: '';
+  position: absolute;
+  left: -40px; /* Position in the padding area */
+  top: 0;
+  width: 40px;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure block controls don't overflow */
+.block-editor .ProseMirror {
+  position: relative;
+  overflow: visible;
+}
+
+/* Block controls positioning */
+.block-editor .ProseMirror > * {
+  position: relative;
+}
+
+/* Enhanced focus styles for accessibility */
+.block-editor button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .block-editor .ProseMirror > *::after {
+    left: -36px;
+    width: 36px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .block-editor .ProseMirror > *:hover::before {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+
+  .block-editor button {
+    border: 1px solid transparent;
+  }
+
+  .block-editor button:hover,
+  .block-editor button:focus {
+    border-color: currentColor;
+  }
+}
+
+/* Drop line animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scaleY(0.8);
+  }
+}
+
+.drop-line {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Enhanced drag handle */
+.block-editor .drag-handle {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.block-editor .drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Improved dragging styles */
+.block-editor .ProseMirror .dragging {
+  opacity: 0.5;
+  transform: scale(0.98) rotate(1deg);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+/* Better drag over styles */
+.block-editor .ProseMirror .drag-over {
+  background-color: rgba(59, 130, 246, 0.08);
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  transition: all 0.15s ease;
+}
+
+/* Synced block styling */
+.synced-block-wrapper {
+  position: relative;
+}
+
+.synced-block-content {
+  outline: none;
+}
+
+.synced-block-wrapper .synced-block-content > * {
+  margin: 0;
+}
+
+/* Synced block indicators */
+.synced-block-wrapper[data-is-original="true"] {
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.synced-block-wrapper[data-is-original="false"] {
+  border-color: #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.05);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .block-editor .ProseMirror > * {
+    transition: none;
+  }
+
+  .drop-line {
+    animation: none;
+  }
+
+  .block-editor .ProseMirror .dragging {
+    transition: none;
+  }
+
+  .block-editor .ProseMirror .drag-over {
+    transition: none;
+  }
+
+  .synced-block-wrapper {
+    transition: none;
+  }
+}

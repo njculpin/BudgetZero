@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { SimpleEditor } from './simple-editor';
+import { BlockEditor } from './block-editor';
 import { createClient } from '@/lib/supabase/client';
 import { GameProject, Rulebook } from '@/lib/types/database';
 
@@ -54,7 +55,7 @@ export function EditorPageClient({ project, rulebook, canEdit }: EditorPageClien
   };
 
   return (
-    <SimpleEditor
+    <BlockEditor
       initialContent={rulebook?.content}
       projectTitle={project.title}
       isReadOnly={!canEdit}

@@ -1,9 +1,15 @@
-import { createClient } from '@/lib/supabase/server';
-import { QuickProjectForm } from '@/components/forms/quick-project-form';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MainLayout } from '@/components/layouts/main-layout';
-import Link from 'next/link';
+import { createClient } from "@/lib/supabase/server";
+import { QuickProjectForm } from "@/components/forms/quick-project-form";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { MainLayout } from "@/components/layouts/main-layout";
+import Link from "next/link";
 import {
   Zap,
   BookOpen,
@@ -12,12 +18,14 @@ import {
   Plus,
   Eye,
   Activity,
-  Star
-} from 'lucide-react';
+  Star,
+} from "lucide-react";
 
 export default async function Home() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return (
@@ -26,7 +34,7 @@ export default async function Home() {
           <Card className="max-w-md mx-auto text-center p-8">
             <div className="space-y-6">
               <div className="space-y-4">
-                <h1 className="text-4xl font-bold text-slate-900">BudgetZero</h1>
+                <h1 className="text-4xl font-bold text-slate-900">Workshop</h1>
                 <p className="text-lg text-slate-600">
                   Collaborative tabletop game creation platform
                 </p>
@@ -51,13 +59,11 @@ export default async function Home() {
   }
 
   return (
-    <MainLayout user={user} breadcrumbs={[{ label: 'Home' }]}>
+    <MainLayout user={user} breadcrumbs={[{ label: "Home" }]}>
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">
-              Welcome back!
-            </h1>
+            <h1 className="text-3xl font-bold text-slate-900">Welcome back!</h1>
             <p className="text-slate-600 mt-2">
               Ready to continue working on your tabletop games?
             </p>
@@ -76,7 +82,9 @@ export default async function Home() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">My Projects</p>
+                  <p className="text-sm font-medium text-slate-600">
+                    My Projects
+                  </p>
                   <p className="text-2xl font-bold">0</p>
                 </div>
                 <BookOpen className="w-8 h-8 text-blue-500" />
@@ -88,7 +96,9 @@ export default async function Home() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Published</p>
+                  <p className="text-sm font-medium text-slate-600">
+                    Published
+                  </p>
                   <p className="text-2xl font-bold">0</p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-green-500" />
@@ -100,7 +110,9 @@ export default async function Home() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Collaborations</p>
+                  <p className="text-sm font-medium text-slate-600">
+                    Collaborations
+                  </p>
                   <p className="text-2xl font-bold">0</p>
                 </div>
                 <Users className="w-8 h-8 text-purple-500" />
@@ -137,9 +149,7 @@ export default async function Home() {
                       <p className="text-xs text-slate-600">Start a new game</p>
                     </div>
                     <Button asChild size="sm">
-                      <Link href="/projects/new">
-                        Create
-                      </Link>
+                      <Link href="/projects/new">Create</Link>
                     </Button>
                   </div>
                 </CardContent>
@@ -153,12 +163,12 @@ export default async function Home() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-sm">Browse Games</h3>
-                      <p className="text-xs text-slate-600">Discover projects</p>
+                      <p className="text-xs text-slate-600">
+                        Discover projects
+                      </p>
                     </div>
                     <Button asChild size="sm" variant="outline">
-                      <Link href="/browse">
-                        Explore
-                      </Link>
+                      <Link href="/browse">Explore</Link>
                     </Button>
                   </div>
                 </CardContent>
@@ -172,13 +182,17 @@ export default async function Home() {
                   <Activity className="w-5 h-5" />
                   Recent Activity
                 </CardTitle>
-                <CardDescription>Your latest actions and updates</CardDescription>
+                <CardDescription>
+                  Your latest actions and updates
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8 space-y-4">
                   <Activity className="w-12 h-12 text-slate-300 mx-auto" />
                   <div className="space-y-2">
-                    <h3 className="text-base font-semibold text-slate-900">No Recent Activity</h3>
+                    <h3 className="text-base font-semibold text-slate-900">
+                      No Recent Activity
+                    </h3>
                     <p className="text-sm text-slate-600">
                       Start creating projects to see your activity here.
                     </p>
@@ -197,7 +211,9 @@ export default async function Home() {
                   <Zap className="w-5 h-5" />
                   Quick Start Guide
                 </CardTitle>
-                <CardDescription>Get started in just a few steps</CardDescription>
+                <CardDescription>
+                  Get started in just a few steps
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -207,7 +223,9 @@ export default async function Home() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium">Create a project</p>
-                      <p className="text-xs text-slate-600">Set up your game's basic information</p>
+                      <p className="text-xs text-slate-600">
+                        Set up your game's basic information
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -216,7 +234,9 @@ export default async function Home() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium">Write your rules</p>
-                      <p className="text-xs text-slate-600">Use our collaborative editor</p>
+                      <p className="text-xs text-slate-600">
+                        Use our collaborative editor
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -224,8 +244,12 @@ export default async function Home() {
                       3
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Invite collaborators</p>
-                      <p className="text-xs text-slate-600">Work together with other creators</p>
+                      <p className="text-sm font-medium">
+                        Invite collaborators
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        Work together with other creators
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -234,7 +258,9 @@ export default async function Home() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium">Publish & share</p>
-                      <p className="text-xs text-slate-600">Make your game available to players</p>
+                      <p className="text-xs text-slate-600">
+                        Make your game available to players
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -248,13 +274,15 @@ export default async function Home() {
                   <Star className="w-5 h-5" />
                   Platform Features
                 </CardTitle>
-                <CardDescription>What you can do with BudgetZero</CardDescription>
+                <CardDescription>What you can do with Workshop</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <BookOpen className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm">Collaborative rulebook editor</span>
+                    <span className="text-sm">
+                      Collaborative rulebook editor
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Users className="w-4 h-4 text-purple-500" />
@@ -262,7 +290,9 @@ export default async function Home() {
                   </div>
                   <div className="flex items-center gap-3">
                     <TrendingUp className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">Analytics & performance tracking</span>
+                    <span className="text-sm">
+                      Analytics & performance tracking
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Activity className="w-4 h-4 text-orange-500" />
@@ -278,22 +308,24 @@ export default async function Home() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button asChild variant="outline" className="w-full justify-start">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full justify-start"
+                >
                   <Link href="/browse">
                     <Eye className="w-4 h-4 mr-2" />
                     Browse Community Projects
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full justify-start"
+                >
                   <Link href="/teams">
                     <Users className="w-4 h-4 mr-2" />
                     Find Collaborators
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/marketplace">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Explore Marketplace
                   </Link>
                 </Button>
               </CardContent>
