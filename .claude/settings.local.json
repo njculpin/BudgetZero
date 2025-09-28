@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Nick/Pictures/Screenshots/**)",
+      "Bash(find:*)",
+      "Bash(supabase status:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm run dev:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,4 +1,4 @@
--- Initial schema for BudgetZero collaborative tabletop game platform
+-- Initial schema for Workshop collaborative tabletop game platform
 
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

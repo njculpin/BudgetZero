@@ -1,14 +1,30 @@
-// Database types for BudgetZero platform
+// Database types for Workshop platform
 
-export type CreatorRole = 'designer' | 'illustrator' | 'modeler' | 'editor' | 'photographer';
-export type ProjectStatus = 'draft' | 'active' | 'archived' | 'published';
-export type CollaborationPermission = 'read' | 'comment' | 'edit' | 'admin';
-export type LicenseType = 'free' | 'attribution' | 'commercial' | 'exclusive';
-export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'revoked';
-export type AssetType = 'model' | 'illustration' | 'photo' | 'texture' | 'audio';
-export type ActivityType = 'project_created' | 'project_updated' | 'collaborator_added' | 'asset_added' | 'rulebook_updated' | 'comment_added';
-export type ResourceType = 'project' | 'rulebook' | 'asset' | 'collaboration';
-export type ExperienceLevel = 'beginner' | 'intermediate' | 'expert';
+export type CreatorRole =
+  | "designer"
+  | "illustrator"
+  | "modeler"
+  | "editor"
+  | "photographer";
+export type ProjectStatus = "draft" | "active" | "archived" | "published";
+export type CollaborationPermission = "read" | "comment" | "edit" | "admin";
+export type LicenseType = "free" | "attribution" | "commercial" | "exclusive";
+export type InvitationStatus = "pending" | "accepted" | "declined" | "revoked";
+export type AssetType =
+  | "model"
+  | "illustration"
+  | "photo"
+  | "texture"
+  | "audio";
+export type ActivityType =
+  | "project_created"
+  | "project_updated"
+  | "collaborator_added"
+  | "asset_added"
+  | "rulebook_updated"
+  | "comment_added";
+export type ResourceType = "project" | "rulebook" | "asset" | "collaboration";
+export type ExperienceLevel = "beginner" | "intermediate" | "expert";
 
 // Profile interfaces
 export interface Profile {

@@ -5,7 +5,6 @@ import { MainLayout } from '@/components/layouts/main-layout';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
 
 interface EditorPageProps {
   params: Promise<{ slug: string }>;
@@ -59,25 +58,14 @@ export default async function EditorPage({ params }: EditorPageProps) {
     <MainLayout user={user} breadcrumbs={breadcrumbs}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={`/projects/${project.slug}`}>
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to Project
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-xl font-semibold">{project.title}</h1>
-              <p className="text-sm text-slate-600">
-                {canEdit ? 'Editing rulebook' : 'Viewing rulebook'}
-              </p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-semibold">{project.title}</h1>
           </div>
 
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" asChild>
               <Link href={`/projects/${project.slug}`}>
-                Project Details
+                Overview
               </Link>
             </Button>
           </div>

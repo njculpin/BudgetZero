@@ -28,7 +28,7 @@ import { Superscript } from '@tiptap/extension-superscript';
 import { ListItem } from '@tiptap/extension-list-item';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import {
   Bold,
   Italic,
@@ -48,7 +48,6 @@ import {
   Table as TableIcon,
   Undo,
   Redo,
-  Save,
   CheckCircle,
   Highlighter,
   Palette,
@@ -80,6 +79,9 @@ export function SimpleEditor({
 }: SimpleEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
+  const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
+  const floatingToolbarRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -162,6 +164,34 @@ export function SimpleEditor({
       if (onContentChange) {
         onContentChange(editor.getJSON());
       }
+    },
+    onSelectionUpdate: ({ editor }) => {
+      const { from, to, empty } = editor.state.selection;
+
+      if (empty || isReadOnly) {
+        setShowFloatingToolbar(false);
+        return;
+      }
+
+      // Get the DOM range for the selection
+      const { view } = editor;
+      const start = view.coordsAtPos(from);
+      const end = view.coordsAtPos(to);
+
+      // Calculate toolbar position
+      const editorRect = view.dom.getBoundingClientRect();
+      const centerX = (start.left + end.left) / 2;
+      const top = start.top - 60; // Position above selection
+
+      // Calculate relative position to the editor container
+      const relativeTop = Math.max(10, top - editorRect.top);
+      const relativeLeft = Math.max(10, Math.min(centerX - editorRect.left, editorRect.width - 200));
+
+      setToolbarPosition({
+        top: relativeTop,
+        left: relativeLeft
+      });
+      setShowFloatingToolbar(true);
     },
   });
 
@@ -254,38 +284,137 @@ export function SimpleEditor({
     );
   }
 
-  return (
-    <div className="w-full mx-auto space-y-4">
-      {/* Toolbar */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Rulebook Editor</h2>
-          <div className="flex items-center gap-4">
-            {editor && (
-              <div className="text-xs text-muted-foreground">
-                {editor.storage.characterCount.characters()} characters, {editor.storage.characterCount.words()} words
-              </div>
-            )}
-            {lastSaved && (
-              <div className="flex items-center gap-1">
-                <CheckCircle className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-muted-foreground">
-                  Saved {lastSaved.toLocaleTimeString()}
-                </span>
-              </div>
-            )}
-            {onSave && (
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                size="sm"
-              >
-                <Save className="w-4 h-4 mr-1" />
-                {isSaving ? 'Saving...' : 'Save'}
-              </Button>
-            )}
-          </div>
-        </div>
+  // Floating Toolbar Component
+  const FloatingToolbar = () => {
+    if (!showFloatingToolbar || !editor) return null;
 
+    return (
+      <div
+        ref={floatingToolbarRef}
+        className="absolute z-50 flex items-center gap-1 p-2 bg-white border border-gray-200 rounded-lg shadow-lg"
+        style={{
+          top: `${toolbarPosition.top}px`,
+          left: `${toolbarPosition.left}px`,
+          transform: 'translateX(-50%)',
+        }}
+      >
+        {/* Bold */}
+        <Button
+          variant={editor.isActive('bold') ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className="h-8 w-8 p-0"
+        >
+          <Bold className="h-4 w-4" />
+        </Button>
+
+        {/* Italic */}
+        <Button
+          variant={editor.isActive('italic') ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className="h-8 w-8 p-0"
+        >
+          <Italic className="h-4 w-4" />
+        </Button>
+
+        {/* Underline */}
+        <Button
+          variant={editor.isActive('underline') ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          className="h-8 w-8 p-0"
+        >
+          <Underline className="h-4 w-4" />
+        </Button>
+
+        {/* Strikethrough */}
+        <Button
+          variant={editor.isActive('strike') ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          className="h-8 w-8 p-0"
+        >
+          <Strikethrough className="h-4 w-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
+        {/* Code */}
+        <Button
+          variant={editor.isActive('code') ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          className="h-8 w-8 p-0"
+        >
+          <Code className="h-4 w-4" />
+        </Button>
+
+        {/* Highlight */}
+        <Button
+          variant={editor.isActive('highlight') ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().toggleHighlight().run()}
+          className="h-8 w-8 p-0"
+        >
+          <Highlighter className="h-4 w-4" />
+        </Button>
+
+        {/* Link */}
+        <Button
+          variant={editor.isActive('link') ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => {
+            const url = window.prompt('Enter URL');
+            if (url) {
+              editor.chain().focus().setLink({ href: url }).run();
+            }
+          }}
+          className="h-8 w-8 p-0"
+        >
+          <LinkIcon className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full mx-auto space-y-4 relative">
+      {/* Status Bar */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          {editor && (
+            <div className="text-xs text-muted-foreground">
+              {editor.storage.characterCount.characters()} characters, {editor.storage.characterCount.words()} words
+            </div>
+          )}
+          {lastSaved && (
+            <div className="flex items-center gap-1">
+              <CheckCircle className="w-3 h-3 text-green-500" />
+              <span className="text-xs text-muted-foreground">
+                Saved {lastSaved.toLocaleTimeString()}
+              </span>
+            </div>
+          )}
+          {isSaving && (
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+              <span className="text-xs text-muted-foreground">
+                Saving...
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Floating Toolbar */}
+      <FloatingToolbar />
+
+      {/* Hidden static toolbar - keeping for advanced features if needed later */}
+      <details className="group">
+        <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground mb-2">
+          Advanced formatting options
+        </summary>
         <div className="flex flex-wrap items-center gap-1 p-3 bg-muted/20 rounded-lg">
           {/* Undo/Redo */}
           <Button
@@ -601,6 +730,7 @@ export function SimpleEditor({
             <Scissors className="h-4 w-4" />
           </Button>
         </div>
+      </details>
 
       {/* Editor */}
         <div className="p-8">

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -14,9 +14,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-} from '@/components/ui/sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +25,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Home,
   FolderOpen,
@@ -37,9 +37,9 @@ import {
   LogOut,
   User,
   ChevronsUpDown,
-} from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface AppSidebarProps {
   user?: {
@@ -54,46 +54,36 @@ interface AppSidebarProps {
 
 const navigation = [
   {
-    title: 'Main',
+    title: "Main",
     items: [
       {
-        title: 'Home',
-        url: '/',
+        title: "Home",
+        url: "/",
         icon: Home,
       },
       {
-        title: 'My Projects',
-        url: '/projects',
+        title: "My Projects",
+        url: "/projects",
         icon: FolderOpen,
       },
-    ],
-  },
-  {
-    title: 'Discover',
-    items: [
       {
-        title: 'Browse Projects',
-        url: '/browse',
+        title: "Browse Projects",
+        url: "/browse",
         icon: BookOpen,
       },
-      {
-        title: 'Marketplace',
-        url: '/marketplace',
-        icon: Package,
-      },
     ],
   },
   {
-    title: 'Collaboration',
+    title: "Collaboration",
     items: [
       {
-        title: 'Teams',
-        url: '/teams',
+        title: "Teams",
+        url: "/teams",
         icon: Users,
       },
       {
-        title: 'Analytics',
-        url: '/analytics',
+        title: "Analytics",
+        url: "/analytics",
         icon: BarChart3,
       },
     ],
@@ -109,14 +99,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
     setIsLoading(true);
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/auth/login');
+    router.push("/auth/login");
   };
 
-  const userName = user?.user_metadata?.full_name || user?.email || 'User';
+  const userName = user?.user_metadata?.full_name || user?.email || "User";
   const userInitials = userName
-    .split(' ')
-    .map(name => name.charAt(0))
-    .join('')
+    .split(" ")
+    .map((name) => name.charAt(0))
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 
@@ -126,7 +116,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
         {/* Brand */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold px-2 py-4">
-            BudgetZero
+            Workshop
           </SidebarGroupLabel>
         </SidebarGroup>
 
@@ -138,10 +128,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
               <SidebarMenu>
                 {group.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === item.url}
-                    >
+                    <SidebarMenuButton asChild isActive={pathname === item.url}>
                       <Link href={item.url}>
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>
@@ -166,7 +153,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} alt={userName} />
+                    <AvatarImage
+                      src={user?.user_metadata?.avatar_url}
+                      alt={userName}
+                    />
                     <AvatarFallback className="rounded-lg">
                       {userInitials}
                     </AvatarFallback>
@@ -187,7 +177,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage src={user?.user_metadata?.avatar_url} alt={userName} />
+                      <AvatarImage
+                        src={user?.user_metadata?.avatar_url}
+                        alt={userName}
+                      />
                       <AvatarFallback className="rounded-lg">
                         {userInitials}
                       </AvatarFallback>
@@ -220,7 +213,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   className="cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  {isLoading ? 'Signing out...' : 'Sign out'}
+                  {isLoading ? "Signing out..." : "Sign out"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
