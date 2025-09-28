@@ -67,7 +67,7 @@
 
 /* Block hover states */
 .block-editor .ProseMirror > *:hover::before {
-  content: '';
+  content: "";
   position: absolute;
   left: -4px;
   top: 0;
@@ -87,7 +87,9 @@
 .block-editor .ProseMirror .dragging {
   opacity: 0.4;
   transform: scale(0.98);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .block-editor .ProseMirror .block-selected {
@@ -108,7 +110,7 @@
 
 /* Plus button hover area - positioned in the left padding area */
 .block-editor .ProseMirror > *::after {
-  content: '';
+  content: "";
   position: absolute;
   left: -40px; /* Position in the padding area */
   top: 0;
@@ -161,7 +163,8 @@
 
 /* Drop line animation */
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scaleY(1);
   }
@@ -190,9 +193,11 @@
 /* Improved dragging styles */
 .block-editor .ProseMirror .dragging {
   opacity: 0.5;
-  transform: scale(0.98) rotate(1deg);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  pointer-events: none;
+  /* Remove transform that might interfere with drag detection */
+  /* transform: scale(0.98) rotate(1deg); */
+  transition: opacity 0.2s ease;
+  /* Allow pointer events during drag for drop detection */
+  pointer-events: auto;
 }
 
 /* Better drag over styles */
@@ -206,25 +211,66 @@
 /* Synced block styling */
 .synced-block-wrapper {
   position: relative;
+  overflow: visible;
 }
 
 .synced-block-content {
   outline: none;
+  min-height: 2rem;
+}
+
+.synced-block-content .ProseMirror {
+  outline: none;
 }
 
 .synced-block-wrapper .synced-block-content > * {
-  margin: 0;
+  margin: 0.5rem 0;
 }
 
-/* Synced block indicators */
-.synced-block-wrapper[data-is-original="true"] {
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
+.synced-block-wrapper .synced-block-content > *:first-child {
+  margin-top: 0;
 }
 
-.synced-block-wrapper[data-is-original="false"] {
-  border-color: #8b5cf6;
-  background-color: rgba(139, 92, 246, 0.05);
+.synced-block-wrapper .synced-block-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Enhanced hover effects for sync blocks */
+.synced-block-wrapper:hover {
+  transform: translateY(-1px);
+}
+
+/* Focus management for nested content */
+.synced-block-content:focus-within {
+  background-color: rgba(var(--accent), 0.05);
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+/* Better spacing for typography inside sync blocks */
+.synced-block-content h1,
+.synced-block-content h2,
+.synced-block-content h3,
+.synced-block-content h4,
+.synced-block-content h5,
+.synced-block-content h6 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.synced-block-content p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.synced-block-content ul,
+.synced-block-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.synced-block-content li {
+  margin: 0.25rem 0;
 }
 
 /* Reduced motion support */
@@ -247,5 +293,15 @@
 
   .synced-block-wrapper {
     transition: none;
+    transform: none !important;
+  }
+
+  .synced-block-content:focus-within {
+    transition: none;
+  }
+
+  /* Disable animations for sync status indicators */
+  .synced-block-wrapper .animate-pulse {
+    animation: none;
   }
 }

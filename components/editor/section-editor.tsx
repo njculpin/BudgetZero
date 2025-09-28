@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableHeader } from '@tiptap/extension-table-header';
-import { TableCell } from '@tiptap/extension-table-cell';
-import Placeholder from '@tiptap/extension-placeholder';
-import UnderlineExtension from '@tiptap/extension-underline';
-import StrikeExtension from '@tiptap/extension-strike';
-import CodeExtension from '@tiptap/extension-code';
-import HorizontalRule from '@tiptap/extension-horizontal-rule';
-import TextAlign from '@tiptap/extension-text-align';
-import { ReusableComponentExtension } from './tiptap-component-extension';
-import { GridLayoutExtension } from './grid-layout-extension';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { useCallback, useEffect, useState } from 'react';
-import { RulebookSection } from './page-section-manager';
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableCell } from "@tiptap/extension-table-cell";
+import Placeholder from "@tiptap/extension-placeholder";
+import UnderlineExtension from "@tiptap/extension-underline";
+import StrikeExtension from "@tiptap/extension-strike";
+import CodeExtension from "@tiptap/extension-code";
+import HorizontalRule from "@tiptap/extension-horizontal-rule";
+import TextAlign from "@tiptap/extension-text-align";
+import { ReusableComponentExtension } from "./tiptap-component-extension";
+import { GridLayoutExtension } from "./grid-layout-extension";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { useCallback, useEffect, useState } from "react";
+import { RulebookSection } from "./page-section-manager";
 import {
   Bold,
   Italic,
@@ -41,15 +41,21 @@ import {
   Redo,
   MoreHorizontal,
   ChevronDown,
-  Keyboard
-} from 'lucide-react';
+  Keyboard,
+} from "lucide-react";
 
 interface SectionEditorProps {
   section: RulebookSection;
   onContentChange?: (sectionId: string, content: any) => void;
   isReadOnly?: boolean;
   isVisible?: boolean;
-  onInsertComponent?: (componentId: string, componentType: string, componentTitle: string, componentContent: string, componentSettings: any) => void;
+  onInsertComponent?: (
+    componentId: string,
+    componentType: string,
+    componentTitle: string,
+    componentContent: string,
+    componentSettings: any,
+  ) => void;
 }
 
 export function SectionEditor({
@@ -57,7 +63,7 @@ export function SectionEditor({
   onContentChange,
   isReadOnly = false,
   isVisible = true,
-  onInsertComponent
+  onInsertComponent,
 }: SectionEditorProps) {
   const [showAdvancedTools, setShowAdvancedTools] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
@@ -75,7 +81,7 @@ export function SectionEditor({
       CodeExtension,
       HorizontalRule,
       TextAlign.configure({
-        types: ['heading', 'paragraph'],
+        types: ["heading", "paragraph"],
       }),
       Table.configure({
         resizable: true,
@@ -85,8 +91,8 @@ export function SectionEditor({
       TableCell,
       Placeholder.configure({
         placeholder: ({ node }) => {
-          if (node.type.name === 'heading') {
-            return 'Write a heading...';
+          if (node.type.name === "heading") {
+            return "Write a heading...";
           }
           return `Start writing your ${section.title.toLowerCase()} content here. Use the toolbar above or try keyboard shortcuts like Ctrl+B for bold, Ctrl+2 for heading, or ? for help.`;
         },
@@ -95,18 +101,18 @@ export function SectionEditor({
       GridLayoutExtension,
     ],
     content: section.content || {
-      type: 'doc',
+      type: "doc",
       content: [
         {
-          type: 'heading',
+          type: "heading",
           attrs: { level: 2 },
-          content: [{ type: 'text', text: section.title }]
+          content: [{ type: "text", text: section.title }],
         },
         {
-          type: 'paragraph',
-          content: [{ type: 'text', text: '' }]
-        }
-      ]
+          type: "paragraph",
+          content: [{ type: "text", text: "" }],
+        },
+      ],
     },
     editable: !isReadOnly,
     onUpdate: ({ editor }) => {
@@ -118,7 +124,11 @@ export function SectionEditor({
 
   // Update content when section content changes
   useEffect(() => {
-    if (editor && section.content && JSON.stringify(editor.getJSON()) !== JSON.stringify(section.content)) {
+    if (
+      editor &&
+      section.content &&
+      JSON.stringify(editor.getJSON()) !== JSON.stringify(section.content)
+    ) {
       editor.commands.setContent(section.content);
     }
   }, [section.content, editor]);
@@ -139,66 +149,70 @@ export function SectionEditor({
 
       if (isCtrlOrCmd) {
         switch (event.key.toLowerCase()) {
-          case 'b':
+          case "b":
             event.preventDefault();
             editor.chain().focus().toggleBold().run();
             break;
-          case 'i':
+          case "i":
             event.preventDefault();
             editor.chain().focus().toggleItalic().run();
             break;
-          case 'u':
+          case "u":
             if (event.shiftKey) {
               event.preventDefault();
               editor.chain().focus().toggleUnderline().run();
             }
             break;
-          case 'k':
+          case "k":
             event.preventDefault();
             editor.chain().focus().toggleCode().run();
             break;
-          case '1':
+          case "1":
             event.preventDefault();
             editor.chain().focus().toggleHeading({ level: 1 }).run();
             break;
-          case '2':
+          case "2":
             event.preventDefault();
             editor.chain().focus().toggleHeading({ level: 2 }).run();
             break;
-          case '3':
+          case "3":
             event.preventDefault();
             editor.chain().focus().toggleHeading({ level: 3 }).run();
             break;
-          case 'l':
+          case "l":
             if (event.shiftKey) {
               event.preventDefault();
               editor.chain().focus().toggleBulletList().run();
             }
             break;
-          case 'o':
+          case "o":
             if (event.shiftKey) {
               event.preventDefault();
               editor.chain().focus().toggleOrderedList().run();
             }
             break;
-          case 'q':
+          case "q":
             if (event.shiftKey) {
               event.preventDefault();
               editor.chain().focus().toggleBlockquote().run();
             }
             break;
-          case 'g':
+          case "g":
             if (event.shiftKey) {
               event.preventDefault();
-              editor.chain().focus().insertGridLayout({
-                columns: 2,
-                rows: 1,
-                gap: '1rem',
-                items: []
-              }).run();
+              editor
+                .chain()
+                .focus()
+                .insertGridLayout({
+                  columns: 2,
+                  rows: 1,
+                  gap: "1rem",
+                  items: [],
+                })
+                .run();
             }
             break;
-          case 'm':
+          case "m":
             if (event.shiftKey) {
               event.preventDefault();
               setShowAdvancedTools(!showAdvancedTools);
@@ -208,15 +222,15 @@ export function SectionEditor({
       } else {
         // Non-modifier key shortcuts
         switch (event.key) {
-          case '?':
+          case "?":
             event.preventDefault();
             setShowKeyboardHelp(!showKeyboardHelp);
             break;
-          case 'F1':
+          case "F1":
             event.preventDefault();
             setShowKeyboardHelp(!showKeyboardHelp);
             break;
-          case 'Escape':
+          case "Escape":
             if (showKeyboardHelp || showAdvancedTools) {
               event.preventDefault();
               setShowKeyboardHelp(false);
@@ -227,28 +241,42 @@ export function SectionEditor({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editor, showAdvancedTools, showKeyboardHelp]);
 
   // Method to insert a reusable component
-  const insertReusableComponent = useCallback((componentId: string, componentType: string, componentTitle: string, componentContent: string, componentSettings: any) => {
-    if (editor) {
-      editor.chain().focus().insertReusableComponent({
-        componentId,
-        componentType,
-        componentTitle,
-        componentContent,
-        componentSettings
-      }).run();
-    }
-  }, [editor]);
+  const insertReusableComponent = useCallback(
+    (
+      componentId: string,
+      componentType: string,
+      componentTitle: string,
+      componentContent: string,
+      componentSettings: any,
+    ) => {
+      if (editor) {
+        editor
+          .chain()
+          .focus()
+          .insertReusableComponent({
+            componentId,
+            componentType,
+            componentTitle,
+            componentContent,
+            componentSettings,
+          })
+          .run();
+      }
+    },
+    [editor],
+  );
 
   // Expose insertion method to parent
   useEffect(() => {
     if (onInsertComponent && insertReusableComponent) {
       // Store the insertion method for the parent component to use
-      (window as any)[`insertIntoSection_${section.id}`] = insertReusableComponent;
+      (window as any)[`insertIntoSection_${section.id}`] =
+        insertReusableComponent;
     }
     return () => {
       delete (window as any)[`insertIntoSection_${section.id}`];
@@ -265,14 +293,16 @@ export function SectionEditor({
 
   return (
     <Card
-      className={`flex-1 min-h-[500px] transition-all duration-200 border-0 shadow-none bg-transparent ${isVisible ? 'block' : 'hidden'}`}
+      className={`flex-1 min-h-[500px] transition-all duration-200 border-0 shadow-none bg-transparent ${isVisible ? "block" : "hidden"}`}
     >
       <div className="p-8">
         <div className="mb-8 pb-4 border-b border-border/20">
           <h3 className="text-xl font-medium text-foreground/80 tracking-tight">
             {section.title}
           </h3>
-          <p className="text-sm text-muted-foreground mt-1">Draft in progress</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Draft in progress
+          </p>
         </div>
 
         {/* Simplified Toolbar */}
@@ -305,7 +335,7 @@ export function SectionEditor({
 
               {/* Essential text formatting */}
               <Button
-                variant={editor.isActive('bold') ? 'default' : 'ghost'}
+                variant={editor.isActive("bold") ? "default" : "ghost"}
                 size="sm"
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 className="h-8 w-8 p-0"
@@ -314,7 +344,7 @@ export function SectionEditor({
                 <Bold className="h-4 w-4" />
               </Button>
               <Button
-                variant={editor.isActive('italic') ? 'default' : 'ghost'}
+                variant={editor.isActive("italic") ? "default" : "ghost"}
                 size="sm"
                 onClick={() => editor.chain().focus().toggleItalic().run()}
                 className="h-8 w-8 p-0"
@@ -327,18 +357,26 @@ export function SectionEditor({
 
               {/* Common headings */}
               <Button
-                variant={editor.isActive('heading', { level: 2 }) ? 'default' : 'ghost'}
+                variant={
+                  editor.isActive("heading", { level: 2 }) ? "default" : "ghost"
+                }
                 size="sm"
-                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                onClick={() =>
+                  editor.chain().focus().toggleHeading({ level: 2 }).run()
+                }
                 className="h-8 w-8 p-0"
                 title="Heading 2"
               >
                 <Heading2 className="h-4 w-4" />
               </Button>
               <Button
-                variant={editor.isActive('heading', { level: 3 }) ? 'default' : 'ghost'}
+                variant={
+                  editor.isActive("heading", { level: 3 }) ? "default" : "ghost"
+                }
                 size="sm"
-                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                onClick={() =>
+                  editor.chain().focus().toggleHeading({ level: 3 }).run()
+                }
                 className="h-8 w-8 p-0"
                 title="Heading 3"
               >
@@ -349,7 +387,7 @@ export function SectionEditor({
 
               {/* Lists */}
               <Button
-                variant={editor.isActive('bulletList') ? 'default' : 'ghost'}
+                variant={editor.isActive("bulletList") ? "default" : "ghost"}
                 size="sm"
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
                 className="h-8 w-8 p-0"
@@ -358,7 +396,7 @@ export function SectionEditor({
                 <List className="h-4 w-4" />
               </Button>
               <Button
-                variant={editor.isActive('orderedList') ? 'default' : 'ghost'}
+                variant={editor.isActive("orderedList") ? "default" : "ghost"}
                 size="sm"
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
                 className="h-8 w-8 p-0"
@@ -373,12 +411,18 @@ export function SectionEditor({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => editor.chain().focus().insertGridLayout({
-                  columns: 2,
-                  rows: 1,
-                  gap: '1rem',
-                  items: []
-                }).run()}
+                onClick={() =>
+                  editor
+                    .chain()
+                    .focus()
+                    .insertGridLayout({
+                      columns: 2,
+                      rows: 1,
+                      gap: "1rem",
+                      items: [],
+                    })
+                    .run()
+                }
                 className="h-8 w-8 p-0"
                 title="Insert Grid Layout"
               >
@@ -389,7 +433,7 @@ export function SectionEditor({
 
               {/* Keyboard shortcuts help */}
               <Button
-                variant={showKeyboardHelp ? 'default' : 'ghost'}
+                variant={showKeyboardHelp ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setShowKeyboardHelp(!showKeyboardHelp)}
                 className="h-8 w-8 p-0"
@@ -400,14 +444,16 @@ export function SectionEditor({
 
               {/* More tools toggle */}
               <Button
-                variant={showAdvancedTools ? 'default' : 'ghost'}
+                variant={showAdvancedTools ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setShowAdvancedTools(!showAdvancedTools)}
                 className="h-8 px-2 gap-1"
                 title="More formatting options (Ctrl+Shift+M)"
               >
                 <MoreHorizontal className="h-4 w-4" />
-                <ChevronDown className={`h-3 w-3 transition-transform ${showAdvancedTools ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`h-3 w-3 transition-transform ${showAdvancedTools ? "rotate-180" : ""}`}
+                />
               </Button>
             </div>
 
@@ -417,16 +463,18 @@ export function SectionEditor({
                 <div className="flex flex-wrap items-center gap-1">
                   {/* Additional text formatting */}
                   <Button
-                    variant={editor.isActive('underline') ? 'default' : 'ghost'}
+                    variant={editor.isActive("underline") ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => editor.chain().focus().toggleUnderline().run()}
+                    onClick={() =>
+                      editor.chain().focus().toggleUnderline().run()
+                    }
                     className="h-8 w-8 p-0"
                     title="Underline"
                   >
                     <Underline className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant={editor.isActive('strike') ? 'default' : 'ghost'}
+                    variant={editor.isActive("strike") ? "default" : "ghost"}
                     size="sm"
                     onClick={() => editor.chain().focus().toggleStrike().run()}
                     className="h-8 w-8 p-0"
@@ -435,7 +483,7 @@ export function SectionEditor({
                     <Strikethrough className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant={editor.isActive('code') ? 'default' : 'ghost'}
+                    variant={editor.isActive("code") ? "default" : "ghost"}
                     size="sm"
                     onClick={() => editor.chain().focus().toggleCode().run()}
                     className="h-8 w-8 p-0"
@@ -448,9 +496,15 @@ export function SectionEditor({
 
                   {/* Additional heading */}
                   <Button
-                    variant={editor.isActive('heading', { level: 1 }) ? 'default' : 'ghost'}
+                    variant={
+                      editor.isActive("heading", { level: 1 })
+                        ? "default"
+                        : "ghost"
+                    }
                     size="sm"
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                    onClick={() =>
+                      editor.chain().focus().toggleHeading({ level: 1 }).run()
+                    }
                     className="h-8 w-8 p-0"
                     title="Heading 1"
                   >
@@ -461,9 +515,13 @@ export function SectionEditor({
 
                   {/* Block elements */}
                   <Button
-                    variant={editor.isActive('blockquote') ? 'default' : 'ghost'}
+                    variant={
+                      editor.isActive("blockquote") ? "default" : "ghost"
+                    }
                     size="sm"
-                    onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                    onClick={() =>
+                      editor.chain().focus().toggleBlockquote().run()
+                    }
                     className="h-8 w-8 p-0"
                     title="Quote"
                   >
@@ -472,7 +530,9 @@ export function SectionEditor({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => editor.chain().focus().setHorizontalRule().run()}
+                    onClick={() =>
+                      editor.chain().focus().setHorizontalRule().run()
+                    }
                     className="h-8 w-8 p-0"
                     title="Horizontal Rule"
                   >
@@ -483,27 +543,45 @@ export function SectionEditor({
 
                   {/* Text alignment */}
                   <Button
-                    variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
+                    variant={
+                      editor.isActive({ textAlign: "left" })
+                        ? "default"
+                        : "ghost"
+                    }
                     size="sm"
-                    onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                    onClick={() =>
+                      editor.chain().focus().setTextAlign("left").run()
+                    }
                     className="h-8 w-8 p-0"
                     title="Align Left"
                   >
                     <AlignLeft className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
+                    variant={
+                      editor.isActive({ textAlign: "center" })
+                        ? "default"
+                        : "ghost"
+                    }
                     size="sm"
-                    onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                    onClick={() =>
+                      editor.chain().focus().setTextAlign("center").run()
+                    }
                     className="h-8 w-8 p-0"
                     title="Align Center"
                   >
                     <AlignCenter className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
+                    variant={
+                      editor.isActive({ textAlign: "right" })
+                        ? "default"
+                        : "ghost"
+                    }
                     size="sm"
-                    onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                    onClick={() =>
+                      editor.chain().focus().setTextAlign("right").run()
+                    }
                     className="h-8 w-8 p-0"
                     title="Align Right"
                   >
@@ -516,7 +594,13 @@ export function SectionEditor({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+                    onClick={() =>
+                      editor
+                        .chain()
+                        .focus()
+                        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                        .run()
+                    }
                     className="h-8 w-8 p-0"
                     title="Insert Table"
                   >
@@ -529,7 +613,9 @@ export function SectionEditor({
             {/* Keyboard shortcuts help panel */}
             {showKeyboardHelp && (
               <div className="mt-3 pt-3 border-t border-muted/30">
-                <h4 className="text-sm font-medium mb-3 text-foreground">Keyboard Shortcuts</h4>
+                <h4 className="text-sm font-medium mb-3 text-foreground">
+                  Keyboard Shortcuts
+                </h4>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="space-y-1">
                     <div className="flex justify-between">

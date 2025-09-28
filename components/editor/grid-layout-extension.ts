@@ -1,6 +1,6 @@
-import { Node, mergeAttributes } from '@tiptap/core';
-import { ReactNodeViewRenderer } from '@tiptap/react';
-import { GridLayoutNodeView } from './grid-layout-node-view';
+import { Node, mergeAttributes } from "@tiptap/core";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import { GridLayoutNodeView } from "./grid-layout-node-view";
 
 export interface GridLayoutAttributes {
   columns: number;
@@ -8,26 +8,30 @@ export interface GridLayoutAttributes {
   gap?: string;
   items: Array<{
     id: string;
-    type: 'text' | 'component';
+    type: "text" | "component";
     content: any;
     position: { col: number; row: number; colspan?: number; rowspan?: number };
   }>;
 }
 
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     gridLayout: {
       insertGridLayout: (attributes: GridLayoutAttributes) => ReturnType;
       addGridItem: (layoutId: string, item: any) => ReturnType;
-      updateGridItem: (layoutId: string, itemId: string, updates: any) => ReturnType;
+      updateGridItem: (
+        layoutId: string,
+        itemId: string,
+        updates: any,
+      ) => ReturnType;
       removeGridItem: (layoutId: string, itemId: string) => ReturnType;
     };
   }
 }
 
 export const GridLayoutExtension = Node.create<{}, GridLayoutAttributes>({
-  name: 'gridLayout',
-  group: 'block',
+  name: "gridLayout",
+  group: "block",
   atom: true,
   draggable: true,
 
@@ -35,40 +39,42 @@ export const GridLayoutExtension = Node.create<{}, GridLayoutAttributes>({
     return {
       columns: {
         default: 2,
-        parseHTML: element => parseInt(element.getAttribute('data-columns') || '2'),
-        renderHTML: attributes => {
+        parseHTML: (element) =>
+          parseInt(element.getAttribute("data-columns") || "2"),
+        renderHTML: (attributes) => {
           return {
-            'data-columns': attributes.columns,
+            "data-columns": attributes.columns,
           };
         },
       },
       rows: {
         default: 1,
-        parseHTML: element => parseInt(element.getAttribute('data-rows') || '1'),
-        renderHTML: attributes => {
+        parseHTML: (element) =>
+          parseInt(element.getAttribute("data-rows") || "1"),
+        renderHTML: (attributes) => {
           return {
-            'data-rows': attributes.rows,
+            "data-rows": attributes.rows,
           };
         },
       },
       gap: {
-        default: '1rem',
-        parseHTML: element => element.getAttribute('data-gap'),
-        renderHTML: attributes => {
+        default: "1rem",
+        parseHTML: (element) => element.getAttribute("data-gap"),
+        renderHTML: (attributes) => {
           return {
-            'data-gap': attributes.gap,
+            "data-gap": attributes.gap,
           };
         },
       },
       items: {
         default: [],
-        parseHTML: element => {
-          const items = element.getAttribute('data-items');
+        parseHTML: (element) => {
+          const items = element.getAttribute("data-items");
           return items ? JSON.parse(items) : [];
         },
-        renderHTML: attributes => {
+        renderHTML: (attributes) => {
           return {
-            'data-items': JSON.stringify(attributes.items),
+            "data-items": JSON.stringify(attributes.items),
           };
         },
       },
@@ -84,7 +90,10 @@ export const GridLayoutExtension = Node.create<{}, GridLayoutAttributes>({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { 'data-type': 'grid-layout' })];
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, { "data-type": "grid-layout" }),
+    ];
   },
 
   addNodeView() {

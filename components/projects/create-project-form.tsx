@@ -1,44 +1,82 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createClient } from '@/lib/supabase/client';
-import { GameProjectService } from '@/lib/services/game-projects';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { createClient } from "@/lib/supabase/client";
+import { GameProjectService } from "@/lib/services/game-projects";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, AlertCircle } from "lucide-react";
 
 const projectFormSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100, 'Title must be less than 100 characters'),
-  description: z.string().min(1, 'Description is required').max(500, 'Description must be less than 500 characters'),
-  category: z.enum(['board_game', 'card_game', 'rpg', 'miniatures', 'party_game', 'strategy', 'other']),
-  visibility: z.enum(['public', 'private', 'unlisted']),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(100, "Title must be less than 100 characters"),
+  description: z
+    .string()
+    .min(1, "Description is required")
+    .max(500, "Description must be less than 500 characters"),
+  category: z.enum([
+    "board_game",
+    "card_game",
+    "rpg",
+    "miniatures",
+    "party_game",
+    "strategy",
+    "other",
+  ]),
+  visibility: z.enum(["public", "private", "unlisted"]),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
 const categories = [
-  { value: 'board_game', label: 'Board Game' },
-  { value: 'card_game', label: 'Card Game' },
-  { value: 'rpg', label: 'RPG / Tabletop' },
-  { value: 'miniatures', label: 'Miniatures' },
-  { value: 'party_game', label: 'Party Game' },
-  { value: 'strategy', label: 'Strategy' },
-  { value: 'other', label: 'Other' },
+  { value: "board_game", label: "Board Game" },
+  { value: "card_game", label: "Card Game" },
+  { value: "rpg", label: "RPG / Tabletop" },
+  { value: "miniatures", label: "Miniatures" },
+  { value: "party_game", label: "Party Game" },
+  { value: "strategy", label: "Strategy" },
+  { value: "other", label: "Other" },
 ];
 
 const visibilityOptions = [
-  { value: 'private', label: 'Private', description: 'Only you and collaborators can see this project' },
-  { value: 'unlisted', label: 'Unlisted', description: 'Anyone with the link can view this project' },
-  { value: 'public', label: 'Public', description: 'Anyone can discover and view this project' },
+  {
+    value: "private",
+    label: "Private",
+    description: "Only you and collaborators can see this project",
+  },
+  {
+    value: "unlisted",
+    label: "Unlisted",
+    description: "Anyone with the link can view this project",
+  },
+  {
+    value: "public",
+    label: "Public",
+    description: "Anyone can discover and view this project",
+  },
 ];
 
 export function CreateProjectForm() {
@@ -50,10 +88,10 @@ export function CreateProjectForm() {
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      category: 'board_game',
-      visibility: 'private',
+      title: "",
+      description: "",
+      category: "board_game",
+      visibility: "private",
     },
   });
 
@@ -62,9 +100,11 @@ export function CreateProjectForm() {
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        setError('You must be logged in to create a project');
+        setError("You must be logged in to create a project");
         return;
       }
 
@@ -72,14 +112,20 @@ export function CreateProjectForm() {
       const result = await gameProjectService.createProject(user.id, values);
 
       if (result.error) {
-        setError(typeof result.error === 'string' ? result.error : 'Failed to create project');
+        setError(
+          typeof result.error === "string"
+            ? result.error
+            : "Failed to create project",
+        );
         return;
       }
 
       // Redirect to the new project
       router.push(`/projects/${result.data?.slug}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -107,11 +153,15 @@ export function CreateProjectForm() {
             <Input
               id="title"
               placeholder="Enter your game title..."
-              {...form.register('title')}
-              className={form.formState.errors.title ? 'border-destructive' : ''}
+              {...form.register("title")}
+              className={
+                form.formState.errors.title ? "border-destructive" : ""
+              }
             />
             {form.formState.errors.title && (
-              <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>
+              <p className="text-sm text-destructive">
+                {form.formState.errors.title.message}
+              </p>
             )}
           </div>
 
@@ -121,19 +171,23 @@ export function CreateProjectForm() {
               id="description"
               placeholder="Describe your game concept, mechanics, and what makes it unique..."
               rows={4}
-              {...form.register('description')}
-              className={form.formState.errors.description ? 'border-destructive' : ''}
+              {...form.register("description")}
+              className={
+                form.formState.errors.description ? "border-destructive" : ""
+              }
             />
             {form.formState.errors.description && (
-              <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
+              <p className="text-sm text-destructive">
+                {form.formState.errors.description.message}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>
             <Select
-              value={form.watch('category')}
-              onValueChange={(value: any) => form.setValue('category', value)}
+              value={form.watch("category")}
+              onValueChange={(value: any) => form.setValue("category", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a category" />
@@ -147,15 +201,17 @@ export function CreateProjectForm() {
               </SelectContent>
             </Select>
             {form.formState.errors.category && (
-              <p className="text-sm text-destructive">{form.formState.errors.category.message}</p>
+              <p className="text-sm text-destructive">
+                {form.formState.errors.category.message}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="visibility">Visibility *</Label>
             <Select
-              value={form.watch('visibility')}
-              onValueChange={(value: any) => form.setValue('visibility', value)}
+              value={form.watch("visibility")}
+              onValueChange={(value: any) => form.setValue("visibility", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select visibility" />
@@ -165,14 +221,18 @@ export function CreateProjectForm() {
                   <SelectItem key={option.value} value={option.value}>
                     <div>
                       <div className="font-medium">{option.label}</div>
-                      <div className="text-xs text-muted-foreground">{option.description}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {option.description}
+                      </div>
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {form.formState.errors.visibility && (
-              <p className="text-sm text-destructive">{form.formState.errors.visibility.message}</p>
+              <p className="text-sm text-destructive">
+                {form.formState.errors.visibility.message}
+              </p>
             )}
           </div>
 

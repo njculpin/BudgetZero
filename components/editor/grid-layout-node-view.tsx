@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { NodeViewWrapper } from '@tiptap/react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Plus, Settings, Trash2, Move } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { NodeViewWrapper } from "@tiptap/react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Plus, Settings, Trash2, Move } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface GridLayoutNodeViewProps {
   node: {
@@ -15,9 +15,14 @@ interface GridLayoutNodeViewProps {
       gap: string;
       items: Array<{
         id: string;
-        type: 'text' | 'component';
+        type: "text" | "component";
         content: any;
-        position: { col: number; row: number; colspan?: number; rowspan?: number };
+        position: {
+          col: number;
+          row: number;
+          colspan?: number;
+          rowspan?: number;
+        };
       }>;
     };
   };
@@ -26,13 +31,18 @@ interface GridLayoutNodeViewProps {
   updateAttributes: (attributes: any) => void;
 }
 
-export function GridLayoutNodeView({ node, deleteNode, selected, updateAttributes }: GridLayoutNodeViewProps) {
+export function GridLayoutNodeView({
+  node,
+  deleteNode,
+  selected,
+  updateAttributes,
+}: GridLayoutNodeViewProps) {
   const { columns, rows, gap, items } = node.attrs;
   const [isEditing, setIsEditing] = useState(false);
 
   // Create grid template
   const gridCols = `repeat(${columns}, minmax(0, 1fr))`;
-  const gridRows = rows ? `repeat(${rows}, minmax(100px, auto))` : 'auto';
+  const gridRows = rows ? `repeat(${rows}, minmax(100px, auto))` : "auto";
 
   // Generate grid cells
   const totalCells = columns * (rows || 1);
@@ -44,50 +54,57 @@ export function GridLayoutNodeView({ node, deleteNode, selected, updateAttribute
 
   // Find item for each cell
   const getItemForCell = (col: number, row: number) => {
-    return items.find(item =>
-      item.position.col === col && item.position.row === row
+    return items.find(
+      (item) => item.position.col === col && item.position.row === row,
     );
   };
 
   const addTextBox = (col: number, row: number) => {
     const newItem = {
       id: `item-${Date.now()}`,
-      type: 'text' as const,
-      content: { type: 'paragraph', content: [{ type: 'text', text: 'Click to edit text...' }] },
-      position: { col, row }
+      type: "text" as const,
+      content: {
+        type: "paragraph",
+        content: [{ type: "text", text: "Click to edit text..." }],
+      },
+      position: { col, row },
     };
 
     updateAttributes({
-      items: [...items, newItem]
+      items: [...items, newItem],
     });
   };
 
   const removeItem = (itemId: string) => {
     updateAttributes({
-      items: items.filter(item => item.id !== itemId)
+      items: items.filter((item) => item.id !== itemId),
     });
   };
 
   const updateItemContent = (itemId: string, content: any) => {
     updateAttributes({
-      items: items.map(item =>
-        item.id === itemId ? { ...item, content } : item
-      )
+      items: items.map((item) =>
+        item.id === itemId ? { ...item, content } : item,
+      ),
     });
   };
 
   return (
     <NodeViewWrapper className="my-4">
-      <Card className={cn(
-        'relative p-4 transition-all duration-200',
-        selected && 'ring-2 ring-primary/20',
-        'hover:shadow-sm'
-      )}>
+      <Card
+        className={cn(
+          "relative p-4 transition-all duration-200",
+          selected && "ring-2 ring-primary/20",
+          "hover:shadow-sm",
+        )}
+      >
         {/* Grid Controls */}
         <div className="flex items-center justify-between mb-4 pb-2 border-b">
           <div className="flex items-center gap-2">
             <Move className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Grid Layout ({columns}×{rows || 'auto'})</span>
+            <span className="text-sm font-medium">
+              Grid Layout ({columns}×{rows || "auto"})
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -120,7 +137,9 @@ export function GridLayoutNodeView({ node, deleteNode, selected, updateAttribute
                   min="1"
                   max="6"
                   value={columns}
-                  onChange={(e) => updateAttributes({ columns: parseInt(e.target.value) || 2 })}
+                  onChange={(e) =>
+                    updateAttributes({ columns: parseInt(e.target.value) || 2 })
+                  }
                   className="ml-2 w-16 px-2 py-1 border rounded text-sm"
                 />
               </label>
@@ -131,7 +150,9 @@ export function GridLayoutNodeView({ node, deleteNode, selected, updateAttribute
                   min="1"
                   max="10"
                   value={rows || 1}
-                  onChange={(e) => updateAttributes({ rows: parseInt(e.target.value) || 1 })}
+                  onChange={(e) =>
+                    updateAttributes({ rows: parseInt(e.target.value) || 1 })
+                  }
                   className="ml-2 w-16 px-2 py-1 border rounded text-sm"
                 />
               </label>
@@ -145,7 +166,7 @@ export function GridLayoutNodeView({ node, deleteNode, selected, updateAttribute
           style={{
             gridTemplateColumns: gridCols,
             gridTemplateRows: gridRows,
-            gap: gap || '0.5rem'
+            gap: gap || "0.5rem",
           }}
         >
           {gridCells.map(({ col, row, index }) => {
@@ -155,26 +176,33 @@ export function GridLayoutNodeView({ node, deleteNode, selected, updateAttribute
               <div
                 key={index}
                 className={cn(
-                  'border-2 border-dashed border-muted-foreground/20 rounded-md p-3 min-h-[100px] flex items-center justify-center transition-all duration-200',
-                  'hover:border-muted-foreground/40 hover:bg-muted/10',
-                  item && 'border-solid border-muted-foreground/60 bg-background'
+                  "border-2 border-dashed border-muted-foreground/20 rounded-md p-3 min-h-[100px] flex items-center justify-center transition-all duration-200",
+                  "hover:border-muted-foreground/40 hover:bg-muted/10",
+                  item &&
+                    "border-solid border-muted-foreground/60 bg-background",
                 )}
                 style={{
-                  gridColumn: item?.position.colspan ? `span ${item.position.colspan}` : 'span 1',
-                  gridRow: item?.position.rowspan ? `span ${item.position.rowspan}` : 'span 1'
+                  gridColumn: item?.position.colspan
+                    ? `span ${item.position.colspan}`
+                    : "span 1",
+                  gridRow: item?.position.rowspan
+                    ? `span ${item.position.rowspan}`
+                    : "span 1",
                 }}
               >
                 {item ? (
                   <div className="w-full h-full relative group">
                     {/* Item Content */}
                     <div className="w-full h-full">
-                      {item.type === 'text' ? (
+                      {item.type === "text" ? (
                         <div className="text-sm p-2">
-                          {typeof item.content === 'string' ? item.content : 'Text content'}
+                          {typeof item.content === "string"
+                            ? item.content
+                            : "Text content"}
                         </div>
                       ) : (
                         <div className="text-sm p-2 bg-blue-50/50 rounded border-l-4 border-blue-400">
-                          Component: {item.content?.title || 'Untitled'}
+                          Component: {item.content?.title || "Untitled"}
                         </div>
                       )}
                     </div>
