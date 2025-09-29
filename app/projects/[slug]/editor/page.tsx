@@ -61,25 +61,11 @@ export default async function EditorPage({ params }: EditorPageProps) {
 
   return (
     <MainLayout user={user} breadcrumbs={breadcrumbs}>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">{project.title}</h1>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/projects/${project.slug}`}>Overview</Link>
-            </Button>
-          </div>
-        </div>
-
         <EditorPageClient
           project={project}
           rulebook={rulebook}
           canEdit={canEdit}
-        />
-      </div>
+        />2
     </MainLayout>
   );
 }

@@ -10,10 +10,6 @@
   transition: background-color 0.1s ease;
 }
 
-.block-editor .ProseMirror > *:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-  border-radius: 4px;
-}
 
 .block-editor .ProseMirror > *.ProseMirror-selectednode {
   background-color: rgba(59, 130, 246, 0.1);
@@ -59,66 +55,29 @@
 .block-editor .ProseMirror ol {
   margin: 8px 0;
   padding-left: 1.5rem;
+  list-style-position: outside;
+}
+
+.block-editor .ProseMirror ul {
+  list-style-type: disc;
+}
+
+.block-editor .ProseMirror ol {
+  list-style-type: decimal;
 }
 
 .block-editor .ProseMirror li {
   margin: 2px 0;
+  display: list-item;
 }
 
-/* Block hover states */
-.block-editor .ProseMirror > *:hover::before {
-  content: "";
-  position: absolute;
-  left: -4px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background-color: rgba(59, 130, 246, 0.5);
-  border-radius: 1px;
-  z-index: 1;
+.block-editor .ProseMirror li p {
+  margin: 0;
 }
 
-/* Drag and drop styles */
-.block-editor .ProseMirror .drag-over {
-  background-color: rgba(59, 130, 246, 0.05);
-  border-radius: 4px;
-}
 
-.block-editor .ProseMirror .dragging {
-  opacity: 0.4;
-  transform: scale(0.98);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-}
 
-.block-editor .ProseMirror .block-selected {
-  background-color: rgba(59, 130, 246, 0.1);
-  border: 2px solid rgba(59, 130, 246, 0.3);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-}
 
-/* Drag preview styles */
-.drag-preview {
-  background: white !important;
-  border: 2px solid #3b82f6 !important;
-  border-radius: 4px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  transform: rotate(2deg) !important;
-}
-
-/* Plus button hover area - positioned in the left padding area */
-.block-editor .ProseMirror > *::after {
-  content: "";
-  position: absolute;
-  left: -40px; /* Position in the padding area */
-  top: 0;
-  width: 40px;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
 
 /* Ensure block controls don't overflow */
 .block-editor .ProseMirror {
@@ -137,20 +96,9 @@
   outline-offset: 2px;
 }
 
-/* Responsive adjustments for smaller screens */
-@media (max-width: 768px) {
-  .block-editor .ProseMirror > *::after {
-    left: -36px;
-    width: 36px;
-  }
-}
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .block-editor .ProseMirror > *:hover::before {
-    background-color: rgba(0, 0, 0, 0.8);
-  }
-
   .block-editor button {
     border: 1px solid transparent;
   }
@@ -161,52 +109,8 @@
   }
 }
 
-/* Drop line animation */
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scaleY(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scaleY(0.8);
-  }
-}
 
-.drop-line {
-  animation: pulse 1s ease-in-out infinite;
-}
 
-/* Enhanced drag handle */
-.block-editor .drag-handle {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.block-editor .drag-handle:active {
-  cursor: grabbing;
-}
-
-/* Improved dragging styles */
-.block-editor .ProseMirror .dragging {
-  opacity: 0.5;
-  /* Remove transform that might interfere with drag detection */
-  /* transform: scale(0.98) rotate(1deg); */
-  transition: opacity 0.2s ease;
-  /* Allow pointer events during drag for drop detection */
-  pointer-events: auto;
-}
-
-/* Better drag over styles */
-.block-editor .ProseMirror .drag-over {
-  background-color: rgba(59, 130, 246, 0.08);
-  border-radius: 6px;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-  transition: all 0.15s ease;
-}
 
 /* Synced block styling */
 .synced-block-wrapper {
@@ -276,18 +180,6 @@
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .block-editor .ProseMirror > * {
-    transition: none;
-  }
-
-  .drop-line {
-    animation: none;
-  }
-
-  .block-editor .ProseMirror .dragging {
-    transition: none;
-  }
-
-  .block-editor .ProseMirror .drag-over {
     transition: none;
   }
 

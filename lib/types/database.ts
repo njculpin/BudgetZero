@@ -10,6 +10,8 @@ export type ProjectStatus = "draft" | "active" | "archived" | "published";
 export type CollaborationPermission = "read" | "comment" | "edit" | "admin";
 export type LicenseType = "free" | "attribution" | "commercial" | "exclusive";
 export type InvitationStatus = "pending" | "accepted" | "declined" | "revoked";
+export type ProjectRelationshipType = "fork" | "merge" | "component";
+export type MergeStatus = "proposed" | "accepted" | "declined" | "completed";
 export type AssetType =
   | "model"
   | "illustration"
@@ -96,6 +98,7 @@ export interface GameProject {
   player_count_max: number | null;
   play_time_minutes: number | null;
   complexity_rating: number | null;
+  seeking_collaborators: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -371,4 +374,68 @@ export interface ProfileFormData {
   portfolio_url?: string;
   skills: string[];
   experience_level: ExperienceLevel;
+}
+
+// Project relationship and merging interfaces
+export interface ProjectRelationship {
+  id: string;
+  parent_project_id: string;
+  child_project_id: string;
+  relationship_type: ProjectRelationshipType;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectRelationshipWithProjects extends ProjectRelationship {
+  parent_project: GameProject;
+  child_project: GameProject;
+  creator: Profile;
+}
+
+export interface ProjectMergeProposal {
+  id: string;
+  target_project_id: string; // The main project being merged into
+  source_project_ids: string[]; // Array of project IDs being merged
+  proposed_by: string;
+  proposed_title: string;
+  proposed_description: string | null;
+  merge_status: MergeStatus;
+  revenue_split: Record<string, number>; // user_id -> percentage
+  merge_terms: string | null;
+  requires_approval_from: string[]; // Array of user IDs who need to approve
+  approved_by: string[]; // Array of user IDs who have approved
+  declined_by: string[]; // Array of user IDs who have declined
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectMergeProposalWithProjects extends ProjectMergeProposal {
+  target_project: GameProjectWithCreator;
+  source_projects: GameProjectWithCreator[];
+  proposer: Profile;
+  approvers: Profile[];
+  decliners: Profile[];
+}
+
+export interface CreateProjectMergeProposalData {
+  target_project_id: string;
+  source_project_ids: string[];
+  proposed_by: string;
+  proposed_title: string;
+  proposed_description?: string;
+  revenue_split: Record<string, number>;
+  merge_terms?: string;
+}
+
+// Yjs collaboration document for real-time editing
+export interface CollaborationDocument {
+  id: string;
+  project_id: string;
+  document_type: "rulebook" | "description" | "notes";
+  yjs_document_id: string; // Reference to Yjs document
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
