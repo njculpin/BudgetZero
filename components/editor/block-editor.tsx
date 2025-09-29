@@ -6,12 +6,9 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { SyncedBlock } from "./extensions/synced-block";
 import { Highlight } from "@tiptap/extension-highlight";
 import { TextStyle } from "@tiptap/extension-text-style";
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Plus,
-  GripVertical,
-  Link2,
   Bold,
   Italic,
   Underline as UnderlineIcon,
@@ -19,6 +16,9 @@ import {
   Code,
   Highlighter,
   Link as LinkIcon,
+  Plus,
+  List,
+  ListOrdered,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import "./block-editor.css";
@@ -38,13 +38,6 @@ export function BlockEditor({
   isReadOnly = false,
   projectTitle = "Untitled Project",
 }: BlockEditorProps) {
-  const [hoveredBlock, setHoveredBlock] = useState<Element | null>(null);
-  const [selectedBlock, setSelectedBlock] = useState<Element | null>(null);
-  const [showBlockMenu, setShowBlockMenu] = useState(false);
-  const [blockMenuPosition, setBlockMenuPosition] = useState({
-    top: 0,
-    left: 0,
-  });
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
@@ -80,10 +73,6 @@ export function BlockEditor({
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
-        },
-        dropcursor: {
-          color: "#3b82f6",
-          width: 2,
         },
         link: {
           openOnClick: false,
@@ -127,7 +116,7 @@ export function BlockEditor({
       }
     },
     onSelectionUpdate: ({ editor }) => {
-      const { from, to, empty } = editor.state.selection;
+      const { from, empty } = editor.state.selection;
 
       if (empty || isReadOnly) {
         setShowFloatingToolbar(false);
@@ -139,7 +128,6 @@ export function BlockEditor({
       const start = view.coordsAtPos(from);
 
       // Calculate toolbar position relative to editor container
-      const editorRect = view.dom.getBoundingClientRect();
       const editorContainer = editorRef.current;
       const contentContainer = editorContainer?.querySelector(".max-w-4xl");
       const contentRect = contentContainer?.getBoundingClientRect();
@@ -166,637 +154,15 @@ export function BlockEditor({
     },
   });
 
-  // Helper function to find the actual block position in TipTap
-  const findBlockPosition = useCallback(
-    (blockElement: Element) => {
-      if (!editor) return null;
 
-      // Get all top-level blocks in the editor
-      const proseMirrorEl = editorRef.current?.querySelector(".ProseMirror");
-      if (!proseMirrorEl) return null;
 
-      const allBlocks = Array.from(proseMirrorEl.children);
-      const blockIndex = allBlocks.indexOf(blockElement);
 
-      if (blockIndex === -1) return null;
 
-      // Calculate position by iterating through nodes
-      let pos = 1; // Start after doc opening
-      const doc = editor.state.doc;
 
-      for (let i = 0; i < blockIndex; i++) {
-        const node = doc.child(i);
-        pos += node.nodeSize;
-      }
 
-      return { pos, blockIndex, node: doc.child(blockIndex) };
-    },
-    [editor],
-  );
 
-  // Handle drop with improved position calculation
-  const handleDrop = useCallback(
-    (e: DragEvent) => {
-      e.preventDefault();
-      if (!editor) return;
 
-      console.log("🎯 Drop event triggered");
-      console.log("🎯 Drop target:", e.target);
-      console.log("🎯 Drop coordinates:", e.clientX, e.clientY);
 
-      // Clean up visual indicators immediately
-      document.querySelectorAll(".drag-over").forEach((el) => {
-        el.classList.remove("drag-over");
-      });
-      document.querySelectorAll(".drop-line").forEach((el) => {
-        el.remove();
-      });
-
-      // Get drag data with validation
-      const draggedData = e.dataTransfer?.getData("application/x-block-data");
-      if (!draggedData) {
-        console.log("No valid drag data found");
-        return;
-      }
-
-      let draggedInfo;
-      try {
-        draggedInfo = JSON.parse(draggedData);
-      } catch (error) {
-        console.log("Invalid drag data format");
-        return;
-      }
-
-      // Get the dragged element from global reference
-      const draggedElement = (window as any).__draggedBlockElement;
-      if (!draggedElement) {
-        console.log("No dragged element reference");
-        return;
-      }
-
-      // Find target block more reliably
-      const target = e.target as Element;
-      const proseMirrorEl = editorRef.current?.querySelector(".ProseMirror");
-      if (!proseMirrorEl) return;
-
-      // Find the closest block element
-      let targetBlock = target;
-      while (targetBlock && targetBlock.parentElement !== proseMirrorEl) {
-        targetBlock = targetBlock.parentElement as Element;
-        if (!targetBlock || targetBlock === proseMirrorEl) {
-          console.log("No valid target block found");
-          return;
-        }
-      }
-
-      // Don't drop on self
-      if (targetBlock === draggedElement) {
-        console.log("Cannot drop on self");
-        return;
-      }
-
-      try {
-        // Use TipTap's posAtDOM for accurate position detection
-        const draggedPos = editor.view.posAtDOM(draggedElement as Node, 0);
-        const targetPos = editor.view.posAtDOM(targetBlock as Node, 0);
-
-        if (
-          draggedPos === null ||
-          targetPos === null ||
-          draggedPos === -1 ||
-          targetPos === -1
-        ) {
-          console.log("Could not determine positions");
-          return;
-        }
-
-        // Determine if we're dropping above or below the target
-        const rect = targetBlock.getBoundingClientRect();
-        const mouseY = e.clientY;
-        const blockMiddle = rect.top + rect.height / 2;
-        const dropAbove = mouseY < blockMiddle;
-
-        // Get the actual nodes
-        const draggedNode = editor.state.doc.nodeAt(draggedPos);
-        const targetNode = editor.state.doc.nodeAt(targetPos);
-
-        if (!draggedNode || !targetNode) {
-          console.log("Could not find nodes");
-          return;
-        }
-
-        // Calculate the final drop position
-        let dropPos;
-        if (dropAbove) {
-          dropPos = targetPos;
-        } else {
-          // Drop after the target block
-          dropPos = targetPos + targetNode.nodeSize;
-        }
-
-        // Adjust position if dragging from before the drop position
-        if (draggedPos < dropPos) {
-          dropPos -= draggedNode.nodeSize;
-        }
-
-        // Don't move if positions are effectively the same
-        if (Math.abs(draggedPos - dropPos) < draggedNode.nodeSize) {
-          console.log("Same position, skipping");
-          return;
-        }
-
-        console.log(`Moving block from ${draggedPos} to ${dropPos}`);
-
-        // Execute the move using TipTap's transaction system
-        const transaction = editor.state.tr;
-
-        // Cut the dragged node
-        const nodeToMove = draggedNode;
-        const cutFrom = draggedPos;
-        const cutTo = draggedPos + nodeToMove.nodeSize;
-
-        // Create the transaction
-        const newTransaction = transaction
-          .delete(cutFrom, cutTo)
-          .insert(dropPos, nodeToMove);
-
-        // Apply the transaction
-        editor.view.dispatch(newTransaction);
-
-        console.log("Block moved successfully");
-      } catch (error) {
-        console.error("Error moving block:", error);
-      }
-    },
-    [editor],
-  );
-
-  // Handle mouse events for block hovering
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!editorRef.current || isReadOnly) return;
-
-      const target = e.target as Element;
-      const blockElement = target.closest(".ProseMirror > *");
-
-      if (blockElement && blockElement !== hoveredBlock) {
-        setHoveredBlock(blockElement);
-      }
-    },
-    [hoveredBlock, isReadOnly],
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    setHoveredBlock(null);
-  }, []);
-
-  // Keyboard navigation for accessibility
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (!editorRef.current || isReadOnly) return;
-
-      // Focus block controls with Ctrl/Cmd + Shift + H
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "H") {
-        e.preventDefault();
-
-        // First, try to get the current cursor position in the editor
-        if (editor && editor.isFocused) {
-          const { from } = editor.state.selection;
-          const resolvedPos = editor.state.doc.resolve(from);
-
-          // Find the block node that contains the cursor
-          let blockPos = from;
-          for (let d = resolvedPos.depth; d > 0; d--) {
-            if (resolvedPos.node(d).isBlock) {
-              blockPos = resolvedPos.before(d);
-              break;
-            }
-          }
-
-          // Find the corresponding DOM element
-          try {
-            const domPos = editor.view.domAtPos(blockPos);
-            const blockElement = domPos.node.nodeType === Node.ELEMENT_NODE
-              ? domPos.node as Element
-              : (domPos.node.parentElement?.closest('.ProseMirror > *') as Element);
-
-            if (blockElement) {
-              setHoveredBlock(blockElement);
-              // Focus the first control button after the controls are rendered
-              setTimeout(() => {
-                const firstButton = document.querySelector(
-                  '[role="toolbar"] button',
-                );
-                if (firstButton instanceof HTMLElement) {
-                  firstButton.focus();
-                }
-              }, 50); // Slightly longer delay to ensure DOM update
-            }
-          } catch (error) {
-            console.warn("Could not determine block element for keyboard shortcut:", error);
-          }
-        } else {
-          // Fallback: try to find focused element's parent block
-          const focusedElement = document.activeElement;
-          const blockElement = focusedElement?.closest(
-            ".ProseMirror > *",
-          ) as Element;
-
-          if (blockElement) {
-            setHoveredBlock(blockElement);
-            setTimeout(() => {
-              const firstButton = document.querySelector(
-                '[role="toolbar"] button',
-              );
-              if (firstButton instanceof HTMLElement) {
-                firstButton.focus();
-              }
-            }, 50);
-          }
-        }
-      }
-
-      // Escape to hide controls
-      if (e.key === "Escape" && hoveredBlock) {
-        e.preventDefault();
-        setHoveredBlock(null);
-        // Return focus to editor
-        if (editor) {
-          editor.commands.focus();
-        }
-      }
-    },
-    [hoveredBlock, isReadOnly, editor],
-  );
-
-  // Handle dragover with improved target detection
-  const handleDragOver = useCallback((e: DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer!.dropEffect = "move";
-
-    // Add subtle logging (less frequent)
-    if (Math.random() < 0.1) { // Only log 10% of dragover events to avoid spam
-      console.log("🔄 Drag over event");
-    }
-
-    const target = e.target as Element;
-    const proseMirrorEl = editorRef.current?.querySelector(".ProseMirror");
-    if (!proseMirrorEl) return;
-
-    // Find the closest block element more reliably
-    let targetBlock: Element | null = target;
-    while (targetBlock && targetBlock.parentElement !== proseMirrorEl) {
-      targetBlock = targetBlock.parentElement as Element;
-      if (!targetBlock || targetBlock === proseMirrorEl) {
-        targetBlock = null;
-        break;
-      }
-    }
-
-    // Remove previous drop indicators
-    document.querySelectorAll(".drag-over").forEach((el) => {
-      el.classList.remove("drag-over");
-    });
-
-    // Remove previous drop lines
-    document.querySelectorAll(".drop-line").forEach((el) => {
-      el.remove();
-    });
-
-    if (targetBlock && editorRef.current) {
-      // Get mouse position relative to target block
-      const rect = targetBlock.getBoundingClientRect();
-      const mouseY = e.clientY;
-      const blockMiddle = rect.top + rect.height / 2;
-
-      // Determine if we're dropping above or below the target
-      const dropAbove = mouseY < blockMiddle;
-
-      // Create drop line indicator
-      const dropLine = document.createElement("div");
-      dropLine.className = "drop-line";
-      dropLine.style.cssText = `
-        position: absolute;
-        left: 48px;
-        right: 32px;
-        height: 3px;
-        background: linear-gradient(90deg, #3b82f6, #60a5fa);
-        border-radius: 2px;
-        z-index: 30;
-        pointer-events: none;
-        box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
-        animation: pulse 1s infinite;
-      `;
-
-      // Position the drop line
-      const editorRect = editorRef.current.getBoundingClientRect();
-      const contentContainer = editorRef.current.querySelector(".max-w-4xl");
-      const containerRect = contentContainer?.getBoundingClientRect();
-
-      if (containerRect) {
-        const relativeTop = dropAbove
-          ? rect.top - containerRect.top - 2
-          : rect.bottom - containerRect.top + 2;
-
-        dropLine.style.top = `${relativeTop}px`;
-      }
-
-      // Add drop line to content container
-      if (contentContainer) {
-        contentContainer.appendChild(dropLine);
-      }
-
-      // Add subtle highlight to target block
-      targetBlock.classList.add("drag-over");
-    }
-  }, []);
-
-  useEffect(() => {
-    const editorElement = editorRef.current;
-    if (!editorElement) return;
-
-    console.log("🔧 Setting up drag and drop event listeners on:", editorElement);
-
-    editorElement.addEventListener("mousemove", handleMouseMove);
-    editorElement.addEventListener("mouseleave", handleMouseLeave);
-    editorElement.addEventListener("drop", handleDrop);
-    editorElement.addEventListener("dragover", handleDragOver);
-    document.addEventListener("keydown", handleKeyDown);
-
-    // Also add listeners to the document for broader coverage
-    document.addEventListener("dragover", (e) => {
-      console.log("📡 Document dragover event");
-      e.preventDefault(); // Allow drop
-    });
-
-    document.addEventListener("drop", (e) => {
-      console.log("📡 Document drop event");
-    });
-
-    return () => {
-      editorElement.removeEventListener("mousemove", handleMouseMove);
-      editorElement.removeEventListener("mouseleave", handleMouseLeave);
-      editorElement.removeEventListener("drop", handleDrop);
-      editorElement.removeEventListener("dragover", handleDragOver);
-      document.removeEventListener("keydown", handleKeyDown);
-
-      // Clean up document listeners
-      document.removeEventListener("dragover", (e) => e.preventDefault());
-      document.removeEventListener("drop", (e) => console.log("📡 Document drop event"));
-    };
-  }, [
-    handleMouseMove,
-    handleMouseLeave,
-    handleDrop,
-    handleDragOver,
-    handleKeyDown,
-  ]);
-
-  // Get block position for controls
-  const getBlockPosition = (blockElement: Element) => {
-    if (!editorRef.current) return { top: 0, left: 0 };
-
-    const editorRect = editorRef.current.getBoundingClientRect();
-    const blockRect = blockElement.getBoundingClientRect();
-
-    // Find the content container (with pl-12 class)
-    const contentContainer = editorRef.current.querySelector(".max-w-4xl");
-    const contentRect = contentContainer?.getBoundingClientRect();
-
-    // Calculate position so the RIGHT edge of controls aligns with LEFT edge of text
-    // pl-12 = 48px padding, text starts at content left + padding
-    const isMobile = window.innerWidth < 768;
-    const controlsWidth = isMobile ? 140 : 156; // Width of the control toolbar (3 buttons + drag handle)
-    const paddingLeft = 48; // pl-12 = 48px
-
-    // Position controls so their right edge touches the left edge of text content
-    const textStartPosition = contentRect
-      ? contentRect.left - editorRect.left + paddingLeft // Where text actually starts
-      : paddingLeft; // Fallback
-
-    const leftOffset = textStartPosition - controlsWidth;
-
-    return {
-      top: blockRect.top - editorRect.top,
-      left: leftOffset,
-    };
-  };
-
-  // Handle adding new block
-  const addBlockBelow = (blockElement: Element) => {
-    if (!editor) return;
-
-    try {
-      // Find the position after this block
-      const pos = editor.view.posAtDOM(blockElement, 0);
-
-      // Check if position is valid
-      if (pos === null || pos === -1 || pos < 0) {
-        // Fallback: add at the end of the document
-        const docSize = editor.state.doc.content.size;
-        editor
-          .chain()
-          .focus()
-          .insertContentAt(docSize, { type: "paragraph" })
-          .setTextSelection(docSize + 1)
-          .run();
-        return;
-      }
-
-      // Validate position is within document bounds
-      if (pos >= editor.state.doc.content.size) {
-        // Position is out of bounds, add at end
-        const docSize = editor.state.doc.content.size;
-        editor
-          .chain()
-          .focus()
-          .insertContentAt(docSize, { type: "paragraph" })
-          .setTextSelection(docSize + 1)
-          .run();
-        return;
-      }
-
-      const resolvedPos = editor.state.doc.resolve(pos);
-      const after = resolvedPos.after();
-
-      // Ensure 'after' position is valid
-      if (after <= editor.state.doc.content.size) {
-        editor
-          .chain()
-          .focus()
-          .insertContentAt(after, { type: "paragraph" })
-          .setTextSelection(after + 1)
-          .run();
-      } else {
-        // Fallback to end of document
-        const docSize = editor.state.doc.content.size;
-        editor
-          .chain()
-          .focus()
-          .insertContentAt(docSize, { type: "paragraph" })
-          .setTextSelection(docSize + 1)
-          .run();
-      }
-    } catch (error) {
-      console.error("Error adding block:", error);
-      // Ultimate fallback: add at end of document
-      const docSize = editor.state.doc.content.size;
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(docSize, { type: "paragraph" })
-        .setTextSelection(docSize + 1)
-        .run();
-    }
-  };
-
-  // Handle creating synced block from current block
-  const createSyncedBlock = (blockElement: Element) => {
-    if (!editor) return;
-
-    try {
-      // Find the position of this block
-      const pos = editor.view.posAtDOM(blockElement, 0);
-
-      if (pos === null || pos === -1 || pos < 0) {
-        console.warn("Invalid block position for synced block creation");
-        return;
-      }
-
-      // Get the resolved position to find the actual block
-      const resolvedPos = editor.state.doc.resolve(pos);
-      const blockPos = resolvedPos.before(resolvedPos.depth);
-      const node = editor.state.doc.nodeAt(blockPos);
-
-      if (!node) {
-        console.warn("No block node found at position");
-        return;
-      }
-
-      // Only convert block-level nodes to synced blocks
-      if (!node.isBlock) {
-        console.warn("Cannot convert non-block node to synced block");
-        return;
-      }
-
-      // Create synced block from current content
-      const syncId = `sync-${Date.now()}-${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-
-      // Replace current block with synced block containing the same content
-      const nodeSize = node.nodeSize;
-      const blockContent = node.toJSON();
-
-      editor
-        .chain()
-        .focus()
-        .deleteRange({ from: blockPos, to: blockPos + nodeSize })
-        .insertContentAt(blockPos, {
-          type: "syncedBlock",
-          attrs: {
-            syncId,
-            lastSynced: new Date().toISOString(),
-          },
-          content: [blockContent],
-        })
-        .run();
-
-      console.log("Created synced block with ID:", syncId);
-    } catch (error) {
-      console.error("Error creating synced block:", error);
-    }
-  };
-
-  // Handle drag start with improved data handling
-  const handleDragStart = (e: React.DragEvent, blockElement: Element) => {
-    console.log("🚀 Drag start triggered on:", blockElement);
-    console.log("🚀 Event details:", e.type, e.currentTarget);
-
-    if (!editor) {
-      console.log("❌ No editor available");
-      return;
-    }
-
-    // Critical: Set up data transfer properly
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.dropEffect = "move";
-
-    // Ensure we don't prevent the drag operation
-    e.stopPropagation(); // Prevent TipTap from interfering
-
-    setSelectedBlock(blockElement);
-
-    try {
-      // Store reference to the dragged element
-      const dragData = {
-        draggedElement: blockElement,
-        timestamp: Date.now(), // For validation
-      };
-
-      // Set drag data
-      e.dataTransfer.setData(
-        "application/x-block-data",
-        JSON.stringify({ draggedElement: true }), // Simple marker since we can't serialize DOM elements
-      );
-
-      // Store the actual element reference globally for the drop handler
-      (window as any).__draggedBlockElement = blockElement;
-
-      // Add visual feedback
-      blockElement.classList.add("dragging");
-      blockElement.classList.add("block-selected");
-
-      // Create a custom drag image for better UX
-      const dragImage = blockElement.cloneNode(true) as HTMLElement;
-      dragImage.style.opacity = "0.8";
-      dragImage.style.transform = "rotate(2deg)";
-      dragImage.style.border = "2px solid #3b82f6";
-      dragImage.style.borderRadius = "4px";
-      dragImage.style.background = "white";
-      dragImage.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
-      dragImage.style.maxWidth = "300px";
-
-      // Temporarily add to DOM for drag image
-      dragImage.style.position = "absolute";
-      dragImage.style.top = "-1000px";
-      dragImage.style.left = "-1000px";
-      document.body.appendChild(dragImage);
-
-      e.dataTransfer.setDragImage(dragImage, 20, 20);
-
-      // Clean up drag image after a short delay
-      setTimeout(() => {
-        if (document.body.contains(dragImage)) {
-          document.body.removeChild(dragImage);
-        }
-      }, 100);
-
-      console.log("Drag start successful");
-    } catch (error) {
-      console.error("Error starting drag:", error);
-    }
-  };
-
-  // Handle drag end
-  const handleDragEnd = (blockElement: Element) => {
-    blockElement.classList.remove("dragging");
-    blockElement.classList.remove("block-selected");
-    setSelectedBlock(null);
-
-    // Clean up global reference
-    (window as any).__draggedBlockElement = null;
-
-    // Clean up any remaining drop indicators
-    document.querySelectorAll(".drag-over").forEach((el) => {
-      el.classList.remove("drag-over");
-    });
-
-    // Clean up drop line indicators
-    document.querySelectorAll(".drop-line").forEach((el) => {
-      el.remove();
-    });
-  };
 
   // Floating Toolbar Component
   const FloatingToolbar = () => {
@@ -875,6 +241,32 @@ export function BlockEditor({
           <Highlighter className="h-4 w-4" />
         </Button>
 
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
+        {/* Bullet List */}
+        <Button
+          variant={editor.isActive("bulletList") ? "default" : "ghost"}
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className="h-8 w-8 p-0"
+          title="Bullet List"
+        >
+          <List className="h-4 w-4" />
+        </Button>
+
+        {/* Ordered List */}
+        <Button
+          variant={editor.isActive("orderedList") ? "default" : "ghost"}
+          size="sm"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className="h-8 w-8 p-0"
+          title="Numbered List"
+        >
+          <ListOrdered className="h-4 w-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
         {/* Link */}
         <Button
           variant={editor.isActive("link") ? "default" : "ghost"}
@@ -893,81 +285,6 @@ export function BlockEditor({
     );
   };
 
-  // Block Controls Component
-  const BlockControls = () => {
-    if (!hoveredBlock || isReadOnly) return null;
-
-    const position = getBlockPosition(hoveredBlock);
-
-    return (
-      <div
-        className="absolute z-20 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-lg border shadow-sm p-1"
-        style={{
-          top: `${position.top}px`,
-          left: `${position.left}px`,
-        }}
-        role="toolbar"
-        aria-label="Block editing controls"
-      >
-        {/* Plus button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-          onClick={() => addBlockBelow(hoveredBlock)}
-          title="Add block below"
-          aria-label="Add new block below this one"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-
-        {/* Synced block button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-          onClick={() => createSyncedBlock(hoveredBlock)}
-          title="Create synced block"
-          aria-label="Convert this block to a synced block"
-        >
-          <Link2 className="h-4 w-4" />
-        </Button>
-
-        {/* Drag handle */}
-        <div
-          className="h-8 w-8 p-1 opacity-70 hover:opacity-100 focus:opacity-100 cursor-grab active:cursor-grabbing flex items-center justify-center rounded hover:bg-gray-100 drag-handle"
-          draggable={true}
-          onDragStart={(e) => {
-            console.log("🎮 Drag handle onDragStart fired");
-            handleDragStart(e, hoveredBlock);
-          }}
-          onDragEnd={(e) => {
-            console.log("🎮 Drag handle onDragEnd fired");
-            handleDragEnd(hoveredBlock);
-          }}
-          onMouseDown={(e) => {
-            console.log("🎮 Drag handle onMouseDown fired");
-            // Don't prevent default here as it blocks drag initiation
-            // Just stop event from bubbling to avoid editor interactions
-            e.stopPropagation();
-          }}
-          title="Drag to move block"
-          role="button"
-          tabIndex={0}
-          aria-label="Drag to reorder this block"
-          style={{
-            touchAction: "none",
-            userSelect: "none",
-            WebkitUserSelect: "none",
-            MozUserSelect: "none",
-            msUserSelect: "none"
-          }}
-        >
-          <GripVertical className="h-4 w-4 pointer-events-none" />
-        </div>
-      </div>
-    );
-  };
 
   if (!editor) {
     return (
@@ -980,48 +297,14 @@ export function BlockEditor({
   return (
     <div className="w-full mx-auto">
       <div ref={editorRef} className="relative">
-        {/* Block Controls */}
-        <BlockControls />
-
         {/* Floating Toolbar */}
         <FloatingToolbar />
-
-        {/* Drag and Drop Test Area */}
-        <div className="max-w-4xl mx-auto pl-12 pr-8 py-2">
-          <div className="flex gap-4 p-4 bg-gray-50 rounded-lg mb-4">
-            <div
-              className="w-20 h-20 bg-blue-200 border-2 border-blue-400 rounded flex items-center justify-center cursor-grab active:cursor-grabbing"
-              draggable={true}
-              onDragStart={(e) => {
-                console.log("🧪 Test drag start");
-                e.dataTransfer.setData("text/plain", "test");
-              }}
-              onDragEnd={() => console.log("🧪 Test drag end")}
-            >
-              Drag Me
-            </div>
-            <div
-              className="w-40 h-20 bg-green-200 border-2 border-green-400 rounded flex items-center justify-center border-dashed"
-              onDragOver={(e) => {
-                e.preventDefault();
-                console.log("🧪 Test drag over");
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                console.log("🧪 Test drop");
-              }}
-            >
-              Drop Zone
-            </div>
-          </div>
-        </div>
 
         {/* Editor */}
         <div className="max-w-4xl mx-auto pl-12 pr-8 py-8">
           <EditorContent
             editor={editor}
             className="min-h-[500px] leading-relaxed text-base block-editor"
-            style={{ pointerEvents: 'auto' }} // Ensure drag events can be received
           />
         </div>
 
@@ -1064,13 +347,9 @@ export function BlockEditor({
                 )}
               </div>
 
-              {/* Keyboard shortcut tip */}
+              {/* Editor tip */}
               <div>
-                <span>💡 Tip: Press </span>
-                <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-300 rounded text-xs">
-                  Ctrl+Shift+H
-                </kbd>
-                <span> while in a block to access controls with keyboard</span>
+                <span>💡 Tip: Select text to see formatting options</span>
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { GameProjectService } from "@/lib/services/game-projects";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { MainLayout } from "@/components/layouts/main-layout";
@@ -17,7 +17,12 @@ import {
   Clock,
   Star,
   Settings,
+  FileText,
+  Box,
+  UserPlus,
 } from "lucide-react";
+import { InviteCollaboratorDialog } from "@/components/collaboration/invite-collaborator-dialog";
+import { ProposeProjectMergeDialog } from "@/components/collaboration/propose-merge-dialog";
 
 interface ProjectDetailPageProps {
   params: Promise<{
@@ -107,9 +112,11 @@ export default async function ProjectDetailPage({
               </Button>
             )}
             {isOwner && (
-              <Button variant="outline" size="sm">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/projects/${project.slug}/settings`}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </Link>
               </Button>
             )}
           </div>
@@ -133,6 +140,81 @@ export default async function ProjectDetailPage({
                     No description provided
                   </p>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Project Components */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Box className="w-5 h-5" />
+                  Project Components
+                </CardTitle>
+                <CardDescription>
+                  All the creative assets and content that make up this game
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Rulebook Component - Always present for game projects */}
+                  <div className="flex items-start gap-3 p-4 border rounded-lg bg-blue-50 border-blue-200">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 text-blue-700" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-medium text-blue-900 mb-1">Rulebook</h4>
+                      <p className="text-sm text-blue-700 mb-2">Core game rules and mechanics</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
+                          Active
+                        </Badge>
+                        <span className="text-xs text-blue-600">
+                          Last updated {new Date(project.updated_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <Link
+                      href={`/projects/${project.slug}/editor`}
+                      className="text-blue-700 hover:text-blue-900 transition-colors"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Link>
+                  </div>
+
+                  {/* Collaboration & Growth - Only show to project owners */}
+                  {isOwner && (
+                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gradient-to-br from-blue-50 to-green-50 border-blue-200">
+                      <div className="max-w-2xl mx-auto text-center mb-4">
+                        <h4 className="font-medium text-gray-900 mb-2">
+                          <UserPlus className="w-4 h-4 inline mr-2" />
+                          Grow Your Project
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Collaborate with other creators or combine projects for richer experiences
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
+                        <InviteCollaboratorDialog
+                          projectId={project.id}
+                          projectTitle={project.title}
+                        />
+
+                        <ProposeProjectMergeDialog
+                          currentProjectId={project.id}
+                          currentProjectTitle={project.title}
+                        />
+                      </div>
+
+                      <div className="mt-4 p-3 bg-white/60 rounded-lg">
+                        <div className="text-xs text-gray-700 space-y-1">
+                          <p><strong>Invite Collaborators:</strong> Add team members to work together on this project</p>
+                          <p><strong>Propose Merge:</strong> Combine with other projects to create collaborative works with shared ownership</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -189,7 +271,7 @@ export default async function ProjectDetailPage({
                             <Star
                               key={i}
                               className={`w-4 h-4 ${
-                                i < project.complexity_rating
+                                i < (project.complexity_rating || 0)
                                   ? "fill-yellow-400 text-yellow-400"
                                   : "text-slate-300"
                               }`}

@@ -26,7 +26,8 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { GameProjectService } from "@/lib/services/game-projects";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, AlertCircle, X, Tag } from "lucide-react";
 
 const projectFormSchema = z.object({
   title: z
@@ -37,28 +38,32 @@ const projectFormSchema = z.object({
     .string()
     .min(1, "Description is required")
     .max(500, "Description must be less than 500 characters"),
-  category: z.enum([
-    "board_game",
-    "card_game",
-    "rpg",
-    "miniatures",
-    "party_game",
-    "strategy",
-    "other",
-  ]),
+  tags: z
+    .array(z.string())
+    .min(1, "Add at least one tag to help others discover your project")
+    .max(10, "Maximum 10 tags allowed"),
   visibility: z.enum(["public", "private", "unlisted"]),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
-const categories = [
-  { value: "board_game", label: "Board Game" },
-  { value: "card_game", label: "Card Game" },
-  { value: "rpg", label: "RPG / Tabletop" },
-  { value: "miniatures", label: "Miniatures" },
-  { value: "party_game", label: "Party Game" },
-  { value: "strategy", label: "Strategy" },
-  { value: "other", label: "Other" },
+const suggestedTags = [
+  "Board Game",
+  "Card Game",
+  "RPG",
+  "Miniatures",
+  "Strategy",
+  "Party Game",
+  "Co-op",
+  "Competitive",
+  "Family Friendly",
+  "Complex",
+  "Quick Play",
+  "Campaign",
+  "Fantasy",
+  "Sci-Fi",
+  "Horror",
+  "Historical",
 ];
 
 const visibilityOptions = [
@@ -82,6 +87,8 @@ const visibilityOptions = [
 export function CreateProjectForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const router = useRouter();
   const supabase = createClient();
 
@@ -90,10 +97,33 @@ export function CreateProjectForm() {
     defaultValues: {
       title: "",
       description: "",
-      category: "board_game",
+      tags: [],
       visibility: "private",
     },
   });
+
+  const handleAddTag = (tag: string) => {
+    const trimmedTag = tag.trim();
+    if (trimmedTag && !selectedTags.includes(trimmedTag) && selectedTags.length < 10) {
+      const newTags = [...selectedTags, trimmedTag];
+      setSelectedTags(newTags);
+      form.setValue("tags", newTags);
+      setTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const newTags = selectedTags.filter((tag) => tag !== tagToRemove);
+    setSelectedTags(newTags);
+    form.setValue("tags", newTags);
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag(tagInput);
+    }
+  };
 
   const onSubmit = async (values: ProjectFormValues) => {
     setIsLoading(true);
@@ -184,27 +214,77 @@ export function CreateProjectForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
-            <Select
-              value={form.watch("category")}
-              onValueChange={(value: any) => form.setValue("category", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {category.label}
-                  </SelectItem>
+            <Label htmlFor="tags">
+              <Tag className="w-4 h-4 inline mr-1" />
+              Tags * (Press Enter to add)
+            </Label>
+
+            {/* Selected Tags */}
+            {selectedTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg border">
+                {selectedTags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="pl-2 pr-1 py-1 flex items-center gap-1"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="hover:bg-gray-300 rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
                 ))}
-              </SelectContent>
-            </Select>
-            {form.formState.errors.category && (
+              </div>
+            )}
+
+            {/* Tag Input */}
+            <Input
+              id="tags"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={handleTagInputKeyDown}
+              placeholder="Add tags (e.g., Board Game, Fantasy, Co-op)..."
+              disabled={isLoading || selectedTags.length >= 10}
+              className={
+                form.formState.errors.tags ? "border-destructive" : ""
+              }
+            />
+
+            {/* Suggested Tags */}
+            {selectedTags.length < 10 && (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-600">Suggested tags:</p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedTags
+                    .filter((tag) => !selectedTags.includes(tag))
+                    .slice(0, 8)
+                    .map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-blue-50 hover:border-blue-300"
+                        onClick={() => handleAddTag(tag)}
+                      >
+                        + {tag}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {form.formState.errors.tags && (
               <p className="text-sm text-destructive">
-                {form.formState.errors.category.message}
+                {form.formState.errors.tags.message}
               </p>
             )}
+
+            <p className="text-xs text-gray-500">
+              {selectedTags.length}/10 tags • Tags help others discover your project
+            </p>
           </div>
 
           <div className="space-y-2">

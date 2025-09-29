@@ -68,85 +68,65 @@ export default async function ProjectsPage() {
             </div>
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
             {projects.map((project) => (
-              <Card
-                key={project.id}
-                className="hover:shadow-md transition-shadow flex flex-col h-full"
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="min-w-0 flex-1">
-                      <CardTitle className="line-clamp-1 text-base leading-6">
-                        {project.title}
-                      </CardTitle>
-                      <CardDescription className="line-clamp-2 mt-2 min-h-[2.5rem] text-sm leading-5">
-                        {project.description || "No description"}
-                      </CardDescription>
+              <Link key={project.id} href={`/projects/${project.slug}`}>
+                <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex flex-col h-full min-w-0 max-w-sm mx-auto w-full cursor-pointer">
+                  <CardHeader className="pb-4">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="line-clamp-2 text-base leading-6 mb-2">
+                          {project.title}
+                        </CardTitle>
+                        <CardDescription className="line-clamp-3 min-h-[3.75rem] text-sm leading-5">
+                          {project.description || "No description provided"}
+                        </CardDescription>
+                      </div>
+                      <Badge
+                        variant={
+                          project.status === "active" ? "default" : "secondary"
+                        }
+                        className="flex-shrink-0 text-xs"
+                      >
+                        {project.status}
+                      </Badge>
                     </div>
-                    <Badge
-                      variant={
-                        project.status === "active" ? "default" : "secondary"
-                      }
-                      className="flex-shrink-0"
-                    >
-                      {project.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
 
-                <CardContent className="flex-1 flex flex-col">
-                  <div className="flex-1 space-y-4">
-                    {/* Tags section with fixed height */}
-                    <div className="min-h-[1.5rem]">
-                      {project.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {project.tags.slice(0, 3).map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                          {project.tags.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{project.tags.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
+                  <CardContent className="flex-1 flex flex-col">
+                    <div className="flex-1 space-y-4">
+                      {/* Tags section with fixed height */}
+                      <div className="min-h-[1.5rem]">
+                        {project.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {project.tags.slice(0, 3).map((tag) => (
+                              <Badge
+                                key={tag}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
+                            {project.tags.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{project.tags.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm text-slate-600 mt-auto">
+                        <span>{project.is_public ? "Public" : "Private"}</span>
+                        <span>
+                          {new Date(project.updated_at).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-
-                    <div className="flex justify-between items-center text-sm text-slate-600">
-                      <span>{project.is_public ? "Public" : "Private"}</span>
-                      <span>
-                        {new Date(project.updated_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Buttons always at bottom */}
-                  <div className="space-y-2 mt-4">
-                    <Button asChild className="w-full" size="sm">
-                      <Link href={`/projects/${project.slug}/editor`}>
-                        Open Editor
-                      </Link>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="w-full"
-                      size="sm"
-                    >
-                      <Link href={`/projects/${project.slug}`}>
-                        View Details
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

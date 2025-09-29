@@ -12,7 +12,11 @@
       "Bash(npm run format:*)",
       "Bash(npx biome check:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(git restore:*)",
+      "Bash(pkill:*)",
+      "Bash(curl -s \"http://localhost:3000/projects/rose-creek\")",
+      "Bash(supabase db:*)"
     ],
     "deny": [],
     "ask": []
