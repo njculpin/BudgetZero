@@ -1,25 +1,10 @@
 "use client";
 
-import { NodeViewWrapper } from "@tiptap/react";
+import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Info, Zap, Trash2, Copy, Edit2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ReusableComponent } from "./reusable-component";
-
-interface ComponentNodeViewProps {
-  node: {
-    attrs: {
-      componentId: string;
-      componentType: ReusableComponent["type"];
-      componentTitle: string;
-      componentContent: string;
-      componentSettings: ReusableComponent["settings"];
-    };
-  };
-  deleteNode: () => void;
-  selected: boolean;
-}
 
 const componentTypeConfig = {
   reminder: {
@@ -46,9 +31,19 @@ export function ComponentNodeView({
   node,
   deleteNode,
   selected,
-}: ComponentNodeViewProps) {
+}: NodeViewProps) {
   const { componentType, componentTitle, componentContent, componentSettings } =
-    node.attrs;
+    node.attrs as {
+      componentType: "reminder" | "mechanic" | "callout";
+      componentTitle: string;
+      componentContent: string;
+      componentSettings: {
+        backgroundColor?: string;
+        borderColor?: string;
+        icon?: string;
+        showTitle?: boolean;
+      };
+    };
   const config = componentTypeConfig[componentType];
   const IconComponent = config.icon;
 

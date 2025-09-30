@@ -57,12 +57,12 @@ export async function updateProject(
   const isPublic = formData.get("is_public") === "on";
 
   // Update the project
-  const result = await gameProjectService.updateProject(projectId, {
+  const result = await gameProjectService.updateProject(projectId, user.id, {
     title,
     description,
     status: status as any,
-    genre: genre || null,
-    complexity_rating: complexity ? parseInt(complexity, 10) : null,
+    genre: genre || undefined,
+    complexity_rating: complexity ? parseInt(complexity, 10) : undefined,
     is_public: isPublic,
   });
 
@@ -91,7 +91,7 @@ export async function archiveProject(projectId: string, projectSlug: string) {
   const gameProjectService = new GameProjectService(supabase);
 
   // Update project status to archived
-  const result = await gameProjectService.updateProject(projectId, {
+  const result = await gameProjectService.updateProject(projectId, user.id, {
     status: "archived",
   });
 

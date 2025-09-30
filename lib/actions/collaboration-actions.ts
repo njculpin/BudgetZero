@@ -46,7 +46,7 @@ export async function inviteCollaborator(
 
     // Check if user is project owner or has admin permissions
     const gameProjectService = new GameProjectService(supabase);
-    const projectResult = await gameProjectService.getProjectById(projectId);
+    const projectResult = await gameProjectService.getProject(projectId);
 
     if (projectResult.error || !projectResult.data) {
       return { error: "Project not found" };

@@ -44,7 +44,7 @@ const projectFormSchema = z.object({
     .min(1, "Add at least one tag to help others discover your project")
     .max(10, "Maximum 10 tags allowed"),
   visibility: z.enum(["public", "private", "unlisted"]),
-  seekingCollaborators: z.boolean().default(false),
+  seekingCollaborators: z.boolean(),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;

@@ -59,7 +59,7 @@ export function SyncedBlockView({
   const syncGroupId = getSyncGroupId(syncId);
   const syncGroupStyles = getSyncGroupStyles(syncId);
   const syncGroupInfo = getSyncGroupInfo(syncId, editor);
-  const currentPos = _getPos ? _getPos() : 0;
+  const currentPos = _getPos?.() ?? 0;
   const navigation = getSyncGroupNavigation(syncId, currentPos, editor);
   const tooltipContent = getSyncGroupTooltipContent(syncId, editor);
   const a11yDescription = getSyncGroupA11yDescription(syncId, syncGroupInfo.totalInstances);
@@ -73,7 +73,7 @@ export function SyncedBlockView({
     editor.state.doc.nodesBetween(
       0,
       editor.state.doc.content.size,
-      (node, pos) => {
+      (node: { type: { name: string }; nodeSize: number }, pos: number) => {
         if (
           node.type.name === "syncedBlock" &&
           pos < from &&
