@@ -126,6 +126,7 @@ export interface CreateGameProjectData {
   player_count_max?: number;
   play_time_minutes?: number;
   complexity_rating?: number;
+  seeking_collaborators?: boolean;
 }
 
 export interface UpdateGameProjectData {
@@ -144,6 +145,7 @@ export interface UpdateGameProjectData {
   player_count_max?: number;
   play_time_minutes?: number;
   complexity_rating?: number;
+  seeking_collaborators?: boolean;
 }
 
 // Project collaboration interfaces
@@ -242,8 +244,36 @@ export interface Asset {
   usage_count: number;
   is_public: boolean;
   is_featured: boolean;
+  // Model-specific fields (Phase 2)
+  polygon_count?: number | null;
+  vertex_count?: number | null;
+  is_rigged?: boolean;
+  is_animated?: boolean;
+  is_textured?: boolean;
+  is_game_ready?: boolean;
+  scale_unit?: 'mm' | 'cm' | 'm' | 'inch' | null;
+  print_settings?: Record<string, any> | null;
+  render_engine_tags?: string[];
+  model_category?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface AssetFile {
+  id: string;
+  asset_id: string;
+  file_type: 'primary' | 'texture' | 'material' | 'thumbnail' | 'preview' | 'additional';
+  file_url: string;
+  file_name: string;
+  file_format: string | null;
+  file_size_bytes: number | null;
+  display_order: number;
+  metadata: Record<string, any>;
+  created_at: string;
+}
+
+export interface AssetWithFiles extends Asset {
+  files: AssetFile[];
 }
 
 export interface AssetWithCreator extends Asset {
@@ -280,6 +310,17 @@ export interface CreateAssetData {
   license_terms?: string;
   price_cents?: number;
   is_public?: boolean;
+  // Model-specific fields (Phase 2)
+  polygon_count?: number;
+  vertex_count?: number;
+  is_rigged?: boolean;
+  is_animated?: boolean;
+  is_textured?: boolean;
+  is_game_ready?: boolean;
+  scale_unit?: 'mm' | 'cm' | 'm' | 'inch';
+  print_settings?: Record<string, any>;
+  render_engine_tags?: string[];
+  model_category?: string;
 }
 
 // Activity and comments interfaces
@@ -438,4 +479,94 @@ export interface CollaborationDocument {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// Phase 4.2 - Project Forking and Collaborative Projects
+
+export type ForkType = "merge" | "reference";
+export type ForkStatus = "pending" | "accepted" | "rejected" | "expired";
+export type CollaborativeProjectStatus = "draft" | "review" | "published" | "archived";
+export type CollaborativeMemberRole = "owner" | "contributor";
+
+export interface ProjectFork {
+  id: string;
+  parent_project_id: string;
+  child_project_id: string;
+  fork_type: ForkType;
+  status: ForkStatus;
+  requested_by: string;
+  requested_at: string;
+  responded_at: string | null;
+  message: string | null;
+}
+
+export interface ProjectForkWithProjects extends ProjectFork {
+  parent_project: GameProject;
+  child_project: GameProject;
+  requester: Profile;
+}
+
+export interface CollaborativeProject {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  source_project_ids: string[];
+  status: CollaborativeProjectStatus;
+  revenue_split: Record<string, number>;
+  requires_unanimous_approval: boolean;
+  published_at: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CollaborativeProjectMember {
+  id: string;
+  collaborative_project_id: string;
+  user_id: string;
+  source_project_id: string | null;
+  role: CollaborativeMemberRole;
+  revenue_percentage: number;
+  joined_at: string;
+}
+
+export interface CollaborativeProjectMemberWithProfile extends CollaborativeProjectMember {
+  user: Profile;
+  source_project?: GameProject;
+}
+
+export interface CollaborativeProjectApproval {
+  id: string;
+  collaborative_project_id: string;
+  approver_id: string;
+  approved: boolean | null;
+  approved_at: string | null;
+  comments: string | null;
+  created_at: string;
+}
+
+export interface CollaborativeProjectApprovalWithProfile extends CollaborativeProjectApproval {
+  approver: Profile;
+}
+
+export interface CollaborativeProjectWithDetails extends CollaborativeProject {
+  members: CollaborativeProjectMemberWithProfile[];
+  approvals: CollaborativeProjectApprovalWithProfile[];
+  source_projects: GameProject[];
+  creator: Profile;
+}
+
+export interface CreateProjectForkData {
+  parent_project_id: string;
+  child_project_id: string;
+  fork_type: ForkType;
+  message?: string;
+}
+
+export interface CreateCollaborativeProjectData {
+  name: string;
+  description?: string;
+  source_project_ids: string[];
+  revenue_split: Record<string, number>;
 }

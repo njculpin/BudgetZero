@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { SyncedBlock } from "./extensions/synced-block";
+import { AssetReference } from "./extensions/asset-reference";
 import { Highlight } from "@tiptap/extension-highlight";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { useState, useRef, useMemo } from "react";
@@ -19,8 +20,11 @@ import {
   Plus,
   List,
   ListOrdered,
+  Box,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { AssetPickerModal } from "./asset-picker-modal";
+import { addAssetToProjectAction } from "@/lib/actions/asset-integration-actions";
 import "./block-editor.css";
 
 interface BlockEditorProps {
@@ -29,6 +33,7 @@ interface BlockEditorProps {
   onContentChange?: (content: any) => void;
   isReadOnly?: boolean;
   projectTitle?: string;
+  projectId?: string;
 }
 
 export function BlockEditor({
@@ -37,11 +42,13 @@ export function BlockEditor({
   onContentChange,
   isReadOnly = false,
   projectTitle = "Untitled Project",
+  projectId,
 }: BlockEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
   const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const floatingToolbarRef = useRef<HTMLDivElement>(null);
 
@@ -87,6 +94,7 @@ export function BlockEditor({
         },
       }),
       SyncedBlock,
+      AssetReference,
       Highlight,
       TextStyle,
     ],
@@ -241,6 +249,22 @@ export function BlockEditor({
           <Highlighter className="h-4 w-4" />
         </Button>
 
+        {/* Add Asset (only if projectId is provided) */}
+        {projectId && (
+          <>
+            <Separator orientation="vertical" className="h-6 mx-1" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAssetPicker(true)}
+              className="h-8 w-8 p-0"
+              title="Add model to project"
+            >
+              <Box className="h-4 w-4" />
+            </Button>
+          </>
+        )}
+
         <Separator orientation="vertical" className="h-6 mx-1" />
 
         {/* Bullet List */}
@@ -285,6 +309,36 @@ export function BlockEditor({
     );
   };
 
+  // Handle asset selection
+  async function handleAssetSelect(asset: any) {
+    if (!editor || !projectId) return;
+
+    try {
+      // Add asset to project in database
+      const result = await addAssetToProjectAction(projectId, asset.id);
+
+      if (!result.success) {
+        console.error("Failed to add asset to project:", result.error);
+        return;
+      }
+
+      // Insert asset reference into editor
+      editor
+        .chain()
+        .focus()
+        .insertAssetReference({
+          assetId: asset.id,
+          assetName: asset.name,
+          assetType: "model",
+          thumbnailUrl: asset.thumbnail_url,
+          creatorName: asset.creator?.full_name || asset.creator?.username,
+          licenseType: asset.license_type,
+        })
+        .run();
+    } catch (error) {
+      console.error("Error adding asset:", error);
+    }
+  }
 
   if (!editor) {
     return (
@@ -355,6 +409,16 @@ export function BlockEditor({
           </div>
         )}
       </div>
+
+      {/* Asset Picker Modal */}
+      {projectId && (
+        <AssetPickerModal
+          open={showAssetPicker}
+          onClose={() => setShowAssetPicker(false)}
+          onSelect={handleAssetSelect}
+          projectId={projectId}
+        />
+      )}
     </div>
   );
 }

@@ -16,7 +16,12 @@
       "Bash(git restore:*)",
       "Bash(pkill:*)",
       "Bash(curl -s \"http://localhost:3000/projects/rose-creek\")",
-      "Bash(supabase db:*)"
+      "Bash(supabase db:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(curl:*)",
+      "Bash(npx supabase migration:*)",
+      "Bash(psql:*)",
+      "Bash(npx supabase db reset:*)"
     ],
     "deny": [],
     "ask": []
