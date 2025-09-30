@@ -345,14 +345,44 @@ export async function respondToMergeProposal(
         return { error: executeResult.error };
       }
 
-      // Redirect to the new merged project
+      // Get merged project details and send notifications to all co-owners
       const { data: mergedProject } = await supabase
         .from("game_projects")
-        .select("slug")
+        .select("slug, title")
         .eq("id", executeResult.data?.mergedProjectId)
         .single();
 
       if (mergedProject) {
+        // Get all collaborators (co-owners) of the merged project
+        const { data: collaborators } = await supabase
+          .from("project_collaborators")
+          .select(`
+            collaborator_id,
+            collaborator:profiles!collaborator_id(full_name, email)
+          `)
+          .eq("project_id", executeResult.data?.mergedProjectId);
+
+        if (collaborators) {
+          const projectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/projects/${mergedProject.slug}`;
+          const coOwnerNames = collaborators
+            .map((c: any) => c.collaborator?.full_name || c.collaborator?.email)
+            .filter(Boolean);
+
+          // Send notification to all co-owners
+          for (const collab of collaborators) {
+            const collaboratorData = collab.collaborator as any;
+            if (collaboratorData?.email) {
+              await sendMergeCompletionEmail(collaboratorData.email, {
+                recipientName: collaboratorData.full_name || collaboratorData.email,
+                mergedProjectTitle: mergedProject.title,
+                mergedProjectSlug: mergedProject.slug,
+                coOwners: coOwnerNames,
+                projectUrl,
+              });
+            }
+          }
+        }
+
         redirect(`/projects/${mergedProject.slug}`);
       }
     }

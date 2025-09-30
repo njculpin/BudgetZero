@@ -38,7 +38,7 @@ interface SyncedBlockViewProps {
   deleteNode: () => void;
   editor: any;
   selected?: boolean;
-  getPos: () => number;
+  getPos: () => number | undefined;
 }
 
 export function SyncedBlockView({

@@ -37,6 +37,8 @@ import {
   LogOut,
   User,
   ChevronsUpDown,
+  Box,
+  Upload,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -70,6 +72,21 @@ const navigation = [
         title: "Browse Projects",
         url: "/browse",
         icon: BookOpen,
+      },
+    ],
+  },
+  {
+    title: "Assets",
+    items: [
+      {
+        title: "Browse Models",
+        url: "/models",
+        icon: Box,
+      },
+      {
+        title: "Upload Model",
+        url: "/models/new",
+        icon: Upload,
       },
     ],
   },

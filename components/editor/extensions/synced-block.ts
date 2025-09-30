@@ -300,7 +300,8 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
           const syncId = `sync-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
           // Replace selection with synced block
-          return commands.deleteSelection().insertContent({
+          commands.deleteSelection();
+          return commands.insertContent({
             type: "syncedBlock",
             attrs: {
               syncId,

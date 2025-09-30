@@ -29,12 +29,18 @@ export default async function DashboardPage() {
   );
   const totalPending = pendingInvites.length + pendingMergeProposals.length;
 
+  const breadcrumbs = [
+    { label: "Dashboard" },
+  ];
+
   return (
-    <MainLayout
-      title="Dashboard"
-      subtitle="Manage your collaborations and project invitations"
-    >
+    <MainLayout user={user} breadcrumbs={breadcrumbs}>
       <div className="space-y-6">
+        {/* Page Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Manage your collaborations and project invitations</p>
+        </div>
         {/* Summary Card */}
         <Card>
           <CardHeader>

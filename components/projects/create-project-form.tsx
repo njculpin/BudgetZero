@@ -27,7 +27,8 @@ import { createClient } from "@/lib/supabase/client";
 import { GameProjectService } from "@/lib/services/game-projects";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertCircle, X, Tag } from "lucide-react";
+import { Loader2, AlertCircle, X, Tag, Users } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const projectFormSchema = z.object({
   title: z
@@ -43,6 +44,7 @@ const projectFormSchema = z.object({
     .min(1, "Add at least one tag to help others discover your project")
     .max(10, "Maximum 10 tags allowed"),
   visibility: z.enum(["public", "private", "unlisted"]),
+  seekingCollaborators: z.boolean().default(false),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -99,6 +101,7 @@ export function CreateProjectForm() {
       description: "",
       tags: [],
       visibility: "private",
+      seekingCollaborators: false,
     },
   });
 
@@ -314,6 +317,31 @@ export function CreateProjectForm() {
                 {form.formState.errors.visibility.message}
               </p>
             )}
+          </div>
+
+          <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="seekingCollaborators"
+                checked={form.watch("seekingCollaborators")}
+                onCheckedChange={(checked) =>
+                  form.setValue("seekingCollaborators", checked === true)
+                }
+              />
+              <div className="flex-1">
+                <Label
+                  htmlFor="seekingCollaborators"
+                  className="text-sm font-medium flex items-center gap-2 cursor-pointer"
+                >
+                  <Users className="w-4 h-4 text-blue-600" />
+                  Seeking Collaborators
+                </Label>
+                <p className="text-xs text-gray-600 mt-1">
+                  Let others know you're looking for collaborators. Your project will appear
+                  in the "Seeking Collaborators" filter on the browse page.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">
