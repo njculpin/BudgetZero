@@ -1,32 +1,16 @@
 "use client";
 
-import { NodeViewWrapper } from "@tiptap/react";
+import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { Box, X, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-interface AssetReferenceViewProps {
-  node: {
-    attrs: {
-      assetId: string;
-      assetName: string;
-      assetType: string;
-      thumbnailUrl?: string;
-      creatorName?: string;
-      licenseType?: string;
-      addedAt?: string;
-    };
-  };
-  deleteNode: () => void;
-  selected: boolean;
-}
-
 export function AssetReferenceView({
   node,
   deleteNode,
   selected,
-}: AssetReferenceViewProps) {
+}: NodeViewProps) {
   const { assetId, assetName, assetType, thumbnailUrl, creatorName, licenseType } =
     node.attrs;
 

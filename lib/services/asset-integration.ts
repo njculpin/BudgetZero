@@ -158,9 +158,9 @@ export class AssetIntegrationService {
       return { success: false, error: error.message };
     }
 
-    const formatted = data.map((item: { project_id: string; added_at: string; project: { title: string } }) => ({
+    const formatted = data.map((item: { project_id: string; added_at: string; project: { title: string }[] }) => ({
       project_id: item.project_id,
-      project_title: item.project.title,
+      project_title: item.project[0]?.title || "Unknown",
       added_at: item.added_at,
     }));
 

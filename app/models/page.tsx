@@ -45,7 +45,7 @@ export default async function ModelsPage({
   const breadcrumbs = [{ label: "Models" }];
 
   return (
-    <MainLayout user={user} breadcrumbs={breadcrumbs}>
+    <MainLayout user={user ?? undefined} breadcrumbs={breadcrumbs}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

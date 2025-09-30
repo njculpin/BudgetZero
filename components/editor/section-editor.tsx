@@ -249,10 +249,15 @@ export function SectionEditor({
   const insertReusableComponent = useCallback(
     (
       componentId: string,
-      componentType: string,
+      componentType: "reminder" | "mechanic" | "callout",
       componentTitle: string,
       componentContent: string,
-      componentSettings: any,
+      componentSettings: {
+        backgroundColor?: string;
+        borderColor?: string;
+        icon?: string;
+        showTitle?: boolean;
+      },
     ) => {
       if (editor) {
         editor

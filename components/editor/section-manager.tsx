@@ -49,10 +49,11 @@ export interface RulebookPage {
 export interface RulebookSection {
   id: string;
   title: string;
-  content?: any;
+  content?: unknown;
   order: number;
   pageId: string;
   isVisible?: boolean;
+  isExpanded?: boolean;
 }
 
 interface SortableItemProps {
@@ -133,9 +134,7 @@ function SortableItem({
           <GripVertical className="w-3 h-3 text-muted-foreground" />
         </div>
 
-        {section.type === "section" &&
-          section.children &&
-          section.children.length > 0 && (
+        {false && (
             <Button
               variant="ghost"
               size="sm"
@@ -154,11 +153,7 @@ function SortableItem({
           )}
 
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          {section.type === "section" ? (
-            <Layers className="w-4 h-4 text-blue-500 flex-shrink-0" />
-          ) : (
-            <FileText className="w-4 h-4 text-green-500 flex-shrink-0" />
-          )}
+          <FileText className="w-4 h-4 text-green-500 flex-shrink-0" />
 
           {isEditing ? (
             <Input
@@ -222,9 +217,9 @@ function SortableItem({
         </div>
       </div>
 
-      {section.type === "section" && section.isExpanded && section.children && (
+      {false && (
         <div className="ml-2">
-          {section.children.map((child) => (
+          {[].map((child: RulebookSection) => (
             <SortableItem
               key={child.id}
               section={child}
@@ -290,11 +285,10 @@ export function SectionManager({
     const newSection: RulebookSection = {
       id: `${addType}-${Date.now()}`,
       title: newSectionTitle.trim(),
-      type: addType,
       isVisible: true,
       isExpanded: true,
       order: sections.length,
-      children: addType === "section" ? [] : undefined,
+      pageId: "",
     };
 
     onSectionsChange([...sections, newSection]);

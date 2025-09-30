@@ -67,18 +67,18 @@ const formSchema = z.object({
     .max(500, "Description must be less than 500 characters")
     .optional(),
   model_category: z.string().min(1, "Please select a category"),
-  tags: z.array(z.string()).default([]),
+  tags: z.array(z.string()),
   license_type: z.enum(["free", "attribution", "commercial", "exclusive"]),
-  price_cents: z.number().default(0),
-  is_public: z.boolean().default(true),
+  price_cents: z.number(),
+  is_public: z.boolean(),
   polygon_count: z.number().optional(),
   vertex_count: z.number().optional(),
-  is_rigged: z.boolean().default(false),
-  is_animated: z.boolean().default(false),
-  is_textured: z.boolean().default(false),
-  is_game_ready: z.boolean().default(false),
+  is_rigged: z.boolean(),
+  is_animated: z.boolean(),
+  is_textured: z.boolean(),
+  is_game_ready: z.boolean(),
   scale_unit: z.enum(["mm", "cm", "m", "inch"]).optional(),
-  render_engine_tags: z.array(z.string()).default([]),
+  render_engine_tags: z.array(z.string()),
 });
 
 type FormValues = z.infer<typeof formSchema>;

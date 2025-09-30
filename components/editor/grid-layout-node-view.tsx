@@ -1,43 +1,34 @@
 "use client";
 
-import { NodeViewWrapper } from "@tiptap/react";
+import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Settings, Trash2, Move } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
-interface GridLayoutNodeViewProps {
-  node: {
-    attrs: {
-      columns: number;
-      rows: number;
-      gap: string;
-      items: Array<{
-        id: string;
-        type: "text" | "component";
-        content: any;
-        position: {
-          col: number;
-          row: number;
-          colspan?: number;
-          rowspan?: number;
-        };
-      }>;
-    };
-  };
-  deleteNode: () => void;
-  selected: boolean;
-  updateAttributes: (attributes: any) => void;
-}
-
 export function GridLayoutNodeView({
   node,
   deleteNode,
   selected,
   updateAttributes,
-}: GridLayoutNodeViewProps) {
-  const { columns, rows, gap, items } = node.attrs;
+}: NodeViewProps) {
+  const { columns, rows, gap, items } = node.attrs as {
+    columns: number;
+    rows: number;
+    gap: string;
+    items: Array<{
+      id: string;
+      type: "text" | "component";
+      content: unknown;
+      position: {
+        col: number;
+        row: number;
+        colspan?: number;
+        rowspan?: number;
+      };
+    }>;
+  };
   const [isEditing, setIsEditing] = useState(false);
 
   // Create grid template
@@ -202,7 +193,7 @@ export function GridLayoutNodeView({
                         </div>
                       ) : (
                         <div className="text-sm p-2 bg-blue-50/50 rounded border-l-4 border-blue-400">
-                          Component: {item.content?.title || "Untitled"}
+                          Component: {(item.content as { title?: string })?.title || "Untitled"}
                         </div>
                       )}
                     </div>
