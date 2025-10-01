@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Box, Search, X } from "lucide-react";
+import { Box, Search, X, ImageIcon, Package } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,11 +15,12 @@ import { createClient } from "@/lib/supabase/client";
 
 interface Asset {
   id: string;
-  name: string;
+  title: string;
   description?: string;
   thumbnail_url?: string;
   creator_id: string;
   license_type: string;
+  asset_type: 'model' | 'illustration';
   creator: {
     full_name?: string;
     username?: string;
@@ -42,22 +43,13 @@ export function AssetPickerModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-
-  const categories = [
-    { value: "all", label: "All Models" },
-    { value: "miniature", label: "Miniatures" },
-    { value: "terrain", label: "Terrain" },
-    { value: "vehicle", label: "Vehicles" },
-    { value: "scenery", label: "Scenery" },
-    { value: "token", label: "Tokens" },
-  ];
+  const [assetType, setAssetType] = useState<'model' | 'illustration'>('model');
 
   useEffect(() => {
     if (open) {
       loadAssets();
     }
-  }, [open, searchQuery, selectedCategory]);
+  }, [open, searchQuery, assetType]);
 
   async function loadAssets() {
     setLoading(true);
@@ -68,11 +60,12 @@ export function AssetPickerModal({
       .select(
         `
         id,
-        name,
+        title,
         description,
         thumbnail_url,
         creator_id,
         license_type,
+        asset_type,
         creator:profiles!assets_creator_id_fkey (
           full_name,
           username
@@ -80,16 +73,12 @@ export function AssetPickerModal({
       `
       )
       .eq("is_public", true)
-      .eq("asset_type", "model")
+      .eq("asset_type", assetType)
       .order("created_at", { ascending: false })
       .limit(20);
 
     if (searchQuery) {
-      query = query.ilike("name", `%${searchQuery}%`);
-    }
-
-    if (selectedCategory !== "all") {
-      query = query.eq("model_category", selectedCategory);
+      query = query.ilike("title", `%${searchQuery}%`);
     }
 
     const { data, error } = await query;
@@ -110,35 +99,39 @@ export function AssetPickerModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Add Model to Project</DialogTitle>
+          <DialogTitle>Add Asset to Project</DialogTitle>
         </DialogHeader>
 
-        {/* Search and filters */}
+        {/* Asset Type Tabs */}
+        <div className="flex gap-2 border-b">
+          <Button
+            variant={assetType === 'model' ? 'default' : 'ghost'}
+            onClick={() => setAssetType('model')}
+            className="flex items-center gap-2"
+          >
+            <Package className="h-4 w-4" />
+            Models
+          </Button>
+          <Button
+            variant={assetType === 'illustration' ? 'default' : 'ghost'}
+            onClick={() => setAssetType('illustration')}
+            className="flex items-center gap-2"
+          >
+            <ImageIcon className="h-4 w-4" />
+            Illustrations
+          </Button>
+        </div>
+
+        {/* Search */}
         <div className="space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search models..."
+              placeholder={`Search ${assetType}s...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {categories.map((category) => (
-              <Button
-                key={category.value}
-                variant={
-                  selectedCategory === category.value ? "default" : "outline"
-                }
-                size="sm"
-                onClick={() => setSelectedCategory(category.value)}
-                className="flex-shrink-0"
-              >
-                {category.label}
-              </Button>
-            ))}
           </div>
         </div>
 
@@ -146,13 +139,17 @@ export function AssetPickerModal({
         <div className="flex-1 overflow-y-auto -mx-6 px-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-500">Loading models...</div>
+              <div className="text-gray-500">Loading {assetType}s...</div>
             </div>
           ) : assets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <Box className="h-12 w-12 mb-3 text-gray-300" />
-              <p>No models found</p>
-              <p className="text-sm">Try adjusting your search or filters</p>
+              {assetType === 'model' ? (
+                <Package className="h-12 w-12 mb-3 text-gray-300" />
+              ) : (
+                <ImageIcon className="h-12 w-12 mb-3 text-gray-300" />
+              )}
+              <p>No {assetType}s found</p>
+              <p className="text-sm">Try adjusting your search</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
@@ -167,17 +164,19 @@ export function AssetPickerModal({
                     {asset.thumbnail_url ? (
                       <img
                         src={asset.thumbnail_url}
-                        alt={asset.name}
+                        alt={asset.title}
                         className="w-full h-full object-cover"
                       />
+                    ) : asset.asset_type === 'illustration' ? (
+                      <ImageIcon className="h-8 w-8 text-gray-400" />
                     ) : (
-                      <Box className="h-8 w-8 text-gray-400" />
+                      <Package className="h-8 w-8 text-gray-400" />
                     )}
                   </div>
 
                   {/* Details */}
                   <h4 className="font-medium text-sm truncate group-hover:text-blue-600">
-                    {asset.name}
+                    {asset.title}
                   </h4>
                   <p className="text-xs text-gray-600 mt-1">
                     by {asset.creator.full_name || asset.creator.username || "Unknown"}
@@ -196,7 +195,7 @@ export function AssetPickerModal({
         {/* Footer */}
         <div className="flex justify-between items-center pt-3 border-t">
           <p className="text-sm text-gray-500">
-            {assets.length} model{assets.length !== 1 ? "s" : ""} available
+            {assets.length} {assetType}{assets.length !== 1 ? "s" : ""} available
           </p>
           <Button variant="outline" onClick={onClose}>
             Cancel

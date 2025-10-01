@@ -184,7 +184,7 @@ export const CreateAssetSchema = z.object({
   file_format: z.string().max(20, "File format too long").optional(),
   thumbnail_url: z.string().url("Invalid thumbnail URL").optional(),
   preview_url: z.string().url("Invalid preview URL").optional(),
-  dimensions: z.record(z.any()).optional(),
+  dimensions: z.record(z.string(), z.any()).optional(),
   tags: z.array(z.string()).default([]),
   license_type: LicenseTypeSchema.default("attribution"),
   license_terms: z.string().max(1000, "License terms too long").optional(),
@@ -203,7 +203,7 @@ export const CreateCommentSchema = z.object({
     .string()
     .min(1, "Comment cannot be empty")
     .max(1000, "Comment too long"),
-  position: z.record(z.any()).optional(), // For contextual comments in editor
+  position: z.record(z.string(), z.any()).optional(), // For contextual comments in editor
 });
 
 export const UpdateCommentSchema = z.object({

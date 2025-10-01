@@ -35,13 +35,12 @@ export class ProjectRelationshipService {
         .single();
 
       if (error) {
-        return { data: null, error: error.message };
+        return { error: error.message };
       }
 
-      return { data, error: null };
+      return { data };
     } catch (error) {
       return {
-        data: null,
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
@@ -63,13 +62,12 @@ export class ProjectRelationshipService {
         .or(`parent_project_id.eq.${projectId},child_project_id.eq.${projectId}`);
 
       if (error) {
-        return { data: null, error: error.message };
+        return { error: error.message };
       }
 
-      return { data: data || [], error: null };
+      return { data: data || [] };
     } catch (error) {
       return {
-        data: null,
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
@@ -92,7 +90,7 @@ export class ProjectRelationshipService {
         .in("id", projectIds);
 
       if (projectsError || !projects) {
-        return { data: null, error: "Failed to fetch project owners" };
+        return { error: "Failed to fetch project owners" };
       }
 
       const requiresApprovalFrom = projects.map((p) => p.creator_id);
@@ -112,13 +110,12 @@ export class ProjectRelationshipService {
         .single();
 
       if (error) {
-        return { data: null, error: error.message };
+        return { error: error.message };
       }
 
-      return { data, error: null };
+      return { data };
     } catch (error) {
       return {
-        data: null,
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
@@ -139,12 +136,12 @@ export class ProjectRelationshipService {
         .single();
 
       if (fetchError || !proposal) {
-        return { data: null, error: "Merge proposal not found" };
+        return { error: "Merge proposal not found" };
       }
 
       // Check if user is required to approve
       if (!proposal.requires_approval_from.includes(userId)) {
-        return { data: null, error: "User not authorized to respond" };
+        return { error: "User not authorized to respond" };
       }
 
       // Update approval/decline arrays
@@ -180,13 +177,12 @@ export class ProjectRelationshipService {
         .single();
 
       if (error) {
-        return { data: null, error: error.message };
+        return { error: error.message };
       }
 
-      return { data, error: null };
+      return { data };
     } catch (error) {
       return {
-        data: null,
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
@@ -210,7 +206,7 @@ export class ProjectRelationshipService {
         .single();
 
       if (proposalError || !proposal) {
-        return { data: null, error: "Accepted merge proposal not found" };
+        return { error: "Accepted merge proposal not found" };
       }
 
       // Create new merged project
@@ -235,7 +231,7 @@ export class ProjectRelationshipService {
         .single();
 
       if (createError || !mergedProject) {
-        return { data: null, error: "Failed to create merged project" };
+        return { error: "Failed to create merged project" };
       }
 
       // Add all original creators as collaborators with revenue splits
@@ -278,10 +274,9 @@ export class ProjectRelationshipService {
         );
       }
 
-      return { data: { mergedProjectId: mergedProject.id }, error: null };
+      return { data: { mergedProjectId: mergedProject.id } };
     } catch (error) {
       return {
-        data: null,
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
@@ -306,13 +301,12 @@ export class ProjectRelationshipService {
         .order("created_at", { ascending: false });
 
       if (error) {
-        return { data: null, error: error.message };
+        return { error: error.message };
       }
 
-      return { data: data || [], error: null };
+      return { data: data || [] };
     } catch (error) {
       return {
-        data: null,
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }

@@ -37,12 +37,19 @@ Workshop is a collaborative tabletop game publishing platform focused on creator
 - 🚨 Email notifications for collaboration (BLOCKER for engagement)
 - 🔄 End-to-end collaboration testing needed
 
-### Phase 2: Model Projects 📋 PLANNED
+### Phase 2: Model Projects ✅ COMPLETE
 
-- 3D model upload and management
-- STL/OBJ file handling
-- Model categorization and preview
-- Terms of use for models
+**Status**: Core features implemented, tags migration complete
+
+**Completed**:
+- ✅ 3D model upload and management
+- ✅ STL/OBJ file handling via Supabase Storage
+- ✅ Flexible tag system (replaced rigid categories)
+- ✅ Model-specific fields (polygon count, rigging, textures, game-ready)
+- ✅ Browse page with tag filtering (/models)
+- ✅ Asset integration into rulebooks (Phase 4.1)
+- ✅ Multi-file support (model + textures + materials)
+- ✅ Terms of use and licensing
 
 ### Phase 3: Illustration Projects 📋 PLANNED
 
@@ -50,24 +57,33 @@ Workshop is a collaborative tabletop game publishing platform focused on creator
 - Image categorization and tagging
 - Terms of use for artwork
 
-### Phase 4: Cross-Project Collaboration 🚧 85% COMPLETE (Infrastructure)
+### Phase 4: Cross-Project Collaboration ✅ 95% COMPLETE
 
-**Status**: Complete infrastructure, awaiting validation and email integration
+**Status**: Infrastructure complete, Phase 4.1 & 4.2 production-ready
 
-**Completed Infrastructure**:
-- ✅ Database schema (project_relationships, project_merge_proposals, project_collaborators)
-- ✅ Service layer (ProjectRelationshipService with full CRUD)
-- ✅ Server actions (invite, respond, propose merge, execute merge)
-- ✅ UI components (InviteCollaboratorDialog, ProposeProjectMergeDialog)
-- ✅ Collaboration dashboard (/dashboard) with pending invites/proposals
-- ✅ Automatic revenue split calculation
-- ✅ Multi-party approval workflow
-- ✅ Auto-creation of merged projects with co-ownership
+**Completed Phase 4.1 - Asset Integration**:
+- ✅ project_assets table with RLS policies
+- ✅ AssetIntegrationService with full CRUD
+- ✅ TipTap AssetReference extension
+- ✅ Asset picker modal in editor
+- ✅ Visual asset cards in rulebooks
+- ✅ Creator attribution and notifications
+- ✅ License compatibility checks
 
-**Critical Gaps**:
-- 🚨 End-to-end workflow testing (BLOCKER - not validated)
-- 🚨 Email notifications (BLOCKER for user engagement)
-- 🔄 Project relationship visualization (nice-to-have)
+**Completed Phase 4.2 - Fork & Collaboration**:
+- ✅ project_forks table with merge/reference types
+- ✅ collaborative_projects with revenue split
+- ✅ ForkService and CollaborativeProjectService
+- ✅ Project search modal
+- ✅ Fork request workflow (send, accept, decline)
+- ✅ Multi-party approval system
+- ✅ Collaborative project workspace UI
+- ✅ License compatibility validation
+
+**Remaining Gaps**:
+- 🔄 End-to-end workflow testing (HIGH PRIORITY)
+- 🔄 Email notifications enhancement (MEDIUM - basic email service exists)
+- 🔄 Cross-type collaboration (game + model + illustration)
 
 ### Phase 5: Marketplace 📋 PLANNED
 
@@ -163,65 +179,90 @@ For each feature request, evaluate:
 **Team**: Single developer
 **Current Phase**: Completing Phase 1 and validating Phase 4 infrastructure
 
-## Immediate Action Plan (Next 4-6 hours)
+## STRATEGIC RECOMMENDATION - UPDATED 2025-09-30
 
-### Priority 1: Validate Collaboration Workflow (30 min - 1 hour)
-**Effort**: Small | **Impact**: CRITICAL | **Risk**: Blocker
+### Analysis Summary
 
-Test the complete collaboration flow end-to-end:
-- Create two test user accounts
-- Test invitation acceptance/decline
-- Test merge proposal workflow
-- Test auto-creation of merged projects
-- Document bugs and UX friction
+**Current State**:
+- Phase 1 (Game Projects): 95% complete - core editor working, tags implemented
+- Phase 2 (Models): ✅ Complete - upload, browse, tags, asset integration done
+- Phase 3 (Illustrations): Not started
+- Phase 4 (Collaboration): 95% complete - asset integration, forking, approvals all working
+- Phase 5 (Marketplace): Not started
 
-**Why Now**: Extensive infrastructure built without validation. This is a critical blocker.
+**Critical Gap Identified**: The platform has TWO content types (games + models) with sophisticated collaboration infrastructure, but is missing the DISCOVERY and MARKETPLACE layers that enable the business model.
 
-### Priority 2: Build Project Discovery (3-4 hours)
-**Effort**: Medium | **Impact**: CRITICAL | **Risk**: Network effects blocker
+### RECOMMENDED PRIORITY ORDER
 
-Enhance `/browse` page with:
-- Tag-based filtering
-- Search by title/description
-- "Looking for Collaborators" flag
-- Sort by recent/popular
+## Priority 1: Complete Phase 3 (Illustration Projects) - 6-8 hours
+**Effort**: Medium | **Impact**: CRITICAL | **Risk**: Content diversity blocker
+
+**Rationale**:
+- Leverage existing asset infrastructure (95% code reuse from models)
+- Minimal effort for maximum content type expansion
+- Enables true multi-disciplinary collaboration (games + models + art)
+- Differentiates platform from model-only marketplaces
+
+**Implementation**:
+- Copy /models structure to /illustrations
+- Add illustration-specific fields (dimensions, resolution, format, style tags)
+- Reuse tag system, upload flow, browse page
+- Update asset picker to include illustrations
+- Add illustration category to AssetType filtering
+
+**Why This First**: Quick win that unlocks richer project combinations. A game designer can now use BOTH models AND illustrations, creating more valuable collaborative projects.
+
+## Priority 2: Unified Asset Discovery - 4-6 hours
+**Effort**: Medium | **Impact**: HIGH | **Risk**: Network effects incomplete
+
+**Enhancement to existing /browse and /models pages**:
+- Unified /browse page for ALL content (games, models, illustrations)
+- Type filter (show all, or filter by type)
+- "Seeking Collaborators" flag on projects
 - Creator profile links
+- Sort by: recent, popular, most collaborative
+- Enhanced tag filtering across all types
 
-**Why Now**: Without discovery, creators cannot find each other. This breaks the core network effects loop. Discovery enables: Creator Signup → Browse Projects → Find Collaborators → Initiate Collaboration.
+**Why Second**: With 3 content types, discovery becomes critical. Creators need to find compatible projects and assets across disciplines.
 
-### Priority 3: Email Notifications (2-3 hours)
-**Effort**: Small-Medium | **Impact**: HIGH | **Risk**: Engagement blocker
+## Priority 3: End-to-End Collaboration Testing - 2-3 hours
+**Effort**: Small | **Impact**: CRITICAL | **Risk**: Quality blocker
 
-Integrate email service (Resend recommended):
-- Collaboration invitation emails
-- Merge proposal notifications
-- Acceptance/decline confirmations
-- Template system for future emails
+**Validation Workflow**:
+- Create 3 test accounts (designer, modeler, illustrator)
+- Test asset integration (add model to game, add illustration to game)
+- Test fork requests (game + model merge)
+- Test multi-project collaboration (game + model + illustration)
+- Test approval workflow and revenue splits
+- Document bugs and UX issues
 
-**Why Now**: Completes the collaboration feedback loop. Without notifications, users don't know about invites/proposals.
+**Why Third**: Validate the collaboration infrastructure works end-to-end before marketplace launch.
 
-## Medium-term Priorities (Next 2-3 days)
+## Priority 4: Phase 5 Marketplace Foundation - 12-16 hours
+**Effort**: Large | **Impact**: CRITICAL | **Risk**: Revenue blocker
 
-### Priority 4: Asset Management Foundation (8-12 hours)
-**Effort**: Large | **Impact**: HIGH | **Risk**: Core value prop incomplete
+**Core Marketplace Features**:
+- Public marketplace page (/marketplace)
+- Published project listings
+- Purchase flow (Stripe integration)
+- Digital asset delivery
+- Revenue distribution tracking
+- Download management
+- License enforcement
 
-- Supabase Storage setup for files
-- Asset upload UI (3D models, illustrations)
-- Asset browser and preview
-- Basic asset usage rights system
-- Link assets to projects
+**Why Fourth**: With 3 content types and validated collaboration, marketplace becomes the revenue engine. This is THE critical business model enabler.
 
-**Why Now**: Core value proposition is "designers use modelers' work." Without asset management, this doesn't work.
+## Deferred Priorities
 
-### Priority 5: User Profiles & Portfolios (4-6 hours)
-**Effort**: Medium | **Impact**: MEDIUM | **Risk**: Discovery incomplete
+### User Profiles & Portfolios - DEFER to Phase 6
+**Rationale**: Browse pages already show creator names. Full profiles are enhancement, not blocker.
 
-- Public profile pages
-- Capability showcase (roles, skills)
-- Project portfolio display
-- Social proof indicators
+### Email Notification Enhancement - DEFER to Phase 6
+**Rationale**: Basic email service exists (lib/services/email.ts). Collaboration works without immediate emails. Add after marketplace.
 
-**Why Now**: Supports project discovery and builds creator reputation.
+### Phase 3 Illustrations Alt: Complete Marketplace First
+**Alternative Strategy**: Skip illustrations, go straight to marketplace with games + models only. Add illustrations post-MVP.
+**Risk**: Less differentiation, smaller network effects, less valuable collaborative projects.
 
 ## Deferred Features (Phase 6+)
 
@@ -269,18 +310,23 @@ Integrate email service (Resend recommended):
 
 ---
 
-_Last Updated: 2025-09-29_
-_Next Review: After collaboration workflow validation and project discovery implementation_
+_Last Updated: 2025-09-30_
+_Next Review: After Phase 3 (Illustrations) completion and marketplace foundation build_
 
-## Recent Accomplishments (2025-09-29)
+## Recent Accomplishments
 
-### Database & Collaboration Infrastructure
+### 2025-09-30 - Tags Migration & Phase 4 Completion
+- ✅ Completed tags migration (replaced rigid categories with flexible tags)
+- ✅ Tags system with popularity tracking for models
+- ✅ Model upload form with tag input
+- ✅ Browse page with tag filtering
+- ✅ Database migration with GIN indexes for performance
+- ✅ Phase 4.1 (Asset Integration) - COMPLETE
+- ✅ Phase 4.2 (Fork & Collaboration) - COMPLETE
+
+### 2025-09-29 - Phase 4 Infrastructure Build
 - Created complete project_relationships table with RLS policies
 - Created project_merge_proposals table with approval workflow
-- Verified project_collaborators table from initial schema
-- Applied all migrations successfully to local Supabase
-
-### Collaboration Features
 - Built complete ProjectRelationshipService with full CRUD operations
 - Implemented all collaboration server actions (invite, respond, propose, merge)
 - Created InviteCollaboratorDialog component
@@ -290,14 +336,24 @@ _Next Review: After collaboration workflow validation and project discovery impl
 - Added multi-party approval workflow for merges
 - Auto-creation of merged projects with co-ownership
 
-### UI Improvements
-- Replaced rigid categories with flexible tag system (1-10 tags)
-- Added suggested tags for quick selection
-- Custom tag creation for organic growth
+### Earlier Achievements
+- Game project editor with TipTap rich text editing
+- Model upload and management system
+- Supabase Storage integration
+- Asset integration into rulebooks
+- License compatibility validation
 - Project settings with delete/archive functionality
 
-### Critical Next Steps
-1. Validate collaboration workflow end-to-end
-2. Build project discovery/browse functionality
-3. Implement email notifications
-4. Begin asset management foundation
+## Next Strategic Actions (Prioritized)
+
+**IMMEDIATE** (This week):
+1. **Phase 3 - Illustrations** (6-8 hours): Leverage model infrastructure for quick content type expansion
+2. **Unified Discovery** (4-6 hours): Enhanced /browse for games + models + illustrations
+3. **E2E Testing** (2-3 hours): Validate collaboration workflows with 3 test accounts
+4. **Phase 5 - Marketplace** (12-16 hours): Build revenue engine with Stripe integration
+
+**DEFERRED** (Post-MVP):
+- User profiles & portfolios (Phase 6)
+- Email notification enhancements (Phase 6)
+- Sync blocks & design principles (Phase 6)
+- Real-time collaboration with Yjs (Phase 7)

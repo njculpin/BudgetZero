@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Bell, GitMerge, UserPlus, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
+import { Bell, GitMerge, UserPlus, CheckCircle, XCircle, Clock, AlertCircle, Box, Palette } from "lucide-react";
 import { getUserCollaborationInvites, getUserMergeProposals } from "@/lib/actions/collaboration-actions";
 import Link from "next/link";
 
@@ -247,7 +247,7 @@ export default async function DashboardPage() {
         <Separator />
 
         {/* Quick Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link href="/projects">
             <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
               <CardContent className="pt-6">
@@ -276,6 +276,42 @@ export default async function DashboardPage() {
                 <div className="text-center">
                   <p className="font-medium text-gray-900">Browse Projects</p>
                   <p className="text-sm text-gray-600 mt-1">Find collaborators</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/models">
+            <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <Box className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                  <p className="font-medium text-gray-900">Browse Models</p>
+                  <p className="text-sm text-gray-600 mt-1">Find 3D assets</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/illustrations">
+            <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <Palette className="w-6 h-6 text-pink-600 mx-auto mb-2" />
+                  <p className="font-medium text-gray-900">Browse Illustrations</p>
+                  <p className="text-sm text-gray-600 mt-1">Find artwork</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/illustrations/new">
+            <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <Palette className="w-6 h-6 text-pink-600 mx-auto mb-2" />
+                  <p className="font-medium text-gray-900">Upload Illustration</p>
+                  <p className="text-sm text-gray-600 mt-1">Share your artwork</p>
                 </div>
               </CardContent>
             </Card>

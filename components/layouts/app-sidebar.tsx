@@ -39,6 +39,8 @@ import {
   ChevronsUpDown,
   Box,
   Upload,
+  ImageIcon,
+  Palette,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -87,6 +89,16 @@ const navigation = [
         title: "Upload Model",
         url: "/models/new",
         icon: Upload,
+      },
+      {
+        title: "Browse Illustrations",
+        url: "/illustrations",
+        icon: Palette,
+      },
+      {
+        title: "Upload Illustration",
+        url: "/illustrations/new",
+        icon: ImageIcon,
       },
     ],
   },

@@ -15,7 +15,6 @@ export interface LicenseTemplate {
     attribution: boolean;
   };
   terms: string;
-  modelSpecificTerms?: string;
 }
 
 export const LICENSE_TEMPLATES: Record<LicenseType, LicenseTemplate> = {
@@ -40,25 +39,25 @@ export const LICENSE_TEMPLATES: Record<LicenseType, LicenseTemplate> = {
 This asset is provided free of charge for both personal and commercial projects.
 
 ## You MAY:
-- Use in personal projects
-- Use in commercial projects (games, products, etc.)
+- Use in personal tabletop game projects
+- Use in commercial tabletop games (rulebooks, cards, components)
 - Modify and adapt the asset for your needs
 - Include in printed rulebooks or game components
+- 3D print models for personal use (if applicable)
 
 ## You MAY NOT:
-- Resell or redistribute the original files
+- Resell or redistribute the original digital files
 - Include in asset packs or bundles for sale
 - Claim the original work as your own
+- Sell 3D prints or reproductions of this asset
+- Share or sell the digital files
 
 ## Attribution:
 Attribution is appreciated but not required. If you do attribute, please link back to the creator's Workshop profile.
-    `.trim(),
-    modelSpecificTerms: `
-## 3D Model Specific Terms:
-- You may 3D print this model for personal use
-- You may NOT sell 3D prints of this model
-- You may NOT share or sell the digital files
-- Physical prints must be for personal use or as game components in your published game
+
+## Usage Notes:
+- Physical prints or reproductions must be for personal use or as components in your published tabletop game
+- Digital files remain the property of the creator
     `.trim(),
   },
 
@@ -83,30 +82,31 @@ Attribution is appreciated but not required. If you do attribute, please link ba
 This asset is free to use for both personal and commercial projects, but you MUST provide attribution to the creator.
 
 ## You MAY:
-- Use in personal projects
-- Use in commercial projects (games, products, etc.)
+- Use in personal tabletop game projects
+- Use in commercial tabletop games (rulebooks, cards, components)
 - Modify and adapt the asset for your needs
 - Include in printed rulebooks or game components
+- 3D print models for personal use (if applicable)
+- Sell 3D prints or reproductions if you provide clear attribution
 
 ## You MUST:
 - Provide clear attribution to the creator in your project
 - Include a link to the creator's Workshop profile when possible
 - Mention the creator's name in credits or rulebook
+- Include attribution on packaging/listing when selling physical reproductions
 
 ## You MAY NOT:
-- Resell or redistribute the original files
+- Resell or redistribute the original digital files
 - Include in asset packs or bundles for sale
 - Claim the original work as your own
+- Share or sell the digital files
 
 ## Attribution Format:
 "[Asset Title] by [Creator Name] from Workshop (workshop.dev/creators/[username])"
-    `.trim(),
-    modelSpecificTerms: `
-## 3D Model Specific Terms:
-- You may 3D print this model for personal use
-- You may sell 3D prints if you provide attribution on packaging/listing
-- You may NOT share or sell the digital files
-- Attribution must be included in any product using this model
+
+## Usage Notes:
+- Attribution must be included in any product using this asset
+- Digital files remain the property of the creator
     `.trim(),
   },
 
@@ -128,35 +128,35 @@ This asset is free to use for both personal and commercial projects, but you MUS
     terms: `
 # Commercial License
 
-Purchase this license to use this asset in commercial projects with extended rights.
+Purchase this license to use this asset in commercial tabletop game projects with extended rights.
 
 ## You MAY:
 - Use in personal projects
-- Use in commercial projects (games, products, etc.)
+- Use in commercial tabletop games (rulebooks, cards, components)
 - Modify and adapt the asset for your needs
 - Include in printed rulebooks or game components
 - Sell products that include this asset
+- 3D print and sell physical prints (if applicable)
+- Include reproductions as components in your published game
+- Bulk manufacturing with no unit limits
 
 ## You MAY NOT:
 - Resell or redistribute the original digital files
 - Include in asset packs or bundles for sale as raw assets
 - Sublicense the asset to others
 - Use in competing asset marketplaces
+- Sell or share the digital files
 
 ## Attribution:
 Attribution is appreciated but not required for purchased commercial licenses.
 
 ## Scope:
 This license is valid for a single project or product line. For use across multiple distinct projects, please purchase multiple licenses or contact the creator for an extended license.
-    `.trim(),
-    modelSpecificTerms: `
-## 3D Model Specific Terms:
-- You may 3D print and sell physical prints of this model
-- You may include prints as components in your published game
-- You may modify the model for your manufacturing needs
-- You may NOT sell or share the digital files
+
+## Usage Notes:
 - Print-and-sell rights are included in this commercial license
-- Bulk manufacturing rights included (no unit limit)
+- You may modify for your manufacturing needs
+- Digital files remain the property of the creator
     `.trim(),
   },
 
@@ -181,38 +181,38 @@ This license is valid for a single project or product line. For use across multi
 Purchase exclusive rights to this asset. The creator will remove it from the marketplace.
 
 ## You MAY:
-- Use in personal and commercial projects
+- Use in personal and commercial tabletop game projects
 - Use in unlimited projects and products
 - Modify and adapt the asset extensively
 - Sell products that include this asset
 - Request removal from marketplace (creator agrees to delist)
 - Have exclusive use in your industry/niche (terms to be negotiated)
+- Full print-and-sell rights with no restrictions (if applicable)
+- Create derivative works
+- Bulk manufacturing with no unit limits
 
 ## You MAY NOT:
 - Resell or redistribute the original digital files as assets
 - Sublicense the asset to competitors
 - Use in competing asset marketplaces
+- Sell the digital files as assets
 
 ## Exclusivity Terms:
 - Creator agrees to remove asset from public marketplace
 - Creator retains copyright but grants exclusive commercial use
 - Duration and scope of exclusivity to be agreed upon in writing
 - Exclusivity may be limited by industry, geography, or time period
+- Creator will not license this asset to others during exclusivity period
 
 ## Attribution:
 Not required, but creator may request portfolio credit.
 
 ## Note:
 Exclusive licenses are typically negotiated directly with the creator. Contact them to discuss specific terms, exclusivity scope, and pricing.
-    `.trim(),
-    modelSpecificTerms: `
-## 3D Model Specific Terms:
-- Full print-and-sell rights with no restrictions
-- You may modify the model extensively
-- You may create derivative works
-- Creator will not license this model to others during exclusivity period
-- You may NOT sell the digital files as assets
-- Bulk manufacturing rights included with no unit limits
+
+## Usage Notes:
+- You may modify extensively for your manufacturing needs
+- Digital files remain the property of the creator
     `.trim(),
   },
 };
@@ -277,13 +277,9 @@ export function getLicenseTemplate(type: LicenseType): LicenseTemplate {
 }
 
 export function getFullLicenseText(
-  type: LicenseType,
-  includeModelTerms: boolean = false
+  type: LicenseType
 ): string {
   const template = LICENSE_TEMPLATES[type];
-  if (includeModelTerms && template.modelSpecificTerms) {
-    return `${template.terms}\n\n${template.modelSpecificTerms}`;
-  }
   return template.terms;
 }
 
