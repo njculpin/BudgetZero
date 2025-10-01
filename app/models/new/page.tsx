@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { ModelUploadForm } from "@/components/models/model-upload-form";
+import { AssetUploadForm } from "@/components/shared/forms/asset-upload-form";
+import { MODEL_SUGGESTED_TAGS } from "@/components/models/model-suggested-tags";
 
 export const metadata = {
   title: "Upload 3D Model | Workshop",
-  description: "Upload and share your 3D models with the community",
+  description: "Upload and share your 3D printable models for tabletop games",
 };
 
 export default async function NewModelPage() {
@@ -29,13 +30,16 @@ export default async function NewModelPage() {
         <div className="space-y-2 mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Upload 3D Model</h1>
           <p className="text-gray-600">
-            Share your 3D models with the community. Set licensing terms and pricing
-            for your work.
+            Share your 3D printable models for tabletop games. Set licensing terms and pricing
+            for models designed to be printed at home.
           </p>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <ModelUploadForm />
+          <AssetUploadForm
+            assetType="model"
+            suggestedTags={MODEL_SUGGESTED_TAGS}
+          />
         </div>
       </div>
     </MainLayout>

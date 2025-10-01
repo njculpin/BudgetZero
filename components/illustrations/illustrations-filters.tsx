@@ -7,26 +7,29 @@ import { Badge } from "@/components/ui/badge";
 import { Search, X, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Popular/suggested tags for quick filtering
+// Popular/suggested tags for quick filtering - illustration specific
 const POPULAR_TAGS = [
-  "miniature",
-  "terrain",
+  "character-art",
+  "map",
+  "token",
+  "card-art",
+  "cover-art",
   "fantasy",
   "sci-fi",
+  "portrait",
+  "landscape",
   "creature",
-  "character",
-  "vehicle",
-  "building",
-  "dragon",
+  "icon",
+  "scene",
   "tabletop",
   "rpg",
   "dnd",
-  "low-poly",
-  "realistic",
-  "printable",
+  "watercolor",
+  "digital",
+  "sketch",
 ];
 
-export function ModelsFilters() {
+export function IllustrationsFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -76,7 +79,7 @@ export function ModelsFilters() {
     // Reset to page 1 when filters change
     params.delete("page");
 
-    router.push(`/models?${params.toString()}`);
+    router.push(`/illustrations?${params.toString()}`);
   }
 
   function toggleTag(tag: string) {
@@ -97,7 +100,7 @@ export function ModelsFilters() {
   function clearAllFilters() {
     setSearchQuery("");
     setSelectedTags([]);
-    router.push("/models");
+    router.push("/illustrations");
   }
 
   const hasActiveFilters = searchQuery || selectedTags.length > 0;
@@ -109,11 +112,11 @@ export function ModelsFilters() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
           type="search"
-          placeholder="Search models..."
+          placeholder="Search illustrations..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 pr-10"
-          aria-label="Search models"
+          aria-label="Search illustrations"
         />
         {searchQuery && (
           <button

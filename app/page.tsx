@@ -19,6 +19,8 @@ import {
   Eye,
   Activity,
   Star,
+  Box,
+  Palette,
 } from "lucide-react";
 
 export default async function Home() {
@@ -169,6 +171,40 @@ export default async function Home() {
                     </div>
                     <Button asChild size="sm" variant="outline">
                       <Link href="/browse">Explore</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Box className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm">Browse Models</h3>
+                      <p className="text-xs text-slate-600">Find 3D assets</p>
+                    </div>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/models">Browse</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                      <Palette className="w-5 h-5 text-pink-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm">Browse Illustrations</h3>
+                      <p className="text-xs text-slate-600">Find artwork</p>
+                    </div>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/illustrations">Browse</Link>
                     </Button>
                   </div>
                 </CardContent>

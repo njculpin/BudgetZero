@@ -86,11 +86,6 @@ export default async function ModelDetailPage({
                 <h1 className="text-3xl font-bold text-gray-900">
                   {model.title}
                 </h1>
-                {model.model_category && (
-                  <Badge variant="secondary" className="mt-2">
-                    {model.model_category}
-                  </Badge>
-                )}
               </div>
               <div className="flex gap-2">
                 {isOwner && (
@@ -126,40 +121,16 @@ export default async function ModelDetailPage({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5" />
-                  Model Details
+                  File Details
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  {model.polygon_count && (
-                    <div>
-                      <p className="text-sm text-gray-600">Polygon Count</p>
-                      <p className="font-semibold">
-                        {model.polygon_count.toLocaleString()}
-                      </p>
-                    </div>
-                  )}
-                  {model.vertex_count && (
-                    <div>
-                      <p className="text-sm text-gray-600">Vertex Count</p>
-                      <p className="font-semibold">
-                        {model.vertex_count.toLocaleString()}
-                      </p>
-                    </div>
-                  )}
                   {model.file_format && (
                     <div>
                       <p className="text-sm text-gray-600">File Format</p>
                       <p className="font-semibold uppercase">
                         {model.file_format}
-                      </p>
-                    </div>
-                  )}
-                  {model.scale_unit && (
-                    <div>
-                      <p className="text-sm text-gray-600">Scale Unit</p>
-                      <p className="font-semibold uppercase">
-                        {model.scale_unit}
                       </p>
                     </div>
                   )}
@@ -172,45 +143,6 @@ export default async function ModelDetailPage({
                     </div>
                   )}
                 </div>
-
-                <Separator />
-
-                {/* Features */}
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Features</p>
-                  <div className="flex flex-wrap gap-2">
-                    {model.is_game_ready && (
-                      <Badge variant="outline">Game Ready</Badge>
-                    )}
-                    {model.is_textured && (
-                      <Badge variant="outline">Textured</Badge>
-                    )}
-                    {model.is_rigged && <Badge variant="outline">Rigged</Badge>}
-                    {model.is_animated && (
-                      <Badge variant="outline">Animated</Badge>
-                    )}
-                  </div>
-                </div>
-
-                {/* Render Engines */}
-                {model.render_engine_tags &&
-                  model.render_engine_tags.length > 0 && (
-                    <>
-                      <Separator />
-                      <div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          Compatible Engines
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {model.render_engine_tags.map((engine) => (
-                            <Badge key={engine} variant="secondary">
-                              {engine}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
 
                 {/* Tags */}
                 {model.tags && model.tags.length > 0 && (
@@ -327,21 +259,12 @@ export default async function ModelDetailPage({
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-4">
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="prose prose-sm max-w-none text-xs">
                         <div className="whitespace-pre-wrap">
                           {licenseTemplate.terms}
                         </div>
                       </div>
-                      {licenseTemplate.modelSpecificTerms && (
-                        <div className="pt-4 border-t">
-                          <div className="prose prose-sm max-w-none text-xs">
-                            <div className="whitespace-pre-wrap">
-                              {licenseTemplate.modelSpecificTerms}
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>

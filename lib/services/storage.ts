@@ -3,6 +3,7 @@ import { ApiResponse } from "@/lib/types/database";
 
 export const STORAGE_BUCKETS = {
   MODELS: "models",
+  ILLUSTRATIONS: "illustrations",
   THUMBNAILS: "thumbnails",
   PREVIEWS: "previews",
   TEXTURES: "textures",
@@ -11,6 +12,7 @@ export const STORAGE_BUCKETS = {
 // File size limits (bytes)
 export const FILE_SIZE_LIMITS = {
   MODEL_MAX: 500 * 1024 * 1024, // 500MB for 3D models
+  ILLUSTRATION_MAX: 100 * 1024 * 1024, // 100MB for illustrations
   TEXTURE_MAX: 50 * 1024 * 1024, // 50MB for textures
   THUMBNAIL_MAX: 5 * 1024 * 1024, // 5MB for thumbnails
   PREVIEW_MAX: 10 * 1024 * 1024, // 10MB for preview images
@@ -35,6 +37,19 @@ export const ALLOWED_TEXTURE_FORMATS = [
   ".exr",
 ];
 export const ALLOWED_MATERIAL_FORMATS = [".mtl", ".mat"];
+export const ALLOWED_ILLUSTRATION_FORMATS = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".svg",
+  ".webp",
+  ".tiff",
+  ".bmp",
+  ".psd",
+  ".ai",
+  ".eps",
+];
 
 export class StorageService {
   constructor(private supabase: SupabaseClient) {}
@@ -86,6 +101,71 @@ export class StorageService {
       // Get public URL
       const { data: urlData } = this.supabase.storage
         .from(STORAGE_BUCKETS.MODELS)
+        .getPublicUrl(filePath);
+
+      return {
+        data: {
+          path: data.path,
+          url: urlData.publicUrl,
+          size: file.size,
+        },
+      };
+    } catch (error) {
+      console.error("Unexpected error uploading file:", error);
+      return { error: "Unexpected error occurred" };
+    }
+  }
+
+  /**
+   * Upload an illustration file
+   */
+  async uploadIllustration(
+    userId: string,
+    file: File,
+    options: {
+      folder?: string;
+      isPublic?: boolean;
+    } = {}
+  ): Promise<ApiResponse<{ path: string; url: string; size: number }>> {
+    try {
+      // Validate file format
+      const fileExtension = file.name.toLowerCase().match(/\.[^.]+$/)?.[0];
+      if (
+        !fileExtension ||
+        !ALLOWED_ILLUSTRATION_FORMATS.includes(fileExtension)
+      ) {
+        return {
+          error: `Invalid file format. Allowed: ${ALLOWED_ILLUSTRATION_FORMATS.join(", ")}`,
+        };
+      }
+
+      // Validate file size
+      if (file.size > FILE_SIZE_LIMITS.ILLUSTRATION_MAX) {
+        return {
+          error: `File too large. Maximum size: ${FILE_SIZE_LIMITS.ILLUSTRATION_MAX / 1024 / 1024}MB`,
+        };
+      }
+
+      const timestamp = Date.now();
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const folder = options.folder || userId;
+      const filePath = `${folder}/${timestamp}_${sanitizedName}`;
+
+      const { data, error } = await this.supabase.storage
+        .from(STORAGE_BUCKETS.ILLUSTRATIONS)
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) {
+        console.error("Upload error:", error);
+        return { error: "Failed to upload file" };
+      }
+
+      // Get public URL
+      const { data: urlData } = this.supabase.storage
+        .from(STORAGE_BUCKETS.ILLUSTRATIONS)
         .getPublicUrl(filePath);
 
       return {

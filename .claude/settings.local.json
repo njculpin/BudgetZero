@@ -21,7 +21,8 @@
       "Bash(curl:*)",
       "Bash(npx supabase migration:*)",
       "Bash(psql:*)",
-      "Bash(npx supabase db reset:*)"
+      "Bash(npx supabase db reset:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

@@ -77,11 +77,9 @@ export class AssetService {
       if (filters.asset_type) {
         query = query.eq("asset_type", filters.asset_type);
       }
-      if (filters.model_category) {
-        query = query.eq("model_category", filters.model_category);
-      }
       if (filters.tags && filters.tags.length > 0) {
-        query = query.overlaps("tags", filters.tags);
+        // Use contains for AND logic (all tags must match)
+        query = query.contains("tags", filters.tags);
       }
       if (filters.is_game_ready !== undefined) {
         query = query.eq("is_game_ready", filters.is_game_ready);

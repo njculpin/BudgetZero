@@ -244,17 +244,7 @@ export interface Asset {
   usage_count: number;
   is_public: boolean;
   is_featured: boolean;
-  // Model-specific fields (Phase 2)
-  polygon_count?: number | null;
-  vertex_count?: number | null;
-  is_rigged?: boolean;
-  is_animated?: boolean;
-  is_textured?: boolean;
-  is_game_ready?: boolean;
-  scale_unit?: 'mm' | 'cm' | 'm' | 'inch' | null;
-  print_settings?: Record<string, any> | null;
-  render_engine_tags?: string[];
-  model_category?: string | null;
+  seeking_collaborators?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -310,17 +300,7 @@ export interface CreateAssetData {
   license_terms?: string;
   price_cents?: number;
   is_public?: boolean;
-  // Model-specific fields (Phase 2)
-  polygon_count?: number;
-  vertex_count?: number;
-  is_rigged?: boolean;
-  is_animated?: boolean;
-  is_textured?: boolean;
-  is_game_ready?: boolean;
-  scale_unit?: 'mm' | 'cm' | 'm' | 'inch';
-  print_settings?: Record<string, any>;
-  render_engine_tags?: string[];
-  model_category?: string;
+  seeking_collaborators?: boolean;
 }
 
 // Activity and comments interfaces
