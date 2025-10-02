@@ -1,5 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
-import { QuickProjectForm } from "@/components/forms/quick-project-form";
+import {
+  Activity,
+  BookOpen,
+  Box,
+  Eye,
+  Palette,
+  Plus,
+  Star,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
+import Link from "next/link";
+import { MainLayout } from "@/components/layouts/main-layout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,20 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { MainLayout } from "@/components/layouts/main-layout";
-import Link from "next/link";
-import {
-  Zap,
-  BookOpen,
-  Users,
-  TrendingUp,
-  Plus,
-  Eye,
-  Activity,
-  Star,
-  Box,
-  Palette,
-} from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -200,7 +199,9 @@ export default async function Home() {
                       <Palette className="w-5 h-5 text-pink-600" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-sm">Browse Illustrations</h3>
+                      <h3 className="font-semibold text-sm">
+                        Browse Illustrations
+                      </h3>
                       <p className="text-xs text-slate-600">Find artwork</p>
                     </div>
                     <Button asChild size="sm" variant="outline">

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (!asset_id || !message) {
       return NextResponse.json(
         { error: "Asset ID and message are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     if (message.length < 20 || message.length > 1000) {
       return NextResponse.json(
         { error: "Message must be between 20 and 1000 characters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,23 +48,20 @@ export async function POST(request: NextRequest) {
           username,
           email
         )
-      `
+      `,
       )
       .eq("id", asset_id)
       .single();
 
     if (assetError || !asset) {
-      return NextResponse.json(
-        { error: "Asset not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Asset not found" }, { status: 404 });
     }
 
     // Check if asset is seeking collaborators
     if (!asset.seeking_collaborators) {
       return NextResponse.json(
         { error: "This asset is not seeking collaborators" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -72,7 +69,7 @@ export async function POST(request: NextRequest) {
     if (asset.creator_id === user.id) {
       return NextResponse.json(
         { error: "You cannot propose collaboration on your own asset" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -88,7 +85,7 @@ export async function POST(request: NextRequest) {
     if (existingProposal) {
       return NextResponse.json(
         { error: "You already have a pending proposal for this asset" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -110,7 +107,7 @@ export async function POST(request: NextRequest) {
       console.error("Proposal creation error:", proposalError);
       return NextResponse.json(
         { error: "Failed to create proposal" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -129,7 +126,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error ? error.message : "Unexpected error occurred",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

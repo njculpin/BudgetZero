@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import type { GameProject } from "@/lib/types/database";
 
@@ -40,14 +40,14 @@ export function ProjectSearchModal({
     if (open) {
       loadProjects();
     }
-  }, [open, searchQuery]);
+  }, [open, loadProjects]);
 
   async function loadProjects() {
     setLoading(true);
     const supabase = createClient();
 
     let query = supabase
-      .from("game_projects")
+      .from("projects")
       .select("*")
       .eq("is_public", true)
       .eq("status", "active")
@@ -150,7 +150,8 @@ export function ProjectSearchModal({
         {/* Footer */}
         <div className="flex justify-between items-center pt-3 border-t">
           <p className="text-sm text-gray-500">
-            {projects.length} project{projects.length !== 1 ? "s" : ""} available
+            {projects.length} project{projects.length !== 1 ? "s" : ""}{" "}
+            available
           </p>
           <Button variant="outline" onClick={onClose}>
             Cancel

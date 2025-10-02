@@ -1,9 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { GameProjectService } from "@/lib/services/game-projects";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { GameProjectService } from "@/lib/services/game-projects";
+import { createClient } from "@/lib/supabase/server";
 
 export async function deleteProject(projectId: string, projectSlug: string) {
   const supabase = await createClient();
@@ -35,7 +35,7 @@ export async function deleteProject(projectId: string, projectSlug: string) {
 export async function updateProject(
   projectId: string,
   projectSlug: string,
-  formData: FormData
+  formData: FormData,
 ) {
   const supabase = await createClient();
   const {

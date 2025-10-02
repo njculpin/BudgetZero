@@ -1,10 +1,26 @@
 "use client";
 
+import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
+import {
+  Copy,
+  Hash,
+  Link2,
+  MoreHorizontal,
+  Navigation,
+  Trash2,
+  Unlink,
+} from "lucide-react";
 import { useState } from "react";
-import { NodeViewWrapper, NodeViewContent } from "@tiptap/react";
-import { Link2, Copy, Unlink, MoreHorizontal, Trash2, Navigation, Hash } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,20 +31,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
+  getSyncGroupA11yDescription,
   getSyncGroupColor,
   getSyncGroupId,
-  getSyncGroupStyles,
   getSyncGroupInfo,
-  getSyncGroupA11yDescription,
   getSyncGroupNavigation,
+  getSyncGroupStyles,
   getSyncGroupTooltipContent,
 } from "@/lib/sync-group-utils";
 
@@ -55,14 +63,17 @@ export function SyncedBlockView({
   const { syncId, lastSynced } = node.attrs;
 
   // Get sync group identification and styling
-  const syncGroupColor = getSyncGroupColor(syncId);
+  const _syncGroupColor = getSyncGroupColor(syncId);
   const syncGroupId = getSyncGroupId(syncId);
   const syncGroupStyles = getSyncGroupStyles(syncId);
   const syncGroupInfo = getSyncGroupInfo(syncId, editor);
   const currentPos = _getPos?.() ?? 0;
   const navigation = getSyncGroupNavigation(syncId, currentPos, editor);
   const tooltipContent = getSyncGroupTooltipContent(syncId, editor);
-  const a11yDescription = getSyncGroupA11yDescription(syncId, syncGroupInfo.totalInstances);
+  const a11yDescription = getSyncGroupA11yDescription(
+    syncId,
+    syncGroupInfo.totalInstances,
+  );
 
   const handleCopyReference = () => {
     // Find a safe position to insert the reference (outside any synced blocks)
@@ -311,7 +322,11 @@ export function SyncedBlockView({
                         disabled={!navigation?.previous}
                       >
                         <Navigation className="w-4 h-4 mr-2 rotate-180" />
-                        Go to previous ({navigation?.currentIndex === 1 ? syncGroupInfo.totalInstances : (navigation?.currentIndex || 1) - 1})
+                        Go to previous (
+                        {navigation?.currentIndex === 1
+                          ? syncGroupInfo.totalInstances
+                          : (navigation?.currentIndex || 1) - 1}
+                        )
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={(e) => {
@@ -322,7 +337,12 @@ export function SyncedBlockView({
                         disabled={!navigation?.next}
                       >
                         <Navigation className="w-4 h-4 mr-2" />
-                        Go to next ({navigation?.currentIndex === syncGroupInfo.totalInstances ? 1 : (navigation?.currentIndex || 1) + 1})
+                        Go to next (
+                        {navigation?.currentIndex ===
+                        syncGroupInfo.totalInstances
+                          ? 1
+                          : (navigation?.currentIndex || 1) + 1}
+                        )
                       </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
@@ -402,14 +422,18 @@ export function SyncedBlockView({
         />
 
         {/* Sync Indicator */}
-        <div className={`absolute top-2 right-2 w-2 h-2 ${syncGroupStyles.textClass.replace('text', 'bg')} rounded-full opacity-60`} />
+        <div
+          className={`absolute top-2 right-2 w-2 h-2 ${syncGroupStyles.textClass.replace("text", "bg")} rounded-full opacity-60`}
+        />
       </div>
 
       {/* Sync Info Footer */}
       <div className="mt-3 pt-2 border-t border-gray-200 text-xs text-gray-500 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span>Group: </span>
-          <code className={`px-1 py-0.5 rounded text-xs ${syncGroupStyles.badgeClass}`}>
+          <code
+            className={`px-1 py-0.5 rounded text-xs ${syncGroupStyles.badgeClass}`}
+          >
             {syncGroupId}
           </code>
           {syncGroupInfo.totalInstances > 1 && (
@@ -418,9 +442,7 @@ export function SyncedBlockView({
             </span>
           )}
         </div>
-        <span className="text-gray-400 text-xs">
-          {tooltipContent.hint}
-        </span>
+        <span className="text-gray-400 text-xs">{tooltipContent.hint}</span>
       </div>
 
       {/* Delete Last Block Warning Dialog */}
@@ -472,7 +494,6 @@ export function SyncedBlockView({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </NodeViewWrapper>
   );
 }

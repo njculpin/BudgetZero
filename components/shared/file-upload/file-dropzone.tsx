@@ -1,7 +1,7 @@
 "use client";
 
+import { AlertCircle, CheckCircle, FileIcon, Upload, X } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Upload, FileIcon, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -47,7 +47,7 @@ export function FileDropzone({
 
       return null;
     },
-    [accept, maxSize]
+    [accept, maxSize],
   );
 
   const handleFile = useCallback(
@@ -61,7 +61,7 @@ export function FileDropzone({
       setValidationError(null);
       onFileSelect(file);
     },
-    [validateFile, onFileSelect]
+    [validateFile, onFileSelect],
   );
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -92,7 +92,7 @@ export function FileDropzone({
         handleFile(files[0]);
       }
     },
-    [handleFile]
+    [handleFile],
   );
 
   const handleFileInput = useCallback(
@@ -102,7 +102,7 @@ export function FileDropzone({
         handleFile(files[0]);
       }
     },
-    [handleFile]
+    [handleFile],
   );
 
   const displayError = error || validationError;
@@ -115,7 +115,7 @@ export function FileDropzone({
             "p-4 border-2 rounded-lg",
             displayError
               ? "border-red-200 bg-red-50"
-              : "border-green-200 bg-green-50"
+              : "border-green-200 bg-green-50",
           )}
         >
           <div className="flex items-center justify-between">
@@ -129,7 +129,7 @@ export function FileDropzone({
                 <p
                   className={cn(
                     "text-sm font-medium truncate",
-                    displayError ? "text-red-900" : "text-green-900"
+                    displayError ? "text-red-900" : "text-green-900",
                   )}
                 >
                   {currentFile.name}
@@ -137,7 +137,7 @@ export function FileDropzone({
                 <p
                   className={cn(
                     "text-xs",
-                    displayError ? "text-red-700" : "text-green-700"
+                    displayError ? "text-red-700" : "text-green-700",
                   )}
                 >
                   {(currentFile.size / 1024 / 1024).toFixed(2)} MB
@@ -176,7 +176,7 @@ export function FileDropzone({
             ? "border-blue-500 bg-blue-50"
             : displayError
               ? "border-red-300 bg-red-50"
-              : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
+              : "border-gray-300 hover:border-blue-400 hover:bg-blue-50",
         )}
       >
         <input
@@ -190,7 +190,9 @@ export function FileDropzone({
         <div className="pointer-events-none">
           {icon || <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />}
           <p className="text-sm font-medium text-gray-700 mb-2">
-            {isDragging ? "Drop file here" : `Drag and drop your ${label.toLowerCase()} here`}
+            {isDragging
+              ? "Drop file here"
+              : `Drag and drop your ${label.toLowerCase()} here`}
           </p>
           <p className="text-xs text-gray-500 mb-4">or click to browse</p>
           {description && (

@@ -1,28 +1,38 @@
-import { createClient } from "@/lib/supabase/server";
-import { GameProjectService } from "@/lib/services/game-projects";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { MainLayout } from "@/components/layouts/main-layout";
-import Link from "next/link";
-import { redirect, notFound } from "next/navigation";
 import {
+  Box,
   Calendar,
+  Clock,
+  Edit3,
   Eye,
   EyeOff,
-  Edit3,
-  Users,
-  Tag,
-  Clock,
-  Star,
-  Settings,
   FileText,
-  Box,
-  UserPlus,
+  Palette,
+  Plus,
+  Settings,
+  Star,
+  Tag,
+  Users,
 } from "lucide-react";
-import { InviteCollaboratorDialog } from "@/components/collaboration/invite-collaborator-dialog";
-import { ProposeProjectMergeDialog } from "@/components/collaboration/propose-merge-dialog";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { MainLayout } from "@/components/layouts/main-layout";
+import { PricingTiersManager } from "@/components/projects/pricing-tiers-manager";
+import { ProjectTagsManager } from "@/components/projects/project-tags-manager";
+import { RevenueSplitPreview } from "@/components/shared/revenue-split-preview";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { GameProjectService } from "@/lib/services/game-projects";
+import { createClient } from "@/lib/supabase/server";
+
+// Collaboration features coming in Phase 1
 
 interface ProjectDetailPageProps {
   params: Promise<{
@@ -59,11 +69,87 @@ export default async function ProjectDetailPage({
     user.id,
   );
   const canRead = accessResult.data?.canRead ?? false;
-  const canEdit = accessResult.data?.canEdit ?? false;
 
   if (!canRead) {
     notFound();
   }
+
+  // Fetch project documents
+  const { data: documents } = await supabase
+    .from("documents")
+    .select("id, title, document_type, status, created_at, updated_at")
+    .eq("project_id", project.id)
+    .order("created_at", { ascending: false });
+
+  // Fetch project assets (models and illustrations)
+  const { data: assets } = await supabase
+    .from("assets")
+    .select("id, title, asset_type, thumbnail_url, created_at, updated_at")
+    .eq("project_id", project.id)
+    .order("created_at", { ascending: false });
+
+  const models = assets?.filter((a) => a.asset_type === "model") || [];
+  const illustrations =
+    assets?.filter((a) => a.asset_type === "illustration") || [];
+
+  // Fetch pricing tiers
+  const { data: pricingTiers } = await supabase
+    .from("pricing_tiers")
+    .select(`
+      *,
+      pricing_tier_assets(asset_id),
+      pricing_tier_documents(document_id)
+    `)
+    .eq("project_id", project.id)
+    .order("display_order", { ascending: true });
+
+  const enrichedTiers = (pricingTiers || []).map((tier) => ({
+    id: tier.id,
+    name: tier.name,
+    description: tier.description,
+    price_cents: tier.price_cents,
+    display_order: tier.display_order,
+    is_active: tier.is_active,
+    included_assets: tier.pricing_tier_assets?.map((a: { asset_id: string }) => a.asset_id) || [],
+    included_documents: tier.pricing_tier_documents?.map((d: { document_id: string }) => d.document_id) || [],
+  }));
+
+  // Fetch referenced assets (approved references from other creators) - optimized
+  const [{ data: refs }, { data: refAssets }, { data: assetCreators }] =
+    await Promise.all([
+      supabase
+        .from("project_asset_references")
+        .select("id, royalty_percentage, status, asset_id")
+        .eq("project_id", project.id)
+        .eq("status", "approved")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("assets")
+        .select("id, title, asset_type, thumbnail_url, creator_id"),
+      supabase.from("users").select("id, full_name"),
+    ]);
+
+  const assetMap = new Map(refAssets?.map((a) => [a.id, a]));
+  const creatorMap = new Map(assetCreators?.map((c) => [c.id, c]));
+
+  const enrichedReferences = (refs || [])
+    .map((ref) => {
+      const asset = assetMap.get(ref.asset_id);
+      if (!asset) return null;
+
+      const creator = creatorMap.get(asset.creator_id) || {
+        id: asset.creator_id,
+        full_name: null,
+      };
+
+      return {
+        id: ref.id,
+        royalty_percentage: ref.royalty_percentage,
+        status: ref.status,
+        asset: { ...asset, creator },
+      };
+    })
+    .filter((ref): ref is NonNullable<typeof ref> => ref !== null);
 
   const breadcrumbs = [
     { label: "My Projects", href: "/projects" },
@@ -103,14 +189,6 @@ export default async function ProjectDetailPage({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {canEdit && (
-              <Button asChild>
-                <Link href={`/projects/${project.slug}/editor`}>
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  Edit Rulebook
-                </Link>
-              </Button>
-            )}
             {isOwner && (
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/projects/${project.slug}/settings`}>
@@ -143,6 +221,26 @@ export default async function ProjectDetailPage({
               </CardContent>
             </Card>
 
+            {/* Tags */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag className="w-5 h-5" />
+                  Tags
+                </CardTitle>
+                <CardDescription>
+                  Categorize your project for better discovery
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProjectTagsManager
+                  projectId={project.id}
+                  initialTags={project.tags || []}
+                  isOwner={isOwner}
+                />
+              </CardContent>
+            </Card>
+
             {/* Project Components */}
             <Card>
               <CardHeader>
@@ -151,72 +249,245 @@ export default async function ProjectDetailPage({
                   Project Components
                 </CardTitle>
                 <CardDescription>
-                  All the creative assets and content that make up this game
+                  All the creative content that makes up this game
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Rulebook Component - Always present for game projects */}
-                  <div className="flex items-start gap-3 p-4 border rounded-lg bg-blue-50 border-blue-200">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5 text-blue-700" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-medium text-blue-900 mb-1">Rulebook</h4>
-                      <p className="text-sm text-blue-700 mb-2">Core game rules and mechanics</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
-                          Active
-                        </Badge>
-                        <span className="text-xs text-blue-600">
-                          Last updated {new Date(project.updated_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/projects/${project.slug}/editor`}
-                      className="text-blue-700 hover:text-blue-900 transition-colors"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </Link>
-                  </div>
-
-                  {/* Collaboration & Growth - Only show to project owners */}
+                  {/* Add Content - Only show to project owners */}
                   {isOwner && (
-                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gradient-to-br from-blue-50 to-green-50 border-blue-200">
-                      <div className="max-w-2xl mx-auto text-center mb-4">
+                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
+                      <div className="text-center mb-4">
                         <h4 className="font-medium text-gray-900 mb-2">
-                          <UserPlus className="w-4 h-4 inline mr-2" />
-                          Grow Your Project
+                          <Plus className="w-4 h-4 inline mr-2" />
+                          Add Content to Your Project
                         </h4>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Collaborate with other creators or combine projects for richer experiences
+                        <p className="text-sm text-gray-600">
+                          Create documents, upload models, and add illustrations
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
-                        <InviteCollaboratorDialog
-                          projectId={project.id}
-                          projectTitle={project.title}
-                        />
-
-                        <ProposeProjectMergeDialog
-                          currentProjectId={project.id}
-                          currentProjectTitle={project.title}
-                        />
-                      </div>
-
-                      <div className="mt-4 p-3 bg-white/60 rounded-lg">
-                        <div className="text-xs text-gray-700 space-y-1">
-                          <p><strong>Invite Collaborators:</strong> Add team members to work together on this project</p>
-                          <p><strong>Propose Merge:</strong> Combine with other projects to create collaborative works with shared ownership</p>
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link
+                            href={`/projects/${project.slug}/create-document`}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            New Document
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link
+                            href={`/projects/${project.slug}/create-asset?type=model`}
+                          >
+                            <Box className="h-4 w-4 mr-2" />
+                            Add Model
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link
+                            href={`/projects/${project.slug}/create-asset?type=illustration`}
+                          >
+                            <Palette className="h-4 w-4 mr-2" />
+                            Add Illustration
+                          </Link>
+                        </Button>
                       </div>
                     </div>
                   )}
+
+                  {/* Documents Gallery */}
+                  {documents && documents.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Documents
+                      </h4>
+                      <div className="space-y-2">
+                        {documents.map((doc) => (
+                          <Link
+                            key={doc.id}
+                            href={`/projects/${project.slug}/documents/${doc.id}`}
+                            className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                          >
+                            <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
+                              <FileText className="w-4 h-4 text-blue-700" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h5 className="font-medium text-sm truncate">
+                                {doc.title}
+                              </h5>
+                              <p className="text-xs text-gray-500 capitalize">
+                                {doc.document_type.replace(/_/g, " ")} •{" "}
+                                {doc.status}
+                              </p>
+                            </div>
+                            <Edit3 className="w-4 h-4 text-gray-400" />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Models Gallery */}
+                  {models.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        3D Models
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {models.map((model) => (
+                          <Link
+                            key={model.id}
+                            href={`/projects/${project.slug}/models/${model.id}`}
+                            className="group relative aspect-square rounded-lg overflow-hidden border hover:border-purple-300 transition-colors"
+                          >
+                            {model.thumbnail_url ? (
+                              <img
+                                src={model.thumbnail_url}
+                                alt={model.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-purple-50 flex items-center justify-center">
+                                <Box className="w-8 h-8 text-purple-300" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="absolute bottom-0 left-0 right-0 p-2">
+                                <p className="text-white text-xs font-medium truncate">
+                                  {model.title}
+                                </p>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Illustrations Gallery */}
+                  {illustrations.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Illustrations
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {illustrations.map((illustration) => (
+                          <Link
+                            key={illustration.id}
+                            href={`/projects/${project.slug}/illustrations/${illustration.id}`}
+                            className="group relative aspect-square rounded-lg overflow-hidden border hover:border-amber-300 transition-colors"
+                          >
+                            {illustration.thumbnail_url ? (
+                              <img
+                                src={illustration.thumbnail_url}
+                                alt={illustration.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-amber-50 flex items-center justify-center">
+                                <Palette className="w-8 h-8 text-amber-300" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="absolute bottom-0 left-0 right-0 p-2">
+                                <p className="text-white text-xs font-medium truncate">
+                                  {illustration.title}
+                                </p>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {(!documents || documents.length === 0) &&
+                    models.length === 0 &&
+                    illustrations.length === 0 && (
+                      <div className="text-center py-8">
+                        <Box className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-sm text-gray-500">No content yet</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Add documents, models, or illustrations to get started
+                        </p>
+                      </div>
+                    )}
                 </div>
               </CardContent>
             </Card>
+
+            {/* Referenced Assets - Attribution Chain */}
+            {enrichedReferences.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Referenced Content
+                  </CardTitle>
+                  <CardDescription>
+                    Content from other creators used in this project
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {enrichedReferences.map((ref) => (
+                      <div
+                        key={ref.id}
+                        className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50"
+                      >
+                        {/* Thumbnail */}
+                        <div className="flex-shrink-0">
+                          {ref.asset.thumbnail_url ? (
+                            <img
+                              src={ref.asset.thumbnail_url}
+                              alt={ref.asset.title}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                              {ref.asset.asset_type === "model" ? (
+                                <Box className="w-5 h-5 text-gray-400" />
+                              ) : (
+                                <Palette className="w-5 h-5 text-gray-400" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Content Info */}
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-medium text-sm truncate">
+                            {ref.asset.title}
+                          </h5>
+                          <p className="text-xs text-gray-600">
+                            by {ref.asset.creator.full_name || "Anonymous"}
+                          </p>
+                        </div>
+
+                        {/* Royalty Badge */}
+                        <Badge variant="secondary" className="text-xs">
+                          {ref.royalty_percentage}% royalty
+                        </Badge>
+                      </div>
+                    ))}
+
+                    {/* Revenue Split Summary */}
+                    <div className="mt-4">
+                      <RevenueSplitPreview
+                        royaltyContributors={enrichedReferences.map((ref) => ({
+                          name: ref.asset.creator.full_name || "Anonymous",
+                          percentage: ref.royalty_percentage,
+                        }))}
+                        variant="compact"
+                        className="bg-blue-50 p-4 rounded-lg"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Game Details */}
             {(project.genre ||
@@ -288,65 +559,10 @@ export default async function ProjectDetailPage({
               </Card>
             )}
 
-            {/* License & Pricing */}
-            <Card>
-              <CardHeader>
-                <CardTitle>License & Pricing</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-slate-900">License Type</h4>
-                    <p className="text-slate-600 capitalize">
-                      {project.license_type}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-slate-900">Price</h4>
-                    <p className="text-slate-600">
-                      {project.price_cents === 0
-                        ? "Free"
-                        : `$${(project.price_cents / 100).toFixed(2)}`}
-                    </p>
-                  </div>
-                </div>
-                {project.license_terms && (
-                  <div>
-                    <h4 className="font-medium text-slate-900 mb-2">
-                      License Terms
-                    </h4>
-                    <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-md">
-                      {project.license_terms}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Tags */}
-            {project.tags && project.tags.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Tag className="w-4 h-4" />
-                    Tags
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-1">
-                    {project.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Project Info */}
             <Card>
               <CardHeader>
@@ -370,6 +586,53 @@ export default async function ProjectDetailPage({
                 <Separator />
                 <div className="text-xs text-slate-500">
                   Project ID: {project.id.slice(0, 8)}...
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* License & Pricing */}
+            <Card>
+              <CardHeader>
+                <CardTitle>License & Pricing</CardTitle>
+                <CardDescription>
+                  Configure pricing tiers and license terms
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* License Info */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-slate-900">
+                        License Type
+                      </h4>
+                      <p className="text-slate-600 capitalize">
+                        {project.license_type}
+                      </p>
+                    </div>
+                  </div>
+                  {project.license_terms && (
+                    <div>
+                      <h4 className="font-medium text-slate-900 mb-2">
+                        License Terms
+                      </h4>
+                      <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-md">
+                        {project.license_terms}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pricing Tiers */}
+                <div className="space-y-3 pt-4 border-t">
+                  <h4 className="font-medium text-slate-900">Pricing Tiers</h4>
+                  <PricingTiersManager
+                    projectId={project.id}
+                    initialTiers={enrichedTiers}
+                    assets={assets || []}
+                    documents={documents || []}
+                    isOwner={isOwner}
+                  />
                 </div>
               </CardContent>
             </Card>

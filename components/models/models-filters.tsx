@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Search, Tag, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Search, X, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // Popular/suggested tags for quick filtering
 const POPULAR_TAGS = [
@@ -31,7 +31,7 @@ export function ModelsFilters() {
   const searchParams = useSearchParams();
 
   const [searchQuery, setSearchQuery] = useState(
-    searchParams.get("search") || ""
+    searchParams.get("search") || "",
   );
   const [selectedTags, setSelectedTags] = useState<string[]>(() => {
     const tagsParam = searchParams.get("tags");
@@ -45,12 +45,12 @@ export function ModelsFilters() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, updateFilters]);
 
   // Update URL when tags change
   useEffect(() => {
     updateFilters({ tags: selectedTags });
-  }, [selectedTags]);
+  }, [selectedTags, updateFilters]);
 
   function updateFilters(updates: { search?: string; tags?: string[] }) {
     const params = new URLSearchParams(searchParams.toString());
@@ -81,7 +81,7 @@ export function ModelsFilters() {
 
   function toggleTag(tag: string) {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   }
 

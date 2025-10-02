@@ -1,9 +1,9 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import {
-  Profile,
-  CreateProfileData,
-  UpdateProfileData,
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
   ApiResponse,
+  CreateProfileData,
+  Profile,
+  UpdateProfileData,
 } from "@/lib/types/database";
 import {
   CreateProfileSchema,

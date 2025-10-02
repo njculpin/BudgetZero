@@ -1,66 +1,65 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { EditorContent, useEditor } from "@tiptap/react";
 import "./simple-editor.css";
-import StarterKit from "@tiptap/starter-kit";
-import { Table } from "@tiptap/extension-table";
-import { TableRow } from "@tiptap/extension-table-row";
-import { TableHeader } from "@tiptap/extension-table-header";
-import { TableCell } from "@tiptap/extension-table-cell";
-import Placeholder from "@tiptap/extension-placeholder";
-import UnderlineExtension from "@tiptap/extension-underline";
-import StrikeExtension from "@tiptap/extension-strike";
-import CodeExtension from "@tiptap/extension-code";
-import HorizontalRule from "@tiptap/extension-horizontal-rule";
-import TextAlign from "@tiptap/extension-text-align";
-import { Color } from "@tiptap/extension-color";
-import { Highlight } from "@tiptap/extension-highlight";
-import { TaskList } from "@tiptap/extension-task-list";
-import { TaskItem } from "@tiptap/extension-task-item";
-import { Link } from "@tiptap/extension-link";
-import { Image } from "@tiptap/extension-image";
 import { CharacterCount } from "@tiptap/extension-character-count";
+import CodeExtension from "@tiptap/extension-code";
+import { Color } from "@tiptap/extension-color";
 import { Focus } from "@tiptap/extension-focus";
-import { Typography } from "@tiptap/extension-typography";
-import { TextStyle } from "@tiptap/extension-text-style";
+import { Highlight } from "@tiptap/extension-highlight";
+import HorizontalRule from "@tiptap/extension-horizontal-rule";
+import { Image } from "@tiptap/extension-image";
+import { Link } from "@tiptap/extension-link";
+import { ListItem } from "@tiptap/extension-list-item";
+import Placeholder from "@tiptap/extension-placeholder";
+import StrikeExtension from "@tiptap/extension-strike";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
-import { ListItem } from "@tiptap/extension-list-item";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { Table } from "@tiptap/extension-table";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TaskItem } from "@tiptap/extension-task-item";
+import { TaskList } from "@tiptap/extension-task-list";
+import TextAlign from "@tiptap/extension-text-align";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Typography } from "@tiptap/extension-typography";
+import UnderlineExtension from "@tiptap/extension-underline";
+import StarterKit from "@tiptap/starter-kit";
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bold,
-  Italic,
-  Underline,
-  Strikethrough,
+  CheckCircle,
+  CheckSquare,
+  Clipboard,
   Code,
+  Copy,
   Heading1,
   Heading2,
   Heading3,
+  Highlighter,
+  Image as ImageIcon,
+  Indent,
+  Italic,
+  Link as LinkIcon,
   List,
   ListOrdered,
-  Quote,
   Minus,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Table as TableIcon,
-  Undo,
-  Redo,
-  CheckCircle,
-  Highlighter,
-  Palette,
-  Link as LinkIcon,
-  Image as ImageIcon,
-  CheckSquare,
-  Focus as FocusIcon,
-  Indent,
   Outdent,
-  Copy,
-  Clipboard,
+  Palette,
+  Quote,
+  Redo,
   Scissors,
+  Strikethrough,
+  Table as TableIcon,
+  Underline,
+  Undo,
 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface SimpleEditorProps {
   initialContent?: any;
@@ -242,13 +241,14 @@ export function SimpleEditor({
             event.preventDefault();
             editor.chain().focus().toggleHighlight().run();
             break;
-          case "K":
+          case "K": {
             event.preventDefault();
             const url = window.prompt("Enter URL");
             if (url) {
               editor.chain().focus().setLink({ href: url }).run();
             }
             break;
+          }
           case "X":
             event.preventDefault();
             editor.chain().focus().toggleStrike().run();

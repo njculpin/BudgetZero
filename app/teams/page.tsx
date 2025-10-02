@@ -1,4 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  Activity,
+  Calendar,
+  Crown,
+  Mail,
+  MessageSquare,
+  Plus,
+  Settings,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { redirect } from "next/navigation";
+import { MainLayout } from "@/components/layouts/main-layout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,21 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MainLayout } from "@/components/layouts/main-layout";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import {
-  Users,
-  Plus,
-  UserPlus,
-  Mail,
-  Crown,
-  Settings,
-  Activity,
-  Calendar,
-  MessageSquare,
-} from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function TeamsPage() {
   const supabase = await createClient();

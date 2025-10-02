@@ -1,4 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  Activity,
+  BarChart3,
+  Calendar,
+  DollarSign,
+  Download,
+  Eye,
+  Star,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import { redirect } from "next/navigation";
+import { MainLayout } from "@/components/layouts/main-layout";
 import {
   Card,
   CardContent,
@@ -6,21 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MainLayout } from "@/components/layouts/main-layout";
-import { redirect } from "next/navigation";
-import {
-  BarChart3,
-  TrendingUp,
-  TrendingDown,
-  Eye,
-  Download,
-  DollarSign,
-  Users,
-  Calendar,
-  Activity,
-  Star,
-} from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function AnalyticsPage() {
   const supabase = await createClient();

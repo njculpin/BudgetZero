@@ -10,7 +10,6 @@
   transition: background-color 0.1s ease;
 }
 
-
 .block-editor .ProseMirror > *.ProseMirror-selectednode {
   background-color: rgba(59, 130, 246, 0.1);
   border-radius: 4px;
@@ -75,10 +74,6 @@
   margin: 0;
 }
 
-
-
-
-
 /* Ensure block controls don't overflow */
 .block-editor .ProseMirror {
   position: relative;
@@ -96,7 +91,6 @@
   outline-offset: 2px;
 }
 
-
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .block-editor button {
@@ -108,9 +102,6 @@
     border-color: currentColor;
   }
 }
-
-
-
 
 /* Synced block styling */
 .synced-block-wrapper {
@@ -185,7 +176,7 @@
 
   .synced-block-wrapper {
     transition: none;
-    transform: none !important;
+    transform: none;
   }
 
   .synced-block-content:focus-within {

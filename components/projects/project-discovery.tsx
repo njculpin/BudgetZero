@@ -1,6 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import {
+  Calendar,
+  Clock,
+  Eye,
+  Filter,
+  Search,
+  TrendingUp,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,21 +22,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
-import {
-  Search,
-  Filter,
-  Eye,
-  Users,
-  Calendar,
-  X,
-  UserPlus,
-  TrendingUp,
-  Clock,
-} from "lucide-react";
-import { GameProjectWithCreator } from "@/lib/types/database";
+import type { GameProjectWithCreator } from "@/lib/types/database";
 
 interface ProjectDiscoveryProps {
   initialProjects: GameProjectWithCreator[];
@@ -40,7 +40,8 @@ export function ProjectDiscovery({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("updated");
   const [showFilters, setShowFilters] = useState(false);
-  const [onlySeekingCollaborators, setOnlySeekingCollaborators] = useState(false);
+  const [onlySeekingCollaborators, setOnlySeekingCollaborators] =
+    useState(false);
 
   // Filter and sort projects
   const filteredProjects = useMemo(() => {
@@ -55,14 +56,14 @@ export function ProjectDiscovery({
           project.description?.toLowerCase().includes(query) ||
           project.creator.full_name?.toLowerCase().includes(query) ||
           project.creator.email.toLowerCase().includes(query) ||
-          project.tags.some((tag) => tag.toLowerCase().includes(query))
+          project.tags.some((tag) => tag.toLowerCase().includes(query)),
       );
     }
 
     // Apply tag filters
     if (selectedTags.length > 0) {
       filtered = filtered.filter((project) =>
-        selectedTags.every((tag) => project.tags.includes(tag))
+        selectedTags.every((tag) => project.tags.includes(tag)),
       );
     }
 
@@ -90,11 +91,17 @@ export function ProjectDiscovery({
     });
 
     return sorted;
-  }, [initialProjects, searchQuery, selectedTags, sortBy, onlySeekingCollaborators]);
+  }, [
+    initialProjects,
+    searchQuery,
+    selectedTags,
+    sortBy,
+    onlySeekingCollaborators,
+  ]);
 
   const handleToggleTag = (tag: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
@@ -285,15 +292,9 @@ export function ProjectDiscovery({
                 : "No public projects yet"}
             </h3>
             <p className="text-slate-600">
-              {hasActiveFilters ? (
-                <>
-                  Try adjusting your search or filters to find more projects.
-                </>
-              ) : (
-                <>
-                  Be the first to share your tabletop game with the community!
-                </>
-              )}
+              {hasActiveFilters
+                ? "Try adjusting your search or filters to find more projects."
+                : "Be the first to share your tabletop game with the community!"}
             </p>
             {hasActiveFilters ? (
               <Button onClick={clearFilters}>Clear Filters</Button>

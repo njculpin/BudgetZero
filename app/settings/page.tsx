@@ -1,4 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  AlertTriangle,
+  Bell,
+  CreditCard,
+  Save,
+  Shield,
+  Trash2,
+  User,
+} from "lucide-react";
+import { redirect } from "next/navigation";
+import { MainLayout } from "@/components/layouts/main-layout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,20 +19,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { MainLayout } from "@/components/layouts/main-layout";
-import { redirect } from "next/navigation";
-import {
-  User,
-  Bell,
-  Shield,
-  CreditCard,
-  Trash2,
-  Save,
-  AlertTriangle,
-} from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage() {
   const supabase = await createClient();

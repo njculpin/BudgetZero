@@ -6,34 +6,34 @@
 // Chart colors from the design system (from globals.css)
 const SYNC_GROUP_COLORS = [
   {
-    name: 'chart-1',
-    light: 'oklch(0.646 0.222 41.116)', // Orange-ish
-    dark: 'oklch(0.488 0.243 264.376)', // Purple-ish
-    css: 'chart-1'
+    name: "chart-1",
+    light: "oklch(0.646 0.222 41.116)", // Orange-ish
+    dark: "oklch(0.488 0.243 264.376)", // Purple-ish
+    css: "chart-1",
   },
   {
-    name: 'chart-2',
-    light: 'oklch(0.6 0.118 184.704)', // Teal-ish
-    dark: 'oklch(0.696 0.17 162.48)', // Green-ish
-    css: 'chart-2'
+    name: "chart-2",
+    light: "oklch(0.6 0.118 184.704)", // Teal-ish
+    dark: "oklch(0.696 0.17 162.48)", // Green-ish
+    css: "chart-2",
   },
   {
-    name: 'chart-3',
-    light: 'oklch(0.398 0.07 227.392)', // Blue-ish
-    dark: 'oklch(0.769 0.188 70.08)', // Yellow-ish
-    css: 'chart-3'
+    name: "chart-3",
+    light: "oklch(0.398 0.07 227.392)", // Blue-ish
+    dark: "oklch(0.769 0.188 70.08)", // Yellow-ish
+    css: "chart-3",
   },
   {
-    name: 'chart-4',
-    light: 'oklch(0.828 0.189 84.429)', // Yellow-green
-    dark: 'oklch(0.627 0.265 303.9)', // Pink-ish
-    css: 'chart-4'
+    name: "chart-4",
+    light: "oklch(0.828 0.189 84.429)", // Yellow-green
+    dark: "oklch(0.627 0.265 303.9)", // Pink-ish
+    css: "chart-4",
   },
   {
-    name: 'chart-5',
-    light: 'oklch(0.769 0.188 70.08)', // Yellow
-    dark: 'oklch(0.645 0.246 16.439)', // Red-orange
-    css: 'chart-5'
+    name: "chart-5",
+    light: "oklch(0.769 0.188 70.08)", // Yellow
+    dark: "oklch(0.645 0.246 16.439)", // Red-orange
+    css: "chart-5",
   },
 ] as const;
 
@@ -45,7 +45,7 @@ function hashString(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32bit integer
   }
   return Math.abs(hash);
@@ -105,10 +105,10 @@ export function getSyncGroupStyles(syncId: string) {
 
     // CSS custom properties for more complex styling
     customProperties: {
-      '--sync-group-color': `var(--color-${color.css})`,
-      '--sync-group-color-alpha-10': `color-mix(in oklch, var(--color-${color.css}), transparent 90%)`,
-      '--sync-group-color-alpha-20': `color-mix(in oklch, var(--color-${color.css}), transparent 80%)`,
-    }
+      "--sync-group-color": `var(--color-${color.css})`,
+      "--sync-group-color-alpha-10": `color-mix(in oklch, var(--color-${color.css}), transparent 90%)`,
+      "--sync-group-color-alpha-20": `color-mix(in oklch, var(--color-${color.css}), transparent 80%)`,
+    },
   };
 }
 
@@ -130,7 +130,7 @@ export function getSyncGroupInfo(syncId: string, editor: any) {
     totalInstances: instances.length,
     instances,
     // Determine if this is a large group (affects UI decisions)
-    isLargeGroup: instances.length > 5
+    isLargeGroup: instances.length > 5,
   };
 }
 
@@ -138,37 +138,45 @@ export function getSyncGroupInfo(syncId: string, editor: any) {
  * Generate accessible description for sync groups
  * Provides screen reader friendly descriptions
  */
-export function getSyncGroupA11yDescription(syncId: string, totalInstances: number): string {
+export function getSyncGroupA11yDescription(
+  syncId: string,
+  totalInstances: number,
+): string {
   const groupId = getSyncGroupId(syncId);
-  return `Synced content group ${groupId}, ${totalInstances} instance${totalInstances === 1 ? '' : 's'} total`;
+  return `Synced content group ${groupId}, ${totalInstances} instance${totalInstances === 1 ? "" : "s"} total`;
 }
 
 /**
  * Get navigation helpers for sync groups
  * Provides data needed for "jump to next/previous" functionality
  */
-export function getSyncGroupNavigation(syncId: string, currentPos: number, editor: any) {
+export function getSyncGroupNavigation(
+  syncId: string,
+  currentPos: number,
+  editor: any,
+) {
   const { instances } = getSyncGroupInfo(syncId, editor);
 
   // Sort by position
   const sortedInstances = instances.sort((a, b) => a.pos - b.pos);
 
   // Find current instance index
-  const currentIndex = sortedInstances.findIndex(instance =>
-    Math.abs(instance.pos - currentPos) < 10 // Allow for small position differences
+  const currentIndex = sortedInstances.findIndex(
+    (instance) => Math.abs(instance.pos - currentPos) < 10, // Allow for small position differences
   );
 
   if (currentIndex === -1) return null;
 
   const nextIndex = (currentIndex + 1) % sortedInstances.length;
-  const prevIndex = currentIndex === 0 ? sortedInstances.length - 1 : currentIndex - 1;
+  const prevIndex =
+    currentIndex === 0 ? sortedInstances.length - 1 : currentIndex - 1;
 
   return {
     current: sortedInstances[currentIndex],
     next: sortedInstances[nextIndex],
     previous: sortedInstances[prevIndex],
     currentIndex: currentIndex + 1, // 1-based for display
-    totalInstances: sortedInstances.length
+    totalInstances: sortedInstances.length,
   };
 }
 
@@ -182,7 +190,7 @@ export function getSyncGroupTooltipContent(syncId: string, editor: any) {
 
   return {
     title: `Sync Group ${groupId}`,
-    description: `${totalInstances} synced instance${totalInstances === 1 ? '' : 's'}`,
-    hint: 'Click actions menu for more options'
+    description: `${totalInstances} synced instance${totalInstances === 1 ? "" : "s"}`,
+    hint: "Click actions menu for more options",
   };
 }

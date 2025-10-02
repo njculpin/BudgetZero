@@ -1,8 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { type UseSupabaseUploadReturn } from "@/hooks/use-supabase-upload";
-import { Button } from "@/components/ui/button";
 import { CheckCircle, File, Loader2, Upload, X } from "lucide-react";
 import {
   createContext,
@@ -10,6 +7,9 @@ import {
   useCallback,
   useContext,
 } from "react";
+import { Button } from "@/components/ui/button";
+import type { UseSupabaseUploadReturn } from "@/hooks/use-supabase-upload";
+import { cn } from "@/lib/utils";
 
 export const formatBytes = (
   bytes: number,
@@ -26,7 +26,7 @@ export const formatBytes = (
     size !== undefined
       ? sizes.indexOf(size)
       : Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
 };
 
 type DropzoneContextType = Omit<
@@ -156,7 +156,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
                 <p className="text-xs text-muted-foreground">
                   Uploading file...
                 </p>
-              ) : !!fileError ? (
+              ) : fileError ? (
                 <p className="text-xs text-destructive">
                   Failed to upload: {fileError.message}
                 </p>
@@ -204,7 +204,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
                 Uploading...
               </>
             ) : (
-              <>Upload files</>
+              "Upload files"
             )}
           </Button>
         </div>

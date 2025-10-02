@@ -1,4 +1,4 @@
-import { Node, mergeAttributes } from "@tiptap/core";
+import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { AssetReferenceView } from "../views/asset-reference-view";
 
@@ -31,7 +31,7 @@ declare module "@tiptap/core" {
           thumbnailUrl: string;
           creatorName: string;
           licenseType: string;
-        }>
+        }>,
       ) => ReturnType;
       /**
        * Delete asset reference

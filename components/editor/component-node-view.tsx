@@ -1,9 +1,9 @@
 "use client";
 
-import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { Button } from "@/components/ui/button";
+import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { AlertCircle, Info, Trash2, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Info, Zap, Trash2, Copy, Edit2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const componentTypeConfig = {

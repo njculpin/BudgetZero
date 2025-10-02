@@ -1,22 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+  BarChart3,
+  BookOpen,
+  ChevronsUpDown,
+  LogOut,
+  Plus,
+  Search,
+  Settings,
+  User,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,23 +25,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Home,
-  FolderOpen,
-  Settings,
-  Users,
-  BookOpen,
-  Package,
-  BarChart3,
-  LogOut,
-  User,
-  ChevronsUpDown,
-  Box,
-  Upload,
-  ImageIcon,
-  Palette,
-} from "lucide-react";
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 interface AppSidebarProps {
   user?: {
@@ -58,47 +50,33 @@ interface AppSidebarProps {
 
 const navigation = [
   {
-    title: "Main",
+    title: "Create",
     items: [
       {
-        title: "Home",
-        url: "/",
-        icon: Home,
+        title: "New Project",
+        url: "/projects/new",
+        icon: Plus,
+        primary: true,
       },
+    ],
+  },
+  {
+    title: "My Work",
+    items: [
       {
         title: "My Projects",
         url: "/projects",
-        icon: FolderOpen,
-      },
-      {
-        title: "Browse Projects",
-        url: "/browse",
         icon: BookOpen,
       },
     ],
   },
   {
-    title: "Assets",
+    title: "Discover",
     items: [
       {
-        title: "Browse Models",
-        url: "/models",
-        icon: Box,
-      },
-      {
-        title: "Upload Model",
-        url: "/models/new",
-        icon: Upload,
-      },
-      {
-        title: "Browse Illustrations",
-        url: "/illustrations",
-        icon: Palette,
-      },
-      {
-        title: "Upload Illustration",
-        url: "/illustrations/new",
-        icon: ImageIcon,
+        title: "Browse",
+        url: "/browse",
+        icon: Search,
       },
     ],
   },
@@ -106,8 +84,8 @@ const navigation = [
     title: "Collaboration",
     items: [
       {
-        title: "Teams",
-        url: "/teams",
+        title: "Requests",
+        url: "/collaboration/requests",
         icon: Users,
       },
       {

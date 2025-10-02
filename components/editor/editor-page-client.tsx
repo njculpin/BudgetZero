@@ -1,30 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { SimpleEditor } from "./simple-editor";
-import { BlockEditor } from "./block-editor";
 import { createClient } from "@/lib/supabase/client";
-import { GameProject, Rulebook } from "@/lib/types/database";
+import type { GameProject, Rulebook } from "@/lib/types/database";
+import { BlockEditor } from "./block-editor";
 
 interface EditorPageClientProps {
-  project: GameProject;
-  rulebook: Rulebook | null;
+  project?: GameProject;
+  rulebook?: Rulebook | null;
+  documentId?: string;
+  initialContent?: any;
   canEdit: boolean;
 }
 
 export function EditorPageClient({
   project,
   rulebook,
+  documentId,
+  initialContent,
   canEdit,
 }: EditorPageClientProps) {
-  const [isSaving, setIsSaving] = useState(false);
+  const [_isSaving, setIsSaving] = useState(false);
   const supabase = createClient();
 
   const handleSave = async (content: any) => {
     setIsSaving(true);
     try {
-      if (rulebook) {
-        // Update existing rulebook
+      if (documentId) {
+        // Update document
+        const { error } = await supabase
+          .from("documents")
+          .update({ content, updated_at: new Date().toISOString() })
+          .eq("id", documentId);
+
+        if (error) {
+          console.error("Error updating document:", error);
+          throw new Error("Failed to save changes");
+        }
+      } else if (rulebook) {
+        // Update existing rulebook (legacy)
         const { error } = await supabase
           .from("rulebooks")
           .update({
@@ -37,8 +51,8 @@ export function EditorPageClient({
           console.error("Error updating rulebook:", error);
           throw new Error("Failed to save changes");
         }
-      } else {
-        // Create new rulebook
+      } else if (project) {
+        // Create new rulebook (legacy)
         const { error } = await supabase.from("rulebooks").insert({
           project_id: project.id,
           title: `${project.title} Rulebook`,
@@ -58,8 +72,8 @@ export function EditorPageClient({
 
   return (
     <BlockEditor
-      initialContent={rulebook?.content}
-      projectTitle={project.title}
+      initialContent={initialContent || rulebook?.content}
+      projectTitle={project?.title || "Document"}
       isReadOnly={!canEdit}
       onSave={canEdit ? handleSave : undefined}
     />

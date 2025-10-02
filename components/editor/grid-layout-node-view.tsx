@@ -1,11 +1,11 @@
 "use client";
 
-import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
+import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { Move, Plus, Settings, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Settings, Trash2, Move } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 export function GridLayoutNodeView({
   node,
@@ -72,7 +72,7 @@ export function GridLayoutNodeView({
     });
   };
 
-  const updateItemContent = (itemId: string, content: any) => {
+  const _updateItemContent = (itemId: string, content: any) => {
     updateAttributes({
       items: items.map((item) =>
         item.id === itemId ? { ...item, content } : item,
@@ -129,7 +129,9 @@ export function GridLayoutNodeView({
                   max="6"
                   value={columns}
                   onChange={(e) =>
-                    updateAttributes({ columns: parseInt(e.target.value) || 2 })
+                    updateAttributes({
+                      columns: parseInt(e.target.value, 10) || 2,
+                    })
                   }
                   className="ml-2 w-16 px-2 py-1 border rounded text-sm"
                 />
@@ -142,7 +144,9 @@ export function GridLayoutNodeView({
                   max="10"
                   value={rows || 1}
                   onChange={(e) =>
-                    updateAttributes({ rows: parseInt(e.target.value) || 1 })
+                    updateAttributes({
+                      rows: parseInt(e.target.value, 10) || 1,
+                    })
                   }
                   className="ml-2 w-16 px-2 py-1 border rounded text-sm"
                 />
@@ -193,7 +197,9 @@ export function GridLayoutNodeView({
                         </div>
                       ) : (
                         <div className="text-sm p-2 bg-blue-50/50 rounded border-l-4 border-blue-400">
-                          Component: {(item.content as { title?: string })?.title || "Untitled"}
+                          Component:{" "}
+                          {(item.content as { title?: string })?.title ||
+                            "Untitled"}
                         </div>
                       )}
                     </div>

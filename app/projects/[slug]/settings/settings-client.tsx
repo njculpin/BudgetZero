@@ -1,10 +1,9 @@
 "use client";
 
+import { AlertTriangle, Archive, Crown, Download, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Trash2, Archive, Crown, Download, AlertTriangle } from "lucide-react";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
+import { Button } from "@/components/ui/button";
 import { archiveProject } from "@/lib/actions/project-actions";
 
 interface ProjectSettingsClientProps {
@@ -37,12 +36,18 @@ export function ProjectSettingsClient({ project }: ProjectSettingsClientProps) {
         {/* Export Data */}
         <div className="flex items-center justify-between p-4 border border-green-200 rounded-lg bg-green-50">
           <div className="space-y-1">
-            <div className="font-medium text-green-700">Export Project Data</div>
+            <div className="font-medium text-green-700">
+              Export Project Data
+            </div>
             <p className="text-sm text-slate-600">
               Download all project content and metadata
             </p>
           </div>
-          <Button variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-100">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-green-300 text-green-700 hover:bg-green-100"
+          >
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
@@ -56,7 +61,11 @@ export function ProjectSettingsClient({ project }: ProjectSettingsClientProps) {
               Transfer this project to another user
             </p>
           </div>
-          <Button variant="outline" size="sm" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-blue-300 text-blue-700 hover:bg-blue-100"
+          >
             <Crown className="w-4 h-4 mr-2" />
             Transfer
           </Button>
@@ -90,7 +99,11 @@ export function ProjectSettingsClient({ project }: ProjectSettingsClientProps) {
               disabled={isArchiving || project.status === "archived"}
             >
               <Archive className="w-4 h-4 mr-2" />
-              {project.status === "archived" ? "Archived" : isArchiving ? "Archiving..." : "Archive"}
+              {project.status === "archived"
+                ? "Archived"
+                : isArchiving
+                  ? "Archiving..."
+                  : "Archive"}
             </Button>
           </div>
 

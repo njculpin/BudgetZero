@@ -1,25 +1,24 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
-  PageSectionManager,
-  RulebookPage,
-  RulebookSection,
-} from "./page-section-manager";
-import { SectionEditor } from "./section-editor";
-import { ComponentLibrary } from "./component-library";
-import { ReusableComponent } from "./reusable-component";
-import {
-  Save,
-  Eye,
-  Users,
   CheckCircle,
   ChevronRight,
   FileText,
   Layers,
+  Save,
+  Users,
 } from "lucide-react";
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ComponentLibrary } from "./component-library";
+import {
+  PageSectionManager,
+  type RulebookPage,
+  type RulebookSection,
+} from "./page-section-manager";
+import type { ReusableComponent } from "./reusable-component";
+import { SectionEditor } from "./section-editor";
 
 interface RulebookEditorProps {
   initialContent?: any;
@@ -46,7 +45,7 @@ export function RulebookEditor({
 }: RulebookEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isPreview, setIsPreview] = useState(false);
+  const [_isPreview, _setIsPreview] = useState(false);
   const [pages, setPages] = useState<RulebookPage[]>(initialPages || []);
 
   // Get all sections from all pages for easier access
@@ -336,11 +335,11 @@ export function RulebookEditor({
             isReadOnly={isReadOnly}
             isVisible={activeSection?.id === section.id}
             onInsertComponent={(
-              componentId,
-              componentType,
-              componentTitle,
-              componentContent,
-              componentSettings,
+              _componentId,
+              _componentType,
+              _componentTitle,
+              _componentContent,
+              _componentSettings,
             ) => {
               // This is handled through the window method approach
             }}

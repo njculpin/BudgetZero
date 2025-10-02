@@ -1,4 +1,4 @@
-import { Node, mergeAttributes } from "@tiptap/core";
+import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { GridLayoutNodeView } from "./grid-layout-node-view";
 
@@ -40,7 +40,7 @@ export const GridLayoutExtension = Node.create<{}, GridLayoutAttributes>({
       columns: {
         default: 2,
         parseHTML: (element) =>
-          parseInt(element.getAttribute("data-columns") || "2"),
+          parseInt(element.getAttribute("data-columns") || "2", 10),
         renderHTML: (attributes) => {
           return {
             "data-columns": attributes.columns,
@@ -50,7 +50,7 @@ export const GridLayoutExtension = Node.create<{}, GridLayoutAttributes>({
       rows: {
         default: 1,
         parseHTML: (element) =>
-          parseInt(element.getAttribute("data-rows") || "1"),
+          parseInt(element.getAttribute("data-rows") || "1", 10),
         renderHTML: (attributes) => {
           return {
             "data-rows": attributes.rows,
@@ -111,19 +111,19 @@ export const GridLayoutExtension = Node.create<{}, GridLayoutAttributes>({
           });
         },
       addGridItem:
-        (layoutId: string, item: any) =>
+        (_layoutId: string, _item: any) =>
         ({ tr, state }) => {
           // Implementation for adding items to existing grid
           return true;
         },
       updateGridItem:
-        (layoutId: string, itemId: string, updates: any) =>
+        (_layoutId: string, _itemId: string, _updates: any) =>
         ({ tr, state }) => {
           // Implementation for updating grid items
           return true;
         },
       removeGridItem:
-        (layoutId: string, itemId: string) =>
+        (_layoutId: string, _itemId: string) =>
         ({ tr, state }) => {
           // Implementation for removing grid items
           return true;

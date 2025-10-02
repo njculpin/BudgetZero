@@ -240,6 +240,7 @@ export interface Asset {
   license_type: LicenseType;
   license_terms: string | null;
   price_cents: number;
+  royalty_percentage: number;
   download_count: number;
   usage_count: number;
   is_public: boolean;
@@ -252,7 +253,13 @@ export interface Asset {
 export interface AssetFile {
   id: string;
   asset_id: string;
-  file_type: 'primary' | 'texture' | 'material' | 'thumbnail' | 'preview' | 'additional';
+  file_type:
+    | "primary"
+    | "texture"
+    | "material"
+    | "thumbnail"
+    | "preview"
+    | "additional";
   file_url: string;
   file_name: string;
   file_format: string | null;
@@ -465,7 +472,11 @@ export interface CollaborationDocument {
 
 export type ForkType = "merge" | "reference";
 export type ForkStatus = "pending" | "accepted" | "rejected" | "expired";
-export type CollaborativeProjectStatus = "draft" | "review" | "published" | "archived";
+export type CollaborativeProjectStatus =
+  | "draft"
+  | "review"
+  | "published"
+  | "archived";
 export type CollaborativeMemberRole = "owner" | "contributor";
 
 export interface ProjectFork {
@@ -511,7 +522,8 @@ export interface CollaborativeProjectMember {
   joined_at: string;
 }
 
-export interface CollaborativeProjectMemberWithProfile extends CollaborativeProjectMember {
+export interface CollaborativeProjectMemberWithProfile
+  extends CollaborativeProjectMember {
   user: Profile;
   source_project?: GameProject;
 }
@@ -526,7 +538,8 @@ export interface CollaborativeProjectApproval {
   created_at: string;
 }
 
-export interface CollaborativeProjectApprovalWithProfile extends CollaborativeProjectApproval {
+export interface CollaborativeProjectApprovalWithProfile
+  extends CollaborativeProjectApproval {
   approver: Profile;
 }
 
@@ -549,4 +562,81 @@ export interface CreateCollaborativeProjectData {
   description?: string;
   source_project_ids: string[];
   revenue_split: Record<string, number>;
+}
+
+// Attribution reference interfaces
+export interface ProjectAssetReference {
+  id: string;
+  project_id: string;
+  asset_id: string;
+  royalty_percentage: number;
+  status: "pending" | "approved" | "rejected";
+  requested_by: string;
+  requested_at: string;
+  responded_at: string | null;
+  created_at: string;
+}
+
+export interface ProjectDocumentReference {
+  id: string;
+  project_id: string;
+  document_id: string;
+  royalty_percentage: number;
+  status: "pending" | "approved" | "rejected";
+  requested_by: string;
+  requested_at: string;
+  responded_at: string | null;
+  created_at: string;
+}
+
+// Enriched reference types (with joined data)
+export interface EnrichedAssetReference {
+  id: string;
+  royalty_percentage: number;
+  status: "pending" | "approved" | "rejected";
+  requested_at: string;
+  asset: {
+    id: string;
+    title: string;
+    asset_type: string;
+    thumbnail_url: string | null;
+    creator_id: string;
+    creator?: {
+      id: string;
+      full_name: string | null;
+    };
+  };
+  project: {
+    id: string;
+    title: string;
+    slug: string;
+    creator_id: string;
+    creator: {
+      id: string;
+      full_name: string | null;
+    };
+  };
+}
+
+export interface EnrichedDocumentReference {
+  id: string;
+  royalty_percentage: number;
+  status: "pending" | "approved" | "rejected";
+  requested_at: string;
+  document: {
+    id: string;
+    title: string;
+    document_type: string;
+    creator_id: string;
+  };
+  project: {
+    id: string;
+    title: string;
+    slug: string;
+    creator_id: string;
+    creator: {
+      id: string;
+      full_name: string | null;
+    };
+  };
 }

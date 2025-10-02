@@ -1,17 +1,17 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import {
-  GameProject,
-  GameProjectWithCreator,
-  GameProjectWithCollaborators,
-  CreateGameProjectData,
-  UpdateGameProjectData,
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
   ApiResponse,
+  CreateGameProjectData,
+  GameProject,
+  GameProjectWithCollaborators,
+  GameProjectWithCreator,
   PaginatedResponse,
+  UpdateGameProjectData,
 } from "@/lib/types/database";
 import {
   CreateGameProjectSchema,
-  UpdateGameProjectSchema,
   createSlug,
+  UpdateGameProjectSchema,
 } from "@/lib/validations/schemas";
 
 export class GameProjectService {
@@ -33,7 +33,7 @@ export class GameProjectService {
       // Ensure slug is unique
       while (true) {
         const { data: existingProject } = await this.supabase
-          .from("game_projects")
+          .from("projects")
           .select("id")
           .eq("slug", slug)
           .single();
@@ -44,7 +44,7 @@ export class GameProjectService {
       }
 
       const { data, error } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .insert([
           {
             ...validatedData,
@@ -104,7 +104,7 @@ export class GameProjectService {
   ): Promise<ApiResponse<GameProjectWithCreator>> {
     try {
       const { data, error } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .select(`
           *,
           creator:profiles!creator_id (*)
@@ -129,7 +129,7 @@ export class GameProjectService {
   ): Promise<ApiResponse<GameProjectWithCreator>> {
     try {
       const { data, error } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .select(`
           *,
           creator:profiles!creator_id (*)
@@ -154,7 +154,7 @@ export class GameProjectService {
   ): Promise<ApiResponse<GameProjectWithCollaborators>> {
     try {
       const { data, error } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .select(`
           *,
           creator:profiles!creator_id (*),
@@ -195,7 +195,7 @@ export class GameProjectService {
         // Ensure slug is unique (excluding current project)
         while (true) {
           const { data: existingProject } = await this.supabase
-            .from("game_projects")
+            .from("projects")
             .select("id")
             .eq("slug", slug)
             .neq("id", projectId)
@@ -210,7 +210,7 @@ export class GameProjectService {
       }
 
       const { data, error } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .update(validatedData)
         .eq("id", projectId)
         .eq("creator_id", userId) // Ensure only creator can update
@@ -243,7 +243,7 @@ export class GameProjectService {
 
       // Get total count for projects user created
       const { count: createdCount } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .select("*", { count: "exact", head: true })
         .eq("creator_id", userId);
 
@@ -255,11 +255,11 @@ export class GameProjectService {
         .eq("invitation_status", "accepted")
         .eq("is_active", true);
 
-      const totalCount = (createdCount || 0) + (collaboratedCount || 0);
+      const _totalCount = (createdCount || 0) + (collaboratedCount || 0);
 
       // Get projects user created
       const { data: createdProjects } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .select(`
           *,
           creator:profiles!creator_id (*)
@@ -281,7 +281,7 @@ export class GameProjectService {
           (item) => item.project_id,
         );
         const { data } = await this.supabase
-          .from("game_projects")
+          .from("projects")
           .select(`
             *,
             creator:profiles!creator_id (*)
@@ -332,14 +332,14 @@ export class GameProjectService {
 
       // Get total count
       const { count } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .select("*", { count: "exact", head: true })
         .eq("is_public", true)
         .in("status", ["active", "published"]);
 
       // Get projects
       const { data, error } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .select(`
           *,
           creator:profiles!creator_id (*)
@@ -385,7 +385,7 @@ export class GameProjectService {
       const offset = (page - 1) * limit;
 
       let queryBuilder = this.supabase
-        .from("game_projects")
+        .from("projects")
         .select(`
           *,
           creator:profiles!creator_id (*)
@@ -461,7 +461,7 @@ export class GameProjectService {
     try {
       // Only creator can delete project
       const { error } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .delete()
         .eq("id", projectId)
         .eq("creator_id", userId);
@@ -487,7 +487,7 @@ export class GameProjectService {
     try {
       // Check if user is creator
       const { data: project } = await this.supabase
-        .from("game_projects")
+        .from("projects")
         .select("creator_id, is_public")
         .eq("id", projectId)
         .single();

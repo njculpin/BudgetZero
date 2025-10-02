@@ -1,30 +1,30 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import { SyncedBlock } from "./extensions/synced-block";
-import { AssetReference } from "./extensions/asset-reference";
 import { Highlight } from "@tiptap/extension-highlight";
+import Placeholder from "@tiptap/extension-placeholder";
 import { TextStyle } from "@tiptap/extension-text-style";
-import { useState, useRef, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import {
   Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Strikethrough,
+  Box,
   Code,
   Highlighter,
+  Italic,
   Link as LinkIcon,
-  Plus,
   List,
   ListOrdered,
-  Box,
+  Plus,
+  Strikethrough,
+  Underline as UnderlineIcon,
 } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { AssetPickerModal } from "./asset-picker-modal";
 import { addAssetToProjectAction } from "@/lib/actions/asset-integration-actions";
+import { AssetPickerModal } from "./asset-picker-modal";
+import { AssetReference } from "./extensions/asset-reference";
+import { SyncedBlock } from "./extensions/synced-block";
 import "./block-editor.css";
 
 interface BlockEditorProps {
@@ -161,16 +161,6 @@ export function BlockEditor({
       setShowFloatingToolbar(true);
     },
   });
-
-
-
-
-
-
-
-
-
-
 
   // Floating Toolbar Component
   const FloatingToolbar = () => {

@@ -1,13 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { ChatMessageItem } from "@/components/chat-message";
-import { useChatScroll } from "@/hooks/use-chat-scroll";
-import { type ChatMessage, useRealtimeChat } from "@/hooks/use-realtime-chat";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChatMessageItem } from "@/components/chat-message";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useChatScroll } from "@/hooks/use-chat-scroll";
+import { type ChatMessage, useRealtimeChat } from "@/hooks/use-realtime-chat";
+import { cn } from "@/lib/utils";
 
 interface RealtimeChatProps {
   roomName: string;
@@ -67,7 +67,7 @@ export const RealtimeChat = ({
   useEffect(() => {
     // Scroll to bottom whenever messages change
     scrollToBottom();
-  }, [allMessages, scrollToBottom]);
+  }, [scrollToBottom]);
 
   const handleSendMessage = useCallback(
     (e: React.FormEvent) => {

@@ -4,7 +4,7 @@ import { AssetIntegrationService } from "@/lib/services/asset-integration";
 
 export async function addAssetToProjectAction(
   projectId: string,
-  assetId: string
+  assetId: string,
 ) {
   return await AssetIntegrationService.addAssetToProject({
     projectId,
@@ -14,7 +14,7 @@ export async function addAssetToProjectAction(
 
 export async function removeAssetFromProjectAction(
   projectId: string,
-  assetId: string
+  assetId: string,
 ) {
   return await AssetIntegrationService.removeAssetFromProject({
     projectId,

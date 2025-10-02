@@ -1,9 +1,9 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import {
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  ApiResponse,
   Asset,
   AssetWithCreator,
   CreateAssetData,
-  ApiResponse,
   PaginatedResponse,
 } from "@/lib/types/database";
 
@@ -15,7 +15,7 @@ export class AssetService {
    */
   async createAsset(
     userId: string,
-    assetData: Omit<CreateAssetData, "creator_id">
+    assetData: Omit<CreateAssetData, "creator_id">,
   ): Promise<ApiResponse<Asset>> {
     try {
       const { data, error } = await this.supabase
@@ -55,7 +55,7 @@ export class AssetService {
       search?: string;
       page?: number;
       limit?: number;
-    } = {}
+    } = {},
   ): Promise<ApiResponse<PaginatedResponse<AssetWithCreator>>> {
     try {
       const page = filters.page || 1;
@@ -69,7 +69,7 @@ export class AssetService {
           *,
           creator:profiles!creator_id (*)
         `,
-          { count: "exact" }
+          { count: "exact" },
         )
         .eq("is_public", true);
 
@@ -92,7 +92,7 @@ export class AssetService {
       }
       if (filters.search) {
         query = query.or(
-          `title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
+          `title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`,
         );
       }
 
@@ -124,9 +124,7 @@ export class AssetService {
   /**
    * Get a single asset by ID
    */
-  async getAssetById(
-    assetId: string
-  ): Promise<ApiResponse<AssetWithCreator>> {
+  async getAssetById(assetId: string): Promise<ApiResponse<AssetWithCreator>> {
     try {
       const { data, error } = await this.supabase
         .from("assets")
@@ -134,7 +132,7 @@ export class AssetService {
           `
           *,
           creator:profiles!creator_id (*)
-        `
+        `,
         )
         .eq("id", assetId)
         .single();
@@ -160,7 +158,7 @@ export class AssetService {
       asset_type?: string;
       page?: number;
       limit?: number;
-    } = {}
+    } = {},
   ): Promise<ApiResponse<PaginatedResponse<Asset>>> {
     try {
       const page = filters.page || 1;
@@ -206,7 +204,7 @@ export class AssetService {
   async updateAsset(
     assetId: string,
     userId: string,
-    updates: Partial<CreateAssetData>
+    updates: Partial<CreateAssetData>,
   ): Promise<ApiResponse<Asset>> {
     try {
       // Verify ownership
@@ -251,7 +249,7 @@ export class AssetService {
    */
   async deleteAsset(
     assetId: string,
-    userId: string
+    userId: string,
   ): Promise<ApiResponse<boolean>> {
     try {
       // Verify ownership
@@ -289,9 +287,7 @@ export class AssetService {
   /**
    * Increment download count
    */
-  async incrementDownloadCount(
-    assetId: string
-  ): Promise<ApiResponse<boolean>> {
+  async incrementDownloadCount(assetId: string): Promise<ApiResponse<boolean>> {
     try {
       const { error } = await this.supabase.rpc("increment_download_count", {
         asset_id: assetId,
@@ -313,7 +309,7 @@ export class AssetService {
    * Get popular models (most downloaded or used)
    */
   async getPopularModels(
-    limit: number = 10
+    limit: number = 10,
   ): Promise<ApiResponse<AssetWithCreator[]>> {
     try {
       const { data, error } = await this.supabase
@@ -322,7 +318,7 @@ export class AssetService {
           `
           *,
           creator:profiles!creator_id (*)
-        `
+        `,
         )
         .eq("asset_type", "model")
         .eq("is_public", true)
@@ -360,7 +356,7 @@ export class AssetService {
 
       // Extract unique categories
       const categories = Array.from(
-        new Set(data?.map((item) => item.model_category).filter(Boolean))
+        new Set(data?.map((item) => item.model_category).filter(Boolean)),
       ).sort();
 
       return { data: categories as string[] };

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Box, Search, X, ImageIcon, Package } from "lucide-react";
+import { ImageIcon, Package, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,8 +11,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 
 interface Asset {
@@ -20,7 +20,7 @@ interface Asset {
   thumbnail_url?: string;
   creator_id: string;
   license_type: string;
-  asset_type: 'model' | 'illustration';
+  asset_type: "model" | "illustration";
   creator: {
     full_name?: string;
     username?: string;
@@ -43,13 +43,13 @@ export function AssetPickerModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
-  const [assetType, setAssetType] = useState<'model' | 'illustration'>('model');
+  const [assetType, setAssetType] = useState<"model" | "illustration">("model");
 
   useEffect(() => {
     if (open) {
       loadAssets();
     }
-  }, [open, searchQuery, assetType]);
+  }, [open, loadAssets]);
 
   async function loadAssets() {
     setLoading(true);
@@ -70,7 +70,7 @@ export function AssetPickerModal({
           full_name,
           username
         )
-      `
+      `,
       )
       .eq("is_public", true)
       .eq("asset_type", assetType)
@@ -105,16 +105,16 @@ export function AssetPickerModal({
         {/* Asset Type Tabs */}
         <div className="flex gap-2 border-b">
           <Button
-            variant={assetType === 'model' ? 'default' : 'ghost'}
-            onClick={() => setAssetType('model')}
+            variant={assetType === "model" ? "default" : "ghost"}
+            onClick={() => setAssetType("model")}
             className="flex items-center gap-2"
           >
             <Package className="h-4 w-4" />
             Models
           </Button>
           <Button
-            variant={assetType === 'illustration' ? 'default' : 'ghost'}
-            onClick={() => setAssetType('illustration')}
+            variant={assetType === "illustration" ? "default" : "ghost"}
+            onClick={() => setAssetType("illustration")}
             className="flex items-center gap-2"
           >
             <ImageIcon className="h-4 w-4" />
@@ -143,7 +143,7 @@ export function AssetPickerModal({
             </div>
           ) : assets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              {assetType === 'model' ? (
+              {assetType === "model" ? (
                 <Package className="h-12 w-12 mb-3 text-gray-300" />
               ) : (
                 <ImageIcon className="h-12 w-12 mb-3 text-gray-300" />
@@ -167,7 +167,7 @@ export function AssetPickerModal({
                         alt={asset.title}
                         className="w-full h-full object-cover"
                       />
-                    ) : asset.asset_type === 'illustration' ? (
+                    ) : asset.asset_type === "illustration" ? (
                       <ImageIcon className="h-8 w-8 text-gray-400" />
                     ) : (
                       <Package className="h-8 w-8 text-gray-400" />
@@ -179,7 +179,10 @@ export function AssetPickerModal({
                     {asset.title}
                   </h4>
                   <p className="text-xs text-gray-600 mt-1">
-                    by {asset.creator.full_name || asset.creator.username || "Unknown"}
+                    by{" "}
+                    {asset.creator.full_name ||
+                      asset.creator.username ||
+                      "Unknown"}
                   </p>
                   <div className="flex gap-1 mt-2">
                     <Badge variant="outline" className="text-xs capitalize">
@@ -195,7 +198,8 @@ export function AssetPickerModal({
         {/* Footer */}
         <div className="flex justify-between items-center pt-3 border-t">
           <p className="text-sm text-gray-500">
-            {assets.length} {assetType}{assets.length !== 1 ? "s" : ""} available
+            {assets.length} {assetType}
+            {assets.length !== 1 ? "s" : ""} available
           </p>
           <Button variant="outline" onClick={onClose}>
             Cancel

@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, Loader2, Tag, Users, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,9 +16,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -23,12 +26,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createClient } from "@/lib/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
 import { GameProjectService } from "@/lib/services/game-projects";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertCircle, X, Tag, Users } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { createClient } from "@/lib/supabase/client";
 
 const projectFormSchema = z.object({
   title: z
@@ -107,7 +107,11 @@ export function CreateProjectForm() {
 
   const handleAddTag = (tag: string) => {
     const trimmedTag = tag.trim();
-    if (trimmedTag && !selectedTags.includes(trimmedTag) && selectedTags.length < 10) {
+    if (
+      trimmedTag &&
+      !selectedTags.includes(trimmedTag) &&
+      selectedTags.length < 10
+    ) {
       const newTags = [...selectedTags, trimmedTag];
       setSelectedTags(newTags);
       form.setValue("tags", newTags);
@@ -252,9 +256,7 @@ export function CreateProjectForm() {
               onKeyDown={handleTagInputKeyDown}
               placeholder="Add tags (e.g., Board Game, Fantasy, Co-op)..."
               disabled={isLoading || selectedTags.length >= 10}
-              className={
-                form.formState.errors.tags ? "border-destructive" : ""
-              }
+              className={form.formState.errors.tags ? "border-destructive" : ""}
             />
 
             {/* Suggested Tags */}
@@ -286,7 +288,8 @@ export function CreateProjectForm() {
             )}
 
             <p className="text-xs text-gray-500">
-              {selectedTags.length}/10 tags • Tags help others discover your project
+              {selectedTags.length}/10 tags • Tags help others discover your
+              project
             </p>
           </div>
 
@@ -337,8 +340,9 @@ export function CreateProjectForm() {
                   Seeking Collaborators
                 </Label>
                 <p className="text-xs text-gray-600 mt-1">
-                  Let others know you're looking for collaborators. Your project will appear
-                  in the "Seeking Collaborators" filter on the browse page.
+                  Let others know you're looking for collaborators. Your project
+                  will appear in the "Seeking Collaborators" filter on the
+                  browse page.
                 </p>
               </div>
             </div>

@@ -1,48 +1,48 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { Table } from "@tiptap/extension-table";
-import { TableRow } from "@tiptap/extension-table-row";
-import { TableHeader } from "@tiptap/extension-table-header";
-import { TableCell } from "@tiptap/extension-table-cell";
-import Placeholder from "@tiptap/extension-placeholder";
-import UnderlineExtension from "@tiptap/extension-underline";
-import StrikeExtension from "@tiptap/extension-strike";
 import CodeExtension from "@tiptap/extension-code";
 import HorizontalRule from "@tiptap/extension-horizontal-rule";
+import Placeholder from "@tiptap/extension-placeholder";
+import StrikeExtension from "@tiptap/extension-strike";
+import { Table } from "@tiptap/extension-table";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableRow } from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
-import { ReusableComponentExtension } from "./tiptap-component-extension";
-import { GridLayoutExtension } from "./grid-layout-extension";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { useCallback, useEffect, useState } from "react";
-import { RulebookSection } from "./page-section-manager";
+import UnderlineExtension from "@tiptap/extension-underline";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bold,
-  Italic,
-  Underline,
-  Strikethrough,
+  ChevronDown,
   Code,
+  Grid3X3,
   Heading1,
   Heading2,
   Heading3,
+  Italic,
+  Keyboard,
   List,
   ListOrdered,
-  Quote,
   Minus,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Table as TableIcon,
-  Grid3X3,
-  Undo,
-  Redo,
   MoreHorizontal,
-  ChevronDown,
-  Keyboard,
+  Quote,
+  Redo,
+  Strikethrough,
+  Table as TableIcon,
+  Underline,
+  Undo,
 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { GridLayoutExtension } from "./grid-layout-extension";
+import type { RulebookSection } from "./page-section-manager";
+import { ReusableComponentExtension } from "./tiptap-component-extension";
 
 interface SectionEditorProps {
   section: RulebookSection;
