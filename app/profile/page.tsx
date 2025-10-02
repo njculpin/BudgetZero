@@ -1,4 +1,18 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  Activity,
+  Award,
+  Calendar,
+  Globe,
+  MapPin,
+  Settings,
+  Star,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { MainLayout } from "@/components/layouts/main-layout";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,22 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MainLayout } from "@/components/layouts/main-layout";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import {
-  Edit3,
-  MapPin,
-  Globe,
-  Calendar,
-  Star,
-  Award,
-  Users,
-  Activity,
-  Settings,
-} from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function ProfilePage() {
   const supabase = await createClient();

@@ -1,13 +1,20 @@
-import { createClient } from "@/lib/supabase/server";
+import { CheckCircle } from "lucide-react";
 import { redirect } from "next/navigation";
+import { AttributionRequestCard } from "@/components/dashboard/attribution-request-card";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Bell, GitMerge, UserPlus, CheckCircle, XCircle, Clock, AlertCircle, Box, Palette } from "lucide-react";
-import { getUserCollaborationInvites, getUserMergeProposals } from "@/lib/actions/collaboration-actions";
-import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/server";
+import type {
+  EnrichedAssetReference,
+  EnrichedDocumentReference,
+} from "@/lib/types/database";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -19,304 +26,232 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
-  // Fetch pending invitations and merge proposals
-  const { data: invites } = await getUserCollaborationInvites();
-  const { data: mergeProposals } = await getUserMergeProposals();
+  // First, get user's asset IDs
+  const { data: userAssets } = await supabase
+    .from("assets")
+    .select("id")
+    .eq("creator_id", user.id);
 
-  const pendingInvites = invites || [];
-  const pendingMergeProposals = (mergeProposals || []).filter(
-    (proposal: any) => proposal.merge_status === "proposed" && proposal.requires_approval_from.includes(user.id)
-  );
-  const totalPending = pendingInvites.length + pendingMergeProposals.length;
+  const assetIds = userAssets?.map((a) => a.id) || [];
 
-  const breadcrumbs = [
-    { label: "Dashboard" },
-  ];
+  // Fetch pending asset references (optimized - single query with in clause)
+  let assetReferences: EnrichedAssetReference[] = [];
+
+  // Shared maps for lookups (used by both assets and documents)
+  const projectMap = new Map<
+    string,
+    { id: string; title: string; slug: string; creator_id: string }
+  >();
+  const creatorMap = new Map<
+    string,
+    { id: string; full_name: string | null }
+  >();
+
+  if (assetIds.length > 0) {
+    const [
+      { data: refs },
+      { data: assets },
+      { data: projects },
+      { data: creators },
+    ] = await Promise.all([
+      supabase
+        .from("project_asset_references")
+        .select(
+          "id, royalty_percentage, status, requested_at, asset_id, project_id",
+        )
+        .eq("status", "pending")
+        .in("asset_id", assetIds)
+        .order("requested_at", { ascending: false }),
+      supabase
+        .from("assets")
+        .select("id, title, asset_type, thumbnail_url, creator_id")
+        .in("id", assetIds),
+      supabase.from("projects").select("id, title, slug, creator_id"),
+      supabase.from("users").select("id, full_name"),
+    ]);
+
+    const assetMap = new Map(assets?.map((a) => [a.id, a]));
+    projects?.forEach((p) => projectMap.set(p.id, p));
+    creators?.forEach((c) => creatorMap.set(c.id, c));
+
+    const enrichedRefs: EnrichedAssetReference[] = [];
+
+    for (const ref of refs || []) {
+      const asset = assetMap.get(ref.asset_id);
+      const project = projectMap.get(ref.project_id);
+      if (!asset || !project) continue;
+
+      const projectCreator = creatorMap.get(project.creator_id) || {
+        id: project.creator_id,
+        full_name: null,
+      };
+
+      enrichedRefs.push({
+        id: ref.id,
+        royalty_percentage: ref.royalty_percentage,
+        status: "pending",
+        requested_at: ref.requested_at,
+        asset,
+        project: { ...project, creator: projectCreator },
+      });
+    }
+
+    assetReferences = enrichedRefs;
+  }
+
+  // Get user's document IDs
+  const { data: userDocuments } = await supabase
+    .from("documents")
+    .select("id")
+    .eq("creator_id", user.id);
+
+  const documentIds = userDocuments?.map((d) => d.id) || [];
+
+  // Fetch pending document references (optimized - batch query with maps)
+  let documentReferences: EnrichedDocumentReference[] = [];
+
+  if (documentIds.length > 0) {
+    const [{ data: refs }, { data: documents }] = await Promise.all([
+      supabase
+        .from("project_document_references")
+        .select(
+          "id, royalty_percentage, status, requested_at, document_id, project_id",
+        )
+        .eq("status", "pending")
+        .in("document_id", documentIds)
+        .order("requested_at", { ascending: false }),
+      supabase
+        .from("documents")
+        .select("id, title, document_type, creator_id")
+        .in("id", documentIds),
+    ]);
+
+    const documentMap = new Map(documents?.map((d) => [d.id, d]));
+
+    // Reuse project and creator data from asset references if available
+    const projectIds =
+      refs?.map((r) => r.project_id).filter((id) => !projectMap.has(id)) || [];
+
+    if (projectIds.length > 0) {
+      const [{ data: newProjects }, { data: newCreators }] = await Promise.all([
+        supabase
+          .from("projects")
+          .select("id, title, slug, creator_id")
+          .in("id", projectIds),
+        supabase.from("users").select("id, full_name"),
+      ]);
+
+      newProjects?.forEach((p) => projectMap.set(p.id, p));
+      newCreators?.forEach((c) => creatorMap.set(c.id, c));
+    }
+
+    const enrichedDocRefs: EnrichedDocumentReference[] = [];
+
+    for (const ref of refs || []) {
+      const document = documentMap.get(ref.document_id);
+      const project = projectMap.get(ref.project_id);
+      if (!document || !project) continue;
+
+      const projectCreator = creatorMap.get(project.creator_id) || {
+        id: project.creator_id,
+        full_name: null,
+      };
+
+      enrichedDocRefs.push({
+        id: ref.id,
+        royalty_percentage: ref.royalty_percentage,
+        status: "pending",
+        requested_at: ref.requested_at,
+        document,
+        project: { ...project, creator: projectCreator },
+      });
+    }
+
+    documentReferences = enrichedDocRefs;
+  }
+
+  const pendingCount =
+    (assetReferences?.length || 0) + (documentReferences?.length || 0);
+
+  const breadcrumbs = [{ label: "Dashboard" }];
 
   return (
     <MainLayout user={user} breadcrumbs={breadcrumbs}>
       <div className="space-y-6">
-        {/* Page Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Manage your collaborations and project invitations</p>
+          <p className="text-gray-600">Welcome to Workshop</p>
         </div>
-        {/* Summary Card */}
+
+        {/* Pending Attribution Requests */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-blue-600" />
-                <CardTitle>Notifications</CardTitle>
+              <div>
+                <CardTitle>Attribution Requests</CardTitle>
+                <CardDescription>
+                  Creators want to use your content in their projects
+                </CardDescription>
               </div>
-              {totalPending > 0 && (
-                <Badge variant="destructive">{totalPending} pending</Badge>
+              {pendingCount > 0 && (
+                <Badge variant="default" className="ml-auto">
+                  {pendingCount} pending
+                </Badge>
               )}
             </div>
-            <CardDescription>
-              Review and respond to collaboration invitations and merge proposals
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            {totalPending === 0 ? (
+            {pendingCount === 0 ? (
               <div className="py-8 text-center text-gray-500">
                 <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="font-medium">All caught up!</p>
-                <p className="text-sm">No pending invitations or proposals</p>
+                <p className="font-medium">No pending requests</p>
+                <p className="text-sm">
+                  Attribution requests will appear here when creators reference
+                  your work
+                </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <UserPlus className="w-4 h-4 text-blue-700" />
-                    <span className="font-medium text-blue-900">Collaboration Invites</span>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-700">{pendingInvites.length}</p>
-                </div>
+              <div className="space-y-4">
+                {/* Asset References */}
+                {assetReferences?.map((reference) => (
+                  <AttributionRequestCard
+                    key={reference.id}
+                    referenceId={reference.id}
+                    referenceType="asset"
+                    contentTitle={reference.asset.title}
+                    contentType={reference.asset.asset_type}
+                    thumbnailUrl={reference.asset.thumbnail_url}
+                    projectTitle={reference.project.title}
+                    projectSlug={reference.project.slug}
+                    requesterName={
+                      reference.project.creator.full_name || "Anonymous"
+                    }
+                    royaltyPercentage={reference.royalty_percentage}
+                    requestedAt={reference.requested_at}
+                  />
+                ))}
 
-                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <GitMerge className="w-4 h-4 text-green-700" />
-                    <span className="font-medium text-green-900">Merge Proposals</span>
-                  </div>
-                  <p className="text-2xl font-bold text-green-700">{pendingMergeProposals.length}</p>
-                </div>
+                {/* Document References */}
+                {documentReferences?.map((reference) => (
+                  <AttributionRequestCard
+                    key={reference.id}
+                    referenceId={reference.id}
+                    referenceType="document"
+                    contentTitle={reference.document.title}
+                    contentType={reference.document.document_type}
+                    projectTitle={reference.project.title}
+                    projectSlug={reference.project.slug}
+                    requesterName={
+                      reference.project.creator.full_name || "Anonymous"
+                    }
+                    royaltyPercentage={reference.royalty_percentage}
+                    requestedAt={reference.requested_at}
+                  />
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
-
-        {/* Pending Collaboration Invites */}
-        {pendingInvites.length > 0 && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-blue-600" />
-                <CardTitle>Collaboration Invitations</CardTitle>
-              </div>
-              <CardDescription>
-                You've been invited to collaborate on these projects
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {pendingInvites.map((invite: any) => (
-                  <div key={invite.id} className="p-4 border rounded-lg bg-blue-50/50">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-gray-900">
-                            {invite.project?.title || "Unknown Project"}
-                          </h3>
-                          <Badge variant="secondary">{invite.role}</Badge>
-                        </div>
-
-                        <p className="text-sm text-gray-600 mb-2">
-                          Invited by <strong>{invite.inviter?.full_name || invite.inviter?.email}</strong>
-                        </p>
-
-                        {invite.contribution_description && (
-                          <p className="text-sm text-gray-700 mb-2">
-                            <strong>Expected contribution:</strong> {invite.contribution_description}
-                          </p>
-                        )}
-
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <Badge variant="outline" className="text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            Invited {new Date(invite.invited_at).toLocaleDateString()}
-                          </Badge>
-                          {invite.permissions?.map((perm: string) => (
-                            <Badge key={perm} variant="outline" className="text-xs">
-                              {perm}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <form action={async () => {
-                          "use server";
-                          const { respondToCollaborationInvite } = await import("@/lib/actions/collaboration-actions");
-                          await respondToCollaborationInvite(invite.id, "accept");
-                        }}>
-                          <Button size="sm" variant="default">
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Accept
-                          </Button>
-                        </form>
-
-                        <form action={async () => {
-                          "use server";
-                          const { respondToCollaborationInvite } = await import("@/lib/actions/collaboration-actions");
-                          await respondToCollaborationInvite(invite.id, "decline");
-                        }}>
-                          <Button size="sm" variant="outline">
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Decline
-                          </Button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Pending Merge Proposals */}
-        {pendingMergeProposals.length > 0 && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <GitMerge className="w-5 h-5 text-green-600" />
-                <CardTitle>Merge Proposals</CardTitle>
-              </div>
-              <CardDescription>
-                These projects want to merge with yours to create collaborative works
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {pendingMergeProposals.map((proposal: any) => (
-                  <div key={proposal.id} className="p-4 border rounded-lg bg-green-50/50">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 mb-2">
-                          {proposal.proposed_title}
-                        </h3>
-
-                        {proposal.proposed_description && (
-                          <p className="text-sm text-gray-700 mb-3">
-                            {proposal.proposed_description}
-                          </p>
-                        )}
-
-                        <div className="text-sm text-gray-600 mb-2">
-                          <strong>Proposed by:</strong> {proposal.proposer?.full_name || proposal.proposer?.email}
-                        </div>
-
-                        <div className="text-sm text-gray-600 mb-3">
-                          <strong>Projects to merge:</strong> {proposal.source_project_ids.length + 1} projects
-                        </div>
-
-                        <div className="flex items-center gap-2 mb-2">
-                          <AlertCircle className="w-4 h-4 text-amber-600" />
-                          <span className="text-sm text-amber-700">
-                            Requires approval from {proposal.requires_approval_from.length} creators
-                          </span>
-                        </div>
-
-                        <div className="text-xs text-gray-500">
-                          Revenue will be split equally: {(100 / Object.keys(proposal.revenue_split).length).toFixed(1)}% each
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <form action={async () => {
-                          "use server";
-                          const { respondToMergeProposal } = await import("@/lib/actions/collaboration-actions");
-                          await respondToMergeProposal(proposal.id, "approve");
-                        }}>
-                          <Button size="sm" variant="default">
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Approve
-                          </Button>
-                        </form>
-
-                        <form action={async () => {
-                          "use server";
-                          const { respondToMergeProposal } = await import("@/lib/actions/collaboration-actions");
-                          await respondToMergeProposal(proposal.id, "decline");
-                        }}>
-                          <Button size="sm" variant="outline">
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Decline
-                          </Button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Separator />
-
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Link href="/projects">
-            <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="font-medium text-gray-900">My Projects</p>
-                  <p className="text-sm text-gray-600 mt-1">View all your projects</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/projects/new">
-            <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="font-medium text-gray-900">Create Project</p>
-                  <p className="text-sm text-gray-600 mt-1">Start a new game project</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/browse">
-            <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="font-medium text-gray-900">Browse Projects</p>
-                  <p className="text-sm text-gray-600 mt-1">Find collaborators</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/models">
-            <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <Box className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                  <p className="font-medium text-gray-900">Browse Models</p>
-                  <p className="text-sm text-gray-600 mt-1">Find 3D assets</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/illustrations">
-            <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <Palette className="w-6 h-6 text-pink-600 mx-auto mb-2" />
-                  <p className="font-medium text-gray-900">Browse Illustrations</p>
-                  <p className="text-sm text-gray-600 mt-1">Find artwork</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/illustrations/new">
-            <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <Palette className="w-6 h-6 text-pink-600 mx-auto mb-2" />
-                  <p className="font-medium text-gray-900">Upload Illustration</p>
-                  <p className="text-sm text-gray-600 mt-1">Share your artwork</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
       </div>
     </MainLayout>
   );

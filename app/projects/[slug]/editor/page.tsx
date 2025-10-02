@@ -1,10 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
-import { GameProjectService } from "@/lib/services/game-projects";
+import { notFound, redirect } from "next/navigation";
 import { EditorPageClient } from "@/components/editor/editor-page-client";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { GameProjectService } from "@/lib/services/game-projects";
+import { createClient } from "@/lib/supabase/server";
 
 interface EditorPageProps {
   params: Promise<{ slug: string }>;
@@ -61,11 +59,12 @@ export default async function EditorPage({ params }: EditorPageProps) {
 
   return (
     <MainLayout user={user} breadcrumbs={breadcrumbs}>
-        <EditorPageClient
-          project={project}
-          rulebook={rulebook}
-          canEdit={canEdit}
-        />2
+      <EditorPageClient
+        project={project}
+        rulebook={rulebook}
+        canEdit={canEdit}
+      />
+      2
     </MainLayout>
   );
 }

@@ -1,5 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { ApiResponse } from "@/lib/types/database";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ApiResponse } from "@/lib/types/database";
 
 export const STORAGE_BUCKETS = {
   MODELS: "models",
@@ -63,7 +63,7 @@ export class StorageService {
     options: {
       folder?: string;
       isPublic?: boolean;
-    } = {}
+    } = {},
   ): Promise<ApiResponse<{ path: string; url: string; size: number }>> {
     try {
       // Validate file format
@@ -125,7 +125,7 @@ export class StorageService {
     options: {
       folder?: string;
       isPublic?: boolean;
-    } = {}
+    } = {},
   ): Promise<ApiResponse<{ path: string; url: string; size: number }>> {
     try {
       // Validate file format
@@ -187,7 +187,7 @@ export class StorageService {
   async uploadThumbnail(
     userId: string,
     file: File,
-    assetId: string
+    assetId: string,
   ): Promise<ApiResponse<{ path: string; url: string }>> {
     try {
       // Validate image format
@@ -239,7 +239,7 @@ export class StorageService {
     userId: string,
     file: File,
     assetId: string,
-    textureIndex: number = 0
+    textureIndex: number = 0,
   ): Promise<ApiResponse<{ path: string; url: string }>> {
     try {
       // Validate texture format
@@ -292,7 +292,7 @@ export class StorageService {
    */
   async deleteFile(
     bucket: keyof typeof STORAGE_BUCKETS,
-    path: string
+    path: string,
   ): Promise<ApiResponse<boolean>> {
     try {
       const { error } = await this.supabase.storage
@@ -336,6 +336,6 @@ export class StorageService {
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+    return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`;
   }
 }

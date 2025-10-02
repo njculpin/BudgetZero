@@ -1,5 +1,18 @@
-import { createClient } from "@/lib/supabase/server";
-import { GameProjectService } from "@/lib/services/game-projects";
+import {
+  Archive,
+  Copy,
+  Crown,
+  Download,
+  Eye,
+  EyeOff,
+  Mail,
+  Settings,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { notFound, redirect } from "next/navigation";
+import { MainLayout } from "@/components/layouts/main-layout";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,31 +23,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { MainLayout } from "@/components/layouts/main-layout";
-import { redirect, notFound } from "next/navigation";
-import {
-  Settings,
-  Save,
-  Trash2,
-  AlertTriangle,
-  Users,
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock,
-  UserPlus,
-  Mail,
-  Crown,
-  Edit3,
-  Download,
-  Copy,
-  Archive,
-} from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { GameProjectService } from "@/lib/services/game-projects";
+import { createClient } from "@/lib/supabase/server";
 import { ProjectSettingsClient } from "./settings-client";
+import { ProjectGeneralSettingsForm } from "@/components/projects/project-general-settings-form";
 
 interface ProjectSettingsPageProps {
   params: Promise<{
@@ -85,7 +79,8 @@ export default async function ProjectSettingsPage({
               Project Settings
             </h1>
             <p className="text-slate-600 mt-2">
-              Manage {project.title} settings, team access, and project lifecycle
+              Manage {project.title} settings, team access, and project
+              lifecycle
             </p>
           </div>
         </div>
@@ -133,93 +128,7 @@ export default async function ProjectSettingsPage({
           {/* Settings Content */}
           <div className="lg:col-span-3 space-y-6">
             {/* General Project Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
-                  General Settings
-                </CardTitle>
-                <CardDescription>
-                  Basic project information and metadata
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Project Title</Label>
-                    <Input
-                      id="title"
-                      defaultValue={project.title}
-                      placeholder="Enter project title"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="slug">URL Slug</Label>
-                    <div className="flex">
-                      <span className="inline-flex items-center px-3 text-sm text-slate-500 bg-slate-50 border border-r-0 border-slate-300 rounded-l-md">
-                        /projects/
-                      </span>
-                      <Input
-                        id="slug"
-                        defaultValue={project.slug}
-                        className="rounded-l-none"
-                        placeholder="project-slug"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    defaultValue={project.description || ""}
-                    placeholder="Describe your project..."
-                    className="min-h-24"
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <select
-                      id="status"
-                      defaultValue={project.status}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="draft">Draft</option>
-                      <option value="active">Active</option>
-                      <option value="completed">Completed</option>
-                      <option value="archived">Archived</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="genre">Genre</Label>
-                    <Input
-                      id="genre"
-                      defaultValue={project.genre || ""}
-                      placeholder="e.g., Strategy, RPG"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="complexity">Complexity (1-5)</Label>
-                    <Input
-                      id="complexity"
-                      type="number"
-                      min="1"
-                      max="5"
-                      defaultValue={project.complexity_rating || ""}
-                      placeholder="1-5"
-                    />
-                  </div>
-                </div>
-
-                <Button>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </Button>
-              </CardContent>
-            </Card>
+            <ProjectGeneralSettingsForm project={project} />
 
             {/* Team & Access Control */}
             <Card>
@@ -263,7 +172,10 @@ export default async function ProjectSettingsPage({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="default" className="flex items-center gap-1">
+                      <Badge
+                        variant="default"
+                        className="flex items-center gap-1"
+                      >
                         <Crown className="w-3 h-3" />
                         Owner
                       </Badge>
@@ -284,13 +196,12 @@ export default async function ProjectSettingsPage({
 
                 {/* Invite New Member Form */}
                 <div className="space-y-3">
-                  <h4 className="font-medium text-slate-900">Invite Collaborator</h4>
+                  <h4 className="font-medium text-slate-900">
+                    Invite Collaborator
+                  </h4>
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <Input
-                        placeholder="Enter email address"
-                        type="email"
-                      />
+                      <Input placeholder="Enter email address" type="email" />
                     </div>
                     <select className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                       <option value="viewer">Viewer</option>
@@ -304,10 +215,8 @@ export default async function ProjectSettingsPage({
                   </div>
                   <p className="text-xs text-slate-500">
                     • Viewer: Can view project and make comments
-                    <br />
-                    • Editor: Can edit content and manage sections
-                    <br />
-                    • Admin: Can manage team and project settings
+                    <br />• Editor: Can edit content and manage sections
+                    <br />• Admin: Can manage team and project settings
                   </p>
                 </div>
               </CardContent>
@@ -382,7 +291,9 @@ export default async function ProjectSettingsPage({
 
                 {/* Sharing & Export */}
                 <div className="space-y-3">
-                  <h4 className="font-medium text-slate-900">Sharing & Export</h4>
+                  <h4 className="font-medium text-slate-900">
+                    Sharing & Export
+                  </h4>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1">
                       <Copy className="w-4 h-4 mr-2" />

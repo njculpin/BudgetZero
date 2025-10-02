@@ -1,18 +1,24 @@
 "use client";
 
-import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { Box, X, ExternalLink } from "lucide-react";
+import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { Box, ExternalLink, X } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export function AssetReferenceView({
   node,
   deleteNode,
   selected,
 }: NodeViewProps) {
-  const { assetId, assetName, assetType, thumbnailUrl, creatorName, licenseType } =
-    node.attrs;
+  const {
+    assetId,
+    assetName,
+    assetType,
+    thumbnailUrl,
+    creatorName,
+    licenseType,
+  } = node.attrs;
 
   return (
     <NodeViewWrapper
@@ -39,9 +45,7 @@ export function AssetReferenceView({
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg truncate">{assetName}</h3>
                 {creatorName && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    by {creatorName}
-                  </p>
+                  <p className="text-sm text-gray-600 mt-1">by {creatorName}</p>
                 )}
               </div>
 

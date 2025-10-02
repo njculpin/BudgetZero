@@ -1,40 +1,40 @@
 "use client";
 
-import { useState } from "react";
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
+  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import {
+  ChevronDown,
+  ChevronRight,
+  Edit2,
+  Eye,
+  EyeOff,
+  FileText,
+  GripVertical,
+  Layers,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import {
-  GripVertical,
-  Plus,
-  Eye,
-  EyeOff,
-  Edit2,
-  Trash2,
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  Layers,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface RulebookPage {
@@ -135,22 +135,22 @@ function SortableItem({
         </div>
 
         {false && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-6 h-6 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleExpanded(section.id);
-              }}
-            >
-              {section.isExpanded ? (
-                <ChevronDown className="w-3 h-3" />
-              ) : (
-                <ChevronRight className="w-3 h-3" />
-              )}
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-6 h-6 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpanded(section.id);
+            }}
+          >
+            {section.isExpanded ? (
+              <ChevronDown className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )}
+          </Button>
+        )}
 
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FileText className="w-4 h-4 text-green-500 flex-shrink-0" />

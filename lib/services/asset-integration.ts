@@ -93,7 +93,7 @@ export class AssetIntegrationService {
    * Get all assets used in a project
    */
   static async getProjectAssets(
-    projectId: string
+    projectId: string,
   ): Promise<{ success: boolean; data?: AssetWithDetails[]; error?: string }> {
     const supabase = await createClient();
 
@@ -116,7 +116,7 @@ export class AssetIntegrationService {
             username
           )
         )
-      `
+      `,
       )
       .eq("project_id", projectId)
       .order("added_at", { ascending: false });
@@ -131,11 +131,13 @@ export class AssetIntegrationService {
   /**
    * Get all projects using a specific asset
    */
-  static async getAssetUsage(
-    assetId: string
-  ): Promise<{
+  static async getAssetUsage(assetId: string): Promise<{
     success: boolean;
-    data?: Array<{ project_id: string; project_title: string; added_at: string }>;
+    data?: Array<{
+      project_id: string;
+      project_title: string;
+      added_at: string;
+    }>;
     error?: string;
   }> {
     const supabase = await createClient();
@@ -146,10 +148,10 @@ export class AssetIntegrationService {
         `
         project_id,
         added_at,
-        project:game_projects!project_assets_project_id_fkey (
+        project:projects!project_assets_project_id_fkey (
           title
         )
-      `
+      `,
       )
       .eq("asset_id", assetId)
       .order("added_at", { ascending: false });
@@ -158,11 +160,17 @@ export class AssetIntegrationService {
       return { success: false, error: error.message };
     }
 
-    const formatted = data.map((item: { project_id: string; added_at: string; project: { title: string }[] }) => ({
-      project_id: item.project_id,
-      project_title: item.project[0]?.title || "Unknown",
-      added_at: item.added_at,
-    }));
+    const formatted = data.map(
+      (item: {
+        project_id: string;
+        added_at: string;
+        project: { title: string }[];
+      }) => ({
+        project_id: item.project_id,
+        project_title: item.project[0]?.title || "Unknown",
+        added_at: item.added_at,
+      }),
+    );
 
     return { success: true, data: formatted };
   }

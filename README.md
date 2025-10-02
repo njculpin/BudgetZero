@@ -1,162 +1,202 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Workshop - Tabletop Creator Collaboration Platform
 
-## Getting Started
+A collaborative platform where tabletop game creators (designers, 3D modelers, illustrators, editors) work together on game projects with transparent attribution and automatic revenue sharing.
 
-First, run the development server:
+## Current Status
+
+- **Phase 0:** ✅ Complete - Supabase setup, unified project architecture
+- **Phase 1:** ✅ Complete - Attribution system with approval dashboard, toast notifications
+- **Phase 2:** 🔄 Planned - Notifications (email + in-app)
+
+## Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
+
+# Run linter
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Core Concept
+Game projects serve as containers for multiple types of content:
+- **Documents** (rulebooks, expansions, quick-start guides)
+- **3D Models** (miniatures, terrain, tokens)
+- **Illustrations** (artwork, covers, icons)
 
-## Learn More
+All content can be **cross-referenced** between projects with automatic attribution and royalty tracking.
 
-To learn more about Next.js, take a look at the following resources:
+### Attribution System
+1. Creator uploads content to their project with royalty percentage (0-50%)
+2. Other creators can request to reference that content in their projects
+3. Content owner approves/rejects via dashboard
+4. Approved references appear with attribution chain on project pages
+5. Revenue is automatically split: Platform fee (2%) + Content royalties + Project creator
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Example Flow
+```
+Designer creates "Fantasy Quest" project
+├─ Uploads rulebook document (10% royalty)
+├─ References Modeler's "Goblin Mini" (15% royalty)
+└─ References Illustrator's "Cover Art" (20% royalty)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+$30 Sale Revenue Split:
+- Platform: $0.60 (2%)
+- Modeler: $4.50 (15%)
+- Illustrator: $6.00 (20%)
+- Rulebook creator: $3.00 (10%)
+- Designer: $15.90 (remainder)
+```
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Framework & Core
+- **Next.js 15** with App Router (React 19)
+- **TypeScript 5** (strict mode, no `any` types)
+- **Turbopack** for fast builds
+- **Supabase** for database, auth, and real-time features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### UI & Styling
+- **Tailwind CSS v4** with PostCSS
+- **ShadCN/UI** component library
+- **Radix UI** primitives for accessibility
+- **Lucide React** icons
+- **CVA** for component variants
 
-# Tabletop Creator Marketplace - Platform Specification
+### Forms & Validation
+- **React Hook Form** with **Zod** resolvers
+- Type-safe form validation
 
-## Platform Overview
-- Collaborative marketplace for tabletop creators.
-- Roles:
-  - Designer: Upload rulesets, mechanics, expansions.
-  - Illustrator: Upload art, covers, boards, assets.
-  - 3D Modeler: Upload miniatures, terrain, STL files.
-  - Editor/Writer/Graphic Designer: Contribute text, layout, and polish.
-- Contributions combined into Artifacts (games, expansions, editions).
-  - Artifacts can be forked/remixed.
-  - Contributors share revenue automatically.
-  - Marketplace supports non-exclusive, compounding creativity.
+### Editor
+- **TipTap** rich text editor for documents
+- **JSONB** storage for content
 
-## Contribution Model
-### Types
-- Rulesets: Mechanics, full games, expansions.
-- Art: Illustrations, covers, icons, UI.
-- 3D Models: Miniatures, tokens, boards, STL packs.
-- Editing/Design: Rules editing, layout, graphic design.
+## Project Structure
 
-### Licensing Options
-1. Approval Required: Contributor must approve usage.
-2. Open (Platform Only): Any creator can remix on-platform; external use prohibited.
-3. Exclusive/For Sale: Revenue-sharing or paid license only.
+```
+/app
+  /projects/[slug]              # Project detail page
+    /create-document            # Add document to project
+    /create-model               # Upload 3D model
+    /create-illustration        # Upload illustration
+    /documents/[document_id]    # Document editor
+  /dashboard                    # Attribution approval dashboard
+  /api                          # API routes
 
-## Project & Artifact Structure
-- Project: Collaborative container.
-  - Roles: Designer, Illustrator, Modeler, Editor (flexible).
-  - Access: Invite-only or open.
-  - Contributors accept auto-generated agreement.
-- Artifact: Sellable version of a project.
-  - Can be forked/remixed.
-  - Revenue shared among contributors.
-- Example:
-  - Project A: Joe (Designer) + Molly (Modeler) + Alice (Illustrator)
-  - Artifact A1: Published game (Alice’s art)
-  - Artifact A2: Fork (Olivia’s art)
-  - Both generate revenue independently.
+/components
+  /ui                           # ShadCN components
+  /dashboard                    # Dashboard-specific components
+  /documents                    # Document forms
+  /assets                       # Asset upload/reference components
 
-## Sales Model
-- Digital: PDFs, zips, downloads. Fees: Stripe 2–3%, Platform 2–3%.
-- Physical (future): Print-on-demand; print/shipping costs deducted.
-- Revenue split evenly among contributors.
+/lib
+  /supabase                     # Supabase clients (browser/server)
+  /services                     # Business logic services
+  /types                        # TypeScript type definitions
+```
 
-## Payouts
-- Monthly via Stripe Connect; $10 minimum.
-- Transparency: Sales count, gross revenue, fees, contributor share, pending/next payout.
-- Statements auto-generated for accounting/taxes.
+## Development Commands
 
-## Discovery & Recommendations
-- Link artifact forks/variants.
-- Highlight top sellers, trending forks.
-- Filters by contributor role, license, popularity, tags.
-- Contributor profiles show history, sales, collaborations.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server with Turbopack |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run lint` | Run Biome linter |
+| `npm run format` | Format code with Biome |
 
-## Contributor Agreement (Auto-generated)
-- Revenue split equal among contributors.
-- Monthly payouts.
-- Withdrawal rights: remove asset; past revenue unaffected.
-- Licensing enforced per contribution.
-- Non-exclusivity unless upgraded.
+## Key Features
 
-## Governance & Quality
-- Invite-only phase for curated creators.
-- Community curation via ratings, reviews, reputation.
-- Anti-spam: Upload limits, duplicate/artifact detection.
+### ✅ Implemented
+- User authentication (Supabase Auth)
+- Project creation and management
+- Document editor with TipTap
+- Model/Illustration upload with royalty settings
+- Asset reference system (request to use content)
+- Attribution approval dashboard
+- Real-time revenue split calculator
+- Toast notifications for approvals
+- Referenced content display on project pages
 
-## Platform Revenue
-- Fees: Stripe 2–3%, Platform 2–3% (~5% total).
-- Optional add-ons: Featured listings, exclusive licensing, print-on-demand.
+### 🔄 In Progress
+- Email notifications for reference requests
+- In-app notification center with badges
 
-## Principles
-- Simplicity: Clear, even splits.
-- Transparency: Fees and revenue visible.
-- Flexibility: Contributor control over licensing and withdrawal.
-- Trust: Auto-generated agreements.
-- Scalability: Digital-first, expandable.
+### 📋 Planned
+- Revenue analytics dashboard
+- Marketplace for published projects
+- Collaboration invites
+- Export to PDF
+- Print-on-demand integration
 
-## Editor & Asset Management System
-- Core Editors:
-  - Rulebook Editor (TipTap): Structured sections, headings, tables, context boxes, inline linking, PDF preview, collaborative editing.
-  - Illustration Asset Manager: Upload, categorize, tag, preview, embed images; version control.
-  - 3D Model Asset Manager: Upload STL/OBJ, categorize, preview, assign to rules.
-  - Rules Editing & Polishing: Context boxes, inline comments, section forking.
-- Context Boxes: Reusable blocks; auto-sync across rulebook; support text, images, models.
-- UX Principles: Notion-like, modular, collaboration-ready, asset-driven.
-- Tech Stack: React 18 + TS, TipTap 3, Supabase, TanStack Query, React DnD, html2canvas + jsPDF, Stripe JS, Vite + SWC, TailwindCSS + ShadeCN. Leverage https://supabase.com/ui/docs/getting-started/introduction real time cursor, chat, auth, avatar stack.
-- Workflow Example:
-  1. Designer creates rulebook.
-  2. Illustrator uploads artwork.
-  3. Designer embeds artwork/context boxes.
-  4. Modeler uploads 3D assets.
-  5. Artifact published; revenue auto-split.
-  6. Updates can fork new artifacts.
+## Database Schema
 
-## Extended Platform Features
-- Collaboration & Permissions:
-  - Roles: Designer, Illustrator, 3D Modeler, Editor/Writer/Designer, Admin/Moderator.
-  - Editing permissions: per project; commenting and suggestions without full edits.
-  - Version history & rollback; forks traceable.
-- Artifact Lifecycle:
-  - Forking: Create new versions without affecting originals.
-  - Snapshots/Releases: Lock artifact for sales, licensing, print.
-- Licensing & Rights:
-  - Contributors can withdraw assets; past sales unaffected.
-  - License types: Platform-non-exclusive by default; optional premium/exclusive.
-  - Track derivative works.
-- Discovery & Marketplace:
-  - Artifact listings with roles, licenses, versions.
-  - Recommendations: forks, updates, complementary assets.
-  - Search & filters: contributor, license, popularity, tags.
-  - Reputation system: tracks history, sales, collaborations.
-- Export & Print:
-  - PDF export: rulebooks and instructions.
-  - Image export: standalone or embedded.
-  - Print-on-demand integration for snapshots.
-- Metrics & Dashboards:
-  - Contributor dashboard: sales, revenue, downloads, pending payouts.
-  - Project activity: edits, forks, contributions, notifications.
-- Onboarding & Invite System:
-  - Invite-only early access for curated creators.
-  - Contributor profiles: skills, artifact history, reputation.
+### Core Tables
+- **users** - User profiles (Supabase Auth)
+- **projects** - Game projects (container for content)
+- **documents** - Rulebooks, expansions, guides
+- **assets** - Models and illustrations
+- **project_asset_references** - Cross-project asset attribution
+- **project_document_references** - Cross-project document attribution
 
+### Attribution Workflow
+1. Reference created with `status: 'pending'`
+2. Owner approves → `status: 'approved'`
+3. Owner rejects → `status: 'rejected'`
+4. Approved references appear on project pages with royalty info
 
+## Code Quality
+
+- **TypeScript Strict Mode**: Enabled
+- **No `any` Types**: Enforced via user configuration
+- **Linting**: Biome with Next.js and React rules
+- **Import Organization**: Automatic via Biome
+- **Formatting**: 2-space indentation, consistent style
+
+## Environment Setup
+
+Create `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## Contributing
+
+1. Follow TypeScript strict mode (no `any` types)
+2. Use Biome for formatting and linting
+3. Keep components focused and reusable
+4. Write descriptive commit messages
+5. Update documentation for new features
+
+## Phase Roadmap
+
+See `CLAUDE.md` for detailed phase descriptions and implementation plan.
+
+## Platform Vision
+
+Workshop enables tabletop creators to:
+- Collaborate across disciplines (design, art, 3D modeling)
+- Build attribution chains with transparent royalty splits
+- Fork and remix content with proper credit
+- Monetize collaborative work automatically
+- Discover and connect with other creators
+
+Built for designers, illustrators, 3D modelers, editors, and everyone in between.
+
+---
+
+**License:** MIT
+**Documentation:** See `CLAUDE.md` for development instructions
+**Status:** See `STATUS.md` for current project state

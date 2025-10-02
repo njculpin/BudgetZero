@@ -2,12 +2,12 @@
 
 import { AlertTriangle, CheckCircle, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import type { LicenseType } from "@/lib/types/database";
 import {
   checkLicenseCompatibility,
-  suggestMergedLicense,
   getLicenseRestrictions,
+  suggestMergedLicense,
 } from "@/lib/utils/license-compatibility";
-import type { LicenseType } from "@/lib/types/database";
 
 interface LicenseCompatibilityCheckProps {
   licenses: LicenseType[];
@@ -106,7 +106,9 @@ export function LicenseCompatibilityCheck({
               Suggested Merged License
             </h4>
             <div className="flex items-center gap-2 mb-2">
-              <Badge className="capitalize">{suggestion.suggestedLicense}</Badge>
+              <Badge className="capitalize">
+                {suggestion.suggestedLicense}
+              </Badge>
               <span className="text-sm text-blue-800">{suggestion.reason}</span>
             </div>
             <div className="mt-3">
@@ -119,7 +121,7 @@ export function LicenseCompatibilityCheck({
                     <li key={index} className="text-xs text-blue-800">
                       • {restriction}
                     </li>
-                  )
+                  ),
                 )}
               </ul>
             </div>

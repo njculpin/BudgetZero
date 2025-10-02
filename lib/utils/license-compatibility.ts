@@ -17,7 +17,7 @@ interface LicenseCompatibility {
 }
 
 export function checkLicenseCompatibility(
-  licenses: LicenseType[]
+  licenses: LicenseType[],
 ): LicenseCompatibility {
   // Remove duplicates
   const uniqueLicenses = Array.from(new Set(licenses));
@@ -102,7 +102,10 @@ export function suggestMergedLicense(licenses: LicenseType[]): {
   }
 
   // If mixing commercial and free, use commercial but note restrictions
-  if (uniqueLicenses.includes("commercial") && uniqueLicenses.includes("free")) {
+  if (
+    uniqueLicenses.includes("commercial") &&
+    uniqueLicenses.includes("free")
+  ) {
     return {
       suggestedLicense: "commercial",
       reason:
@@ -130,7 +133,7 @@ export function suggestMergedLicense(licenses: LicenseType[]): {
  */
 export function getLicenseCompatibilityExplanation(
   license1: LicenseType,
-  license2: LicenseType
+  license2: LicenseType,
 ): string {
   if (license1 === license2) {
     return "Both projects use the same license - fully compatible!";

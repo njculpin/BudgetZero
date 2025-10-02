@@ -1,7 +1,7 @@
-import { Node, mergeAttributes } from "@tiptap/core";
+import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { ReusableComponent } from "./reusable-component";
 import { ComponentNodeView } from "./component-node-view";
+import type { ReusableComponent } from "./reusable-component";
 
 export interface ComponentAttributes {
   componentId: string;

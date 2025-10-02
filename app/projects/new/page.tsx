@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { CreateProjectForm } from "@/components/projects/create-project-form";
+import { ProjectForm } from "@/components/projects/project-form";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function NewProjectPage() {
   const supabase = await createClient();
@@ -15,22 +15,20 @@ export default async function NewProjectPage() {
 
   const breadcrumbs = [
     { label: "My Projects", href: "/projects" },
-    { label: "Create Project" },
+    { label: "New Project" },
   ];
 
   return (
     <MainLayout user={user} breadcrumbs={breadcrumbs}>
-      <div className="max-w-4xl space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Create New Project</h1>
-          <p className="text-muted-foreground">
-            Start building your tabletop game
+          <p className="text-muted-foreground mt-2">
+            Start your tabletop project - add documents, models, and illustrations as you go
           </p>
         </div>
 
-        <div className="max-w-2xl">
-          <CreateProjectForm />
-        </div>
+        <ProjectForm />
       </div>
     </MainLayout>
   );

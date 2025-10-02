@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { StorageService } from "@/lib/services/storage";
+import { type NextRequest, NextResponse } from "next/server";
 import { AssetService } from "@/lib/services/assets";
-import { CreateAssetData } from "@/lib/types/database";
+import { StorageService } from "@/lib/services/storage";
+import { createClient } from "@/lib/supabase/server";
+import type { CreateAssetData } from "@/lib/types/database";
 
 export const runtime = "nodejs";
 export const maxDuration = 300; // 5 minutes for large file uploads
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (!modelFile) {
       return NextResponse.json(
         { error: "Model file is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,10 +47,10 @@ export async function POST(request: NextRequest) {
       | "attribution"
       | "commercial"
       | "exclusive";
-    const price_cents = parseInt(formData.get("price_cents") as string) || 0;
+    const price_cents =
+      parseInt(formData.get("price_cents") as string, 10) || 0;
     const is_public =
-      formData.get("is_public") === "true" ||
-      formData.get("is_public") === "1";
+      formData.get("is_public") === "true" || formData.get("is_public") === "1";
     const seeking_collaborators =
       formData.get("seeking_collaborators") === "true" ||
       formData.get("seeking_collaborators") === "1";
@@ -68,13 +68,13 @@ export async function POST(request: NextRequest) {
     const modelUploadResult = await storageService.uploadModelFile(
       user.id,
       modelFile,
-      { isPublic: is_public }
+      { isPublic: is_public },
     );
 
     if (modelUploadResult.error || !modelUploadResult.data) {
       return NextResponse.json(
         { error: modelUploadResult.error || "Failed to upload model" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       const thumbnailResult = await storageService.uploadThumbnail(
         user.id,
         thumbnailFile,
-        tempAssetId
+        tempAssetId,
       );
       if (thumbnailResult.data) {
         thumbnailUrl = thumbnailResult.data.url;
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     if (createResult.error || !createResult.data) {
       return NextResponse.json(
         { error: createResult.error || "Failed to create asset" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     // Upload texture files if any
     if (textureFiles.length > 0) {
       const textureUploads = textureFiles.map((file, index) =>
-        storageService.uploadTexture(user.id, file, assetId, index)
+        storageService.uploadTexture(user.id, file, assetId, index),
       );
 
       await Promise.all(textureUploads);
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error ? error.message : "Unexpected error occurred",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

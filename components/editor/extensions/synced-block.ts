@@ -1,6 +1,6 @@
-import { Node, mergeAttributes } from "@tiptap/core";
-import { ReactNodeViewRenderer } from "@tiptap/react";
+import { mergeAttributes, Node } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { ReactNodeViewRenderer } from "@tiptap/react";
 import { SyncedBlockView } from "../views/synced-block-view";
 
 export interface SyncedBlockOptions {
@@ -99,7 +99,7 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
 
   addNodeView() {
     return ReactNodeViewRenderer(SyncedBlockView, {
-      contentDOMElementTag: 'div',
+      contentDOMElementTag: "div",
     });
   },
 
@@ -107,7 +107,7 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
     return [
       new Plugin({
         key: new PluginKey("syncedBlockUpdater"),
-        appendTransaction: (transactions, oldState, newState) => {
+        appendTransaction: (transactions, _oldState, newState) => {
           // Skip if no real document changes
           if (!transactions.some((tr) => tr.docChanged)) {
             return null;
@@ -129,7 +129,7 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
               if (!syncGroups.has(syncId)) {
                 syncGroups.set(syncId, []);
               }
-              syncGroups.get(syncId)!.push({ pos, node });
+              syncGroups.get(syncId)?.push({ pos, node });
             }
           });
 
@@ -167,19 +167,25 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
                 try {
                   // Validate position still exists in current transaction state
                   if (pos >= newTr.doc.content.size || pos < 0) {
-                    console.warn(`Position ${pos} is beyond document bounds, skipping`);
+                    console.warn(
+                      `Position ${pos} is beyond document bounds, skipping`,
+                    );
                     return;
                   }
 
                   const nodeAtPos = newTr.doc.nodeAt(pos);
                   if (!nodeAtPos || nodeAtPos.type.name !== "syncedBlock") {
-                    console.warn(`No sync block found at position ${pos}, skipping`);
+                    console.warn(
+                      `No sync block found at position ${pos}, skipping`,
+                    );
                     return;
                   }
 
                   // Verify the node has the same syncId
                   if (nodeAtPos.attrs.syncId !== syncId) {
-                    console.warn(`Sync ID mismatch at position ${pos}, skipping`);
+                    console.warn(
+                      `Sync ID mismatch at position ${pos}, skipping`,
+                    );
                     return;
                   }
 
@@ -198,16 +204,25 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
                     const to = pos + nodeAtPos.nodeSize - 1;
 
                     // Validate the range is still valid after the markup change
-                    if (from < newTr.doc.content.size && to <= newTr.doc.content.size && from < to) {
+                    if (
+                      from < newTr.doc.content.size &&
+                      to <= newTr.doc.content.size &&
+                      from < to
+                    ) {
                       newTr = newTr.replaceWith(from, to, sourceContent);
                     } else {
-                      console.warn(`Invalid range [${from}, ${to}] for content replacement, skipping`);
+                      console.warn(
+                        `Invalid range [${from}, ${to}] for content replacement, skipping`,
+                      );
                     }
                   }
 
                   hasUpdates = true;
                 } catch (error) {
-                  console.error(`Error updating sync block at position ${pos}:`, error);
+                  console.error(
+                    `Error updating sync block at position ${pos}:`,
+                    error,
+                  );
                   // Continue processing other blocks even if one fails
                 }
               });

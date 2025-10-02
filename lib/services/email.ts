@@ -5,9 +5,12 @@ import { Resend } from "resend";
 //   throw new Error("RESEND_API_KEY is not defined in environment variables");
 // }
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Workshop <noreply@workshop.dev>";
+const FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL || "Workshop <noreply@workshop.dev>";
 
 interface CollaborationInviteEmailData {
   inviteeName: string;
@@ -47,11 +50,14 @@ interface MergeCompletionEmailData {
 
 export async function sendCollaborationInviteEmail(
   to: string,
-  data: CollaborationInviteEmailData
+  data: CollaborationInviteEmailData,
 ) {
   // Skip sending emails if Resend is not configured
   if (!resend) {
-    console.log("Email skipped (Resend not configured):", { to, subject: `Collaboration invite for ${data.projectTitle}` });
+    console.log("Email skipped (Resend not configured):", {
+      to,
+      subject: `Collaboration invite for ${data.projectTitle}`,
+    });
     return { success: true };
   }
 
@@ -119,7 +125,7 @@ export async function sendCollaborationInviteEmail(
 
 export async function sendInviteResponseEmail(
   to: string,
-  data: InviteResponseEmailData
+  data: InviteResponseEmailData,
 ) {
   const subject = data.accepted
     ? `${data.collaboratorName} accepted your collaboration invitation`
@@ -198,11 +204,14 @@ export async function sendInviteResponseEmail(
 
 export async function sendMergeProposalEmail(
   to: string,
-  data: MergeProposalEmailData
+  data: MergeProposalEmailData,
 ) {
   // Skip sending emails if Resend is not configured
   if (!resend) {
-    console.log("Email skipped (Resend not configured):", { to, subject: `Merge proposal: ${data.proposedTitle}` });
+    console.log("Email skipped (Resend not configured):", {
+      to,
+      subject: `Merge proposal: ${data.proposedTitle}`,
+    });
     return { success: true };
   }
 
@@ -272,11 +281,14 @@ export async function sendMergeProposalEmail(
 
 export async function sendMergeCompletionEmail(
   to: string,
-  data: MergeCompletionEmailData
+  data: MergeCompletionEmailData,
 ) {
   // Skip sending emails if Resend is not configured
   if (!resend) {
-    console.log("Email skipped (Resend not configured):", { to, subject: `Merge completed: ${data.mergedProjectTitle}` });
+    console.log("Email skipped (Resend not configured):", {
+      to,
+      subject: `Merge completed: ${data.mergedProjectTitle}`,
+    });
     return { success: true };
   }
 
@@ -350,10 +362,12 @@ interface AssetUsageNotificationData {
 
 export async function sendAssetUsageNotification(
   to: string,
-  data: AssetUsageNotificationData
+  data: AssetUsageNotificationData,
 ): Promise<{ success: boolean; error?: any }> {
   if (!resend) {
-    console.warn("Email service not configured - skipping asset usage notification email");
+    console.warn(
+      "Email service not configured - skipping asset usage notification email",
+    );
     return { success: false, error: "Email service not configured" };
   }
 
@@ -436,10 +450,12 @@ interface ForkRequestNotificationData {
 
 export async function sendForkRequestNotification(
   to: string,
-  data: ForkRequestNotificationData
+  data: ForkRequestNotificationData,
 ): Promise<{ success: boolean; error?: any }> {
   if (!resend) {
-    console.warn("Email service not configured - skipping fork request notification email");
+    console.warn(
+      "Email service not configured - skipping fork request notification email",
+    );
     return { success: false, error: "Email service not configured" };
   }
 
@@ -477,19 +493,25 @@ export async function sendForkRequestNotification(
                 </p>
               </div>
 
-              ${data.message ? `
+              ${
+                data.message
+                  ? `
                 <div style="background: #f8f9fa; border-radius: 6px; padding: 15px; margin: 20px 0;">
                   <p style="font-size: 14px; font-weight: 600; color: #333; margin: 0 0 8px 0;">Message from ${data.requesterName}:</p>
                   <p style="font-size: 14px; color: #666; margin: 0; white-space: pre-wrap;">${data.message}</p>
                 </div>
-              ` : ""}
+              `
+                  : ""
+              }
 
               <div style="background: #e0f2fe; border-left: 4px solid #0ea5e9; padding: 15px; margin: 20px 0; border-radius: 4px;">
                 <p style="margin: 0; font-size: 14px; color: #0369a1;">
                   <strong>What is a ${forkTypeLabel}?</strong><br>
-                  ${forkTypeLabel === "merge"
-                    ? "A merge creates a new collaborative project where both of you become co-owners. You'll share revenue equally and work together on the combined project."
-                    : "A reference allows them to use your content in their project with proper attribution. You retain full ownership of your original project."}
+                  ${
+                    forkTypeLabel === "merge"
+                      ? "A merge creates a new collaborative project where both of you become co-owners. You'll share revenue equally and work together on the combined project."
+                      : "A reference allows them to use your content in their project with proper attribution. You retain full ownership of your original project."
+                  }
                 </p>
               </div>
 
@@ -530,10 +552,12 @@ interface ForkResponseNotificationData {
 
 export async function sendForkResponseNotification(
   to: string,
-  data: ForkResponseNotificationData
+  data: ForkResponseNotificationData,
 ): Promise<{ success: boolean; error?: any }> {
   if (!resend) {
-    console.warn("Email service not configured - skipping fork response notification email");
+    console.warn(
+      "Email service not configured - skipping fork response notification email",
+    );
     return { success: false, error: "Email service not configured" };
   }
 
@@ -562,13 +586,16 @@ export async function sendForkResponseNotification(
               <p style="font-size: 16px; margin-bottom: 20px;">Hi ${data.requesterName},</p>
 
               <p style="font-size: 16px; margin-bottom: 20px;">
-                ${data.accepted
-                  ? `<strong>${data.responderName}</strong> has accepted your collaboration request for "${data.projectTitle}"!`
-                  : `<strong>${data.responderName}</strong> has declined your collaboration request for "${data.projectTitle}".`
+                ${
+                  data.accepted
+                    ? `<strong>${data.responderName}</strong> has accepted your collaboration request for "${data.projectTitle}"!`
+                    : `<strong>${data.responderName}</strong> has declined your collaboration request for "${data.projectTitle}".`
                 }
               </p>
 
-              ${data.accepted ? `
+              ${
+                data.accepted
+                  ? `
                 <div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 4px;">
                   <p style="margin: 0; font-size: 14px; color: #065f46;">
                     <strong>Next Steps:</strong><br>
@@ -582,20 +609,24 @@ export async function sendForkResponseNotification(
                 <div style="text-align: center; margin: 30px 0;">
                   <a href="${data.dashboardUrl}" style="display: inline-block; background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Create Collaborative Project</a>
                 </div>
-              ` : `
+              `
+                  : `
                 <div style="background: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
                   <p style="margin: 0; font-size: 14px; color: #374151;">
                     Don't be discouraged! There are many other creators looking to collaborate. Keep exploring and you'll find the right match.
                   </p>
                 </div>
-              `}
+              `
+              }
 
               <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
 
               <p style="font-size: 14px; color: #666; margin: 0;">
-                ${data.accepted
-                  ? "This is the beginning of an exciting collaboration. Good luck with your project!"
-                  : "Thank you for your interest in collaboration. Keep creating!"}
+                ${
+                  data.accepted
+                    ? "This is the beginning of an exciting collaboration. Good luck with your project!"
+                    : "Thank you for your interest in collaboration. Keep creating!"
+                }
               </p>
             </div>
           </body>

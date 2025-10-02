@@ -1,9 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useCurrentUserImage } from "@/hooks/use-current-user-image";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
 
 const supabase = createClient();
 

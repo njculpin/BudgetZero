@@ -1,4 +1,4 @@
-import { LicenseType } from "@/lib/types/database";
+import type { LicenseType } from "@/lib/types/database";
 
 export interface LicenseTemplate {
   type: LicenseType;
@@ -276,9 +276,7 @@ export function getLicenseTemplate(type: LicenseType): LicenseTemplate {
   return LICENSE_TEMPLATES[type];
 }
 
-export function getFullLicenseText(
-  type: LicenseType
-): string {
+export function getFullLicenseText(type: LicenseType): string {
   const template = LICENSE_TEMPLATES[type];
   return template.terms;
 }
@@ -290,7 +288,7 @@ export function getLicensePermissions(type: LicenseType) {
 // Helper to validate if a license type allows specific usage
 export function canUsageTypeApply(
   licenseType: LicenseType,
-  usageType: keyof LicenseTemplate["permissions"]
+  usageType: keyof LicenseTemplate["permissions"],
 ): boolean {
   return LICENSE_TEMPLATES[licenseType].permissions[usageType];
 }

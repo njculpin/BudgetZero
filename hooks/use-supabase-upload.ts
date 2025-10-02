@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type FileError,
   type FileRejection,
   useDropzone,
 } from "react-dropzone";
+import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
 
@@ -135,7 +135,7 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
       filesToUpload.map(async (file) => {
         const { error } = await supabase.storage
           .from(bucketName)
-          .upload(!!path ? `${path}/${file.name}` : file.name, file, {
+          .upload(path ? `${path}/${file.name}` : file.name, file, {
             cacheControl: cacheControl.toString(),
             upsert,
           });
