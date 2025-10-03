@@ -1,10 +1,10 @@
 "use client";
 
+import { X } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
-import { useState } from "react";
 
 const SUGGESTED_TAGS = ["Game", "Expansion", "Illustration", "3D Models"];
 
@@ -79,7 +79,7 @@ export function ProjectTagsManager({
   function handleToggleSuggestedTag(suggestedTag: string) {
     if (tagExists(suggestedTag)) {
       handleRemoveTag(
-        tags.find((t) => normalizeTag(t) === normalizeTag(suggestedTag)) || ""
+        tags.find((t) => normalizeTag(t) === normalizeTag(suggestedTag)) || "",
       );
     } else {
       const newTags = [...tags, suggestedTag];

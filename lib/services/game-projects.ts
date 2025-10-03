@@ -109,7 +109,7 @@ export class GameProjectService {
           *,
           creator:profiles!creator_id (*)
         `)
-        .eq("id", projectId)
+        .eq("slug", projectId)
         .single();
 
       if (error) {

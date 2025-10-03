@@ -8,7 +8,7 @@ const tagsSchema = z.object({
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -31,10 +31,7 @@ export async function PATCH(
       .single();
 
     if (projectError || !project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     if (project.creator_id !== user.id) {
@@ -48,7 +45,7 @@ export async function PATCH(
     if (!validation.success) {
       return NextResponse.json(
         { error: "Invalid tags data", details: validation.error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -66,7 +63,7 @@ export async function PATCH(
       console.error("Error updating tags:", error);
       return NextResponse.json(
         { error: "Failed to update tags" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -75,7 +72,7 @@ export async function PATCH(
     console.error("Error in tags PATCH:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

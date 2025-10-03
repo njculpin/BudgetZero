@@ -18,6 +18,7 @@ import { notFound, redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { PricingTiersManager } from "@/components/projects/pricing-tiers-manager";
 import { ProjectTagsManager } from "@/components/projects/project-tags-manager";
+import { ProjectAssetReferences } from "@/components/projects/project-asset-references";
 import { RevenueSplitPreview } from "@/components/shared/revenue-split-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,18 +33,16 @@ import { Separator } from "@/components/ui/separator";
 import { GameProjectService } from "@/lib/services/game-projects";
 import { createClient } from "@/lib/supabase/server";
 
-// Collaboration features coming in Phase 1
-
 interface ProjectDetailPageProps {
   params: Promise<{
-    slug: string;
+    project_id: string;
   }>;
 }
 
 export default async function ProjectDetailPage({
   params,
 }: ProjectDetailPageProps) {
-  const { slug } = await params;
+  const { project_id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -54,7 +53,7 @@ export default async function ProjectDetailPage({
   }
 
   const gameProjectService = new GameProjectService(supabase);
-  const result = await gameProjectService.getProjectBySlug(slug);
+  const result = await gameProjectService.getProject(project_id);
 
   if (result.error || !result.data) {
     notFound();
@@ -92,6 +91,22 @@ export default async function ProjectDetailPage({
   const illustrations =
     assets?.filter((a) => a.asset_type === "illustration") || [];
 
+  // Fetch project collaborators
+  const { data: collaborators } = await supabase
+    .from("project_collaborators")
+    .select(`
+      id,
+      role,
+      revenue_percentage,
+      contribution_description,
+      joined_at,
+      profiles!project_collaborators_collaborator_id_fkey(id, full_name, email, avatar_url)
+    `)
+    .eq("project_id", project.id)
+    .eq("is_active", true)
+    .eq("invitation_status", "accepted")
+    .order("joined_at", { ascending: true });
+
   // Fetch pricing tiers
   const { data: pricingTiers } = await supabase
     .from("pricing_tiers")
@@ -110,8 +125,13 @@ export default async function ProjectDetailPage({
     price_cents: tier.price_cents,
     display_order: tier.display_order,
     is_active: tier.is_active,
-    included_assets: tier.pricing_tier_assets?.map((a: { asset_id: string }) => a.asset_id) || [],
-    included_documents: tier.pricing_tier_documents?.map((d: { document_id: string }) => d.document_id) || [],
+    included_assets:
+      tier.pricing_tier_assets?.map((a: { asset_id: string }) => a.asset_id) ||
+      [],
+    included_documents:
+      tier.pricing_tier_documents?.map(
+        (d: { document_id: string }) => d.document_id,
+      ) || [],
   }));
 
   // Fetch referenced assets (approved references from other creators) - optimized
@@ -267,29 +287,21 @@ export default async function ProjectDetailPage({
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Button variant="outline" size="sm" asChild>
                           <Link
-                            href={`/projects/${project.slug}/create-document`}
+                            href={`/projects/${project.id}/add-asset`}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Browse Asset Library
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link
+                            href={`/projects/${project.id}/create-document`}
                           >
                             <FileText className="h-4 w-4 mr-2" />
                             New Document
-                          </Link>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link
-                            href={`/projects/${project.slug}/create-asset?type=model`}
-                          >
-                            <Box className="h-4 w-4 mr-2" />
-                            Add Model
-                          </Link>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link
-                            href={`/projects/${project.slug}/create-asset?type=illustration`}
-                          >
-                            <Palette className="h-4 w-4 mr-2" />
-                            Add Illustration
                           </Link>
                         </Button>
                       </div>
@@ -338,7 +350,7 @@ export default async function ProjectDetailPage({
                         {models.map((model) => (
                           <Link
                             key={model.id}
-                            href={`/projects/${project.slug}/models/${model.id}`}
+                            href={`/assets/${model.id}`}
                             className="group relative aspect-square rounded-lg overflow-hidden border hover:border-purple-300 transition-colors"
                           >
                             {model.thumbnail_url ? (
@@ -375,7 +387,7 @@ export default async function ProjectDetailPage({
                         {illustrations.map((illustration) => (
                           <Link
                             key={illustration.id}
-                            href={`/projects/${project.slug}/illustrations/${illustration.id}`}
+                            href={`/assets/${illustration.id}`}
                             className="group relative aspect-square rounded-lg overflow-hidden border hover:border-amber-300 transition-colors"
                           >
                             {illustration.thumbnail_url ? (
@@ -418,73 +430,30 @@ export default async function ProjectDetailPage({
               </CardContent>
             </Card>
 
-            {/* Referenced Assets - Attribution Chain */}
+            {/* Referenced Assets - Asset References Component */}
+            <ProjectAssetReferences projectId={project.id} />
+
+            {/* Revenue Split Summary - Only show if there are approved references */}
             {enrichedReferences.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="w-5 h-5" />
-                    Referenced Content
+                    Revenue Split Preview
                   </CardTitle>
                   <CardDescription>
-                    Content from other creators used in this project
+                    How project earnings would be distributed
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {enrichedReferences.map((ref) => (
-                      <div
-                        key={ref.id}
-                        className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50"
-                      >
-                        {/* Thumbnail */}
-                        <div className="flex-shrink-0">
-                          {ref.asset.thumbnail_url ? (
-                            <img
-                              src={ref.asset.thumbnail_url}
-                              alt={ref.asset.title}
-                              className="w-12 h-12 object-cover rounded"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                              {ref.asset.asset_type === "model" ? (
-                                <Box className="w-5 h-5 text-gray-400" />
-                              ) : (
-                                <Palette className="w-5 h-5 text-gray-400" />
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Content Info */}
-                        <div className="flex-1 min-w-0">
-                          <h5 className="font-medium text-sm truncate">
-                            {ref.asset.title}
-                          </h5>
-                          <p className="text-xs text-gray-600">
-                            by {ref.asset.creator.full_name || "Anonymous"}
-                          </p>
-                        </div>
-
-                        {/* Royalty Badge */}
-                        <Badge variant="secondary" className="text-xs">
-                          {ref.royalty_percentage}% royalty
-                        </Badge>
-                      </div>
-                    ))}
-
-                    {/* Revenue Split Summary */}
-                    <div className="mt-4">
-                      <RevenueSplitPreview
-                        royaltyContributors={enrichedReferences.map((ref) => ({
-                          name: ref.asset.creator.full_name || "Anonymous",
-                          percentage: ref.royalty_percentage,
-                        }))}
-                        variant="compact"
-                        className="bg-blue-50 p-4 rounded-lg"
-                      />
-                    </div>
-                  </div>
+                  <RevenueSplitPreview
+                    royaltyContributors={enrichedReferences.map((ref) => ({
+                      name: ref.asset.creator.full_name || "Anonymous",
+                      percentage: ref.royalty_percentage,
+                    }))}
+                    variant="compact"
+                    className="bg-blue-50 p-4 rounded-lg"
+                  />
                 </CardContent>
               </Card>
             )}
@@ -558,7 +527,6 @@ export default async function ProjectDetailPage({
                 </CardContent>
               </Card>
             )}
-
           </div>
 
           {/* Sidebar */}
@@ -651,6 +619,7 @@ export default async function ProjectDetailPage({
                   <h4 className="text-sm font-medium text-slate-900">
                     Contributors
                   </h4>
+                  {/* Project Creator */}
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                       <span className="text-sm font-medium text-primary">
@@ -664,11 +633,38 @@ export default async function ProjectDetailPage({
                         {project.creator.full_name || project.creator.email}
                       </p>
                       <p className="text-xs text-slate-500">
-                        Creator • Active today
+                        Creator • Owner
                       </p>
                     </div>
                   </div>
-                  {/* TODO: Add collaborators when available */}
+
+                  {/* Collaborators */}
+                  {collaborators && collaborators.length > 0 && (
+                    <>
+                      {collaborators.map((collab) => {
+                        const profile = Array.isArray(collab.profiles) ? collab.profiles[0] : collab.profiles;
+                        if (!profile) return null;
+                        const displayName = profile.full_name || profile.email;
+                        return (
+                          <div key={collab.id} className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-purple-700">
+                                {displayName.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {displayName}
+                              </p>
+                              <p className="text-xs text-slate-500 capitalize">
+                                {collab.role} • {collab.revenue_percentage}% revenue
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
                 </div>
 
                 <Separator />

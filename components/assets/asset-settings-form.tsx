@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,51 +35,48 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
-const documentSettingsSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  document_type: z.enum([
-    "rulebook",
-    "expansion",
-    "quick_start",
-    "reference",
-    "other",
-  ]),
+const assetSettingsSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100),
+  description: z.string().max(500).optional(),
   status: z.enum(["draft", "published", "archived"]),
   is_public: z.boolean(),
+  is_featured: z.boolean(),
   license_type: z.enum(["free", "attribution", "commercial", "exclusive"]),
   license_terms: z.string().optional(),
   royalty_percentage: z.number().min(0).max(50),
+  price_cents: z.number().min(0),
   seeking_collaborators: z.boolean(),
   tags: z.array(z.string()),
 });
 
-type DocumentSettingsFormData = z.infer<typeof documentSettingsSchema>;
+type AssetSettingsFormData = z.infer<typeof assetSettingsSchema>;
 
-interface DocumentSettingsFormProps {
-  documentId: string;
-  projectSlug: string;
-  initialData: DocumentSettingsFormData;
+interface AssetSettingsFormProps {
+  assetId: string;
+  assetType: "model" | "illustration";
+  projectId?: string;
+  initialData: AssetSettingsFormData;
 }
 
-export function DocumentSettingsForm({
-  documentId,
-  projectSlug,
+export function AssetSettingsForm({
+  assetId,
+  assetType,
+  projectId,
   initialData,
-}: DocumentSettingsFormProps) {
+}: AssetSettingsFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [tagInput, setTagInput] = useState("");
 
-  const form = useForm<DocumentSettingsFormData>({
-    resolver: zodResolver(documentSettingsSchema),
+  const form = useForm<AssetSettingsFormData>({
+    resolver: zodResolver(assetSettingsSchema),
     defaultValues: initialData,
   });
 
-  async function onSubmit(data: DocumentSettingsFormData) {
+  async function onSubmit(data: AssetSettingsFormData) {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/documents/${documentId}`, {
+      const response = await fetch(`/api/assets/${assetId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -86,15 +84,26 @@ export function DocumentSettingsForm({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update document");
+        throw new Error(error.error || "Failed to update asset");
       }
 
-      router.push(`/projects/${projectSlug}/documents/${documentId}`);
-      router.refresh();
+      toast.success("Asset settings saved successfully");
+
+      // Small delay so user sees the toast
+      setTimeout(() => {
+        if (projectId) {
+          router.push(
+            `/projects/${projectId}/${assetType === "model" ? "models" : "illustrations"}/${assetId}`
+          );
+        } else {
+          router.push(`/assets/${assetId}`);
+        }
+        router.refresh();
+      }, 500);
     } catch (error) {
-      console.error("Error updating document:", error);
-      alert(
-        error instanceof Error ? error.message : "Failed to update document",
+      console.error("Error updating asset:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update asset. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -112,9 +121,11 @@ export function DocumentSettingsForm({
   function removeTag(tag: string) {
     form.setValue(
       "tags",
-      form.getValues("tags").filter((t) => t !== tag),
+      form.getValues("tags").filter((t) => t !== tag)
     );
   }
+
+  const priceInDollars = form.watch("price_cents") / 100;
 
   return (
     <Form {...form}>
@@ -124,7 +135,8 @@ export function DocumentSettingsForm({
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
             <CardDescription>
-              Update the title and description of your document
+              Update the title and description of your{" "}
+              {assetType === "model" ? "3D model" : "illustration"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -135,7 +147,7 @@ export function DocumentSettingsForm({
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Document title" {...field} />
+                    <Input placeholder="Asset title" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -150,36 +162,13 @@ export function DocumentSettingsForm({
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Brief description of this document"
+                      placeholder="Brief description of this asset"
                       rows={3}
+                      maxLength={500}
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="document_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Document Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="rulebook">Rulebook</SelectItem>
-                      <SelectItem value="expansion">Expansion</SelectItem>
-                      <SelectItem value="quick_start">Quick Start</SelectItem>
-                      <SelectItem value="reference">Reference</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormDescription>Max 500 characters</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -192,7 +181,7 @@ export function DocumentSettingsForm({
           <CardHeader>
             <CardTitle>Publication Settings</CardTitle>
             <CardDescription>
-              Control the visibility and status of your document
+              Control the visibility and status of your asset
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -215,7 +204,7 @@ export function DocumentSettingsForm({
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Draft documents are only visible to you and collaborators
+                    Draft assets are only visible to you
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -228,9 +217,30 @@ export function DocumentSettingsForm({
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Public Document</FormLabel>
+                    <FormLabel className="text-base">Public Asset</FormLabel>
                     <FormDescription>
-                      Allow anyone to view this document
+                      Allow anyone to view and use this asset
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="is_featured"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Featured Asset</FormLabel>
+                    <FormDescription>
+                      Highlight this asset in your portfolio
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -268,12 +278,12 @@ export function DocumentSettingsForm({
           </CardContent>
         </Card>
 
-        {/* License & Royalty */}
+        {/* Pricing & License */}
         <Card>
           <CardHeader>
-            <CardTitle>License & Royalty</CardTitle>
+            <CardTitle>Pricing & License</CardTitle>
             <CardDescription>
-              Set the license type and royalty percentage
+              Set the license type, price, and royalty percentage
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -321,6 +331,40 @@ export function DocumentSettingsForm({
 
             <FormField
               control={form.control}
+              name="price_cents"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price (USD)</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        $
+                      </span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        placeholder="0.00"
+                        className="pl-7"
+                        value={priceInDollars}
+                        onChange={(e) =>
+                          field.onChange(
+                            Math.round(parseFloat(e.target.value || "0") * 100)
+                          )
+                        }
+                      />
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Individual asset price (use pricing tiers for bundles)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="royalty_percentage"
               render={({ field }) => (
                 <FormItem>
@@ -331,11 +375,13 @@ export function DocumentSettingsForm({
                       min={0}
                       max={50}
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value || "0"))
+                      }
                     />
                   </FormControl>
                   <FormDescription>
-                    Percentage of revenue you'll receive from sales
+                    Percentage of revenue when used in other projects
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -349,7 +395,7 @@ export function DocumentSettingsForm({
           <CardHeader>
             <CardTitle>Tags</CardTitle>
             <CardDescription>
-              Add tags to help others discover your document
+              Add tags to help others discover your asset
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -393,7 +439,11 @@ export function DocumentSettingsForm({
             type="button"
             variant="outline"
             onClick={() =>
-              router.push(`/projects/${projectSlug}/documents/${documentId}`)
+              projectId
+                ? router.push(
+                    `/projects/${projectId}/${assetType === "model" ? "models" : "illustrations"}/${assetId}`
+                  )
+                : router.push(`/assets/${assetId}`)
             }
             disabled={isLoading}
           >

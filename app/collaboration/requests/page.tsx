@@ -60,7 +60,7 @@ export default async function CollaborationRequestsPage() {
       supabase
         .from("project_asset_references")
         .select(
-          "id, royalty_percentage, status, requested_at, asset_id, project_id"
+          "id, royalty_percentage, status, requested_at, asset_id, project_id",
         )
         .in("asset_id", assetIds)
         .order("requested_at", { ascending: false }),
@@ -127,7 +127,7 @@ export default async function CollaborationRequestsPage() {
       supabase
         .from("project_document_references")
         .select(
-          "id, royalty_percentage, status, requested_at, document_id, project_id"
+          "id, royalty_percentage, status, requested_at, document_id, project_id",
         )
         .in("document_id", documentIds)
         .order("requested_at", { ascending: false }),
@@ -271,6 +271,8 @@ export default async function CollaborationRequestsPage() {
                         }
                         royaltyPercentage={reference.royalty_percentage}
                         requestedAt={reference.requested_at}
+                        currentUserId={user.id}
+                        status={reference.status}
                       />
                     ))}
                     {pendingDocRefs.map((reference) => (
@@ -282,6 +284,8 @@ export default async function CollaborationRequestsPage() {
                         contentType={reference.document.document_type}
                         projectTitle={reference.project.title}
                         projectSlug={reference.project.slug}
+                        currentUserId={user.id}
+                        status={reference.status}
                         requesterName={
                           reference.project.creator.full_name || "Anonymous"
                         }
@@ -330,6 +334,8 @@ export default async function CollaborationRequestsPage() {
                         }
                         royaltyPercentage={reference.royalty_percentage}
                         requestedAt={reference.requested_at}
+                        currentUserId={user.id}
+                        status={reference.status}
                       />
                     ))}
                     {approvedDocRefs.map((reference) => (
@@ -346,6 +352,8 @@ export default async function CollaborationRequestsPage() {
                         }
                         royaltyPercentage={reference.royalty_percentage}
                         requestedAt={reference.requested_at}
+                        currentUserId={user.id}
+                        status={reference.status}
                       />
                     ))}
                   </div>
@@ -388,6 +396,8 @@ export default async function CollaborationRequestsPage() {
                           reference.project.creator.full_name || "Anonymous"
                         }
                         royaltyPercentage={reference.royalty_percentage}
+                        currentUserId={user.id}
+                        status={reference.status}
                         requestedAt={reference.requested_at}
                       />
                     ))}
@@ -405,6 +415,8 @@ export default async function CollaborationRequestsPage() {
                         }
                         royaltyPercentage={reference.royalty_percentage}
                         requestedAt={reference.requested_at}
+                        currentUserId={user.id}
+                        status={reference.status}
                       />
                     ))}
                   </div>

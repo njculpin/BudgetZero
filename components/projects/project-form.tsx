@@ -88,10 +88,7 @@ export function ProjectForm() {
                 Project Title <span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
-                <Input
-                  placeholder="My Tabletop Project"
-                  {...field}
-                />
+                <Input placeholder="My Tabletop Project" {...field} />
               </FormControl>
               <FormDescription>
                 Give your project a clear, memorable name

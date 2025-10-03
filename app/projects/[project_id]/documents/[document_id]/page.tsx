@@ -1,4 +1,4 @@
-import { ArrowLeft, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { EditorPageClient } from "@/components/editor/editor-page-client";
@@ -10,13 +10,13 @@ import { createClient } from "@/lib/supabase/server";
 
 interface DocumentPageProps {
   params: Promise<{
-    slug: string;
+    product_id: string;
     document_id: string;
   }>;
 }
 
 export default async function DocumentPage({ params }: DocumentPageProps) {
-  const { slug, document_id } = await params;
+  const { product_id, document_id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,7 +28,7 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
 
   // Get project
   const projectService = new ProjectService(supabase);
-  const projectResult = await projectService.getProjectBySlug(slug);
+  const projectResult = await projectService.getProjectBySlug(product_id);
 
   if (projectResult.error || !projectResult.data) {
     notFound();
@@ -85,7 +85,7 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
           </div>
 
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/projects/${slug}/documents/${document_id}/settings`}>
+            <Link href={`/projects/${product_id}/documents/${document_id}/settings`}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Link>

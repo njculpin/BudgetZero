@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string; tierId: string }> }
+  _request: Request,
+  { params }: { params: Promise<{ id: string; tierId: string }> },
 ) {
   try {
     const { id: projectId, tierId } = await params;
@@ -26,10 +26,7 @@ export async function DELETE(
       .single();
 
     if (projectError || !project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     if (project.creator_id !== user.id) {
@@ -47,7 +44,7 @@ export async function DELETE(
       console.error("Error deleting tier:", error);
       return NextResponse.json(
         { error: "Failed to delete tier" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -56,7 +53,7 @@ export async function DELETE(
     console.error("Error in pricing tier DELETE:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
