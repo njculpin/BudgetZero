@@ -13,7 +13,7 @@ const tierSchema = z.object({
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: projectId } = await params;
@@ -36,10 +36,7 @@ export async function POST(
       .single();
 
     if (projectError || !project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     if (project.creator_id !== user.id) {
@@ -53,12 +50,17 @@ export async function POST(
     if (!validation.success) {
       return NextResponse.json(
         { error: "Invalid tier data", details: validation.error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const { name, description, price_cents, included_assets, included_documents } =
-      validation.data;
+    const {
+      name,
+      description,
+      price_cents,
+      included_assets,
+      included_documents,
+    } = validation.data;
 
     // Get highest display order
     const { data: existingTiers } = await supabase
@@ -87,7 +89,7 @@ export async function POST(
       console.error("Error creating tier:", tierError);
       return NextResponse.json(
         { error: "Failed to create tier" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -120,14 +122,14 @@ export async function POST(
     console.error("Error in pricing tier POST:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: projectId } = await params;
@@ -150,10 +152,7 @@ export async function PATCH(
       .single();
 
     if (projectError || !project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     if (project.creator_id !== user.id) {
@@ -167,17 +166,23 @@ export async function PATCH(
     if (!validation.success) {
       return NextResponse.json(
         { error: "Invalid tier data", details: validation.error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const { tier_id, name, description, price_cents, included_assets, included_documents } =
-      validation.data;
+    const {
+      tier_id,
+      name,
+      description,
+      price_cents,
+      included_assets,
+      included_documents,
+    } = validation.data;
 
     if (!tier_id) {
       return NextResponse.json(
         { error: "tier_id is required for updates" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -198,7 +203,7 @@ export async function PATCH(
       console.error("Error updating tier:", tierError);
       return NextResponse.json(
         { error: "Failed to update tier" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -215,7 +220,10 @@ export async function PATCH(
     }
 
     // Update included documents - delete all and re-insert
-    await supabase.from("pricing_tier_documents").delete().eq("tier_id", tier_id);
+    await supabase
+      .from("pricing_tier_documents")
+      .delete()
+      .eq("tier_id", tier_id);
 
     if (included_documents.length > 0) {
       const docInserts = included_documents.map((documentId) => ({
@@ -235,14 +243,14 @@ export async function PATCH(
     console.error("Error in pricing tier PATCH:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: projectId } = await params;
@@ -259,7 +267,7 @@ export async function GET(
       console.error("Error fetching tiers:", error);
       return NextResponse.json(
         { error: "Failed to fetch tiers" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -282,7 +290,7 @@ export async function GET(
           included_assets: assets?.map((a) => a.asset_id) || [],
           included_documents: documents?.map((d) => d.document_id) || [],
         };
-      })
+      }),
     );
 
     return NextResponse.json(enrichedTiers);
@@ -290,7 +298,7 @@ export async function GET(
     console.error("Error in pricing tier GET:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

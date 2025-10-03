@@ -39,7 +39,10 @@ const projectGeneralSettingsSchema = z.object({
     .string()
     .min(1)
     .max(100)
-    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens"),
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug must be lowercase letters, numbers, and hyphens",
+    ),
   description: z.string().max(1000).optional(),
   status: z.enum(["draft", "active", "archived", "published"]),
   genre: z.string().optional(),
@@ -104,7 +107,9 @@ export function ProjectGeneralSettingsForm({
       router.refresh();
     } catch (error) {
       console.error("Error updating project:", error);
-      alert(error instanceof Error ? error.message : "Failed to update project");
+      alert(
+        error instanceof Error ? error.message : "Failed to update project",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -243,7 +248,9 @@ export function ProjectGeneralSettingsForm({
                         value={field.value || ""}
                         onChange={(e) =>
                           field.onChange(
-                            e.target.value ? parseInt(e.target.value) : undefined
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined,
                           )
                         }
                       />

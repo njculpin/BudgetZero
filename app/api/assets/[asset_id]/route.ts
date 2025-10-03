@@ -3,13 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 
 interface RouteContext {
   params: Promise<{
-    document_id: string;
+    asset_id: string;
   }>;
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { document_id } = await context.params;
+    const { asset_id } = await context.params;
     const supabase = await createClient();
 
     const {
@@ -21,26 +21,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     // Verify ownership
-    const { data: document, error: fetchError } = await supabase
-      .from("documents")
-      .select("creator_id, project_id, projects!inner(creator_id)")
-      .eq("id", document_id)
+    const { data: asset, error: fetchError } = await supabase
+      .from("assets")
+      .select("creator_id")
+      .eq("id", asset_id)
       .single();
 
-    if (fetchError || !document) {
-      return NextResponse.json(
-        { error: "Document not found" },
-        { status: 404 },
-      );
+    if (fetchError || !asset) {
+      return NextResponse.json({ error: "Asset not found" }, { status: 404 });
     }
 
-    const isOwner = document.creator_id === user.id;
-    const project = Array.isArray(document.projects)
-      ? document.projects[0]
-      : document.projects;
-    const isProjectOwner = project && project.creator_id === user.id;
-
-    if (!isOwner && !isProjectOwner) {
+    if (asset.creator_id !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -49,50 +40,52 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const {
       title,
       description,
-      document_type,
       status,
       is_public,
+      is_featured,
       license_type,
       license_terms,
       royalty_percentage,
+      price_cents,
       seeking_collaborators,
       tags,
     } = body;
 
-    // Update document
-    const { data: updatedDocument, error: updateError } = await supabase
-      .from("documents")
+    // Update asset
+    const { data: updatedAsset, error: updateError } = await supabase
+      .from("assets")
       .update({
         title,
         description,
-        document_type,
         status,
         is_public,
+        is_featured,
         license_type,
         license_terms,
         royalty_percentage,
+        price_cents,
         seeking_collaborators,
         tags,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", document_id)
+      .eq("id", asset_id)
       .select()
       .single();
 
     if (updateError) {
-      console.error("Error updating document:", updateError);
+      console.error("Error updating asset:", updateError);
       return NextResponse.json(
-        { error: "Failed to update document" },
-        { status: 500 },
+        { error: "Failed to update asset" },
+        { status: 500 }
       );
     }
 
-    return NextResponse.json(updatedDocument);
+    return NextResponse.json(updatedAsset);
   } catch (error) {
-    console.error("Error in PATCH /api/documents/[document_id]:", error);
+    console.error("Error in PATCH /api/assets/[asset_id]:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

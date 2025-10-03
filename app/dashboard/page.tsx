@@ -228,6 +228,8 @@ export default async function DashboardPage() {
                     }
                     royaltyPercentage={reference.royalty_percentage}
                     requestedAt={reference.requested_at}
+                    currentUserId={user.id}
+                    status={reference.status}
                   />
                 ))}
 
@@ -246,6 +248,8 @@ export default async function DashboardPage() {
                     }
                     royaltyPercentage={reference.royalty_percentage}
                     requestedAt={reference.requested_at}
+                    currentUserId={user.id}
+                    status={reference.status}
                   />
                 ))}
               </div>

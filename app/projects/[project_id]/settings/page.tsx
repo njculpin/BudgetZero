@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
+import { ProjectGeneralSettingsForm } from "@/components/projects/project-general-settings-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +29,6 @@ import { Switch } from "@/components/ui/switch";
 import { GameProjectService } from "@/lib/services/game-projects";
 import { createClient } from "@/lib/supabase/server";
 import { ProjectSettingsClient } from "./settings-client";
-import { ProjectGeneralSettingsForm } from "@/components/projects/project-general-settings-form";
 
 interface ProjectSettingsPageProps {
   params: Promise<{

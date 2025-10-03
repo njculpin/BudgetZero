@@ -1,8 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { MainLayout } from "@/components/layouts/main-layout";
 import { DocumentSettingsForm } from "@/components/documents/document-settings-form";
+import { MainLayout } from "@/components/layouts/main-layout";
 import { ProjectService } from "@/lib/services/project-service";
 import { createClient } from "@/lib/supabase/server";
 

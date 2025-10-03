@@ -24,7 +24,8 @@ export default async function NewProjectPage() {
         <div>
           <h1 className="text-3xl font-bold">Create New Project</h1>
           <p className="text-muted-foreground mt-2">
-            Start your tabletop project - add documents, models, and illustrations as you go
+            Start your tabletop project - add documents, models, and
+            illustrations as you go
           </p>
         </div>
 

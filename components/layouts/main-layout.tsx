@@ -15,6 +15,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
+import { NotificationsBell } from "@/components/notifications/notifications-bell";
+import { VPDisplay } from "@/components/victory-points/vp-display";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -37,7 +39,7 @@ export function MainLayout({ children, user, breadcrumbs }: MainLayoutProps) {
     <SidebarProvider>
       <AppSidebar user={user} />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <header className="flex h-16 shrink-0 items-center gap-2 justify-between transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -63,6 +65,10 @@ export function MainLayout({ children, user, breadcrumbs }: MainLayoutProps) {
                 </BreadcrumbList>
               </Breadcrumb>
             )}
+          </div>
+          <div className="flex items-center gap-3 px-4">
+            <VPDisplay />
+            <NotificationsBell />
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>

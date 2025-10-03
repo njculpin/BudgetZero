@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  Check,
+  DollarSign,
+  Edit,
+  FileText,
+  Package,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +31,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, DollarSign, Edit, FileText, Package, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
 
 interface PricingTier {
   id: string;
@@ -135,7 +143,7 @@ export function PricingTiersManager({
     } catch (error) {
       console.error("Error saving tier:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to save pricing tier"
+        error instanceof Error ? error.message : "Failed to save pricing tier",
       );
     } finally {
       setIsLoading(false);
@@ -151,7 +159,7 @@ export function PricingTiersManager({
         `/api/projects/${projectId}/pricing-tiers/${tierId}`,
         {
           method: "DELETE",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -165,7 +173,7 @@ export function PricingTiersManager({
       alert(
         error instanceof Error
           ? error.message
-          : "Failed to delete pricing tier"
+          : "Failed to delete pricing tier",
       );
     } finally {
       setIsLoading(false);
@@ -219,7 +227,7 @@ export function PricingTiersManager({
   }
 
   const sortedTiers = [...tiers].sort(
-    (a, b) => a.display_order - b.display_order
+    (a, b) => a.display_order - b.display_order,
   );
 
   if (!isOwner && tiers.length === 0) {
@@ -234,7 +242,9 @@ export function PricingTiersManager({
           <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <p className="font-medium">No pricing tiers configured</p>
           {isOwner && (
-            <p className="text-sm">Create tiers to offer different price points</p>
+            <p className="text-sm">
+              Create tiers to offer different price points
+            </p>
           )}
         </div>
       ) : (
@@ -582,9 +592,7 @@ export function PricingTiersManager({
             </Button>
             <Button
               onClick={handleSave}
-              disabled={
-                isLoading || !formData.name || !formData.price_dollars
-              }
+              disabled={isLoading || !formData.name || !formData.price_dollars}
             >
               {isLoading
                 ? "Saving..."

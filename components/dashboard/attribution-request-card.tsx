@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RevenueSplitPreview } from "@/components/shared/revenue-split-preview";
+import { RequestComments } from "@/components/collaboration/request-comments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface AttributionRequestCardProps {
   referenceId: string;
@@ -22,6 +24,8 @@ interface AttributionRequestCardProps {
   requesterName: string;
   royaltyPercentage: number;
   requestedAt: string;
+  currentUserId: string;
+  status?: string;
 }
 
 export function AttributionRequestCard({
@@ -35,6 +39,8 @@ export function AttributionRequestCard({
   requesterName,
   royaltyPercentage,
   requestedAt,
+  currentUserId,
+  status = "pending",
 }: AttributionRequestCardProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
@@ -157,6 +163,14 @@ export function AttributionRequestCard({
                 </span>
               </div>
             </div>
+
+            {/* Comments Section */}
+            <Separator className="my-4" />
+            <RequestComments
+              referenceId={referenceId}
+              currentUserId={currentUserId}
+              status={status}
+            />
           </div>
 
           {/* Action Buttons */}

@@ -3,11 +3,15 @@
 import {
   BarChart3,
   BookOpen,
+  Box,
   ChevronsUpDown,
+  Home,
+  Image,
   LogOut,
   Plus,
   Search,
   Settings,
+  Upload,
   User,
   Users,
 } from "lucide-react";
@@ -50,33 +54,37 @@ interface AppSidebarProps {
 
 const navigation = [
   {
-    title: "Create",
+    title: "Main",
     items: [
       {
-        title: "New Project",
-        url: "/projects/new",
-        icon: Plus,
-        primary: true,
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: Home,
       },
-    ],
-  },
-  {
-    title: "My Work",
-    items: [
       {
         title: "My Projects",
         url: "/projects",
         icon: BookOpen,
       },
+      {
+        title: "New Project",
+        url: "/projects/new",
+        icon: Plus,
+      },
     ],
   },
   {
-    title: "Discover",
+    title: "Assets",
     items: [
       {
-        title: "Browse",
-        url: "/browse",
+        title: "Asset Library",
+        url: "/assets",
         icon: Search,
+      },
+      {
+        title: "Upload Asset",
+        url: "/assets/upload",
+        icon: Upload,
       },
     ],
   },

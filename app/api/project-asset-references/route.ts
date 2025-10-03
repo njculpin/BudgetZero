@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { project_id, asset_id, royalty_percentage } = validation.data;
+    const { project_id, asset_id } = validation.data;
 
     // Verify the user owns the project
     const { data: project, error: projectError } = await supabase
@@ -126,12 +126,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // TODO: Send notification to asset owner (Phase 1)
-    // await sendNotification({
-    //   to: asset.creator_id,
-    //   type: 'asset_reference_request',
-    //   data: { project_id, asset_id, reference_id: reference.id }
-    // });
+    // Create notification for asset owner
+    await supabase.from("notifications").insert({
+      user_id: asset.creator_id,
+      type: "asset_reference_request",
+      title: "Asset Reference Request",
+      message: `Someone wants to use your asset in their project`,
+      link_url: `/collaboration/requests`,
+      metadata: {
+        project_id,
+        asset_id,
+        reference_id: reference.id,
+        requested_by: user.id,
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -221,7 +229,73 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // TODO: Send notification to project owner (Phase 1)
+    // If approved, add asset creator as project collaborator
+    if (status === "approved") {
+      // Get asset creator's profile to determine role
+      const { data: assetCreator, error: creatorError } = await supabase
+        .from("profiles")
+        .select("id, role")
+        .eq("id", reference.asset.creator_id)
+        .single();
+
+      if (!creatorError && assetCreator) {
+        // Check if collaborator already exists
+        const { data: existingCollab } = await supabase
+          .from("project_collaborators")
+          .select("id, revenue_percentage")
+          .eq("project_id", reference.project_id)
+          .eq("collaborator_id", reference.asset.creator_id)
+          .single();
+
+        if (existingCollab) {
+          // Update existing collaborator's revenue percentage
+          const newRevenue =
+            existingCollab.revenue_percentage + reference.royalty_percentage;
+
+          await supabase
+            .from("project_collaborators")
+            .update({
+              revenue_percentage: Math.min(newRevenue, 100),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existingCollab.id);
+        } else {
+          // Create new collaborator record
+          const { error: collabError } = await supabase
+            .from("project_collaborators")
+            .insert({
+              project_id: reference.project_id,
+              collaborator_id: reference.asset.creator_id,
+              role: assetCreator.role || "modeler",
+              permissions: ["read"],
+              invitation_status: "accepted",
+              joined_at: new Date().toISOString(),
+              revenue_percentage: reference.royalty_percentage,
+              contribution_description: `Contributed asset (reference ${reference_id})`,
+              is_active: true,
+            });
+
+          if (collabError) {
+            console.error("Error creating collaborator:", collabError);
+            // Don't fail the request, but log the error
+          }
+        }
+      }
+    }
+
+    // Create notification for project owner
+    await supabase.from("notifications").insert({
+      user_id: reference.requested_by,
+      type: status === "approved" ? "asset_reference_approved" : "asset_reference_rejected",
+      title: `Asset Reference ${status === "approved" ? "Approved" : "Rejected"}`,
+      message: `Your asset reference request was ${status}`,
+      link_url: `/projects/${reference.project_id}`,
+      metadata: {
+        project_id: reference.project_id,
+        asset_id: reference.asset_id,
+        reference_id: reference.id,
+      },
+    });
 
     return NextResponse.json({
       success: true,

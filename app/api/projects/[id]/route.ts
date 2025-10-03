@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 interface RouteContext {
   params: Promise<{
-    project_id: string;
+    id: string;
   }>;
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { project_id } = await context.params;
+    const { id: project_id } = await context.params;
     const supabase = await createClient();
 
     const {
@@ -28,10 +28,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       .single();
 
     if (fetchError || !project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     if (project.creator_id !== user.id) {
@@ -40,14 +37,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     // Parse request body
     const body = await request.json();
-    const {
-      title,
-      slug,
-      description,
-      status,
-      genre,
-      complexity_rating,
-    } = body;
+    const { title, slug, description, status, genre, complexity_rating } = body;
 
     // Build update object with only provided fields
     const updateData: Record<string, unknown> = {
@@ -74,7 +64,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       console.error("Error updating project:", updateError);
       return NextResponse.json(
         { error: "Failed to update project" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -83,7 +73,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     console.error("Error in PATCH /api/projects/[project_id]:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
