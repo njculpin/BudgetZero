@@ -780,22 +780,6 @@ export default async function ProjectDetailPage({
             </Card>
           </div>
         </div>
-
-        {/* Playtest Reviews Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          <div className="lg:col-span-2">
-            <PlaytestReviewsList
-              projectId={project.id}
-              currentUserId={user.id}
-            />
-          </div>
-          <div className="lg:col-span-1">
-            <PlaytestReviewForm
-              projectId={project.id}
-              projectTitle={project.title}
-            />
-          </div>
-        </div>
       </div>
     </MainLayout>
   );
