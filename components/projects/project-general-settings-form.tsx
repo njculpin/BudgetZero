@@ -211,10 +211,6 @@ export function ProjectGeneralSettingsForm({
                         <SelectItem value="archived">Archived</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      Draft: Private, Active: In development, Published: Ready
-                      for sale, Archived: Hidden
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
