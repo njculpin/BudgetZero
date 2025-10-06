@@ -1,4 +1,5 @@
 // Database types for Workshop platform
+import type { JSONContent } from "@tiptap/core";
 
 export type CreatorRole =
   | "designer"
@@ -181,13 +182,22 @@ export interface CreateCollaboratorInviteData {
   revenue_percentage?: number;
 }
 
+// Document section interface for structured rulebooks
+export interface DocumentSection {
+  id: string;
+  type: string;
+  title: string;
+  content: JSONContent;
+  order: number;
+}
+
 // Rulebook interfaces
 export interface Rulebook {
   id: string;
   project_id: string;
   title: string;
-  content: any; // TipTap JSON content
-  sections?: any[]; // Document structure sections
+  content: JSONContent;
+  sections?: DocumentSection[];
   version: number;
   is_published: boolean;
   word_count: number;
@@ -205,7 +215,7 @@ export interface RulebookVersion {
   id: string;
   rulebook_id: string;
   version_number: number;
-  content: any;
+  content: JSONContent;
   changes_summary: string | null;
   created_by: string;
   created_at: string;
@@ -214,12 +224,12 @@ export interface RulebookVersion {
 export interface CreateRulebookData {
   project_id: string;
   title?: string;
-  content?: any;
+  content?: JSONContent;
 }
 
 export interface UpdateRulebookData {
   title?: string;
-  content?: any;
+  content?: JSONContent;
   last_edited_by: string;
 }
 

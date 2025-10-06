@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { toast } from "sonner";
+import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,7 +93,7 @@ export function AssetSettingsForm({
       setTimeout(() => {
         if (projectId) {
           router.push(
-            `/projects/${projectId}/${assetType === "model" ? "models" : "illustrations"}/${assetId}`
+            `/projects/${projectId}/${assetType === "model" ? "models" : "illustrations"}/${assetId}`,
           );
         } else {
           router.push(`/assets/${assetId}`);
@@ -103,7 +103,9 @@ export function AssetSettingsForm({
     } catch (error) {
       console.error("Error updating asset:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to update asset. Please try again."
+        error instanceof Error
+          ? error.message
+          : "Failed to update asset. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -121,7 +123,7 @@ export function AssetSettingsForm({
   function removeTag(tag: string) {
     form.setValue(
       "tags",
-      form.getValues("tags").filter((t) => t !== tag)
+      form.getValues("tags").filter((t) => t !== tag),
     );
   }
 
@@ -349,7 +351,7 @@ export function AssetSettingsForm({
                         value={priceInDollars}
                         onChange={(e) =>
                           field.onChange(
-                            Math.round(parseFloat(e.target.value || "0") * 100)
+                            Math.round(parseFloat(e.target.value || "0") * 100),
                           )
                         }
                       />
@@ -376,7 +378,7 @@ export function AssetSettingsForm({
                       max={50}
                       {...field}
                       onChange={(e) =>
-                        field.onChange(parseInt(e.target.value || "0"))
+                        field.onChange(parseInt(e.target.value || "0", 10))
                       }
                     />
                   </FormControl>
@@ -441,7 +443,7 @@ export function AssetSettingsForm({
             onClick={() =>
               projectId
                 ? router.push(
-                    `/projects/${projectId}/${assetType === "model" ? "models" : "illustrations"}/${assetId}`
+                    `/projects/${projectId}/${assetType === "model" ? "models" : "illustrations"}/${assetId}`,
                   )
                 : router.push(`/assets/${assetId}`)
             }

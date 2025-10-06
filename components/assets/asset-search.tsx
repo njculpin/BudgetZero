@@ -1,9 +1,9 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState, useRef } from "react";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -11,7 +11,9 @@ export function AssetSearch() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
+  const [searchValue, setSearchValue] = useState(
+    searchParams.get("search") || "",
+  );
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {

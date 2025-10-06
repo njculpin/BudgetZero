@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { MessageSquare, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageSquare, Send } from "lucide-react";
+import { formatTimeAgo } from "@/lib/utils/date";
 
 interface Comment {
   id: string;
@@ -55,6 +56,7 @@ export function RequestComments({
 
   useEffect(() => {
     fetchComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [referenceId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,18 +84,6 @@ export function RequestComments({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (seconds < 60) return "just now";
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-    return date.toLocaleDateString();
   };
 
   const canComment = status === "pending";

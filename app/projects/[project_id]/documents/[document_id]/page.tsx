@@ -85,7 +85,9 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
           </div>
 
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/projects/${product_id}/documents/${document_id}/settings`}>
+            <Link
+              href={`/projects/${product_id}/documents/${document_id}/settings`}
+            >
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Link>

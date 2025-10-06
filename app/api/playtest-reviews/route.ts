@@ -55,10 +55,7 @@ export async function POST(request: Request) {
       .single();
 
     if (projectError || !project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     // Create review (VP is awarded automatically via trigger)
@@ -260,13 +257,11 @@ export async function PATCH(request: Request) {
     }
 
     // Create new vote
-    const { error: insertError } = await supabase
-      .from("review_votes")
-      .insert({
-        review_id,
-        voter_id: user.id,
-        vote_type,
-      });
+    const { error: insertError } = await supabase.from("review_votes").insert({
+      review_id,
+      voter_id: user.id,
+      vote_type,
+    });
 
     if (insertError) {
       throw insertError;

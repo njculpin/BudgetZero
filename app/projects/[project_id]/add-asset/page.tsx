@@ -1,6 +1,9 @@
-import { notFound, redirect } from "next/navigation";
+import { ArrowLeft, Box, Clock, Image } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { notFound, redirect } from "next/navigation";
+import { AssetSearch } from "@/components/assets/asset-search";
+import { AddAssetButton } from "@/components/projects/add-asset-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,10 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Box, Image, Clock } from "lucide-react";
-import { AssetSearch } from "@/components/assets/asset-search";
-import { AddAssetButton } from "@/components/projects/add-asset-button";
+import { createClient } from "@/lib/supabase/server";
 
 interface AddAssetPageProps {
   params: Promise<{
@@ -71,7 +71,7 @@ export default async function AddAssetPage({
 
   // Use Map for O(1) lookup with status information
   const existingAssetMap = new Map(
-    existingReferences?.map((ref) => [ref.asset_id, ref.status]) || []
+    existingReferences?.map((ref) => [ref.asset_id, ref.status]) || [],
   );
 
   // Build asset query
@@ -82,7 +82,7 @@ export default async function AddAssetPage({
       *,
       creator:profiles!creator_id(id, full_name, username, avatar_url)
     `,
-      { count: "exact" }
+      { count: "exact" },
     )
     .eq("is_public", true)
     .eq("status", "published")
@@ -113,7 +113,8 @@ export default async function AddAssetPage({
         </Button>
         <h1 className="text-3xl font-bold">Add Assets to Project</h1>
         <p className="text-muted-foreground mt-2">
-          Browse and add 3D models, illustrations, and other assets to your project
+          Browse and add 3D models, illustrations, and other assets to your
+          project
         </p>
       </div>
 
@@ -229,9 +230,11 @@ export default async function AddAssetPage({
                             }`}
                             disabled
                           >
-                            {referenceStatus === "pending" && "Pending Approval"}
+                            {referenceStatus === "pending" &&
+                              "Pending Approval"}
                             {referenceStatus === "approved" && "Already Added"}
-                            {referenceStatus === "rejected" && "Request Rejected"}
+                            {referenceStatus === "rejected" &&
+                              "Request Rejected"}
                           </Button>
                           {referenceStatus === "pending" && (
                             <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
@@ -260,11 +263,13 @@ export default async function AddAssetPage({
               {page > 1 && (
                 <Button variant="outline" asChild>
                   <Link
-                    href={`/projects/${project_id}/add-asset?${new URLSearchParams({
-                      ...(assetType && { type: assetType }),
-                      ...(search && { search }),
-                      page: (page - 1).toString(),
-                    }).toString()}`}
+                    href={`/projects/${project_id}/add-asset?${new URLSearchParams(
+                      {
+                        ...(assetType && { type: assetType }),
+                        ...(search && { search }),
+                        page: (page - 1).toString(),
+                      },
+                    ).toString()}`}
                   >
                     Previous
                   </Link>
@@ -276,11 +281,13 @@ export default async function AddAssetPage({
               {page < totalPages && (
                 <Button variant="outline" asChild>
                   <Link
-                    href={`/projects/${project_id}/add-asset?${new URLSearchParams({
-                      ...(assetType && { type: assetType }),
-                      ...(search && { search }),
-                      page: (page + 1).toString(),
-                    }).toString()}`}
+                    href={`/projects/${project_id}/add-asset?${new URLSearchParams(
+                      {
+                        ...(assetType && { type: assetType }),
+                        ...(search && { search }),
+                        page: (page + 1).toString(),
+                      },
+                    ).toString()}`}
                   >
                     Next
                   </Link>

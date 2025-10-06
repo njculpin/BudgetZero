@@ -4,7 +4,7 @@ import { AlertTriangle, Archive, Crown, Download, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { Button } from "@/components/ui/button";
-import { archiveProject } from "@/lib/actions/project-actions";
+import { archiveProject } from "./actions";
 
 interface ProjectSettingsClientProps {
   project: {

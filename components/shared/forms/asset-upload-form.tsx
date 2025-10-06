@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Loader2, Upload, Users, X } from "lucide-react";
+import { AlertCircle, Loader2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -10,7 +10,6 @@ import { FileDropzone } from "@/components/shared/file-upload/file-dropzone";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -22,25 +21,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  formatPrice,
-  LICENSE_TEMPLATES,
-  SUGGESTED_PRICING,
-} from "@/lib/constants/licenses";
-import {
-  ALLOWED_ILLUSTRATION_FORMATS,
-  ALLOWED_MODEL_FORMATS,
+  ALLOWED_EXTENSIONS,
   FILE_SIZE_LIMITS,
-} from "@/lib/services/storage";
-import type { AssetType, LicenseType } from "@/lib/types/database";
+} from "@/lib/constants/file-sizes";
 
 const formSchema = z.object({
   title: z
@@ -55,24 +40,17 @@ const formSchema = z.object({
     .array(z.string())
     .min(1, "Add at least one tag to help others discover your asset")
     .max(10, "Maximum 10 tags allowed"),
-  license_type: z.enum(["free", "attribution", "commercial", "exclusive"]),
-  price_cents: z.number(),
-  royalty_percentage: z.number().min(0).max(50),
-  is_public: z.boolean(),
-  seeking_collaborators: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface AssetUploadFormProps {
-  assetType: AssetType;
   projectId?: string;
   suggestedTags?: string[];
   onSuccess?: (assetId: string) => void;
 }
 
 export function AssetUploadForm({
-  assetType,
   projectId,
   suggestedTags = [],
   onSuccess,
@@ -87,18 +65,15 @@ export function AssetUploadForm({
   const [primaryFile, setPrimaryFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
-  const assetLabel = assetType === "model" ? "model" : "illustration";
-  const assetLabelCap = assetType === "model" ? "Model" : "Illustration";
-  const allowedFormats =
-    assetType === "model"
-      ? ALLOWED_MODEL_FORMATS
-      : ALLOWED_ILLUSTRATION_FORMATS;
-  const maxSize =
-    assetType === "model"
-      ? FILE_SIZE_LIMITS.MODEL_MAX
-      : FILE_SIZE_LIMITS.ILLUSTRATION_MAX;
-  const uploadEndpoint = `/api/${assetType}s/upload`;
-  const browsePath = `/${assetType}s`;
+  // All file formats supported
+  const allFormats = [
+    ...ALLOWED_EXTENSIONS.model,
+    ...ALLOWED_EXTENSIONS.illustration,
+    ...ALLOWED_EXTENSIONS.photo,
+    ...ALLOWED_EXTENSIONS.audio,
+  ];
+  const maxSize = 500 * 1024 * 1024; // 500MB max
+  const uploadEndpoint = "/api/assets/upload";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -106,20 +81,12 @@ export function AssetUploadForm({
       title: "",
       description: "",
       tags: [],
-      license_type: "free",
-      price_cents: 0,
-      royalty_percentage: 10,
-      is_public: true,
-      seeking_collaborators: false,
     },
   });
 
-  const selectedLicense = form.watch("license_type");
-  const licenseTemplate = LICENSE_TEMPLATES[selectedLicense];
-
   async function onSubmit(values: FormValues) {
     if (!primaryFile) {
-      setError(`Please select a ${assetLabel} file`);
+      setError("Please select a file");
       return;
     }
 
@@ -127,7 +94,7 @@ export function AssetUploadForm({
       setIsUploading(true);
       setError(null);
       setUploadProgress(10);
-      setUploadStatus(`Preparing ${assetLabel} upload...`);
+      setUploadStatus("Preparing upload...");
 
       const formData = new FormData();
       formData.append("primaryFile", primaryFile);
@@ -141,23 +108,12 @@ export function AssetUploadForm({
         formData.append("description", values.description);
       }
       formData.append("tags", JSON.stringify(values.tags));
-      formData.append("license_type", values.license_type);
-      formData.append("price_cents", values.price_cents.toString());
-      formData.append("is_public", values.is_public ? "true" : "false");
-      formData.append(
-        "seeking_collaborators",
-        values.seeking_collaborators ? "true" : "false",
-      );
-      formData.append(
-        "royalty_percentage",
-        values.royalty_percentage.toString(),
-      );
       if (projectId) {
         formData.append("project_id", projectId);
       }
 
       setUploadProgress(30);
-      setUploadStatus(`Uploading ${assetLabel} file...`);
+      setUploadStatus("Uploading file...");
 
       const response = await fetch(uploadEndpoint, {
         method: "POST",
@@ -178,7 +134,7 @@ export function AssetUploadForm({
       if (onSuccess) {
         onSuccess(result.asset.id);
       } else {
-        router.push(`/${assetType}s/${result.asset.id}`);
+        router.push(`/assets/${result.asset.id}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -218,24 +174,24 @@ export function AssetUploadForm({
           <div>
             <h3 className="text-lg font-semibold mb-1">Files</h3>
             <p className="text-sm text-gray-600">
-              Upload your {assetLabel} and optional preview images
+              Upload your media file and optional thumbnail
             </p>
           </div>
 
           {/* Primary File Upload */}
           <FormItem>
             <FormLabel>
-              {assetLabelCap} File <span className="text-red-500">*</span>
+              Asset File <span className="text-red-500">*</span>
             </FormLabel>
             <FormControl>
               <FileDropzone
-                accept={allowedFormats}
+                accept={allFormats}
                 maxSize={maxSize}
                 onFileSelect={handlePrimaryFileSelect}
                 currentFile={primaryFile}
                 onRemove={() => setPrimaryFile(null)}
-                label={`Drop your ${assetLabel} file here`}
-                description={`Supported formats: ${allowedFormats.join(", ")}`}
+                label="Drop your file here"
+                description="Models, illustrations, photos, audio, and more"
                 icon={<Upload className="h-8 w-8" />}
               />
             </FormControl>
@@ -272,7 +228,7 @@ export function AssetUploadForm({
                   Title <span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input placeholder={`My awesome ${assetLabel}`} {...field} />
+                  <Input placeholder="My awesome asset" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -287,13 +243,13 @@ export function AssetUploadForm({
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder={`Describe your ${assetLabel}...`}
+                    placeholder="Describe your asset..."
                     rows={4}
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Optional: Tell users about your {assetLabel}
+                  Optional: Tell users about your asset
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -370,220 +326,6 @@ export function AssetUploadForm({
           />
         </div>
 
-        {/* License and Pricing */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">License and Pricing</h3>
-
-          <FormField
-            control={form.control}
-            name="license_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  License Type <span className="text-red-500">*</span>
-                </FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select license type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Object.values(LICENSE_TEMPLATES).map((license) => (
-                      <SelectItem key={license.type} value={license.type}>
-                        {license.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>{licenseTemplate.description}</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {(selectedLicense === "commercial" ||
-            selectedLicense === "exclusive") && (
-            <FormField
-              control={form.control}
-              name="price_cents"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price (USD)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="20.00"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value
-                            ? Math.round(parseFloat(e.target.value) * 100)
-                            : 0,
-                        )
-                      }
-                      value={field.value ? field.value / 100 : ""}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Suggested:{" "}
-                    {formatPrice(
-                      SUGGESTED_PRICING[selectedLicense as LicenseType]
-                        .recommended,
-                    )}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-
-          {/* Royalty Agreement */}
-          <div className="space-y-4 p-6 border-2 border-blue-200 rounded-lg bg-blue-50">
-            <div className="flex items-start gap-3">
-              <Users className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">
-                  Royalty Agreement
-                </h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  Set a royalty percentage when others reference your work in
-                  their projects
-                </p>
-              </div>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="royalty_percentage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Royalty Percentage (0-50%)</FormLabel>
-                  <FormControl>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        <Input
-                          type="range"
-                          min={0}
-                          max={50}
-                          step={1}
-                          value={field.value || 0}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
-                          className="flex-1"
-                        />
-                        <div className="flex items-center gap-2 min-w-[100px]">
-                          <Input
-                            type="number"
-                            min={0}
-                            max={50}
-                            value={field.value || 0}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                            className="w-20 text-center"
-                          />
-                          <span className="text-gray-600 font-medium">%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </FormControl>
-                  <FormDescription>
-                    When creators reference this {assetLabel} in their projects,
-                    you'll receive {field.value || 0}% of their sales. Platform
-                    takes 2%, remaining goes to the project creator.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Royalty Calculator Preview */}
-            <div className="bg-white rounded-md p-4 text-sm">
-              <h5 className="font-medium text-gray-900 mb-3">
-                Revenue Split Example (on $30 sale):
-              </h5>
-              <div className="space-y-2 text-gray-700">
-                <div className="flex justify-between">
-                  <span>Platform fee (2%):</span>
-                  <span className="font-mono">$0.60</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>
-                    Your royalty ({form.watch("royalty_percentage") || 0}%):
-                  </span>
-                  <span className="font-mono font-semibold text-blue-600">
-                    $
-                    {(
-                      (30 * (form.watch("royalty_percentage") || 0)) /
-                      100
-                    ).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Project creator gets:</span>
-                  <span className="font-mono">
-                    $
-                    {(
-                      30 -
-                      0.6 -
-                      (30 * (form.watch("royalty_percentage") || 0)) / 100
-                    ).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <FormField
-            control={form.control}
-            name="is_public"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>Make this {assetLabel} publicly visible</FormLabel>
-                  <FormDescription>
-                    Uncheck to keep as private/draft
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="seeking_collaborators"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg bg-blue-50 border-blue-200">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>Seeking Collaborators</FormLabel>
-                  <FormDescription>
-                    Signal that you want this work used in collaborative game
-                    projects with revenue sharing
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
-        </div>
-
         {/* Error Display */}
         {error && (
           <Alert variant="destructive">
@@ -596,9 +338,7 @@ export function AssetUploadForm({
         {isUploading && (
           <Alert className="border-blue-200 bg-blue-50">
             <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-            <AlertTitle className="text-blue-900">
-              Uploading your {assetLabel}
-            </AlertTitle>
+            <AlertTitle className="text-blue-900">Uploading asset</AlertTitle>
             <AlertDescription className="space-y-3 mt-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium text-blue-900">
@@ -627,7 +367,7 @@ export function AssetUploadForm({
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Upload {assetLabelCap}
+                Upload Asset
               </>
             )}
           </Button>
@@ -635,7 +375,7 @@ export function AssetUploadForm({
             type="button"
             variant="outline"
             size="lg"
-            onClick={() => router.push(browsePath)}
+            onClick={() => router.push("/assets")}
             disabled={isUploading}
           >
             Cancel

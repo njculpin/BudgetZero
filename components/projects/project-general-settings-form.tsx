@@ -5,6 +5,7 @@ import { Save, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -105,9 +106,10 @@ export function ProjectGeneralSettingsForm({
       }
 
       router.refresh();
+      toast.success("Project updated successfully");
     } catch (error) {
       console.error("Error updating project:", error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : "Failed to update project",
       );
     } finally {
@@ -249,7 +251,7 @@ export function ProjectGeneralSettingsForm({
                         onChange={(e) =>
                           field.onChange(
                             e.target.value
-                              ? parseInt(e.target.value)
+                              ? parseInt(e.target.value, 10)
                               : undefined,
                           )
                         }

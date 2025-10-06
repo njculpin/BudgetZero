@@ -115,7 +115,9 @@ export async function POST(request: Request) {
       user_id: notifyUserId,
       type: "asset_reference_request",
       title: "New message on collaboration request",
-      message: comment_text.substring(0, 100) + (comment_text.length > 100 ? "..." : ""),
+      message:
+        comment_text.substring(0, 100) +
+        (comment_text.length > 100 ? "..." : ""),
       link_url: `/collaboration/requests`,
       metadata: {
         reference_id,

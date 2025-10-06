@@ -1,5 +1,10 @@
 import { Resend } from "resend";
 
+type ServiceResult = {
+  success: boolean;
+  error?: string | Error;
+};
+
 // Temporarily disabled - uncomment when ready to enable email notifications
 // if (!process.env.RESEND_API_KEY) {
 //   throw new Error("RESEND_API_KEY is not defined in environment variables");
@@ -363,7 +368,7 @@ interface AssetUsageNotificationData {
 export async function sendAssetUsageNotification(
   to: string,
   data: AssetUsageNotificationData,
-): Promise<{ success: boolean; error?: any }> {
+): Promise<ServiceResult> {
   if (!resend) {
     console.warn(
       "Email service not configured - skipping asset usage notification email",
@@ -434,7 +439,7 @@ export async function sendAssetUsageNotification(
     return { success: true };
   } catch (error) {
     console.error("Error sending asset usage notification:", error);
-    return { success: false, error };
+    return { success: false, error: error instanceof Error ? error : String(error) };
   }
 }
 
@@ -451,7 +456,7 @@ interface ForkRequestNotificationData {
 export async function sendForkRequestNotification(
   to: string,
   data: ForkRequestNotificationData,
-): Promise<{ success: boolean; error?: any }> {
+): Promise<ServiceResult> {
   if (!resend) {
     console.warn(
       "Email service not configured - skipping fork request notification email",
@@ -538,7 +543,7 @@ export async function sendForkRequestNotification(
     return { success: true };
   } catch (error) {
     console.error("Error sending fork request notification:", error);
-    return { success: false, error };
+    return { success: false, error: error instanceof Error ? error : String(error) };
   }
 }
 
@@ -553,7 +558,7 @@ interface ForkResponseNotificationData {
 export async function sendForkResponseNotification(
   to: string,
   data: ForkResponseNotificationData,
-): Promise<{ success: boolean; error?: any }> {
+): Promise<ServiceResult> {
   if (!resend) {
     console.warn(
       "Email service not configured - skipping fork response notification email",
@@ -642,6 +647,6 @@ export async function sendForkResponseNotification(
     return { success: true };
   } catch (error) {
     console.error("Error sending fork response notification:", error);
-    return { success: false, error };
+    return { success: false, error: error instanceof Error ? error : String(error) };
   }
 }

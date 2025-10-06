@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       console.error("Error updating asset:", updateError);
       return NextResponse.json(
         { error: "Failed to update asset" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     console.error("Error in PATCH /api/assets/[asset_id]:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

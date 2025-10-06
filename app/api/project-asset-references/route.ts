@@ -286,7 +286,10 @@ export async function PATCH(request: Request) {
     // Create notification for project owner
     await supabase.from("notifications").insert({
       user_id: reference.requested_by,
-      type: status === "approved" ? "asset_reference_approved" : "asset_reference_rejected",
+      type:
+        status === "approved"
+          ? "asset_reference_approved"
+          : "asset_reference_rejected",
       title: `Asset Reference ${status === "approved" ? "Approved" : "Rejected"}`,
       message: `Your asset reference request was ${status}`,
       link_url: `/projects/${reference.project_id}`,

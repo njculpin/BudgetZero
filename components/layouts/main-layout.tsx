@@ -1,5 +1,7 @@
 "use client";
 
+import { CartButton } from "@/components/marketplace/cart-button";
+import { NotificationsBell } from "@/components/notifications/notifications-bell";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -14,9 +16,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppSidebar } from "./app-sidebar";
-import { NotificationsBell } from "@/components/notifications/notifications-bell";
 import { VPDisplay } from "@/components/victory-points/vp-display";
+import { AppSidebar } from "./app-sidebar";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -48,17 +49,22 @@ export function MainLayout({ children, user, breadcrumbs }: MainLayoutProps) {
                 <BreadcrumbList>
                   {breadcrumbs.map((crumb, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <BreadcrumbItem className="hidden md:block">
+                      <BreadcrumbItem>
                         {crumb.href ? (
-                          <BreadcrumbLink href={crumb.href}>
+                          <BreadcrumbLink
+                            href={crumb.href}
+                            className="max-w-[120px] truncate md:max-w-none"
+                          >
                             {crumb.label}
                           </BreadcrumbLink>
                         ) : (
-                          <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                          <BreadcrumbPage className="max-w-[120px] truncate md:max-w-none">
+                            {crumb.label}
+                          </BreadcrumbPage>
                         )}
                       </BreadcrumbItem>
                       {index < breadcrumbs.length - 1 && (
-                        <BreadcrumbSeparator className="hidden md:block" />
+                        <BreadcrumbSeparator />
                       )}
                     </div>
                   ))}
@@ -68,6 +74,7 @@ export function MainLayout({ children, user, breadcrumbs }: MainLayoutProps) {
           </div>
           <div className="flex items-center gap-3 px-4">
             <VPDisplay />
+            <CartButton />
             <NotificationsBell />
           </div>
         </header>

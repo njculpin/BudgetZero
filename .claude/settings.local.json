@@ -27,7 +27,11 @@
       "Bash(xargs cat:*)",
       "Bash(npx supabase:*)",
       "Bash(npx tsc:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(xargs rm:*)",
+      "Bash(git checkout:*)",
+      "Bash(lsof:*)",
+      "Bash(/dev/null)"
     ],
     "deny": [],
     "ask": []

@@ -6,8 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { RevenueSplitPreview } from "@/components/shared/revenue-split-preview";
 import { RequestComments } from "@/components/collaboration/request-comments";
+import { RevenueSplitPreview } from "@/components/shared/revenue-split-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -173,8 +173,8 @@ export function AttributionRequestCard({
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
+          {/* Action Buttons - Primary action appears first on mobile */}
+          <div className="flex-shrink-0 flex flex-col-reverse sm:flex-row gap-2">
             <Button
               size="sm"
               variant="outline"

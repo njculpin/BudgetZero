@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { MainLayout } from "@/components/layouts/main-layout";
 import { AssetSettingsForm } from "@/components/assets/asset-settings-form";
+import { MainLayout } from "@/components/layouts/main-layout";
+import { createClient } from "@/lib/supabase/server";
 
 interface AssetSettingsPageProps {
   params: Promise<{

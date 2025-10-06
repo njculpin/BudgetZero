@@ -1,18 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server";
+import {
+  FILE_SIZE_LABELS,
+  validateFile,
+} from "@/lib/constants/file-sizes";
 import { createClient } from "@/lib/supabase/server";
+import type { AssetType } from "@/lib/types/database";
 
 const BUCKET_MAP = {
   model: "models",
   illustration: "illustrations",
   texture: "textures",
   photo: "previews",
-} as const;
-
-const MAX_FILE_SIZES = {
-  model: 500 * 1024 * 1024, // 500MB
-  illustration: 100 * 1024 * 1024, // 100MB
-  texture: 50 * 1024 * 1024, // 50MB
-  photo: 10 * 1024 * 1024, // 10MB
+  audio: "audio",
 } as const;
 
 export async function POST(request: NextRequest) {
@@ -38,18 +37,16 @@ export async function POST(request: NextRequest) {
     if (!assetType || !BUCKET_MAP[assetType as keyof typeof BUCKET_MAP]) {
       return NextResponse.json(
         { error: "Invalid asset_type" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Validate file size
-    const maxSize = MAX_FILE_SIZES[assetType as keyof typeof MAX_FILE_SIZES];
-    if (file.size > maxSize) {
+    // Comprehensive file validation (size, MIME type, extension)
+    const validation = validateFile(file, assetType as AssetType);
+    if (!validation.valid) {
       return NextResponse.json(
-        {
-          error: `File size exceeds maximum allowed size of ${maxSize / (1024 * 1024)}MB`,
-        },
-        { status: 400 }
+        { error: validation.error },
+        { status: 400 },
       );
     }
 
@@ -71,7 +68,7 @@ export async function POST(request: NextRequest) {
       console.error("Error uploading file:", uploadError);
       return NextResponse.json(
         { error: "Failed to upload file" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -91,7 +88,7 @@ export async function POST(request: NextRequest) {
     console.error("Error in POST /api/assets/upload:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

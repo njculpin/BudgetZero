@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Trophy, TrendingUp } from "lucide-react";
+import { TrendingUp, Trophy } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { formatTimeAgo } from "@/lib/utils/date";
 import {
   Popover,
   PopoverContent,
@@ -34,16 +35,22 @@ export function VPDisplay() {
   });
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchVP = async () => {
     try {
       const response = await fetch("/api/victory-points?transactions=true");
-      if (response.ok) {
-        const data = await response.json();
-        setVpData(data);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("VP API error:", response.status, errorData);
+        throw new Error(errorData.error || "Failed to load VP balance");
       }
+      const data = await response.json();
+      setVpData(data);
+      setError(null);
     } catch (error) {
       console.error("Error fetching VP:", error);
+      setError("Unable to load VP");
     } finally {
       setIsLoading(false);
     }
@@ -51,19 +58,8 @@ export function VPDisplay() {
 
   useEffect(() => {
     fetchVP();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (seconds < 60) return "just now";
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-    return date.toLocaleDateString();
-  };
 
   const getTransactionColor = (points: number) => {
     return points > 0 ? "text-green-600" : "text-red-600";
@@ -81,15 +77,29 @@ export function VPDisplay() {
     );
   }
 
+  if (error) {
+    return (
+      <Button
+        variant="ghost"
+        className="flex items-center gap-2 px-3 py-1.5 bg-red-50 hover:bg-red-100 rounded-lg h-auto"
+        onClick={fetchVP}
+      >
+        <Trophy className="h-4 w-4 text-red-600" />
+        <span className="text-sm font-medium text-red-900">{error}</span>
+      </Button>
+    );
+  }
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 rounded-lg h-auto"
+          className="flex items-center gap-2 px-3 py-1.5 bg-amber-100 hover:bg-amber-200 rounded-lg h-auto"
+          aria-label="View Victory Points balance and transaction history"
         >
           <Trophy className="h-4 w-4 text-amber-600" />
-          <span className="text-sm font-semibold text-amber-900">
+          <span className="text-sm font-semibold text-amber-950">
             {totalPoints.toLocaleString()} VP
           </span>
         </Button>
@@ -146,7 +156,8 @@ export function VPDisplay() {
                   >
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">
-                        {transaction.description || transaction.transaction_type}
+                        {transaction.description ||
+                          transaction.transaction_type}
                       </p>
                       <p className="text-muted-foreground">
                         {formatTimeAgo(transaction.created_at)}

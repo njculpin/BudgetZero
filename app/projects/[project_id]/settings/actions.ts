@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { GameProjectService } from "@/lib/services/game-projects";
 import { createClient } from "@/lib/supabase/server";
+import type { ProjectStatus } from "@/lib/types/database";
 
 export async function deleteProject(projectId: string, projectSlug: string) {
   const supabase = await createClient();
@@ -61,7 +62,7 @@ export async function updateProject(
   const result = await gameProjectService.updateProject(projectId, user.id, {
     title,
     description,
-    status: status as any,
+    status: status as ProjectStatus,
     genre: genre || undefined,
     complexity_rating: complexity ? parseInt(complexity, 10) : undefined,
     is_public: isPublic,
