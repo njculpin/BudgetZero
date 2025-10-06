@@ -1,10 +1,12 @@
+import type { JSONContent } from "@tiptap/core";
 import { mergeAttributes, Node } from "@tiptap/core";
+import type { Node as PMNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { SyncedBlockView } from "../views/synced-block-view";
 
 export interface SyncedBlockOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, string>;
 }
 
 declare module "@tiptap/core" {
@@ -15,7 +17,7 @@ declare module "@tiptap/core" {
        */
       insertSyncedBlock: (attributes?: {
         syncId?: string;
-        content?: any;
+        content?: JSONContent;
       }) => ReturnType;
       /**
        * Create a new synced block from current selection
@@ -24,7 +26,7 @@ declare module "@tiptap/core" {
       /**
        * Update synced block content
        */
-      updateSyncedBlock: (syncId: string, content: any) => ReturnType;
+      updateSyncedBlock: (syncId: string, content: JSONContent) => ReturnType;
       /**
        * Delete synced block(s)
        */
@@ -120,7 +122,7 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
           // Collect all sync blocks and group by syncId
           const syncGroups = new Map<
             string,
-            Array<{ pos: number; node: any }>
+            Array<{ pos: number; node: PMNode }>
           >();
 
           newState.doc.descendants((node, pos) => {
@@ -327,10 +329,10 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
         },
 
       updateSyncedBlock:
-        (syncId: string, content: any) =>
-        ({ commands, state, tr }) => {
+        (syncId: string, content: JSONContent) =>
+        ({ commands, state, tr, editor }) => {
           // Find all synced blocks with this syncId
-          const updates: { pos: number; node: any }[] = [];
+          const updates: { pos: number; node: PMNode }[] = [];
 
           state.doc.descendants((node, pos) => {
             if (
@@ -340,6 +342,9 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
               updates.push({ pos, node });
             }
           });
+
+          // Convert JSONContent to ProseMirror nodes
+          const pmContent = editor.schema.nodeFromJSON(content);
 
           // Update all instances
           let newTr = tr;
@@ -354,7 +359,7 @@ export const SyncedBlock = Node.create<SyncedBlockOptions>({
             // Update content
             const contentStart = pos + 1;
             const contentEnd = pos + node.nodeSize - 1;
-            newTr = newTr.replaceWith(contentStart, contentEnd, content);
+            newTr = newTr.replaceWith(contentStart, contentEnd, pmContent);
           });
 
           if (newTr.docChanged) {

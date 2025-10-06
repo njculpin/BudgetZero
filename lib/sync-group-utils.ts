@@ -3,6 +3,9 @@
  * Following Atlassian Design System principles for consistency and accessibility
  */
 
+import type { Editor } from "@tiptap/core";
+import type { Node as PMNode } from "@tiptap/pm/model";
+
 // Chart colors from the design system (from globals.css)
 const SYNC_GROUP_COLORS = [
   {
@@ -116,11 +119,11 @@ export function getSyncGroupStyles(syncId: string) {
  * Get sync group count and position information
  * Helps users understand the scope of sync groups in the document
  */
-export function getSyncGroupInfo(syncId: string, editor: any) {
-  const instances: Array<{ pos: number; node: any }> = [];
+export function getSyncGroupInfo(syncId: string, editor: Editor) {
+  const instances: Array<{ pos: number; node: PMNode }> = [];
 
   // Traverse document to find all instances
-  editor.state.doc.descendants((node: any, pos: number) => {
+  editor.state.doc.descendants((node: PMNode, pos: number) => {
     if (node.type.name === "syncedBlock" && node.attrs.syncId === syncId) {
       instances.push({ pos, node });
     }
@@ -153,7 +156,7 @@ export function getSyncGroupA11yDescription(
 export function getSyncGroupNavigation(
   syncId: string,
   currentPos: number,
-  editor: any,
+  editor: Editor,
 ) {
   const { instances } = getSyncGroupInfo(syncId, editor);
 
@@ -184,7 +187,7 @@ export function getSyncGroupNavigation(
  * Generate tooltip content for sync groups
  * Provides rich information on hover
  */
-export function getSyncGroupTooltipContent(syncId: string, editor: any) {
+export function getSyncGroupTooltipContent(syncId: string, editor: Editor) {
   const { totalInstances } = getSyncGroupInfo(syncId, editor);
   const groupId = getSyncGroupId(syncId);
 

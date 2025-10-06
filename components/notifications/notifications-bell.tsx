@@ -1,8 +1,12 @@
 "use client";
 
 import { Bell } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatTimeAgo } from "@/lib/utils/date";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,9 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
 
 interface Notification {
   id: string;
@@ -26,6 +28,7 @@ interface Notification {
 }
 
 export function NotificationsBell() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -50,6 +53,7 @@ export function NotificationsBell() {
     // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const markAsRead = async (notificationId: string) => {
@@ -70,18 +74,6 @@ export function NotificationsBell() {
     });
 
     fetchNotifications();
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (seconds < 60) return "just now";
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-    return date.toLocaleDateString();
   };
 
   return (
@@ -128,14 +120,16 @@ export function NotificationsBell() {
                 onClick={() => {
                   markAsRead(notification.id);
                   if (notification.link_url) {
-                    window.location.href = notification.link_url;
+                    router.push(notification.link_url);
                   }
                   setIsOpen(false);
                 }}
               >
                 <div className="flex items-start justify-between w-full gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${!notification.is_read ? "text-primary" : ""}`}>
+                    <p
+                      className={`text-sm font-medium ${!notification.is_read ? "text-primary" : ""}`}
+                    >
                       {notification.title}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">

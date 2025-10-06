@@ -12,13 +12,19 @@ import {
   Star,
   Tag,
   Users,
+  Upload,
+  Search,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { AddToCartButton } from "@/components/marketplace/add-to-cart-button";
 import { MainLayout } from "@/components/layouts/main-layout";
+import { PlaytestReviewForm } from "@/components/projects/playtest-review-form";
+import { PlaytestReviewsList } from "@/components/projects/playtest-reviews-list";
 import { PricingTiersManager } from "@/components/projects/pricing-tiers-manager";
-import { ProjectTagsManager } from "@/components/projects/project-tags-manager";
 import { ProjectAssetReferences } from "@/components/projects/project-asset-references";
+import { ProjectTagsManager } from "@/components/projects/project-tags-manager";
 import { RevenueSplitPreview } from "@/components/shared/revenue-split-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +35,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { GameProjectService } from "@/lib/services/game-projects";
 import { createClient } from "@/lib/supabase/server";
@@ -261,52 +275,59 @@ export default async function ProjectDetailPage({
               </CardContent>
             </Card>
 
-            {/* Project Components */}
+            {/* Project Content - Consolidated View */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Box className="w-5 h-5" />
-                  Project Components
-                </CardTitle>
-                <CardDescription>
-                  All the creative content that makes up this game
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Add Content - Only show to project owners */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Box className="w-5 h-5" />
+                      Project Content
+                    </CardTitle>
+                    <CardDescription>
+                      All content in this project - owned and referenced
+                    </CardDescription>
+                  </div>
                   {isOwner && (
-                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
-                      <div className="text-center mb-4">
-                        <h4 className="font-medium text-gray-900 mb-2">
-                          <Plus className="w-4 h-4 inline mr-2" />
-                          Add Content to Your Project
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          Create documents, upload models, and add illustrations
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link
-                            href={`/projects/${project.id}/add-asset`}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Browse Asset Library
-                          </Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Content
+                          <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" asChild>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Create New</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
                           <Link
                             href={`/projects/${project.id}/create-document`}
                           >
-                            <FileText className="h-4 w-4 mr-2" />
+                            <FileText className="mr-2 h-4 w-4" />
                             New Document
                           </Link>
-                        </Button>
-                      </div>
-                    </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/assets/upload?project_id=${project.id}`}>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload Asset
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Add Existing</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/projects/${project.id}/add-asset`}>
+                            <Search className="mr-2 h-4 w-4" />
+                            Browse Asset Library
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
 
                   {/* Documents Gallery */}
                   {documents && documents.length > 0 && (
@@ -325,9 +346,14 @@ export default async function ProjectDetailPage({
                               <FileText className="w-4 h-4 text-blue-700" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h5 className="font-medium text-sm truncate">
-                                {doc.title}
-                              </h5>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h5 className="font-medium text-sm truncate">
+                                  {doc.title}
+                                </h5>
+                                <Badge variant="secondary" className="text-xs">
+                                  Mine
+                                </Badge>
+                              </div>
                               <p className="text-xs text-gray-500 capitalize">
                                 {doc.document_type.replace(/_/g, " ")} •{" "}
                                 {doc.status}
@@ -353,6 +379,12 @@ export default async function ProjectDetailPage({
                             href={`/assets/${model.id}`}
                             className="group relative aspect-square rounded-lg overflow-hidden border hover:border-purple-300 transition-colors"
                           >
+                            <Badge
+                              variant="secondary"
+                              className="absolute top-2 left-2 z-10 text-xs"
+                            >
+                              Mine
+                            </Badge>
                             {model.thumbnail_url ? (
                               <img
                                 src={model.thumbnail_url}
@@ -390,6 +422,12 @@ export default async function ProjectDetailPage({
                             href={`/assets/${illustration.id}`}
                             className="group relative aspect-square rounded-lg overflow-hidden border hover:border-amber-300 transition-colors"
                           >
+                            <Badge
+                              variant="secondary"
+                              className="absolute top-2 left-2 z-10 text-xs"
+                            >
+                              Mine
+                            </Badge>
                             {illustration.thumbnail_url ? (
                               <img
                                 src={illustration.thumbnail_url}
@@ -414,6 +452,12 @@ export default async function ProjectDetailPage({
                     </div>
                   )}
 
+                  {/* Referenced Assets */}
+                  <ProjectAssetReferences
+                    projectId={project.id}
+                    embedded={true}
+                  />
+
                   {/* Empty State */}
                   {(!documents || documents.length === 0) &&
                     models.length === 0 &&
@@ -429,9 +473,6 @@ export default async function ProjectDetailPage({
                 </div>
               </CardContent>
             </Card>
-
-            {/* Referenced Assets - Asset References Component */}
-            <ProjectAssetReferences projectId={project.id} />
 
             {/* Revenue Split Summary - Only show if there are approved references */}
             {enrichedReferences.length > 0 && (
@@ -602,6 +643,26 @@ export default async function ProjectDetailPage({
                     isOwner={isOwner}
                   />
                 </div>
+
+                {/* Add to Cart - Only show if published and has pricing */}
+                {project.status === "published" && enrichedTiers.length > 0 && (
+                  <div className="space-y-3 pt-4 border-t">
+                    <h4 className="font-medium text-slate-900">
+                      Purchase This Project
+                    </h4>
+                    <AddToCartButton
+                      projectId={project.id}
+                      projectTitle={project.title}
+                      pricingTiers={enrichedTiers.map((tier) => ({
+                        id: tier.id,
+                        name: tier.name,
+                        price: tier.price_cents / 100,
+                      }))}
+                      coverImageUrl={project.cover_image_url || undefined}
+                      size="lg"
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -632,39 +693,41 @@ export default async function ProjectDetailPage({
                       <p className="text-sm font-medium">
                         {project.creator.full_name || project.creator.email}
                       </p>
-                      <p className="text-xs text-slate-500">
-                        Creator • Owner
-                      </p>
+                      <p className="text-xs text-slate-500">Creator • Owner</p>
                     </div>
                   </div>
 
                   {/* Collaborators */}
-                  {collaborators && collaborators.length > 0 && (
-                    <>
-                      {collaborators.map((collab) => {
-                        const profile = Array.isArray(collab.profiles) ? collab.profiles[0] : collab.profiles;
-                        if (!profile) return null;
-                        const displayName = profile.full_name || profile.email;
-                        return (
-                          <div key={collab.id} className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-medium text-purple-700">
-                                {displayName.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {displayName}
-                              </p>
-                              <p className="text-xs text-slate-500 capitalize">
-                                {collab.role} • {collab.revenue_percentage}% revenue
-                              </p>
-                            </div>
+                  {collaborators &&
+                    collaborators.length > 0 &&
+                    collaborators.map((collab) => {
+                      const profile = Array.isArray(collab.profiles)
+                        ? collab.profiles[0]
+                        : collab.profiles;
+                      if (!profile) return null;
+                      const displayName = profile.full_name || profile.email;
+                      return (
+                        <div
+                          key={collab.id}
+                          className="flex items-center gap-3"
+                        >
+                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-purple-700">
+                              {displayName.charAt(0).toUpperCase()}
+                            </span>
                           </div>
-                        );
-                      })}
-                    </>
-                  )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {displayName}
+                            </p>
+                            <p className="text-xs text-slate-500 capitalize">
+                              {collab.role} • {collab.revenue_percentage}%
+                              revenue
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
 
                 <Separator />
@@ -715,6 +778,22 @@ export default async function ProjectDetailPage({
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </div>
+
+        {/* Playtest Reviews Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          <div className="lg:col-span-2">
+            <PlaytestReviewsList
+              projectId={project.id}
+              currentUserId={user.id}
+            />
+          </div>
+          <div className="lg:col-span-1">
+            <PlaytestReviewForm
+              projectId={project.id}
+              projectTitle={project.title}
+            />
           </div>
         </div>
       </div>

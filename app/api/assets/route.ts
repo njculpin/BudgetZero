@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     if (!title || !asset_type || !file_url) {
       return NextResponse.json(
         { error: "Missing required fields: title, asset_type, file_url" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       console.error("Error creating asset:", createError);
       return NextResponse.json(
         { error: "Failed to create asset" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     console.error("Error in POST /api/assets:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
         *,
         creator:profiles!creator_id(id, full_name, username, avatar_url)
       `,
-        { count: "exact" }
+        { count: "exact" },
       )
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
@@ -130,9 +130,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.or(
-        `title.ilike.%${search}%,description.ilike.%${search}%`
-      );
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
     const { data: assets, error, count } = await query;
@@ -141,7 +139,7 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching assets:", error);
       return NextResponse.json(
         { error: "Failed to fetch assets" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -155,7 +153,7 @@ export async function GET(request: NextRequest) {
     console.error("Error in GET /api/assets:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

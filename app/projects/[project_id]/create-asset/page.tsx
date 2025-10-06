@@ -95,10 +95,9 @@ export default async function CreateAssetPage({
         </div>
 
         <AssetUploadForm
-          assetType={type}
           projectId={project.id}
           onSuccess={(assetId) => {
-            redirect(`/projects/${slug}/${type}s/${assetId}`);
+            redirect(`/projects/${slug}/assets/${assetId}`);
           }}
         />
       </div>

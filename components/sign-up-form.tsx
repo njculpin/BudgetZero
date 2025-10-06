@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -44,11 +45,14 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/profile`,
         },
       });
       if (error) throw error;
-      router.push("/auth/sign-up-success");
+      toast.success("Account created!", {
+        description: "Welcome to Workshop. You can verify your email later.",
+      });
+      router.push("/profile");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {

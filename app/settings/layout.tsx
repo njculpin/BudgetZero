@@ -1,0 +1,39 @@
+import { redirect } from "next/navigation";
+import { MainLayout } from "@/components/layouts/main-layout";
+import { SettingsNavigation } from "@/components/settings/settings-navigation";
+import { createClient } from "@/lib/supabase/server";
+
+export default async function SettingsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  return (
+    <MainLayout user={user} breadcrumbs={[{ label: "Settings" }]}>
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
+            <p className="text-slate-600 mt-2">
+              Manage your account preferences and security
+            </p>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-4 gap-6">
+          <SettingsNavigation />
+          <div className="lg:col-span-3">{children}</div>
+        </div>
+      </div>
+    </MainLayout>
+  );
+}

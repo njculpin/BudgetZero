@@ -38,7 +38,6 @@ export function AssetPickerModal({
   open,
   onClose,
   onSelect,
-  projectId,
 }: AssetPickerModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -49,7 +48,8 @@ export function AssetPickerModal({
     if (open) {
       loadAssets();
     }
-  }, [open, loadAssets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, assetType, searchQuery]);
 
   async function loadAssets() {
     setLoading(true);
@@ -155,6 +155,7 @@ export function AssetPickerModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
               {assets.map((asset) => (
                 <button
+                  type="button"
                   key={asset.id}
                   onClick={() => handleSelect(asset)}
                   className="group text-left border-2 border-gray-200 rounded-lg p-3 hover:border-blue-500 hover:shadow-md transition-all"

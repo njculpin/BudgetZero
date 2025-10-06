@@ -13,6 +13,7 @@ import {
 import { notFound, redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { ProjectGeneralSettingsForm } from "@/components/projects/project-general-settings-form";
+import { PublishProjectButton } from "@/components/projects/publish-project-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -129,6 +130,13 @@ export default async function ProjectSettingsPage({
           <div className="lg:col-span-3 space-y-6">
             {/* General Project Settings */}
             <ProjectGeneralSettingsForm project={project} />
+
+            {/* Publishing */}
+            <PublishProjectButton
+              projectId={project.id}
+              projectTitle={project.title}
+              currentStatus={project.status}
+            />
 
             {/* Team & Access Control */}
             <Card>

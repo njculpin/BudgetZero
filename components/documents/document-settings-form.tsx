@@ -331,7 +331,9 @@ export function DocumentSettingsForm({
                       min={0}
                       max={50}
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value, 10))
+                      }
                     />
                   </FormControl>
                   <FormDescription>

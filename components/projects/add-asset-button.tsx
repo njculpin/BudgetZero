@@ -40,14 +40,17 @@ export function AddAssetButton({
       }
 
       toast.success(`"${assetTitle}" has been requested for your project`, {
-        description: "The asset owner will be notified to approve your request.",
+        description:
+          "The asset owner will be notified to approve your request.",
       });
 
       router.refresh();
     } catch (error) {
       console.error("Error adding asset:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to add asset. Please try again."
+        error instanceof Error
+          ? error.message
+          : "Failed to add asset. Please try again.",
       );
     } finally {
       setIsLoading(false);

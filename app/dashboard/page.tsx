@@ -1,8 +1,20 @@
-import { CheckCircle } from "lucide-react";
+import {
+  CheckCircle,
+  Search,
+  Upload,
+  FolderOpen,
+  FileBox,
+  FileText,
+  Eye,
+  DollarSign,
+  TrendingUp,
+} from "lucide-react";
 import { redirect } from "next/navigation";
 import { AttributionRequestCard } from "@/components/dashboard/attribution-request-card";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -26,6 +38,47 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
+  // Fetch user stats in parallel
+  const [
+    { count: projectCount },
+    { count: assetCount },
+    { count: documentCount },
+    { data: assetStats },
+    { data: vpData },
+  ] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("*", { count: "exact", head: true })
+      .eq("creator_id", user.id),
+    supabase
+      .from("assets")
+      .select("*", { count: "exact", head: true })
+      .eq("creator_id", user.id),
+    supabase
+      .from("documents")
+      .select("*", { count: "exact", head: true })
+      .eq("creator_id", user.id),
+    supabase
+      .from("assets")
+      .select("download_count, usage_count")
+      .eq("creator_id", user.id),
+    supabase
+      .from("user_victory_points")
+      .select("total_points")
+      .eq("user_id", user.id)
+      .single(),
+  ]);
+
+  // Calculate total views (downloads + usages)
+  const totalDownloads =
+    assetStats?.reduce((sum, asset) => sum + (asset.download_count || 0), 0) ||
+    0;
+  const totalUsages =
+    assetStats?.reduce((sum, asset) => sum + (asset.usage_count || 0), 0) || 0;
+  const totalViews = totalDownloads + totalUsages;
+
+  const victoryPoints = vpData?.total_points || 0;
+
   // First, get user's asset IDs
   const { data: userAssets } = await supabase
     .from("assets")
@@ -38,14 +91,11 @@ export default async function DashboardPage() {
   let assetReferences: EnrichedAssetReference[] = [];
 
   // Shared maps for lookups (used by both assets and documents)
-  const projectMap = new Map<
+  let projectMap = new Map<
     string,
     { id: string; title: string; slug: string; creator_id: string }
   >();
-  const creatorMap = new Map<
-    string,
-    { id: string; full_name: string | null }
-  >();
+  let creatorMap = new Map<string, { id: string; full_name: string | null }>();
 
   if (assetIds.length > 0) {
     const [
@@ -71,8 +121,8 @@ export default async function DashboardPage() {
     ]);
 
     const assetMap = new Map(assets?.map((a) => [a.id, a]));
-    projects?.forEach((p) => projectMap.set(p.id, p));
-    creators?.forEach((c) => creatorMap.set(c.id, c));
+    projectMap = new Map(projects?.map((p) => [p.id, p]));
+    creatorMap = new Map(creators?.map((c) => [c.id, c]));
 
     const enrichedRefs: EnrichedAssetReference[] = [];
 
@@ -141,8 +191,12 @@ export default async function DashboardPage() {
         supabase.from("users").select("id, full_name"),
       ]);
 
-      newProjects?.forEach((p) => projectMap.set(p.id, p));
-      newCreators?.forEach((c) => creatorMap.set(c.id, c));
+      for (const p of newProjects || []) {
+        projectMap.set(p.id, p);
+      }
+      for (const c of newCreators || []) {
+        creatorMap.set(c.id, c);
+      }
     }
 
     const enrichedDocRefs: EnrichedDocumentReference[] = [];
@@ -183,6 +237,98 @@ export default async function DashboardPage() {
           <p className="text-gray-600">Welcome to Workshop</p>
         </div>
 
+        {/* Stats Grid */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {/* Projects Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Projects</CardTitle>
+              <FolderOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{projectCount || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Your active projects
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Assets Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Assets</CardTitle>
+              <FileBox className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{assetCount || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Models, illustrations, and more
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Documents Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Documents</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{documentCount || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Rulebooks and documents
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Total Views Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {totalViews.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {totalDownloads.toLocaleString()} downloads,{" "}
+                {totalUsages.toLocaleString()} uses
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Victory Points Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Victory Points
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {victoryPoints.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Earn more by playtesting
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Earnings Card - Placeholder */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Earnings</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$0.00</div>
+              <p className="text-xs text-muted-foreground">Coming soon</p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Pending Attribution Requests */}
         <Card>
           <CardHeader>
@@ -205,10 +351,24 @@ export default async function DashboardPage() {
               <div className="py-8 text-center text-gray-500">
                 <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                 <p className="font-medium">No pending requests</p>
-                <p className="text-sm">
-                  Attribution requests will appear here when creators reference
-                  your work
+                <p className="text-sm mb-4">
+                  Attribution requests appear when creators want to use your
+                  assets
                 </p>
+                <div className="flex gap-3 justify-center mt-4">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/assets/upload">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Assets
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/assets">
+                      <Search className="w-4 h-4 mr-2" />
+                      Browse Library
+                    </Link>
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">

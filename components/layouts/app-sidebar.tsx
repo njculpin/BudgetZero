@@ -3,14 +3,14 @@
 import {
   BarChart3,
   BookOpen,
-  Box,
   ChevronsUpDown,
   Home,
-  Image,
   LogOut,
+  Package,
   Plus,
   Search,
   Settings,
+  ShoppingBag,
   Upload,
   User,
   Users,
@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { PendingRequestsBadge } from "@/components/collaboration/pending-requests-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -62,14 +63,19 @@ const navigation = [
         icon: Home,
       },
       {
+        title: "Marketplace",
+        url: "/marketplace",
+        icon: ShoppingBag,
+      },
+      {
+        title: "My Orders",
+        url: "/orders",
+        icon: Package,
+      },
+      {
         title: "My Projects",
         url: "/projects",
         icon: BookOpen,
-      },
-      {
-        title: "New Project",
-        url: "/projects/new",
-        icon: Plus,
       },
     ],
   },
@@ -147,6 +153,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       <Link href={item.url}>
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>
+                        {item.url === "/collaboration/requests" && (
+                          <PendingRequestsBadge />
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
