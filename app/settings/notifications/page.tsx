@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { NotificationSettingsForm } from "@/components/settings/notification-settings-form";
+import { NotificationSettingsForm } from "@/components/blocks/notification-settings-form";
 
 export default async function NotificationSettingsPage() {
   const supabase = await createClient();

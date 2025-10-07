@@ -1,5 +1,5 @@
+import { ProfileSettingsForm } from "@/components/blocks/profile-settings-form";
 import { createClient } from "@/lib/supabase/server";
-import { ProfileSettingsForm } from "@/components/settings/profile-settings-form";
 
 export default async function ProfileSettingsPage() {
   const supabase = await createClient();

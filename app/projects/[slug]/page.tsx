@@ -5,25 +5,19 @@ import {
   Edit3,
   Eye,
   EyeOff,
-  FileText,
-  Palette,
   Plus,
-  Settings,
   Star,
   Tag,
   Users,
-  Upload,
-  Search,
-  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { AddToCartButton } from "@/components/marketplace/add-to-cart-button";
+import { AddToCartButton } from "@/components/blocks/projects/project-card-add-button";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { PricingTiersManager } from "@/components/projects/pricing-tiers-manager";
-import { ProjectAssetReferences } from "@/components/projects/project-asset-references";
-import { ProjectTagsManager } from "@/components/projects/project-tags-manager";
-import { RevenueSplitPreview } from "@/components/shared/revenue-split-preview";
+import { PricingTiersManager } from "@/components/blocks/projects/project-pricing-manager";
+import { ProjectAssetReferences } from "@/components/blocks/projects/project-asset-references";
+import { ProjectTagsManager } from "@/components/blocks/projects/project-tags-manager";
+import { RevenueSplitPreview } from "@/components/blocks/projects/project-revenue-split";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,14 +27,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { GameProjectService } from "@/lib/services/game-projects";
 import { createClient } from "@/lib/supabase/server";
@@ -92,16 +78,12 @@ export default async function ProjectDetailPage({
     .eq("project_id", project.id)
     .order("created_at", { ascending: false });
 
-  // Fetch project assets (models and illustrations)
+  // Fetch project assets (documents, models and illustrations)
   const { data: assets } = await supabase
     .from("assets")
     .select("id, title, asset_type, thumbnail_url, created_at, updated_at")
     .eq("project_id", project.id)
     .order("created_at", { ascending: false });
-
-  const models = assets?.filter((a) => a.asset_type === "model") || [];
-  const illustrations =
-    assets?.filter((a) => a.asset_type === "illustration") || [];
 
   // Fetch project collaborators
   const { data: collaborators } = await supabase
@@ -219,17 +201,6 @@ export default async function ProjectDetailPage({
               Created by {project.creator.full_name || project.creator.email}
             </p>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            {isOwner && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/projects/${project.slug}/settings`}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </Link>
-              </Button>
-            )}
-          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -286,95 +257,26 @@ export default async function ProjectDetailPage({
                       All content in this project - owned and referenced
                     </CardDescription>
                   </div>
-                  {isOwner && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Content
-                          <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Create New</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            href={`/projects/${project.slug}/documents/create`}
-                          >
-                            <FileText className="mr-2 h-4 w-4" />
-                            New Document
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/assets/upload?project_id=${project.slug}`}>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Asset
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Add Existing</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/projects/${project.slug}/add-asset`}>
-                            <Search className="mr-2 h-4 w-4" />
-                            Browse Asset Library
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
+                  {isOwner && 
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                      Add Content
+                  </Button>}
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-
-                  {/* Documents Gallery */}
-                  {documents && documents.length > 0 && (
+                  {/* Asset Gallery */}
+                  {assets && assets.length > 0 && (
                     <div className="space-y-3">
                       <h4 className="text-sm font-semibold text-gray-700">
-                        Documents
-                      </h4>
-                      <div className="space-y-2">
-                        {documents.map((doc) => (
-                          <Link
-                            key={doc.id}
-                            href={`/projects/${project.slug}/documents/${doc.id}`}
-                            className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                          >
-                            <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                              <FileText className="w-4 h-4 text-blue-700" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h5 className="font-medium text-sm truncate">
-                                  {doc.title}
-                                </h5>
-                                <Badge variant="secondary" className="text-xs">
-                                  Mine
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-gray-500 capitalize">
-                                {doc.document_type.replace(/_/g, " ")} •{" "}
-                                {doc.status}
-                              </p>
-                            </div>
-                            <Edit3 className="w-4 h-4 text-gray-400" />
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Models Gallery */}
-                  {models.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-semibold text-gray-700">
-                        3D Models
+                        Assets
                       </h4>
                       <div className="grid grid-cols-2 gap-2">
-                        {models.map((model) => (
+                        {assets.map((asset) => (
                           <Link
-                            key={model.id}
-                            href={`/assets/${model.id}`}
+                            key={asset.id}
+                            href={`/assets/${asset.id}`}
                             className="group relative aspect-square rounded-lg overflow-hidden border hover:border-purple-300 transition-colors"
                           >
                             <Badge
@@ -383,10 +285,10 @@ export default async function ProjectDetailPage({
                             >
                               Mine
                             </Badge>
-                            {model.thumbnail_url ? (
+                            {asset.thumbnail_url ? (
                               <img
-                                src={model.thumbnail_url}
-                                alt={model.title}
+                                src={asset.thumbnail_url}
+                                alt={asset.title}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
@@ -397,50 +299,7 @@ export default async function ProjectDetailPage({
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                               <div className="absolute bottom-0 left-0 right-0 p-2">
                                 <p className="text-white text-xs font-medium truncate">
-                                  {model.title}
-                                </p>
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Illustrations Gallery */}
-                  {illustrations.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-semibold text-gray-700">
-                        Illustrations
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {illustrations.map((illustration) => (
-                          <Link
-                            key={illustration.id}
-                            href={`/assets/${illustration.id}`}
-                            className="group relative aspect-square rounded-lg overflow-hidden border hover:border-amber-300 transition-colors"
-                          >
-                            <Badge
-                              variant="secondary"
-                              className="absolute top-2 left-2 z-10 text-xs"
-                            >
-                              Mine
-                            </Badge>
-                            {illustration.thumbnail_url ? (
-                              <img
-                                src={illustration.thumbnail_url}
-                                alt={illustration.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-amber-50 flex items-center justify-center">
-                                <Palette className="w-8 h-8 text-amber-300" />
-                              </div>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                              <div className="absolute bottom-0 left-0 right-0 p-2">
-                                <p className="text-white text-xs font-medium truncate">
-                                  {illustration.title}
+                                  {asset.title}
                                 </p>
                               </div>
                             </div>
@@ -457,9 +316,7 @@ export default async function ProjectDetailPage({
                   />
 
                   {/* Empty State */}
-                  {(!documents || documents.length === 0) &&
-                    models.length === 0 &&
-                    illustrations.length === 0 && (
+                  {(!assets || assets.length === 0) &&  (
                       <div className="text-center py-8">
                         <Box className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                         <p className="text-sm text-gray-500">No content yet</p>

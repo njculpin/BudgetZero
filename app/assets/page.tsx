@@ -1,7 +1,7 @@
 import { Box, Image, Plus, Search as SearchIcon, Upload } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AssetSearch } from "@/components/assets/asset-search";
+import { AssetSearch } from "@/components/blocks/assets/asset-search";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

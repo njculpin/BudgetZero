@@ -1,24 +1,21 @@
 "use client";
 
 import {
-  BarChart3,
   BookOpen,
   ChevronsUpDown,
   Home,
   LogOut,
-  Package,
-  Plus,
   Search,
   Settings,
-  ShoppingBag,
   Upload,
   User,
   Users,
+  GitPullRequestCreate
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { PendingRequestsBadge } from "@/components/collaboration/pending-requests-badge";
+import { PendingRequestsBadge } from "@/components/blocks/projects/project-request-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -63,16 +60,6 @@ const navigation = [
         icon: Home,
       },
       {
-        title: "Marketplace",
-        url: "/marketplace",
-        icon: ShoppingBag,
-      },
-      {
-        title: "My Orders",
-        url: "/orders",
-        icon: Package,
-      },
-      {
         title: "My Projects",
         url: "/projects",
         icon: BookOpen,
@@ -83,7 +70,7 @@ const navigation = [
     title: "Assets",
     items: [
       {
-        title: "Asset Library",
+        title: "Assets",
         url: "/assets",
         icon: Search,
       },
@@ -91,7 +78,7 @@ const navigation = [
         title: "Upload Asset",
         url: "/assets/upload",
         icon: Upload,
-      },
+      }
     ],
   },
   {
@@ -100,8 +87,18 @@ const navigation = [
       {
         title: "Requests",
         url: "/requests",
+        icon: GitPullRequestCreate,
+      },
+      {
+        title: "Teams",
+        url: "/teams",
         icon: Users,
-      }
+      },
+      {
+        title: "Public Library",
+        url: "/assets",
+        icon: Search,
+      },
     ],
   },
 ];
