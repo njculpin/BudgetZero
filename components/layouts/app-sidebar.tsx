@@ -1,20 +1,5 @@
 "use client";
 
-import {
-  BookOpen,
-  ChevronsUpDown,
-  Home,
-  LogOut,
-  Search,
-  Settings,
-  Upload,
-  User,
-  Users,
-  GitPullRequestCreate
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 import { PendingRequestsBadge } from "@/components/blocks/projects/project-request-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -38,6 +23,22 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/client";
+import {
+  BookOpen,
+  ChevronsUpDown,
+  GitPullRequestCreate,
+  Home,
+  Library,
+  LogOut,
+  Search,
+  Settings,
+  Upload,
+  User,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface AppSidebarProps {
   user?: {
@@ -59,8 +60,23 @@ const navigation = [
         url: "/dashboard",
         icon: Home,
       },
+    ],
+  },
+  {
+    title: "Projects",
+    items: [
       {
-        title: "My Projects",
+        title: "Projects",
+        url: "/projects",
+        icon: BookOpen,
+      },
+      {
+        title: "Find Projects",
+        url: "/projects",
+        icon: BookOpen,
+      },
+      {
+        title: "Create Project",
         url: "/projects",
         icon: BookOpen,
       },
@@ -72,13 +88,18 @@ const navigation = [
       {
         title: "Assets",
         url: "/assets",
+        icon: Library,
+      },
+      {
+        title: "Find Assets",
+        url: "/assets",
         icon: Search,
       },
       {
-        title: "Upload Asset",
+        title: "Create Asset",
         url: "/assets/upload",
         icon: Upload,
-      }
+      },
     ],
   },
   {
@@ -93,11 +114,6 @@ const navigation = [
         title: "Teams",
         url: "/teams",
         icon: Users,
-      },
-      {
-        title: "Public Library",
-        url: "/assets",
-        icon: Search,
       },
     ],
   },
