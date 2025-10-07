@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { deleteProject } from "@/app/projects/[project_id]/settings/actions";
+import { deleteProject } from "@/app/projects/[slug]/settings/actions";
 
 interface DeleteProjectDialogProps {
   projectId: string;

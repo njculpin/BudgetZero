@@ -33,14 +33,14 @@ import { ProjectSettingsClient } from "./settings-client";
 
 interface ProjectSettingsPageProps {
   params: Promise<{
-    project_id: string;
+    slug: string;
   }>;
 }
 
 export default async function ProjectSettingsPage({
   params,
 }: ProjectSettingsPageProps) {
-  const { project_id } = await params;
+  const { slug } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -51,7 +51,7 @@ export default async function ProjectSettingsPage({
   }
 
   const gameProjectService = new GameProjectService(supabase);
-  const result = await gameProjectService.getProject(project_id);
+  const result = await gameProjectService.getProject(slug);
 
   if (result.error || !result.data) {
     notFound();

@@ -1,21 +1,22 @@
-import { ArrowLeft } from "lucide-react";
+import { Settings } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { DocumentSettingsForm } from "@/components/documents/document-settings-form";
+import { EditorPageClient } from "@/components/editor/editor-page-client";
 import { MainLayout } from "@/components/layouts/main-layout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ProjectService } from "@/lib/services/project-service";
 import { createClient } from "@/lib/supabase/server";
+import { DocumentSettingsForm } from "@/components/documents/document-settings-form";
 
-interface DocumentSettingsPageProps {
+interface DocumentPageProps {
   params: Promise<{
     slug: string;
     document_id: string;
   }>;
 }
 
-export default async function DocumentSettingsPage({
-  params,
-}: DocumentSettingsPageProps) {
+export default async function DocumentPage({ params }: DocumentPageProps) {
   const { slug, document_id } = await params;
   const supabase = await createClient();
   const {
@@ -58,28 +59,40 @@ export default async function DocumentSettingsPage({
   const breadcrumbs = [
     { label: "Projects", href: "/projects" },
     { label: project.title, href: `/projects/${project.slug}` },
-    {
-      label: document.title,
-      href: `/projects/${project.slug}/documents/${document_id}`,
-    },
-    { label: "Settings" },
+    { label: document.title },
   ];
 
   return (
     <MainLayout user={user} breadcrumbs={breadcrumbs}>
-      <div className="max-w-3xl space-y-6">
+      <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link
-            href={`/projects/${slug}/documents/${document_id}`}
-            className="p-2 hover:bg-accent rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">Document Settings</h1>
-            <p className="text-muted-foreground">{document.title}</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold">{document.title}</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="capitalize">
+                  {document.document_type.replace(/_/g, " ")}
+                </Badge>
+                <Badge
+                  variant={
+                    document.status === "published" ? "default" : "secondary"
+                  }
+                >
+                  {document.status}
+                </Badge>
+              </div>
+            </div>
           </div>
+
+          <Button variant="outline" size="sm" asChild>
+            <Link
+              href={`/projects/${slug}/documents/${document_id}/settings`}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Link>
+          </Button>
         </div>
 
         {/* Settings Form */}
@@ -96,8 +109,14 @@ export default async function DocumentSettingsPage({
             license_terms: document.license_terms || "",
             royalty_percentage: document.royalty_percentage,
             seeking_collaborators: document.seeking_collaborators,
-            tags: document.tags || [],
           }}
+        />
+
+        {/* Editor */}
+        <EditorPageClient
+          documentId={document.id}
+          initialContent={document.content || { type: "doc", content: [] }}
+          canEdit={canEdit}
         />
       </div>
     </MainLayout>

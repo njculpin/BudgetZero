@@ -99,14 +99,9 @@ const navigation = [
     items: [
       {
         title: "Requests",
-        url: "/collaboration/requests",
+        url: "/requests",
         icon: Users,
-      },
-      {
-        title: "Analytics",
-        url: "/analytics",
-        icon: BarChart3,
-      },
+      }
     ],
   },
 ];
