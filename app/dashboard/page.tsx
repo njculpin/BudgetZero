@@ -10,7 +10,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { redirect } from "next/navigation";
-import { AttributionRequestCard } from "@/components/dashboard/attribution-request-card";
+import { AttributionRequestCard } from "@/components/blocks/projects/project-request-card";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

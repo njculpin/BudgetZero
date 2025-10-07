@@ -1,7 +1,8 @@
 "use client";
 
-import { CartButton } from "@/components/marketplace/cart-button";
-import { NotificationsBell } from "@/components/notifications/notifications-bell";
+import { NotificationsBell } from "@/components/blocks/notifications-bell";
+import { CartButton } from "@/components/blocks/projects/project-card-view-button";
+import { VPDisplay } from "@/components/blocks/vp-display";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,7 +17,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { VPDisplay } from "@/components/victory-points/vp-display";
 import { AppSidebar } from "./app-sidebar";
 
 interface MainLayoutProps {
@@ -48,7 +48,7 @@ export function MainLayout({ children, user, breadcrumbs }: MainLayoutProps) {
               <Breadcrumb>
                 <BreadcrumbList>
                   {breadcrumbs.map((crumb, index) => (
-                    <div key={index} className="flex items-center gap-2">
+                    <div key={crumb.label} className="flex items-center gap-2">
                       <BreadcrumbItem>
                         {crumb.href ? (
                           <BreadcrumbLink

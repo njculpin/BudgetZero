@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { PrivacySettingsForm } from "@/components/settings/privacy-settings-form";
+import { PrivacySettingsForm } from "@/components/blocks/privacy-settings-form";
 
 export default async function PrivacySettingsPage() {
   const supabase = await createClient();

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { ProjectForm } from "@/components/projects/project-form";
+import { ProjectForm } from "@/components/blocks/projects/project-form";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function NewProjectPage() {
