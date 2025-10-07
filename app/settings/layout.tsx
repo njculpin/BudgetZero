@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { SettingsNavigation } from "@/components/settings/settings-navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SettingsLayout({
@@ -29,9 +28,8 @@ export default async function SettingsLayout({
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-6">
-          <SettingsNavigation />
-          <div className="lg:col-span-3">{children}</div>
+        <div>
+          {children}
         </div>
       </div>
     </MainLayout>

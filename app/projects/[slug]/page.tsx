@@ -20,8 +20,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AddToCartButton } from "@/components/marketplace/add-to-cart-button";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { PlaytestReviewForm } from "@/components/projects/playtest-review-form";
-import { PlaytestReviewsList } from "@/components/projects/playtest-reviews-list";
 import { PricingTiersManager } from "@/components/projects/pricing-tiers-manager";
 import { ProjectAssetReferences } from "@/components/projects/project-asset-references";
 import { ProjectTagsManager } from "@/components/projects/project-tags-manager";
@@ -49,14 +47,14 @@ import { createClient } from "@/lib/supabase/server";
 
 interface ProjectDetailPageProps {
   params: Promise<{
-    project_id: string;
+    slug: string;
   }>;
 }
 
 export default async function ProjectDetailPage({
   params,
 }: ProjectDetailPageProps) {
-  const { project_id } = await params;
+  const { slug } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -67,7 +65,7 @@ export default async function ProjectDetailPage({
   }
 
   const gameProjectService = new GameProjectService(supabase);
-  const result = await gameProjectService.getProject(project_id);
+  const result = await gameProjectService.getProject(slug);
 
   if (result.error || !result.data) {
     notFound();
@@ -301,14 +299,14 @@ export default async function ProjectDetailPage({
                         <DropdownMenuLabel>Create New</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
                           <Link
-                            href={`/projects/${project.id}/create-document`}
+                            href={`/projects/${project.slug}/documents/create`}
                           >
                             <FileText className="mr-2 h-4 w-4" />
                             New Document
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`/assets/upload?project_id=${project.id}`}>
+                          <Link href={`/assets/upload?project_id=${project.slug}`}>
                             <Upload className="mr-2 h-4 w-4" />
                             Upload Asset
                           </Link>
@@ -316,7 +314,7 @@ export default async function ProjectDetailPage({
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Add Existing</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                          <Link href={`/projects/${project.id}/add-asset`}>
+                          <Link href={`/projects/${project.slug}/add-asset`}>
                             <Search className="mr-2 h-4 w-4" />
                             Browse Asset Library
                           </Link>
