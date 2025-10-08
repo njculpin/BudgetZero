@@ -1,23 +1,9 @@
-import {
-  Box,
-  Calendar,
-  Clock,
-  Edit3,
-  Eye,
-  EyeOff,
-  Plus,
-  Star,
-  Tag,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { AddToCartButton } from "@/components/blocks/projects/project-card-add-button";
-import { MainLayout } from "@/components/layouts/main-layout";
-import { PricingTiersManager } from "@/components/blocks/projects/project-pricing-manager";
 import { ProjectAssetReferences } from "@/components/blocks/projects/project-asset-references";
-import { ProjectTagsManager } from "@/components/blocks/projects/project-tags-manager";
+import { AddToCartButton } from "@/components/blocks/projects/project-card-add-button";
+import { PricingTiersManager } from "@/components/blocks/projects/project-pricing-manager";
 import { RevenueSplitPreview } from "@/components/blocks/projects/project-revenue-split";
+import { ProjectTagsManager } from "@/components/blocks/projects/project-tags-manager";
+import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +16,18 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { GameProjectService } from "@/lib/services/game-projects";
 import { createClient } from "@/lib/supabase/server";
+import {
+  Box,
+  Calendar,
+  Clock,
+  Eye,
+  EyeOff,
+  Plus,
+  Tag,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 
 interface ProjectDetailPageProps {
   params: Promise<{
@@ -254,14 +252,15 @@ export default async function ProjectDetailPage({
                       Project Content
                     </CardTitle>
                     <CardDescription>
-                      All content in this project - owned and referenced
+                      All assets in this project - owned and referenced
                     </CardDescription>
                   </div>
-                  {isOwner && 
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                      Add Content
-                  </Button>}
+                  {isOwner && (
+                    <Button>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Asset
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -316,15 +315,15 @@ export default async function ProjectDetailPage({
                   />
 
                   {/* Empty State */}
-                  {(!assets || assets.length === 0) &&  (
-                      <div className="text-center py-8">
-                        <Box className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-sm text-gray-500">No content yet</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Add documents, models, or illustrations to get started
-                        </p>
-                      </div>
-                    )}
+                  {(!assets || assets.length === 0) && (
+                    <div className="text-center py-8">
+                      <Box className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500">No content yet</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Add documents, models, or illustrations to get started
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -395,28 +394,6 @@ export default async function ProjectDetailPage({
                         <p className="text-slate-600">
                           {project.play_time_minutes} minutes
                         </p>
-                      </div>
-                    )}
-                    {project.complexity_rating && (
-                      <div>
-                        <h4 className="font-medium text-slate-900 mb-1">
-                          Complexity
-                        </h4>
-                        <div className="flex items-center gap-1">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < (project.complexity_rating || 0)
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-slate-300"
-                              }`}
-                            />
-                          ))}
-                          <span className="text-sm text-slate-600 ml-2">
-                            {project.complexity_rating}/5
-                          </span>
-                        </div>
                       </div>
                     )}
                   </div>
@@ -518,119 +495,6 @@ export default async function ProjectDetailPage({
                     />
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Team & Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Team & Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Team Members */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-slate-900">
-                    Contributors
-                  </h4>
-                  {/* Project Creator */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">
-                        {(project.creator.full_name || project.creator.email)
-                          .charAt(0)
-                          .toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        {project.creator.full_name || project.creator.email}
-                      </p>
-                      <p className="text-xs text-slate-500">Creator • Owner</p>
-                    </div>
-                  </div>
-
-                  {/* Collaborators */}
-                  {collaborators &&
-                    collaborators.length > 0 &&
-                    collaborators.map((collab) => {
-                      const profile = Array.isArray(collab.profiles)
-                        ? collab.profiles[0]
-                        : collab.profiles;
-                      if (!profile) return null;
-                      const displayName = profile.full_name || profile.email;
-                      return (
-                        <div
-                          key={collab.id}
-                          className="flex items-center gap-3"
-                        >
-                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-purple-700">
-                              {displayName.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {displayName}
-                            </p>
-                            <p className="text-xs text-slate-500 capitalize">
-                              {collab.role} • {collab.revenue_percentage}%
-                              revenue
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-
-                <Separator />
-
-                {/* Recent Activity */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-slate-900">
-                    Recent Activity
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-start gap-2 text-slate-600">
-                      <Edit3 className="w-3 h-3 mt-1 text-blue-500" />
-                      <div>
-                        <span className="font-medium">Rulebook updated</span>
-                        <p className="text-xs text-slate-500">2 hours ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 text-slate-600">
-                      <Calendar className="w-3 h-3 mt-1 text-green-500" />
-                      <div>
-                        <span className="font-medium">Project created</span>
-                        <p className="text-xs text-slate-500">
-                          {new Date(project.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress Indicators */}
-                <Separator />
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-slate-900">
-                    Progress
-                  </h4>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-600">Completion</span>
-                      <span className="text-slate-900 font-medium">25%</span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full"
-                        style={{ width: "25%" }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
