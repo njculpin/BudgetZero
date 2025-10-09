@@ -1,15 +1,10 @@
 import { MainLayout } from "@/components/layouts/main-layout";
-import { getUser } from "@/lib/sdk/client/use-user-get-me";
-import { redirect } from "next/navigation";
+import { useAdminGetMe } from "@/lib/sdk/server";
 
 export default async function LicensingPage() {
-  const { data, error } = await getUser();
-  const me = data;
-  if (!me || error) {
-    redirect("/auth/login");
-  }
+  const user = await useAdminGetMe();
   return (
-    <MainLayout user={me} breadcrumbs={[{ label: "Licensing" }]}>
+    <MainLayout user={user} breadcrumbs={[{ label: "Licensing" }]}>
       <div></div>
     </MainLayout>
   );

@@ -1,16 +1,11 @@
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Card } from "@/components/ui/card";
-import { getUser } from "@/lib/sdk/client/use-user-get-me";
-import { redirect } from "next/navigation";
+import { useAdminGetMe } from "@/lib/sdk/server";
 
 export default async function TeamsPage() {
-  const { data: me, error: meError } = await getUser();
-  console.log("me", me, "meError", meError);
-  if (!me || meError) {
-    redirect("/auth/login");
-  }
+  const user = await useAdminGetMe();
   return (
-    <MainLayout user={me} breadcrumbs={[{ label: "Teams" }]}>
+    <MainLayout user={user} breadcrumbs={[{ label: "Teams" }]}>
       <Card className="p-12 text-center">
         <p className="text-red-600">TEAMS</p>
       </Card>
