@@ -32,6 +32,7 @@ import {
   LogOut,
   Search,
   Settings,
+  ShoppingBag,
   Upload,
   User,
   Users,
@@ -66,17 +67,7 @@ const navigation = [
     title: "Projects",
     items: [
       {
-        title: "Projects",
-        url: "/projects",
-        icon: BookOpen,
-      },
-      {
-        title: "Find Projects",
-        url: "/projects",
-        icon: BookOpen,
-      },
-      {
-        title: "Create Project",
+        title: "My Projects",
         url: "/projects",
         icon: BookOpen,
       },
@@ -86,19 +77,19 @@ const navigation = [
     title: "Assets",
     items: [
       {
-        title: "Assets",
+        title: "Asset Library",
         url: "/assets",
         icon: Library,
       },
+    ],
+  },
+  {
+    title: "Marketplace",
+    items: [
       {
-        title: "Find Assets",
-        url: "/assets",
-        icon: Search,
-      },
-      {
-        title: "Create Asset",
-        url: "/assets/upload",
-        icon: Upload,
+        title: "Shop",
+        url: "/shop",
+        icon: ShoppingBag,
       },
     ],
   },
@@ -161,9 +152,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       <Link href={item.url}>
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>
-                        {item.url === "/collaboration/requests" && (
-                          <PendingRequestsBadge />
-                        )}
+                        {item.url === "/requests" && <PendingRequestsBadge />}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

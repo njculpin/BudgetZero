@@ -1,18 +1,5 @@
 -- ============================================================================
--- Workshop Platform - Consolidated Schema Migration
--- ============================================================================
--- This is the complete schema for the Workshop collaborative tabletop game
--- publishing platform. It consolidates all previous migrations into a single
--- clean schema for initial deployment.
---
--- Core Features:
--- - User profiles with creator roles
--- - Unified projects system (games, models, illustrations, documents)
--- - Asset library with royalty tracking
--- - Collaboration and revenue sharing
--- - Marketplace with orders and payments
--- - Stripe Connect for creator payouts
--- - Notifications and activity tracking
+-- Workshop Platform - Fully Normalized Schema Migration
 -- ============================================================================
 
 -- Enable necessary extensions
@@ -22,305 +9,580 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- CUSTOM TYPES
 -- ============================================================================
 
-CREATE TYPE creator_role AS ENUM ('designer', 'illustrator', 'modeler', 'editor', 'photographer');
 CREATE TYPE project_status AS ENUM ('draft', 'active', 'archived', 'published');
-CREATE TYPE collaboration_permission AS ENUM ('read', 'comment', 'edit', 'admin');
+CREATE TYPE asset_status AS ENUM ('draft', 'active', 'archived', 'published');
+CREATE TYPE invitation_status AS ENUM ('pending', 'accepted', 'declined', 'revoked');
+CREATE TYPE address_type AS ENUM ('shipping', 'billing', 'both');
 CREATE TYPE license_type AS ENUM ('free', 'attribution', 'commercial', 'exclusive');
+CREATE TYPE reference_status AS ENUM ('pending', 'approved', 'rejected');
+CREATE TYPE order_status AS ENUM ('pending', 'processing', 'completed', 'failed', 'refunded', 'cancelled');
+CREATE TYPE payout_status AS ENUM ('pending', 'processing', 'completed', 'failed', 'cancelled');
+CREATE TYPE notification_type AS ENUM (
+  'asset_reference_request',
+  'asset_reference_approved',
+  'asset_reference_rejected',
+  'collaborator_invite',
+  'collaborator_joined',
+  'project_published',
+  'order_received',
+  'payout_completed',
+  'payout_failed'
+);
+CREATE TYPE permission_type AS ENUM ('read', 'write', 'delete', 'admin', 'manage_collaborators', 'manage_pricing');
 
 -- ============================================================================
--- CORE TABLES
+-- USERS TABLES
 -- ============================================================================
 
--- User Profiles (extends auth.users)
-CREATE TABLE profiles (
+CREATE TABLE users (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
   username TEXT UNIQUE,
   bio TEXT,
   avatar_url TEXT,
-  creator_roles creator_role[] DEFAULT '{}',
   location TEXT,
-  website TEXT,
-  portfolio_url TEXT,
-  social_links JSONB DEFAULT '{}',
-  skills TEXT[] DEFAULT '{}',
-  experience_level TEXT CHECK (experience_level IN ('beginner', 'intermediate', 'expert')),
-
-  -- Privacy settings
-  is_profile_public BOOLEAN DEFAULT true,
-  show_email_public BOOLEAN DEFAULT false,
-  allow_collaboration_requests BOOLEAN DEFAULT true,
-
-  -- Notification preferences
-  notification_preferences JSONB DEFAULT '{
-    "email_enabled": true,
-    "in_app_enabled": true,
-    "collaboration_requests": true,
-    "project_updates": true,
-    "marketplace_sales": true,
-    "playtest_reviews": true,
-    "comments": true,
-    "marketing": false,
-    "frequency": "instant"
-  }'::jsonb,
-
-  -- Status
   is_verified BOOLEAN DEFAULT FALSE,
   is_active BOOLEAN DEFAULT TRUE,
-
-  -- Victory Points System
   total_vp INTEGER DEFAULT 0,
-
-  -- Timestamps
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Unified Projects Table (games, models, illustrations)
+CREATE TABLE users_addresses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  address_type address_type NOT NULL DEFAULT 'shipping',
+  is_primary BOOLEAN DEFAULT FALSE,
+  full_name TEXT NOT NULL CHECK (length(full_name) >= 1 AND length(full_name) <= 200),
+  company_name TEXT CHECK (length(company_name) <= 200),
+  address_line1 TEXT NOT NULL CHECK (length(address_line1) >= 1 AND length(address_line1) <= 255),
+  address_line2 TEXT CHECK (length(address_line2) <= 255),
+  city TEXT NOT NULL CHECK (length(city) >= 1 AND length(city) <= 100),
+  state_province TEXT CHECK (length(state_province) <= 100),
+  postal_code TEXT NOT NULL CHECK (length(postal_code) >= 1 AND length(postal_code) <= 20),
+  country_code TEXT NOT NULL CHECK (length(country_code) = 2),
+  phone TEXT CHECK (length(phone) <= 20),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT unique_primary_address_per_user UNIQUE NULLS NOT DISTINCT (user_id, is_primary, address_type)
+);
+
+CREATE TABLE users_links (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  title TEXT,
+  url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================================
+-- PROJECTS TABLES
+-- ============================================================================
+
 CREATE TABLE projects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  creator_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL CHECK (length(title) >= 1 AND length(title) <= 100),
   description TEXT CHECK (length(description) <= 1000),
   slug TEXT UNIQUE NOT NULL,
-  creator_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
-
-  -- Project type discriminator
-  project_type TEXT NOT NULL CHECK (project_type IN ('game', 'model', 'illustration')),
-
-  -- Status and visibility
   status project_status DEFAULT 'draft',
-  is_public BOOLEAN DEFAULT FALSE,
   cover_image_url TEXT,
-  tags TEXT[] DEFAULT '{}',
-
-  -- Licensing
-  license_type license_type DEFAULT 'free',
-  license_terms TEXT,
-
-  -- Pricing (moved to pricing_tiers table)
-
-  -- Game-specific fields (nullable for non-game projects)
-  genre TEXT,
-  player_count_min INTEGER CHECK (player_count_min > 0),
-  player_count_max INTEGER CHECK (player_count_max >= player_count_min),
-  play_time_minutes INTEGER CHECK (play_time_minutes > 0),
-  complexity_rating INTEGER CHECK (complexity_rating >= 1 AND complexity_rating <= 5),
-
-  -- Collaboration
-  seeking_collaborators BOOLEAN DEFAULT false,
-
-  -- Timestamps
+  published_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Project Collaborators
+CREATE TABLE project_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  is_public BOOLEAN DEFAULT FALSE,
+  allow_comments BOOLEAN DEFAULT TRUE,
+  allow_forks BOOLEAN DEFAULT FALSE,
+  allow_downloads BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE project_licenses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  license_type license_type NOT NULL,
+  license_terms TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  effective_from TIMESTAMPTZ DEFAULT NOW(),
+  effective_until TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE project_tags (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  tag TEXT NOT NULL CHECK (length(tag) >= 1 AND length(tag) <= 50),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(project_id, tag)
+);
+
+CREATE TABLE project_stats (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  view_count INTEGER DEFAULT 0,
+  download_count INTEGER DEFAULT 0,
+  like_count INTEGER DEFAULT 0,
+  fork_count INTEGER DEFAULT 0,
+  collaborator_count INTEGER DEFAULT 0,
+  asset_count INTEGER DEFAULT 0,
+  total_revenue_cents INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE project_collaborators (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
-  collaborator_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
-  role creator_role NOT NULL,
-  permissions collaboration_permission[] DEFAULT '{"read"}',
-  invitation_status TEXT DEFAULT 'pending' CHECK (invitation_status IN ('pending', 'accepted', 'declined', 'revoked')),
-  invited_by UUID REFERENCES profiles(id),
-  invited_at TIMESTAMPTZ DEFAULT NOW(),
-  joined_at TIMESTAMPTZ,
-  revenue_percentage DECIMAL(5,2) DEFAULT 0.00 CHECK (revenue_percentage >= 0 AND revenue_percentage <= 100),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  invitation_status invitation_status DEFAULT 'pending',
   contribution_description TEXT,
   is_active BOOLEAN DEFAULT TRUE,
+  invited_by UUID REFERENCES users(id),
+  invited_at TIMESTAMPTZ DEFAULT NOW(),
+  joined_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(project_id, collaborator_id)
+  UNIQUE(project_id, user_id)
 );
 
--- Assets (3D models, illustrations, photos, textures, audio)
+CREATE TABLE project_collaborator_permissions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  collaborator_id UUID REFERENCES project_collaborators(id) ON DELETE CASCADE NOT NULL,
+  permission permission_type NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(collaborator_id, permission)
+);
+
+CREATE TABLE project_collaborator_revenue_splits (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  collaborator_id UUID REFERENCES project_collaborators(id) ON DELETE CASCADE NOT NULL,
+  percentage DECIMAL(5,2) NOT NULL CHECK (percentage >= 0 AND percentage <= 100),
+  is_active BOOLEAN DEFAULT TRUE,
+  effective_from TIMESTAMPTZ DEFAULT NOW(),
+  effective_until TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================================
+-- ASSETS TABLES
+-- ============================================================================
+
 CREATE TABLE assets (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  creator_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  creator_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
   title TEXT NOT NULL CHECK (length(title) >= 1 AND length(title) <= 100),
   description TEXT CHECK (length(description) <= 500),
-  asset_type TEXT NOT NULL CHECK (asset_type IN ('model', 'illustration', 'photo', 'texture', 'audio')),
+  thumbnail_url TEXT,
+  preview_url TEXT,
+  status asset_status DEFAULT 'draft',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-  -- File information
+CREATE TABLE asset_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  is_public BOOLEAN DEFAULT FALSE,
+  is_featured BOOLEAN DEFAULT FALSE,
+  seeking_collaborators BOOLEAN DEFAULT FALSE,
+  allow_comments BOOLEAN DEFAULT TRUE,
+  allow_downloads BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE asset_royalties (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
+  percentage DECIMAL(5,2) NOT NULL CHECK (percentage >= 0 AND percentage <= 50),
+  is_active BOOLEAN DEFAULT TRUE,
+  effective_from TIMESTAMPTZ DEFAULT NOW(),
+  effective_until TIMESTAMPTZ,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE asset_licenses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
+  license_type license_type NOT NULL,
+  license_terms TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  effective_from TIMESTAMPTZ DEFAULT NOW(),
+  effective_until TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE asset_tags (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
+  tag TEXT NOT NULL CHECK (length(tag) >= 1 AND length(tag) <= 50),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(asset_id, tag)
+);
+
+CREATE TABLE asset_stats (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  view_count INTEGER DEFAULT 0,
+  download_count INTEGER DEFAULT 0,
+  usage_count INTEGER DEFAULT 0,
+  reference_count INTEGER DEFAULT 0,
+  like_count INTEGER DEFAULT 0,
+  comment_count INTEGER DEFAULT 0,
+  total_revenue_cents INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE asset_images (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
   file_url TEXT NOT NULL,
   file_size_bytes BIGINT,
   file_format TEXT,
-  thumbnail_url TEXT,
-  preview_url TEXT,
-  dimensions JSONB,
-
-  -- Metadata
-  tags TEXT[] DEFAULT '{}',
-
-  -- Licensing and pricing
-  license_type license_type DEFAULT 'attribution',
-  license_terms TEXT,
-  price_cents INTEGER DEFAULT 0 CHECK (price_cents >= 0),
-  royalty_percentage INTEGER DEFAULT 0 CHECK (royalty_percentage >= 0 AND royalty_percentage <= 50),
-
-  -- Publishing
-  is_public BOOLEAN DEFAULT TRUE,
-  status TEXT DEFAULT 'published' CHECK (status IN ('draft', 'published', 'archived')),
-  seeking_collaborators BOOLEAN DEFAULT false,
-
-  -- Stats
-  download_count INTEGER DEFAULT 0,
-  usage_count INTEGER DEFAULT 0,
-  is_featured BOOLEAN DEFAULT FALSE,
-
-  -- Timestamps
+  display_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Documents (rulebooks, guides, expansions)
-CREATE TABLE documents (
+CREATE TABLE asset_files (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  creator_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-
-  -- Metadata
-  title TEXT NOT NULL,
-  description TEXT,
-  document_type TEXT DEFAULT 'rulebook' CHECK (document_type IN ('rulebook', 'expansion', 'quick_start', 'reference', 'other')),
-
-  -- Content (TipTap JSON)
-  content JSONB DEFAULT '{"type":"doc","content":[]}'::jsonb,
-  version INTEGER DEFAULT 1,
-
-  -- Licensing
-  royalty_percentage INTEGER DEFAULT 0 CHECK (royalty_percentage >= 0 AND royalty_percentage <= 50),
-  license_type TEXT DEFAULT 'free' CHECK (license_type IN ('free', 'attribution', 'commercial', 'exclusive')),
-  license_terms TEXT,
-
-  -- Publishing
-  is_public BOOLEAN DEFAULT false,
-  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
-  seeking_collaborators BOOLEAN DEFAULT false,
-
-  -- Stats
-  view_count INTEGER DEFAULT 0,
-  download_count INTEGER DEFAULT 0,
-
-  -- Tags
-  tags TEXT[] DEFAULT ARRAY[]::TEXT[],
-
-  -- Timestamps
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
+  file_url TEXT NOT NULL,
+  file_size_bytes BIGINT,
+  file_format TEXT,
+  file_name TEXT,
+  display_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================================
+-- LICENSING TABLES
+-- ============================================================================
+
+CREATE TABLE licenses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  creator_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  agreement TEXT NOT NULL,
+  is_platform_default BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE asset_license_grants (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  licensor_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  licensee_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
+  license_id UUID REFERENCES licenses(id) ON DELETE CASCADE NOT NULL,
+  granted_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(asset_id, licensee_id, license_id)
 );
 
 -- ============================================================================
 -- RELATIONSHIP TABLES
 -- ============================================================================
 
--- Project Asset References (for attribution and royalty tracking)
 CREATE TABLE project_asset_references (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   asset_id UUID NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
-  royalty_percentage INTEGER NOT NULL CHECK (royalty_percentage >= 0 AND royalty_percentage <= 50),
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-  requested_by UUID NOT NULL REFERENCES profiles(id),
-  requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  responded_at TIMESTAMPTZ,
-  response_message TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(project_id, asset_id)
-);
-
--- Project Document References
-CREATE TABLE project_document_references (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-  royalty_percentage INTEGER NOT NULL CHECK (royalty_percentage >= 0 AND royalty_percentage <= 50),
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-  requested_by UUID NOT NULL REFERENCES auth.users(id),
+  asset_royalty_id UUID REFERENCES asset_royalties(id) ON DELETE SET NULL,
+  status reference_status DEFAULT 'pending',
+  requested_by UUID NOT NULL REFERENCES users(id),
   requested_at TIMESTAMPTZ DEFAULT NOW(),
   responded_at TIMESTAMPTZ,
+  response_message TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(project_id, document_id)
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(project_id, asset_id)
 );
 
 -- ============================================================================
 -- MARKETPLACE TABLES
 -- ============================================================================
 
--- Pricing Tiers
-CREATE TABLE pricing_tiers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
+CREATE TABLE asset_pricing (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL CHECK (length(name) >= 1 AND length(name) <= 100),
   description TEXT,
-  price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
-  features JSONB DEFAULT '[]'::jsonb,
-  is_active BOOLEAN DEFAULT true,
+  price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE project_pricing (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL CHECK (length(name) >= 1 AND length(name) <= 100),
+  description TEXT,
+  price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE orders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_number TEXT UNIQUE NOT NULL,
+  buyer_id UUID REFERENCES users(id) NOT NULL,
+  product_id UUID REFERENCES products(id) NOT NULL,
+  variant_id UUID REFERENCES product_variants(id) NOT NULL,
+  currency_code TEXT NOT NULL CHECK (length(currency_code) = 3),
+  subtotal_cents INTEGER NOT NULL CHECK (subtotal_cents >= 0),
+  platform_fee_cents INTEGER NOT NULL CHECK (platform_fee_cents >= 0),
+  total_cents INTEGER NOT NULL CHECK (total_cents >= 0),
+  status order_status DEFAULT 'pending',
+  stripe_payment_intent_id TEXT,
+  stripe_charge_id TEXT,
+  billing_address_id UUID REFERENCES users_addresses(id),
+  shipping_address_id UUID REFERENCES users_addresses(id),
+  completed_at TIMESTAMPTZ,
+  refunded_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_metadata (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+  key TEXT NOT NULL,
+  value TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(order_id, key)
+);
+
+CREATE TABLE order_revenue_splits (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+  recipient_id UUID REFERENCES users(id) NOT NULL,
+  split_type TEXT NOT NULL CHECK (split_type IN ('platform_fee', 'asset_royalty', 'collaborator_share', 'project_creator')),
+  resource_id UUID,
+  resource_type TEXT CHECK (resource_type IN ('asset', 'project', 'platform')),
+  amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
+  percentage DECIMAL(5,2) NOT NULL CHECK (percentage >= 0 AND percentage <= 100),
+  status payout_status DEFAULT 'pending',
+  stripe_transfer_id TEXT,
+  paid_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================================
+-- PRODUCT LISTING SYSTEM
+-- ============================================================================
+
+CREATE TYPE product_status AS ENUM ('draft', 'active', 'archived');
+
+CREATE TABLE products (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  handle TEXT UNIQUE NOT NULL CHECK (length(handle) >= 1 AND length(handle) <= 100),
+  title TEXT NOT NULL CHECK (length(title) >= 1 AND length(title) <= 200),
+  description TEXT CHECK (length(description) <= 5000),
+  status product_status DEFAULT 'draft',
+  is_featured BOOLEAN DEFAULT FALSE,
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE product_projects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE NOT NULL,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(product_id, project_id)
+);
+
+CREATE TABLE product_images (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE NOT NULL,
+  file_url TEXT NOT NULL,
+  alt_text TEXT,
+  display_order INTEGER DEFAULT 0,
+  is_primary BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE product_collections (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL CHECK (length(name) >= 1 AND length(name) <= 100),
+  handle TEXT UNIQUE NOT NULL CHECK (length(handle) >= 1 AND length(handle) <= 100),
+  description TEXT,
+  image_url TEXT,
+  display_order INTEGER DEFAULT 0,
+  is_visible BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE product_collection_items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE NOT NULL,
+  collection_id UUID REFERENCES product_collections(id) ON DELETE CASCADE NOT NULL,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(product_id, collection_id)
+);
+
+CREATE TABLE product_tags (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE NOT NULL,
+  tag TEXT NOT NULL CHECK (length(tag) >= 1 AND length(tag) <= 50),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(product_id, tag)
+);
+
+CREATE TABLE product_variants (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE NOT NULL,
+  sku TEXT UNIQUE CHECK (length(sku) <= 100),
+  name TEXT NOT NULL CHECK (length(name) >= 1 AND length(name) <= 200),
+  is_available BOOLEAN DEFAULT TRUE,
   display_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Orders
-CREATE TABLE orders (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  order_number TEXT UNIQUE NOT NULL,
-  buyer_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount > 0),
-  stripe_checkout_session_id TEXT,
-  stripe_payment_intent_id TEXT,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'refunded')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  completed_at TIMESTAMPTZ
+CREATE TABLE product_variant_prices (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  variant_id UUID REFERENCES product_variants(id) ON DELETE CASCADE NOT NULL,
+  currency_code TEXT NOT NULL CHECK (length(currency_code) = 3),
+  amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
+  compare_at_amount_cents INTEGER CHECK (compare_at_amount_cents >= 0),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(variant_id, currency_code)
 );
 
--- Order Items
-CREATE TABLE order_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE RESTRICT,
-  pricing_tier_id UUID NOT NULL REFERENCES pricing_tiers(id) ON DELETE RESTRICT,
-  price DECIMAL(10, 2) NOT NULL CHECK (price > 0),
-  project_title TEXT NOT NULL,
-  pricing_tier_name TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE product_variant_options (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  variant_id UUID REFERENCES product_variants(id) ON DELETE CASCADE NOT NULL,
+  option_name TEXT NOT NULL CHECK (length(option_name) >= 1 AND length(option_name) <= 100),
+  option_value TEXT NOT NULL CHECK (length(option_value) >= 1 AND length(option_value) <= 100),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(variant_id, option_name)
 );
 
--- Revenue Splits
-CREATE TABLE revenue_splits (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  order_item_id UUID NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
-  recipient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  amount DECIMAL(10, 2) NOT NULL CHECK (amount >= 0),
-  percentage DECIMAL(5, 2) NOT NULL CHECK (percentage >= 0 AND percentage <= 100),
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'paid', 'failed')),
-  stripe_transfer_id TEXT,
-  paid_at TIMESTAMPTZ,
-  payout_request_id UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE product_digital_files (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  variant_id UUID REFERENCES product_variants(id) ON DELETE CASCADE NOT NULL,
+  file_url TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  file_size_bytes BIGINT,
+  file_format TEXT,
+  is_primary BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Downloaded Items
-CREATE TABLE downloaded_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  order_item_id UUID NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  asset_id UUID REFERENCES assets(id) ON DELETE SET NULL,
-  document_id UUID REFERENCES documents(id) ON DELETE SET NULL,
-  download_url TEXT,
-  downloaded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT must_have_asset_or_document CHECK (
-    (asset_id IS NOT NULL AND document_id IS NULL) OR
-    (asset_id IS NULL AND document_id IS NOT NULL)
-  )
+CREATE TABLE product_print_options (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  variant_id UUID REFERENCES product_variants(id) ON DELETE CASCADE NOT NULL,
+  printer_integration_id TEXT NOT NULL,
+  print_template_id TEXT,
+  paper_type TEXT,
+  finish_type TEXT,
+  dimensions TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE product_seo (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  meta_title TEXT CHECK (length(meta_title) <= 200),
+  meta_description TEXT CHECK (length(meta_description) <= 500),
+  meta_keywords TEXT,
+  og_image_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================================
+-- NOTIFICATIONS & COMMUNICATION
+-- ============================================================================
+
+CREATE TABLE notifications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  notification_type notification_type NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT,
+  resource_type TEXT CHECK (resource_type IN ('project', 'asset', 'order', 'payout', 'collaborator')),
+  resource_id UUID,
+  action_url TEXT,
+  is_read BOOLEAN DEFAULT FALSE,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE asset_comments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
+  author_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  content TEXT NOT NULL CHECK (length(content) >= 1 AND length(content) <= 5000),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE project_comments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  author_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  content TEXT NOT NULL CHECK (length(content) >= 1 AND length(content) <= 5000),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE project_review (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  author_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+  content TEXT NOT NULL CHECK (length(content) >= 1 AND length(content) <= 5000),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+)
+
+CREATE TABLE project_chat (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  author_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  message TEXT NOT NULL CHECK (length(message) >= 1 AND length(message) <= 5000),
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ============================================================================
 -- STRIPE CONNECT TABLES
 -- ============================================================================
 
--- Stripe Connected Accounts
 CREATE TABLE stripe_connected_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
@@ -335,12 +597,11 @@ CREATE TABLE stripe_connected_accounts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Payout Requests
 CREATE TABLE payout_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
+  status payout_status DEFAULT 'pending',
   stripe_transfer_id TEXT,
   requested_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   processed_at TIMESTAMPTZ,
@@ -348,7 +609,6 @@ CREATE TABLE payout_requests (
   error_message TEXT
 );
 
--- Payout Schedules
 CREATE TABLE payout_schedules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
@@ -366,83 +626,9 @@ CREATE TABLE payout_schedules (
 -- ENGAGEMENT TABLES
 -- ============================================================================
 
--- Notifications
-CREATE TABLE notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL,
-  title TEXT NOT NULL,
-  message TEXT NOT NULL,
-  link TEXT,
-  is_read BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Collaboration Request Comments
-CREATE TABLE request_comments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  request_id UUID NOT NULL,
-  request_type TEXT NOT NULL CHECK (request_type IN ('asset', 'document')),
-  author_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  content TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Playtest Reviews
-CREATE TABLE playtest_reviews (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  reviewer_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  rating INTEGER CHECK (rating BETWEEN 1 AND 5),
-  content TEXT NOT NULL,
-  player_count INTEGER,
-  play_time_minutes INTEGER,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Victory Points Transactions
-CREATE TABLE vp_transactions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  amount INTEGER NOT NULL,
-  reason TEXT NOT NULL,
-  description TEXT,
-  reference_type TEXT,
-  reference_id UUID,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Activity Feed
-CREATE TABLE activities (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  actor_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
-  action_type TEXT NOT NULL CHECK (action_type IN ('project_created', 'project_updated', 'collaborator_added', 'asset_added', 'rulebook_updated', 'comment_added')),
-  resource_type TEXT NOT NULL CHECK (resource_type IN ('project', 'rulebook', 'asset', 'collaboration')),
-  resource_id UUID NOT NULL,
-  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-  metadata JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Comments
-CREATE TABLE comments (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  author_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
-  resource_type TEXT NOT NULL CHECK (resource_type IN ('project', 'rulebook', 'asset')),
-  resource_id UUID NOT NULL,
-  parent_id UUID REFERENCES comments(id) ON DELETE CASCADE,
-  content TEXT NOT NULL CHECK (length(content) >= 1 AND length(content) <= 1000),
-  is_resolved BOOLEAN DEFAULT FALSE,
-  position JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Webhook Events (for Stripe)
 CREATE TABLE webhook_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id TEXT UNIQUE NOT NULL,
+  event TEXT UNIQUE NOT NULL,
   event_type TEXT NOT NULL,
   payload JSONB NOT NULL,
   processed BOOLEAN DEFAULT false,
@@ -452,158 +638,190 @@ CREATE TABLE webhook_events (
 );
 
 -- ============================================================================
--- STORAGE BUCKETS (Supabase Storage)
+-- INDEXES FOR PERFORMANCE
 -- ============================================================================
 
-INSERT INTO storage.buckets (id, name, public)
-VALUES
-  ('models', 'models', true),
-  ('illustrations', 'illustrations', true),
-  ('avatars', 'avatars', true)
-ON CONFLICT (id) DO NOTHING;
-
--- Storage policies for models bucket
-CREATE POLICY "Models are publicly accessible" ON storage.objects
-  FOR SELECT USING (bucket_id = 'models');
-
-CREATE POLICY "Authenticated users can upload models" ON storage.objects
-  FOR INSERT WITH CHECK (
-    bucket_id = 'models'
-    AND auth.role() = 'authenticated'
-  );
-
-CREATE POLICY "Users can update own models" ON storage.objects
-  FOR UPDATE USING (
-    bucket_id = 'models'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can delete own models" ON storage.objects
-  FOR DELETE USING (
-    bucket_id = 'models'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
--- Storage policies for illustrations bucket
-CREATE POLICY "Illustrations are publicly accessible" ON storage.objects
-  FOR SELECT USING (bucket_id = 'illustrations');
-
-CREATE POLICY "Authenticated users can upload illustrations" ON storage.objects
-  FOR INSERT WITH CHECK (
-    bucket_id = 'illustrations'
-    AND auth.role() = 'authenticated'
-  );
-
-CREATE POLICY "Users can update own illustrations" ON storage.objects
-  FOR UPDATE USING (
-    bucket_id = 'illustrations'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can delete own illustrations" ON storage.objects
-  FOR DELETE USING (
-    bucket_id = 'illustrations'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
--- Storage policies for avatars bucket
-CREATE POLICY "Avatars are publicly accessible" ON storage.objects
-  FOR SELECT USING (bucket_id = 'avatars');
-
-CREATE POLICY "Authenticated users can upload avatars" ON storage.objects
-  FOR INSERT WITH CHECK (
-    bucket_id = 'avatars'
-    AND auth.role() = 'authenticated'
-  );
-
-CREATE POLICY "Users can update own avatars" ON storage.objects
-  FOR UPDATE USING (
-    bucket_id = 'avatars'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can delete own avatars" ON storage.objects
-  FOR DELETE USING (
-    bucket_id = 'avatars'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
--- ============================================================================
--- INDEXES
--- ============================================================================
-
--- Profiles indexes
-CREATE INDEX idx_profiles_username ON profiles(username);
-CREATE INDEX idx_profiles_creator_roles ON profiles USING GIN(creator_roles);
+-- Users indexes
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_is_active ON users(is_active);
 
 -- Projects indexes
 CREATE INDEX idx_projects_creator_id ON projects(creator_id);
-CREATE INDEX idx_projects_status ON projects(status);
 CREATE INDEX idx_projects_slug ON projects(slug);
-CREATE INDEX idx_projects_type ON projects(project_type);
-CREATE INDEX idx_projects_type_status ON projects(project_type, status);
+CREATE INDEX idx_projects_status ON projects(status);
+CREATE INDEX idx_projects_created_at ON projects(created_at DESC);
+
+-- Project settings indexes
+CREATE INDEX idx_project_settings_project_id ON project_settings(project_id);
+CREATE INDEX idx_project_settings_is_public ON project_settings(is_public);
+
+-- Project licenses indexes
+CREATE INDEX idx_project_licenses_project_id ON project_licenses(project_id);
+CREATE INDEX idx_project_licenses_is_active ON project_licenses(is_active);
+
+-- Project tags indexes
+CREATE INDEX idx_project_tags_project_id ON project_tags(project_id);
+CREATE INDEX idx_project_tags_tag ON project_tags(tag);
+
+-- Project stats indexes
+CREATE INDEX idx_project_stats_project_id ON project_stats(project_id);
 
 -- Collaborators indexes
 CREATE INDEX idx_project_collaborators_project_id ON project_collaborators(project_id);
-CREATE INDEX idx_project_collaborators_collaborator_id ON project_collaborators(collaborator_id);
+CREATE INDEX idx_project_collaborators_user_id ON project_collaborators(user_id);
+CREATE INDEX idx_project_collaborators_status ON project_collaborators(invitation_status);
+
+-- Collaborator permissions indexes
+CREATE INDEX idx_collaborator_permissions_collaborator_id ON project_collaborator_permissions(collaborator_id);
+
+-- Collaborator revenue splits indexes
+CREATE INDEX idx_collaborator_revenue_splits_collaborator_id ON project_collaborator_revenue_splits(collaborator_id);
+CREATE INDEX idx_collaborator_revenue_splits_is_active ON project_collaborator_revenue_splits(is_active);
 
 -- Assets indexes
 CREATE INDEX idx_assets_creator_id ON assets(creator_id);
-CREATE INDEX idx_assets_asset_type ON assets(asset_type);
-CREATE INDEX idx_assets_tags ON assets USING GIN(tags);
+CREATE INDEX idx_assets_project_id ON assets(project_id);
+CREATE INDEX idx_assets_status ON assets(status);
 
--- Documents indexes
-CREATE INDEX idx_documents_creator ON documents(creator_id);
-CREATE INDEX idx_documents_project ON documents(project_id);
-CREATE INDEX idx_documents_status ON documents(status);
-CREATE INDEX idx_documents_public ON documents(is_public);
-CREATE INDEX idx_documents_type ON documents(document_type);
-CREATE INDEX idx_documents_tags ON documents USING GIN(tags);
+-- Asset settings indexes
+CREATE INDEX idx_asset_settings_asset_id ON asset_settings(asset_id);
+CREATE INDEX idx_asset_settings_is_public ON asset_settings(is_public);
+CREATE INDEX idx_asset_settings_is_featured ON asset_settings(is_featured);
+CREATE INDEX idx_asset_settings_seeking_collaborators ON asset_settings(seeking_collaborators);
 
--- Reference indexes
-CREATE INDEX idx_project_asset_references_project ON project_asset_references(project_id);
-CREATE INDEX idx_project_asset_references_asset ON project_asset_references(asset_id);
-CREATE INDEX idx_project_asset_references_status ON project_asset_references(status) WHERE status = 'pending';
-CREATE INDEX idx_project_document_refs_project ON project_document_references(project_id);
-CREATE INDEX idx_project_document_refs_document ON project_document_references(document_id);
-CREATE INDEX idx_project_document_refs_status ON project_document_references(status);
+-- Asset royalties indexes
+CREATE INDEX idx_asset_royalties_asset_id ON asset_royalties(asset_id);
+CREATE INDEX idx_asset_royalties_is_active ON asset_royalties(is_active);
 
--- Marketplace indexes
+-- Asset licenses indexes
+CREATE INDEX idx_asset_licenses_asset_id ON asset_licenses(asset_id);
+CREATE INDEX idx_asset_licenses_is_active ON asset_licenses(is_active);
+
+-- Asset tags indexes
+CREATE INDEX idx_asset_tags_asset_id ON asset_tags(asset_id);
+CREATE INDEX idx_asset_tags_tag ON asset_tags(tag);
+
+-- Asset stats indexes
+CREATE INDEX idx_asset_stats_asset_id ON asset_stats(asset_id);
+
+-- Asset files indexes
+CREATE INDEX idx_asset_images_asset_id ON asset_images(asset_id);
+CREATE INDEX idx_asset_files_asset_id ON asset_files(asset_id);
+
+-- License grants indexes
+CREATE INDEX idx_asset_license_grants_licensor_id ON asset_license_grants(licensor_id);
+CREATE INDEX idx_asset_license_grants_licensee_id ON asset_license_grants(licensee_id);
+CREATE INDEX idx_asset_license_grants_asset_id ON asset_license_grants(asset_id);
+CREATE INDEX idx_asset_license_grants_is_active ON asset_license_grants(is_active);
+
+-- References indexes
+CREATE INDEX idx_project_asset_refs_project_id ON project_asset_references(project_id);
+CREATE INDEX idx_project_asset_refs_asset_id ON project_asset_references(asset_id);
+CREATE INDEX idx_project_asset_refs_requested_by ON project_asset_references(requested_by);
+CREATE INDEX idx_project_asset_refs_status ON project_asset_references(status);
+
+-- Pricing indexes
+CREATE INDEX idx_asset_pricing_asset_id ON asset_pricing(asset_id);
+CREATE INDEX idx_asset_pricing_is_active ON asset_pricing(is_active);
+CREATE INDEX idx_project_pricing_project_id ON project_pricing(project_id);
+CREATE INDEX idx_project_pricing_is_active ON project_pricing(is_active);
+
+-- Orders indexes
 CREATE INDEX idx_orders_buyer_id ON orders(buyer_id);
+CREATE INDEX idx_orders_product_id ON orders(product_id);
+CREATE INDEX idx_orders_variant_id ON orders(variant_id);
 CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_order_number ON orders(order_number);
+CREATE INDEX idx_orders_currency_code ON orders(currency_code);
 CREATE INDEX idx_orders_created_at ON orders(created_at DESC);
-CREATE INDEX idx_order_items_order_id ON order_items(order_id);
-CREATE INDEX idx_order_items_project_id ON order_items(project_id);
-CREATE INDEX idx_revenue_splits_order_item_id ON revenue_splits(order_item_id);
-CREATE INDEX idx_revenue_splits_recipient_id ON revenue_splits(recipient_id);
-CREATE INDEX idx_revenue_splits_status ON revenue_splits(status);
-CREATE INDEX idx_downloaded_items_user_id ON downloaded_items(user_id);
-CREATE INDEX idx_downloaded_items_order_item_id ON downloaded_items(order_item_id);
 
--- Stripe Connect indexes
-CREATE INDEX idx_stripe_connected_accounts_user_id ON stripe_connected_accounts(user_id);
-CREATE INDEX idx_stripe_connected_accounts_stripe_id ON stripe_connected_accounts(stripe_account_id);
+-- Order metadata indexes
+CREATE INDEX idx_order_metadata_order_id ON order_metadata(order_id);
+
+-- Revenue splits indexes
+CREATE INDEX idx_revenue_splits_order_id ON order_revenue_splits(order_id);
+CREATE INDEX idx_revenue_splits_recipient_id ON order_revenue_splits(recipient_id);
+CREATE INDEX idx_revenue_splits_status ON order_revenue_splits(status);
+
+-- Notifications indexes
+CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX idx_notifications_is_read ON notifications(user_id, is_read);
+CREATE INDEX idx_notifications_created_at ON notifications(user_id, created_at DESC);
+
+-- Comments indexes
+CREATE INDEX idx_asset_comments_asset_id ON asset_comments(asset_id);
+CREATE INDEX idx_asset_comments_author_id ON asset_comments(author_id);
+CREATE INDEX idx_project_comments_project_id ON project_comments(project_id);
+CREATE INDEX idx_project_comments_author_id ON project_comments(author_id);
+
+-- Chat indexes
+CREATE INDEX idx_project_chat_project_id ON project_chat(project_id);
+CREATE INDEX idx_project_chat_created_at ON project_chat(project_id, created_at DESC);
+
+-- Stripe indexes
+CREATE INDEX idx_stripe_accounts_user_id ON stripe_connected_accounts(user_id);
 CREATE INDEX idx_payout_requests_user_id ON payout_requests(user_id);
 CREATE INDEX idx_payout_requests_status ON payout_requests(status);
-CREATE INDEX idx_payout_requests_requested_at ON payout_requests(requested_at DESC);
 CREATE INDEX idx_payout_schedules_user_id ON payout_schedules(user_id);
-CREATE INDEX idx_payout_schedules_next_payout ON payout_schedules(next_payout_at) WHERE enabled = true;
 
--- Engagement indexes
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_is_read ON notifications(is_read);
-CREATE INDEX idx_request_comments_request ON request_comments(request_id, request_type);
-CREATE INDEX idx_playtest_reviews_project ON playtest_reviews(project_id);
-CREATE INDEX idx_vp_transactions_user ON vp_transactions(user_id);
-CREATE INDEX idx_activities_actor_id ON activities(actor_id);
-CREATE INDEX idx_activities_project_id ON activities(project_id);
-CREATE INDEX idx_comments_resource ON comments(resource_type, resource_id);
+-- Webhook indexes
+CREATE INDEX idx_webhook_events_event_type ON webhook_events(event_type);
+CREATE INDEX idx_webhook_events_processed ON webhook_events(processed, created_at);
+
+-- Product indexes
+CREATE INDEX idx_products_handle ON products(handle);
+CREATE INDEX idx_products_status ON products(status);
+CREATE INDEX idx_products_is_featured ON products(is_featured);
+CREATE INDEX idx_products_published_at ON products(published_at DESC);
+
+-- Product projects indexes
+CREATE INDEX idx_product_projects_product_id ON product_projects(product_id);
+CREATE INDEX idx_product_projects_project_id ON product_projects(project_id);
+
+-- Product images indexes
+CREATE INDEX idx_product_images_product_id ON product_images(product_id);
+CREATE INDEX idx_product_images_is_primary ON product_images(product_id, is_primary);
+
+-- Product collections indexes
+CREATE INDEX idx_product_collections_handle ON product_collections(handle);
+CREATE INDEX idx_product_collections_is_visible ON product_collections(is_visible);
+
+-- Product collection items indexes
+CREATE INDEX idx_product_collection_items_product_id ON product_collection_items(product_id);
+CREATE INDEX idx_product_collection_items_collection_id ON product_collection_items(collection_id);
+
+-- Product tags indexes
+CREATE INDEX idx_product_tags_product_id ON product_tags(product_id);
+CREATE INDEX idx_product_tags_tag ON product_tags(tag);
+
+-- Product variants indexes
+CREATE INDEX idx_product_variants_product_id ON product_variants(product_id);
+CREATE INDEX idx_product_variants_sku ON product_variants(sku);
+CREATE INDEX idx_product_variants_is_available ON product_variants(is_available);
+
+-- Product variant prices indexes
+CREATE INDEX idx_product_variant_prices_variant_id ON product_variant_prices(variant_id);
+CREATE INDEX idx_product_variant_prices_currency_code ON product_variant_prices(currency_code);
+CREATE INDEX idx_product_variant_prices_is_active ON product_variant_prices(is_active);
+
+-- Product variant options indexes
+CREATE INDEX idx_product_variant_options_variant_id ON product_variant_options(variant_id);
+
+-- Product digital files indexes
+CREATE INDEX idx_product_digital_files_variant_id ON product_digital_files(variant_id);
+
+-- Product print options indexes
+CREATE INDEX idx_product_print_options_variant_id ON product_print_options(variant_id);
+
+-- Product SEO indexes
+CREATE INDEX idx_product_seo_product_id ON product_seo(product_id);
 
 -- ============================================================================
--- FUNCTIONS
+-- TRIGGERS
 -- ============================================================================
 
--- Updated at trigger function
+-- Trigger function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -612,319 +830,270 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Generate order number
-CREATE OR REPLACE FUNCTION generate_order_number()
-RETURNS TEXT AS $$
-DECLARE
-  new_number TEXT;
-  exists_check BOOLEAN;
-BEGIN
-  LOOP
-    new_number := 'WS-' || to_char(now(), 'YYYYMMDD') || '-' || LPAD(floor(random() * 100000)::TEXT, 5, '0');
-    SELECT EXISTS(SELECT 1 FROM orders WHERE order_number = new_number) INTO exists_check;
-    IF NOT exists_check THEN EXIT; END IF;
-  END LOOP;
-  RETURN new_number;
-END;
-$$ LANGUAGE plpgsql;
+-- Apply updated_at trigger to all tables with updated_at column
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Calculate revenue splits
-CREATE OR REPLACE FUNCTION calculate_revenue_splits(
-  p_order_item_id UUID,
-  p_project_id UUID,
-  p_price DECIMAL
-)
-RETURNS void AS $$
-DECLARE
-  v_creator_id UUID;
-  v_total_royalty_percentage DECIMAL := 0;
-  v_creator_percentage DECIMAL;
-  v_platform_fee_percentage DECIMAL := 10;
-  v_platform_amount DECIMAL;
-  v_creator_amount DECIMAL;
-  v_collaborator_amount DECIMAL;
-  v_collaborator RECORD;
-  v_platform_account_id UUID := '00000000-0000-0000-0000-000000000001';
-BEGIN
-  SELECT creator_id INTO v_creator_id FROM projects WHERE id = p_project_id;
+CREATE TRIGGER update_users_addresses_updated_at BEFORE UPDATE ON users_addresses
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-  SELECT COALESCE(SUM(royalty_percentage), 0) INTO v_total_royalty_percentage
-  FROM project_asset_references WHERE project_id = p_project_id AND status = 'approved';
-
-  v_platform_amount := p_price * v_platform_fee_percentage / 100;
-
-  IF v_platform_amount > 0 THEN
-    INSERT INTO revenue_splits (order_item_id, recipient_id, amount, percentage, status)
-    VALUES (p_order_item_id, v_platform_account_id, v_platform_amount, v_platform_fee_percentage, 'paid');
-  END IF;
-
-  v_creator_percentage := 100 - v_platform_fee_percentage - v_total_royalty_percentage;
-  v_creator_amount := p_price * v_creator_percentage / 100;
-
-  IF v_creator_amount > 0 THEN
-    INSERT INTO revenue_splits (order_item_id, recipient_id, amount, percentage)
-    VALUES (p_order_item_id, v_creator_id, v_creator_amount, v_creator_percentage);
-  END IF;
-
-  FOR v_collaborator IN
-    SELECT DISTINCT a.creator_id, par.royalty_percentage
-    FROM project_asset_references par
-    JOIN assets a ON a.id = par.asset_id
-    WHERE par.project_id = p_project_id AND par.status = 'approved' AND a.creator_id != v_creator_id
-  LOOP
-    v_collaborator_amount := p_price * v_collaborator.royalty_percentage / 100;
-    IF v_collaborator_amount > 0 THEN
-      INSERT INTO revenue_splits (order_item_id, recipient_id, amount, percentage)
-      VALUES (p_order_item_id, v_collaborator.creator_id, v_collaborator_amount, v_collaborator.royalty_percentage);
-    END IF;
-  END LOOP;
-END;
-$$ LANGUAGE plpgsql;
-
--- Earnings calculation functions
-CREATE OR REPLACE FUNCTION get_available_balance(p_user_id UUID)
-RETURNS DECIMAL AS $$
-BEGIN
-  RETURN COALESCE((
-    SELECT SUM(amount) FROM revenue_splits
-    WHERE recipient_id = p_user_id AND status = 'processing'
-  ), 0);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION get_pending_earnings(p_user_id UUID)
-RETURNS DECIMAL AS $$
-BEGIN
-  RETURN COALESCE((
-    SELECT SUM(amount) FROM revenue_splits
-    WHERE recipient_id = p_user_id AND status = 'pending'
-  ), 0);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION get_lifetime_earnings(p_user_id UUID)
-RETURNS DECIMAL AS $$
-BEGIN
-  RETURN COALESCE((
-    SELECT SUM(amount) FROM revenue_splits WHERE recipient_id = p_user_id
-  ), 0);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Calculate next payout date
-CREATE OR REPLACE FUNCTION calculate_next_payout_date(
-  p_frequency TEXT,
-  p_day_of_month INTEGER DEFAULT 1
-)
-RETURNS TIMESTAMPTZ AS $$
-DECLARE
-  v_next_date TIMESTAMPTZ;
-  v_current_date TIMESTAMPTZ := now();
-BEGIN
-  CASE p_frequency
-    WHEN 'weekly' THEN
-      v_next_date := date_trunc('week', v_current_date) + interval '7 days';
-    WHEN 'biweekly' THEN
-      v_next_date := date_trunc('week', v_current_date) + interval '14 days';
-    WHEN 'monthly' THEN
-      IF EXTRACT(DAY FROM v_current_date) >= p_day_of_month THEN
-        v_next_date := date_trunc('month', v_current_date) + interval '1 month';
-      ELSE
-        v_next_date := date_trunc('month', v_current_date);
-      END IF;
-      v_next_date := v_next_date + (p_day_of_month - 1) * interval '1 day';
-    ELSE
-      v_next_date := v_current_date + interval '1 month';
-  END CASE;
-  RETURN v_next_date;
-END;
-$$ LANGUAGE plpgsql;
-
--- Victory Points functions
-CREATE OR REPLACE FUNCTION award_vp(
-  p_user_id UUID,
-  p_amount INTEGER,
-  p_reason TEXT,
-  p_description TEXT DEFAULT NULL,
-  p_reference_type TEXT DEFAULT NULL,
-  p_reference_id UUID DEFAULT NULL
-)
-RETURNS void AS $$
-BEGIN
-  INSERT INTO vp_transactions (user_id, amount, reason, description, reference_type, reference_id)
-  VALUES (p_user_id, p_amount, p_reason, p_description, p_reference_type, p_reference_id);
-
-  UPDATE profiles SET total_vp = total_vp + p_amount WHERE id = p_user_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- ============================================================================
--- TRIGGERS
--- ============================================================================
-
--- Updated at triggers
-CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
+CREATE TRIGGER update_users_links_updated_at BEFORE UPDATE ON users_links
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_project_settings_updated_at BEFORE UPDATE ON project_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_project_licenses_updated_at BEFORE UPDATE ON project_licenses
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_project_stats_updated_at BEFORE UPDATE ON project_stats
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_project_collaborators_updated_at BEFORE UPDATE ON project_collaborators
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_collaborator_revenue_splits_updated_at BEFORE UPDATE ON project_collaborator_revenue_splits
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_assets_updated_at BEFORE UPDATE ON assets
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_comments_updated_at BEFORE UPDATE ON comments
+CREATE TRIGGER update_asset_settings_updated_at BEFORE UPDATE ON asset_settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_documents_updated_at BEFORE UPDATE ON documents
+CREATE TRIGGER update_asset_royalties_updated_at BEFORE UPDATE ON asset_royalties
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Order number trigger
-CREATE OR REPLACE FUNCTION set_order_number()
+CREATE TRIGGER update_asset_licenses_updated_at BEFORE UPDATE ON asset_licenses
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_asset_stats_updated_at BEFORE UPDATE ON asset_stats
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_asset_images_updated_at BEFORE UPDATE ON asset_images
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_asset_files_updated_at BEFORE UPDATE ON asset_files
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_licenses_updated_at BEFORE UPDATE ON licenses
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_asset_license_grants_updated_at BEFORE UPDATE ON asset_license_grants
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_project_asset_refs_updated_at BEFORE UPDATE ON project_asset_references
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_asset_pricing_updated_at BEFORE UPDATE ON asset_pricing
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_project_pricing_updated_at BEFORE UPDATE ON project_pricing
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_asset_comments_updated_at BEFORE UPDATE ON asset_comments
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_project_comments_updated_at BEFORE UPDATE ON project_comments
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_order_revenue_splits_updated_at BEFORE UPDATE ON order_revenue_splits
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_stripe_accounts_updated_at BEFORE UPDATE ON stripe_connected_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_payout_schedules_updated_at BEFORE UPDATE ON payout_schedules
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_product_images_updated_at BEFORE UPDATE ON product_images
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_product_collections_updated_at BEFORE UPDATE ON product_collections
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_product_variants_updated_at BEFORE UPDATE ON product_variants
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_product_variant_prices_updated_at BEFORE UPDATE ON product_variant_prices
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_product_digital_files_updated_at BEFORE UPDATE ON product_digital_files
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_product_print_options_updated_at BEFORE UPDATE ON product_print_options
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_product_seo_updated_at BEFORE UPDATE ON product_seo
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to create user profile when auth.users record is created
+CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.order_number IS NULL THEN
-    NEW.order_number := generate_order_number();
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_set_order_number BEFORE INSERT ON orders
-  FOR EACH ROW EXECUTE FUNCTION set_order_number();
-
--- Payout schedule trigger
-CREATE OR REPLACE FUNCTION update_next_payout_date()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.enabled THEN
-    NEW.next_payout_at := calculate_next_payout_date(NEW.frequency, NEW.day_of_month);
-  ELSE
-    NEW.next_payout_at := NULL;
-  END IF;
-  NEW.updated_at := now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_update_next_payout_date
-  BEFORE INSERT OR UPDATE ON payout_schedules
-  FOR EACH ROW EXECUTE FUNCTION update_next_payout_date();
-
--- Profile creation trigger
-CREATE OR REPLACE FUNCTION create_profile_for_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO profiles (id, email, full_name)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', '')
-  );
+  INSERT INTO users (id, email, created_at, updated_at)
+  VALUES (NEW.id, NEW.email, NOW(), NOW());
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION create_profile_for_user();
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- Trigger to create default settings when asset is created
+CREATE OR REPLACE FUNCTION handle_new_asset()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO asset_settings (asset_id, created_at, updated_at)
+  VALUES (NEW.id, NOW(), NOW());
+
+  INSERT INTO asset_stats (asset_id, created_at, updated_at)
+  VALUES (NEW.id, NOW(), NOW());
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER on_asset_created
+  AFTER INSERT ON assets
+  FOR EACH ROW EXECUTE FUNCTION handle_new_asset();
+
+-- Trigger to create default settings when project is created
+CREATE OR REPLACE FUNCTION handle_new_project()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO project_settings (project_id, created_at, updated_at)
+  VALUES (NEW.id, NOW(), NOW());
+
+  INSERT INTO project_stats (project_id, created_at, updated_at)
+  VALUES (NEW.id, NOW(), NOW());
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER on_project_created
+  AFTER INSERT ON projects
+  FOR EACH ROW EXECUTE FUNCTION handle_new_project();
 
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================================================
 
 -- Enable RLS on all tables
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users_addresses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_licenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_stats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_collaborators ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_collaborator_permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_collaborator_revenue_splits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_royalties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_licenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE licenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_license_grants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_asset_references ENABLE ROW LEVEL SECURITY;
-ALTER TABLE project_document_references ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pricing_tiers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_pricing ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_pricing ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE revenue_splits ENABLE ROW LEVEL SECURITY;
-ALTER TABLE downloaded_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_metadata ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_revenue_splits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_collections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_collection_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_variant_prices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_variant_options ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_digital_files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_print_options ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_seo ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_chat ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stripe_connected_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payout_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payout_schedules ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE request_comments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE playtest_reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE vp_transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
-ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 
--- Profiles policies
-CREATE POLICY "Public profiles viewable by everyone" ON profiles FOR SELECT USING (is_active = true);
-CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+-- Users policies
+CREATE POLICY "Users can view their own profile" ON users FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update their own profile" ON users FOR UPDATE USING (auth.uid() = id);
 
--- Projects policies
-CREATE POLICY "Public projects viewable by everyone" ON projects FOR SELECT USING (is_public = true OR auth.uid() = creator_id);
-CREATE POLICY "Collaborators can view projects" ON projects FOR SELECT USING (
-  auth.uid() IN (
-    SELECT collaborator_id FROM project_collaborators
-    WHERE project_id = projects.id AND invitation_status = 'accepted' AND is_active = true
+-- Products policies (public read for active products)
+CREATE POLICY "Anyone can view active products" ON products FOR SELECT USING (status = 'active');
+CREATE POLICY "Project creators can manage products" ON products FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM product_projects pp
+    JOIN projects p ON p.id = pp.project_id
+    WHERE pp.product_id = products.id AND p.creator_id = auth.uid()
   )
 );
-CREATE POLICY "Project creators can manage projects" ON projects FOR ALL USING (auth.uid() = creator_id);
-CREATE POLICY "Anyone can create projects" ON projects FOR INSERT WITH CHECK (auth.uid() = creator_id);
 
--- Assets policies
-CREATE POLICY "Public assets viewable" ON assets FOR SELECT USING (is_public = true);
-CREATE POLICY "Asset creators can manage assets" ON assets FOR ALL USING (auth.uid() = creator_id);
-CREATE POLICY "Anyone can create assets" ON assets FOR INSERT WITH CHECK (auth.uid() = creator_id);
+-- Product variants policies
+CREATE POLICY "Anyone can view variants of active products" ON product_variants FOR SELECT USING (
+  EXISTS (SELECT 1 FROM products WHERE id = product_variants.product_id AND status = 'active')
+);
 
--- Documents policies
-CREATE POLICY "Public documents viewable" ON documents FOR SELECT USING (is_public = true);
-CREATE POLICY "Users can view own documents" ON documents FOR SELECT USING (auth.uid() = creator_id);
-CREATE POLICY "Users can create documents" ON documents FOR INSERT WITH CHECK (auth.uid() = creator_id);
-CREATE POLICY "Users can update own documents" ON documents FOR UPDATE USING (auth.uid() = creator_id);
-CREATE POLICY "Users can delete own documents" ON documents FOR DELETE USING (auth.uid() = creator_id);
+-- Product variant prices policies  
+CREATE POLICY "Anyone can view active variant prices" ON product_variant_prices FOR SELECT USING (
+  is_active = true AND EXISTS (
+    SELECT 1 FROM product_variants pv
+    JOIN products p ON p.id = pv.product_id
+    WHERE pv.id = product_variant_prices.variant_id AND p.status = 'active'
+  )
+);
+
+-- Product images policies
+CREATE POLICY "Anyone can view product images" ON product_images FOR SELECT USING (
+  EXISTS (SELECT 1 FROM products WHERE id = product_images.product_id AND status = 'active')
+);
+
+-- Product collections policies
+CREATE POLICY "Anyone can view visible collections" ON product_collections FOR SELECT USING (is_visible = true);
+CREATE POLICY "Anyone can view collection items" ON product_collection_items FOR SELECT USING (true);
+
+-- Product tags, options, SEO (public read)
+CREATE POLICY "Anyone can view product tags" ON product_tags FOR SELECT USING (true);
+CREATE POLICY "Anyone can view variant options" ON product_variant_options FOR SELECT USING (true);
+CREATE POLICY "Anyone can view product SEO" ON product_seo FOR SELECT USING (true);
+
+-- Digital files - only after purchase
+CREATE POLICY "Buyers can view digital files after purchase" ON product_digital_files FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM orders o
+    WHERE o.variant_id = product_digital_files.variant_id
+    AND o.buyer_id = auth.uid()
+    AND o.status = 'completed'
+  )
+);
 
 -- Orders policies
-CREATE POLICY "Users can view own orders" ON orders FOR SELECT USING (auth.uid() = buyer_id);
-CREATE POLICY "Users can create orders" ON orders FOR INSERT WITH CHECK (auth.uid() = buyer_id);
-CREATE POLICY "Users can update own orders" ON orders FOR UPDATE USING (auth.uid() = buyer_id);
-
--- Revenue splits policies
-CREATE POLICY "Users can view own revenue" ON revenue_splits FOR SELECT USING (auth.uid() = recipient_id);
-
--- Stripe Connect policies
-CREATE POLICY "Users can view own stripe account" ON stripe_connected_accounts FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage own stripe account" ON stripe_connected_accounts FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can view own payout requests" ON payout_requests FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can create payout requests" ON payout_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can view own payout schedule" ON payout_schedules FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage own payout schedule" ON payout_schedules FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can view their own orders" ON orders FOR SELECT USING (buyer_id = auth.uid());
+CREATE POLICY "Users can create orders" ON orders FOR INSERT WITH CHECK (buyer_id = auth.uid());
 
 -- Notifications policies
-CREATE POLICY "Users can view own notifications" ON notifications FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update own notifications" ON notifications FOR UPDATE USING (auth.uid() = user_id);
-
--- VP Transactions policies
-CREATE POLICY "Users can view own vp transactions" ON vp_transactions FOR SELECT USING (auth.uid() = user_id);
-
--- Comments policies
-CREATE POLICY "Users can view comments on accessible resources" ON comments FOR SELECT USING (
-  CASE
-    WHEN resource_type = 'project' THEN
-      resource_id::uuid IN (SELECT id FROM projects WHERE creator_id = auth.uid() OR is_public = true)
-    WHEN resource_type = 'asset' THEN
-      resource_id::uuid IN (SELECT id FROM assets WHERE creator_id = auth.uid() OR is_public = true)
-    ELSE false
-  END
-);
-CREATE POLICY "Users can create comments" ON comments FOR INSERT WITH CHECK (auth.uid() = author_id);
-CREATE POLICY "Users can update own comments" ON comments FOR UPDATE USING (auth.uid() = author_id);
-
--- ============================================================================
--- COMPLETE
--- ============================================================================
-
-COMMENT ON SCHEMA public IS 'Workshop Platform - Consolidated Schema v1.0';
+CREATE POLICY "Users can view their own notifications" ON notifications FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can update their own notifications" ON notifications FOR UPDATE USING (user_id = auth.uid());

@@ -11,8 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ProjectService } from "@/lib/services/project-service";
+import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
+import { getAllProjects } from "@/lib/sdk/server";
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
@@ -24,20 +25,27 @@ export default async function ProjectsPage() {
     redirect("/auth/login");
   }
 
-  const projectService = new ProjectService(supabase);
-  const result = await projectService.getUserProjects(user.id);
+  // Fetch projects using SDK
+  const { data: projectsData, error } = await getAllProjects({
+    creatorId: user.id,
+  });
 
-  if (result.error) {
+  if (error) {
     return (
       <MainLayout user={user} breadcrumbs={[{ label: "My Projects" }]}>
         <Card className="p-12 text-center">
-          <p className="text-red-600">Error loading projects: {result.error}</p>
+          <p className="text-red-600">Error loading projects: {error.message}</p>
         </Card>
       </MainLayout>
     );
   }
 
-  const projects = result.data || [];
+  // Transform data to include is_public and tags array
+  const projects = projectsData?.map((project) => ({
+    ...project,
+    is_public: project.project_settings?.[0]?.is_public || false,
+    tags: project.project_tags?.map((t) => t.tag) || [],
+  })) || [];
 
   return (
     <MainLayout user={user} breadcrumbs={[{ label: "My Projects" }]}>
@@ -58,22 +66,20 @@ export default async function ProjectsPage() {
         </div>
 
         {projects.length === 0 ? (
-          <Card className="p-12 text-center">
-            <div className="max-w-md mx-auto space-y-4">
-              <BookOpen className="w-16 h-16 text-muted-foreground mx-auto" />
-              <h3 className="text-lg font-semibold text-slate-900">
-                No projects yet
-              </h3>
-              <p className="text-slate-600">
-                Create your first game project to get started
-              </p>
-              <Button asChild>
-                <Link href="/projects/new">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Project
-                </Link>
-              </Button>
-            </div>
+          <Card>
+            <EmptyState
+              icon={<BookOpen className="w-6 h-6" />}
+              title="No projects yet"
+              description="Create your first game project to get started"
+              action={
+                <Button asChild>
+                  <Link href="/projects/new">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Project
+                  </Link>
+                </Button>
+              }
+            />
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
