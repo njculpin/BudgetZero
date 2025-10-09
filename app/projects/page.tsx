@@ -12,21 +12,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { createClient } from "@/lib/supabase/server";
-import { getAllProjects } from "@/lib/sdk/server";
+import { useAdminGetAllProjects } from "@/lib/sdk/server/use-admin-get-all-projects";
+import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
 
 export default async function ProjectsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
+  const user = await useAdminGetMe();
 
   // Fetch projects using SDK
-  const { data: projectsData, error } = await getAllProjects({
+  const { data: projectsData, error } = await useAdminGetAllProjects({
     creatorId: user.id,
   });
 

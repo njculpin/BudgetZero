@@ -1,8 +1,10 @@
+import { LoadingLayout } from "@/components/layouts/loading-layout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProjectsLoading() {
   return (
+    <LoadingLayout>
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="space-y-2">
@@ -43,5 +45,6 @@ export default function ProjectsLoading() {
         ))}
       </div>
     </div>
+    </LoadingLayout>
   );
 }

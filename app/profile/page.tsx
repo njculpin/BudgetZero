@@ -1,15 +1,3 @@
-import {
-  Activity,
-  Award,
-  Calendar,
-  Globe,
-  MapPin,
-  Settings,
-  Star,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -21,17 +9,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
+import { useAdminGetMe } from "@/lib/sdk/server";
+import {
+  Activity,
+  Award,
+  Calendar,
+  Globe,
+  MapPin,
+  Settings,
+  Star,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
+  const user = await useAdminGetMe();
 
   const userName = user.user_metadata?.full_name || user.email || "User";
   const userInitials = userName

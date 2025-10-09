@@ -1,6 +1,3 @@
-import { ArrowLeft, Download, Eye, Heart, MessageSquare } from "lucide-react";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { createClient } from "@/lib/supabase/server";
+import { useAdminGetAssetById } from "@/lib/sdk/server/use-admin-get-asset-by-id";
+import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
+import { ArrowLeft, Download, Eye, Heart, MessageSquare } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 interface AssetDetailPageProps {
   params: Promise<{
@@ -24,34 +25,10 @@ export default async function AssetDetailPage({
   params,
 }: AssetDetailPageProps) {
   const { id } = await params;
-  const supabase = await createClient();
+  const user = await useAdminGetMe();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
-
-  // Fetch asset with all related data
-  const { data: asset, error } = await supabase
-    .from("assets")
-    .select(
-      `
-      *,
-      creator:creator_id(id, full_name, username, avatar_url),
-      asset_settings(*),
-      asset_stats(*),
-      asset_tags(tag),
-      asset_images(*),
-      asset_files(*),
-      asset_royalties(*),
-      asset_licenses(*)
-    `
-    )
-    .eq("id", id)
-    .single();
+  // Fetch asset with all related data using SDK
+  const { data: asset, error } = await useAdminGetAssetById(id);
 
   if (error || !asset) {
     notFound();
@@ -67,8 +44,8 @@ export default async function AssetDetailPage({
   }
 
   const stats = asset.asset_stats?.[0];
-  const activeRoyalty = asset.asset_royalties?.find((r) => r.is_active);
-  const activeLicense = asset.asset_licenses?.find((l) => l.is_active);
+  const activeRoyalty = asset.asset_royalties?.find((r: { is_active: boolean }) => r.is_active);
+  const activeLicense = asset.asset_licenses?.find((l: { is_active: boolean }) => l.is_active);
 
   const breadcrumbs = [
     { label: "Assets", href: "/assets" },
@@ -139,8 +116,8 @@ export default async function AssetDetailPage({
                 <CardContent>
                   <div className="space-y-3">
                     {asset.asset_files
-                      .sort((a, b) => a.display_order - b.display_order)
-                      .map((file) => (
+                      .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)
+                      .map((file: { id: string; file_name: string | null; file_format: string | null; file_size_bytes: number | null; file_url: string }) => (
                         <div
                           key={file.id}
                           className="flex items-center justify-between p-3 border rounded-lg"
@@ -158,7 +135,7 @@ export default async function AssetDetailPage({
                               {file.file_size_bytes && (
                                 <span>
                                   {(file.file_size_bytes / 1024 / 1024).toFixed(
-                                    2
+                                    2,
                                   )}{" "}
                                   MB
                                 </span>
@@ -192,8 +169,8 @@ export default async function AssetDetailPage({
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {asset.asset_images
-                      .sort((a, b) => a.display_order - b.display_order)
-                      .map((image) => (
+                      .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)
+                      .map((image: { id: string; file_url: string }) => (
                         <div
                           key={image.id}
                           className="aspect-square bg-muted rounded-lg overflow-hidden"
@@ -231,7 +208,11 @@ export default async function AssetDetailPage({
                       </Link>
                     </div>
                   </div>
-                  <Badge variant={asset.status === "active" ? "default" : "secondary"}>
+                  <Badge
+                    variant={
+                      asset.status === "active" ? "default" : "secondary"
+                    }
+                  >
                     {asset.status}
                   </Badge>
                 </div>
@@ -243,7 +224,7 @@ export default async function AssetDetailPage({
                   <Separator />
                   <CardContent className="pt-4">
                     <div className="flex flex-wrap gap-2">
-                      {asset.asset_tags.map((tag, idx) => (
+                      {asset.asset_tags.map((tag: { tag: string }, idx: number) => (
                         <Badge key={idx} variant="outline">
                           {tag.tag}
                         </Badge>
@@ -274,7 +255,9 @@ export default async function AssetDetailPage({
                         <Download className="w-4 h-4" />
                         <span>Downloads</span>
                       </div>
-                      <span className="font-medium">{stats.download_count}</span>
+                      <span className="font-medium">
+                        {stats.download_count}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -302,7 +285,9 @@ export default async function AssetDetailPage({
                   <CardTitle>License</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Badge className="capitalize">{activeLicense.license_type}</Badge>
+                  <Badge className="capitalize">
+                    {activeLicense.license_type}
+                  </Badge>
                   {activeLicense.license_terms && (
                     <p className="text-sm text-muted-foreground mt-3">
                       {activeLicense.license_terms}

@@ -1,8 +1,10 @@
+import { LoadingLayout } from "@/components/layouts/loading-layout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AssetsLoading() {
   return (
+    <LoadingLayout>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -47,5 +49,6 @@ export default function AssetsLoading() {
         ))}
       </div>
     </div>
+    </LoadingLayout>
   );
 }

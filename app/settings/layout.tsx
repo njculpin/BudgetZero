@@ -1,20 +1,12 @@
-import { redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { createClient } from "@/lib/supabase/server";
+import { useAdminGetMe } from "@/lib/sdk/server";
 
 export default async function SettingsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
+  const user = await useAdminGetMe();
 
   return (
     <MainLayout user={user} breadcrumbs={[{ label: "Settings" }]}>
@@ -28,9 +20,7 @@ export default async function SettingsLayout({
           </div>
         </div>
 
-        <div>
-          {children}
-        </div>
+        <div>{children}</div>
       </div>
     </MainLayout>
   );

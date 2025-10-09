@@ -30,10 +30,8 @@ import {
   Home,
   Library,
   LogOut,
-  Search,
   Settings,
   ShoppingBag,
-  Upload,
   User,
   Users,
 } from "lucide-react";

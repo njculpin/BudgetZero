@@ -1,18 +1,7 @@
-import {
-  CheckCircle,
-  Search,
-  Upload,
-  FolderOpen,
-  FileBox,
-  Eye,
-  DollarSign,
-} from "lucide-react";
-import { redirect } from "next/navigation";
 import { AttributionRequestCard } from "@/components/blocks/projects/project-request-card";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -21,91 +10,86 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { createClient } from "@/lib/supabase/server";
 import {
-  getUserAssets,
-  getAssetStats,
-  countUserProjects,
-  countUserAssets,
+  useAdminCountUserAssets,
+  useAdminCountUserProjects,
+  useAdminGetAssetReferences,
+  useAdminGetAssetRoyalties,
+  useAdminGetAssetStats,
+  useAdminGetAssets,
+  useAdminGetProjects,
+  useAdminGetUserAssets,
+  useAdminGetUsers,
 } from "@/lib/sdk/server";
-import {
-  getAssetReferences,
-  getAssets,
-  getProjects,
-  getUsers,
-  getAssetRoyalties,
-} from "@/lib/sdk/server";
+import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
 import type { EnrichedAssetReference } from "@/lib/types/database";
+import {
+  CheckCircle,
+  DollarSign,
+  Eye,
+  FileBox,
+  FolderOpen,
+  Search,
+  Upload,
+} from "lucide-react";
+import Link from "next/link";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
+  const user = await useAdminGetMe();
 
   // Fetch user stats in parallel using SDK
-  const [
-    { count: projectCount },
-    { count: assetCount },
-    { data: userAssets },
-  ] = await Promise.all([
-    countUserProjects(user.id),
-    countUserAssets(user.id),
-    getUserAssets(user.id),
-  ]);
+  const [{ count: projectCount }, { count: assetCount }, { data: userAssets }] =
+    await Promise.all([
+      useAdminCountUserProjects(user.id),
+      useAdminCountUserAssets(user.id),
+      useAdminGetUserAssets(user.id),
+    ]);
 
   // Get asset stats for user's assets
   const assetIds = userAssets?.map((a) => a.id) || [];
-  let totalViews = 0;
-  let totalDownloads = 0;
 
-  if (assetIds.length > 0) {
-    const { data: assetStatsData } = await getAssetStats(assetIds);
+  // Always call SDK functions unconditionally - they handle empty arrays
+  const { data: assetStatsData } = await useAdminGetAssetStats(assetIds);
 
-    totalViews =
-      assetStatsData?.reduce((sum, stat) => sum + (stat.view_count || 0), 0) ||
-      0;
-    totalDownloads =
-      assetStatsData?.reduce(
-        (sum, stat) => sum + (stat.download_count || 0),
-        0,
-      ) || 0;
-  }
+  const totalViews =
+    assetStatsData?.reduce((sum, stat) => sum + (stat.view_count || 0), 0) || 0;
+  const totalDownloads =
+    assetStatsData?.reduce(
+      (sum, stat) => sum + (stat.download_count || 0),
+      0,
+    ) || 0;
 
   // Fetch pending asset references using SDK
+  const [
+    { data: refs },
+    { data: assets },
+    { data: projects },
+    { data: creators },
+  ] = await Promise.all([
+    useAdminGetAssetReferences({ assetIds, status: "pending" }),
+    useAdminGetAssets(assetIds),
+    useAdminGetProjects([]),
+    useAdminGetUsers([]),
+  ]);
+
+  // Get royalty percentages if they exist
+  const royaltyIds =
+    refs
+      ?.map((r: { asset_royalty_id?: string }) => r.asset_royalty_id)
+      .filter(Boolean) || [];
+
+  const { data: royalties } = await useAdminGetAssetRoyalties(
+    royaltyIds as string[],
+  );
+
+  // Build asset references
   let assetReferences: EnrichedAssetReference[] = [];
 
   if (assetIds.length > 0) {
-    const [{ data: refs }, { data: assets }, { data: projects }, { data: creators }] =
-      await Promise.all([
-        getAssetReferences({ assetIds, status: "pending" }),
-        getAssets(assetIds),
-        getProjects([]),
-        getUsers([]),
-      ]);
-
     const assetMap = new Map(assets?.map((a) => [a.id, a]));
     const projectMap = new Map(projects?.map((p) => [p.id, p]));
     const creatorMap = new Map(creators?.map((c) => [c.id, c]));
-
-    // Get royalty percentages if they exist
-    const royaltyIds =
-      refs
-        ?.map((r) => (r as { asset_royalty_id?: string }).asset_royalty_id)
-        .filter(Boolean) || [];
-    let royaltyMap = new Map<string, number>();
-
-    if (royaltyIds.length > 0) {
-      const { data: royalties } = await getAssetRoyalties(
-        royaltyIds as string[],
-      );
-
-      royaltyMap = new Map(royalties?.map((r) => [r.id, r.percentage]));
-    }
+    const royaltyMap = new Map(royalties?.map((r) => [r.id, r.percentage]));
 
     const enrichedRefs: EnrichedAssetReference[] = [];
 
@@ -119,9 +103,8 @@ export default async function DashboardPage() {
         full_name: null,
       };
 
-      const royaltyPercentage = (
-        ref as { asset_royalty_id?: string }
-      ).asset_royalty_id
+      const royaltyPercentage = (ref as { asset_royalty_id?: string })
+        .asset_royalty_id
         ? royaltyMap.get(
             (ref as { asset_royalty_id: string }).asset_royalty_id,
           ) || 0

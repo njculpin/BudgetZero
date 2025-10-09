@@ -1,4 +1,4 @@
-import { MainLayout } from "@/components/layouts/main-layout";
+import { LoadingLayout } from "@/components/layouts/loading-layout";
 import {
   Card,
   CardContent,
@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardLoading() {
   return (
+    <LoadingLayout>
     <div className="space-y-6">
       <div className="space-y-2">
         <Skeleton className="h-9 w-48" />
@@ -60,5 +61,6 @@ export default function DashboardLoading() {
         </CardContent>
       </Card>
     </div>
+    </LoadingLayout>
   );
 }

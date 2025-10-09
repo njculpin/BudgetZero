@@ -1,6 +1,3 @@
-import { Box, Image, Plus, Search as SearchIcon, Upload } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { AssetSearch } from "@/components/blocks/assets/asset-search";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { createClient } from "@/lib/supabase/server";
+import { useAdminGetAllAssets } from "@/lib/sdk/server/use-admin-get-all-assets";
+import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
+import { Box, Image, Plus, Search as SearchIcon, Upload } from "lucide-react";
+import Link from "next/link";
 
 interface AssetsPageProps {
   searchParams: Promise<{
@@ -31,26 +31,23 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
   const limit = 24;
   const offset = (page - 1) * limit;
 
-  const supabase = await createClient();
+  const user = await useAdminGetMe();
 
+  // Use SDK to get all public assets
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: assets,
+    count,
+    error,
+  } = await useAdminGetAllAssets({
+    assetType,
+    search,
+    publicOnly: true,
+    limit,
+    offset,
+  });
 
-  if (!user) {
-    redirect("/auth/login");
-  }
-
-  // First get asset IDs that match the search criteria and are public
-  const { data: assetSettings } = await supabase
-    .from("asset_settings")
-    .select("asset_id")
-    .eq("is_public", true);
-
-  const publicAssetIds = assetSettings?.map((s) => s.asset_id) || [];
-
-  if (publicAssetIds.length === 0) {
-    // No public assets
+  if (error) {
+    // Handle error gracefully
     const breadcrumbs = [{ label: "Asset Library" }];
     return (
       <MainLayout user={user} breadcrumbs={breadcrumbs}>
@@ -65,38 +62,13 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
           </div>
           <Card className="text-center py-12">
             <CardContent>
-              <p>No public assets available yet.</p>
+              <p>Error loading assets. Please try again later.</p>
             </CardContent>
           </Card>
         </div>
       </MainLayout>
     );
   }
-
-  // Build query for assets
-  let query = supabase
-    .from("assets")
-    .select(
-      `
-      *,
-      creator:creator_id(id, full_name, username, avatar_url)
-    `,
-      { count: "exact" },
-    )
-    .in("id", publicAssetIds)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (assetType) {
-    query = query.eq("asset_type", assetType);
-  }
-
-  if (search) {
-    query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
-  }
-
-  const { data: assets, count } = await query;
 
   const totalPages = count ? Math.ceil(count / limit) : 0;
 

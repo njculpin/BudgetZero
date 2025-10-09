@@ -346,8 +346,54 @@ CREATE TABLE project_pricing (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE orders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_number TEXT UNIQUE NOT NULL,
+  buyer_id UUID REFERENCES users(id) NOT NULL,
+  product_id UUID REFERENCES products(id) NOT NULL,
+  variant_id UUID REFERENCES product_variants(id) NOT NULL,
+  currency_code TEXT NOT NULL CHECK (length(currency_code) = 3),
+  subtotal_cents INTEGER NOT NULL CHECK (subtotal_cents >= 0),
+  platform_fee_cents INTEGER NOT NULL CHECK (platform_fee_cents >= 0),
+  total_cents INTEGER NOT NULL CHECK (total_cents >= 0),
+  status order_status DEFAULT 'pending',
+  stripe_payment_intent_id TEXT,
+  stripe_charge_id TEXT,
+  billing_address_id UUID REFERENCES users_addresses(id),
+  shipping_address_id UUID REFERENCES users_addresses(id),
+  completed_at TIMESTAMPTZ,
+  refunded_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_metadata (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+  key TEXT NOT NULL,
+  value TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(order_id, key)
+);
+
+CREATE TABLE order_revenue_splits (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+  recipient_id UUID REFERENCES users(id) NOT NULL,
+  split_type TEXT NOT NULL CHECK (split_type IN ('platform_fee', 'asset_royalty', 'collaborator_share', 'project_creator')),
+  resource_id UUID,
+  resource_type TEXT CHECK (resource_type IN ('asset', 'project', 'platform')),
+  amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
+  percentage DECIMAL(5,2) NOT NULL CHECK (percentage >= 0 AND percentage <= 100),
+  status payout_status DEFAULT 'pending',
+  stripe_transfer_id TEXT,
+  paid_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================================
--- PRODUCT LISTING SYSTEM (moved here to fix table ordering)
+-- PRODUCT LISTING SYSTEM
 -- ============================================================================
 
 CREATE TYPE product_status AS ENUM ('draft', 'active', 'archived');
@@ -476,56 +522,6 @@ CREATE TABLE product_seo (
   meta_description TEXT CHECK (length(meta_description) <= 500),
   meta_keywords TEXT,
   og_image_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================================================
--- ORDERS & REVENUE (now products/variants exist)
--- ============================================================================
-
-CREATE TABLE orders (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  order_number TEXT UNIQUE NOT NULL,
-  buyer_id UUID REFERENCES users(id) NOT NULL,
-  product_id UUID REFERENCES products(id) NOT NULL,
-  variant_id UUID REFERENCES product_variants(id) NOT NULL,
-  currency_code TEXT NOT NULL CHECK (length(currency_code) = 3),
-  subtotal_cents INTEGER NOT NULL CHECK (subtotal_cents >= 0),
-  platform_fee_cents INTEGER NOT NULL CHECK (platform_fee_cents >= 0),
-  total_cents INTEGER NOT NULL CHECK (total_cents >= 0),
-  status order_status DEFAULT 'pending',
-  stripe_payment_intent_id TEXT,
-  stripe_charge_id TEXT,
-  billing_address_id UUID REFERENCES users_addresses(id),
-  shipping_address_id UUID REFERENCES users_addresses(id),
-  completed_at TIMESTAMPTZ,
-  refunded_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE order_metadata (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
-  key TEXT NOT NULL,
-  value TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(order_id, key)
-);
-
-CREATE TABLE order_revenue_splits (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
-  recipient_id UUID REFERENCES users(id) NOT NULL,
-  split_type TEXT NOT NULL CHECK (split_type IN ('platform_fee', 'asset_royalty', 'collaborator_share', 'project_creator')),
-  resource_id UUID,
-  resource_type TEXT CHECK (resource_type IN ('asset', 'project', 'platform')),
-  amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
-  percentage DECIMAL(5,2) NOT NULL CHECK (percentage >= 0 AND percentage <= 100),
-  status payout_status DEFAULT 'pending',
-  stripe_transfer_id TEXT,
-  paid_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

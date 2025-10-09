@@ -1,17 +1,9 @@
-import { redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { createClient } from "@/lib/supabase/server";
 import { AssetUploadForm } from "@/components/blocks/assets/asset-upload-form";
+import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
 
 export default async function AssetUploadPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
+  const user = await useAdminGetMe();
 
   const breadcrumbs = [
     { label: "Asset Library", href: "/assets" },
