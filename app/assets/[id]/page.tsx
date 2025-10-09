@@ -44,8 +44,12 @@ export default async function AssetDetailPage({
   }
 
   const stats = asset.asset_stats?.[0];
-  const activeRoyalty = asset.asset_royalties?.find((r: { is_active: boolean }) => r.is_active);
-  const activeLicense = asset.asset_licenses?.find((l: { is_active: boolean }) => l.is_active);
+  const activeRoyalty = asset.asset_royalties?.find(
+    (r: { is_active: boolean }) => r.is_active,
+  );
+  const activeLicense = asset.asset_licenses?.find(
+    (l: { is_active: boolean }) => l.is_active,
+  );
 
   const breadcrumbs = [
     { label: "Assets", href: "/assets" },
@@ -116,45 +120,60 @@ export default async function AssetDetailPage({
                 <CardContent>
                   <div className="space-y-3">
                     {asset.asset_files
-                      .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)
-                      .map((file: { id: string; file_name: string | null; file_format: string | null; file_size_bytes: number | null; file_url: string }) => (
-                        <div
-                          key={file.id}
-                          className="flex items-center justify-between p-3 border rounded-lg"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">
-                              {file.file_name || "Untitled File"}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              {file.file_format && (
-                                <Badge variant="outline" className="text-xs">
-                                  {file.file_format}
-                                </Badge>
-                              )}
-                              {file.file_size_bytes && (
-                                <span>
-                                  {(file.file_size_bytes / 1024 / 1024).toFixed(
-                                    2,
-                                  )}{" "}
-                                  MB
-                                </span>
-                              )}
+                      .sort(
+                        (
+                          a: { display_order: number },
+                          b: { display_order: number },
+                        ) => a.display_order - b.display_order,
+                      )
+                      .map(
+                        (file: {
+                          id: string;
+                          file_name: string | null;
+                          file_format: string | null;
+                          file_size_bytes: number | null;
+                          file_url: string;
+                        }) => (
+                          <div
+                            key={file.id}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">
+                                {file.file_name || "Untitled File"}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                {file.file_format && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {file.file_format}
+                                  </Badge>
+                                )}
+                                {file.file_size_bytes && (
+                                  <span>
+                                    {(
+                                      file.file_size_bytes /
+                                      1024 /
+                                      1024
+                                    ).toFixed(2)}{" "}
+                                    MB
+                                  </span>
+                                )}
+                              </div>
                             </div>
+                            <Button size="sm" asChild>
+                              <a
+                                href={file.file_url}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Download
+                              </a>
+                            </Button>
                           </div>
-                          <Button size="sm" asChild>
-                            <a
-                              href={file.file_url}
-                              download
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Download
-                            </a>
-                          </Button>
-                        </div>
-                      ))}
+                        ),
+                      )}
                   </div>
                 </CardContent>
               </Card>
@@ -169,7 +188,12 @@ export default async function AssetDetailPage({
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {asset.asset_images
-                      .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)
+                      .sort(
+                        (
+                          a: { display_order: number },
+                          b: { display_order: number },
+                        ) => a.display_order - b.display_order,
+                      )
                       .map((image: { id: string; file_url: string }) => (
                         <div
                           key={image.id}
@@ -177,7 +201,7 @@ export default async function AssetDetailPage({
                         >
                           <img
                             src={image.file_url}
-                            alt="Asset image"
+                            alt="Asset"
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -224,8 +248,8 @@ export default async function AssetDetailPage({
                   <Separator />
                   <CardContent className="pt-4">
                     <div className="flex flex-wrap gap-2">
-                      {asset.asset_tags.map((tag: { tag: string }, idx: number) => (
-                        <Badge key={idx} variant="outline">
+                      {asset.asset_tags.map((tag: { tag: string }) => (
+                        <Badge key={tag.tag} variant="outline">
                           {tag.tag}
                         </Badge>
                       ))}

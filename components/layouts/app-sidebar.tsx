@@ -59,6 +59,31 @@ const navigation = [
         url: "/dashboard",
         icon: Home,
       },
+      {
+        title: "Requests",
+        url: "/requests",
+        icon: GitPullRequestCreate,
+      },
+      {
+        title: "Teams",
+        url: "/teams",
+        icon: Users,
+      },
+    ],
+  },
+  {
+    title: "Assets",
+    items: [
+      {
+        title: "Asset Library",
+        url: "/assets",
+        icon: Library,
+      },
+      {
+        title: "Licensing",
+        url: "/licensing",
+        icon: Library,
+      },
     ],
   },
   {
@@ -72,37 +97,17 @@ const navigation = [
     ],
   },
   {
-    title: "Assets",
-    items: [
-      {
-        title: "Asset Library",
-        url: "/assets",
-        icon: Library,
-      },
-    ],
-  },
-  {
     title: "Marketplace",
     items: [
+      {
+        title: "My Products",
+        url: "/products",
+        icon: ShoppingBag,
+      },
       {
         title: "Shop",
         url: "/shop",
         icon: ShoppingBag,
-      },
-    ],
-  },
-  {
-    title: "Collaboration",
-    items: [
-      {
-        title: "Requests",
-        url: "/requests",
-        icon: GitPullRequestCreate,
-      },
-      {
-        title: "Teams",
-        url: "/teams",
-        icon: Users,
       },
     ],
   },
