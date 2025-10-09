@@ -1,7 +1,6 @@
 "use client";
 
 import { NotificationsBell } from "@/components/blocks/notifications-bell";
-import { CartButton } from "@/components/blocks/projects/project-card-view-button";
 import { VPDisplay } from "@/components/blocks/vp-display";
 import {
   Breadcrumb,
@@ -74,7 +73,6 @@ export function MainLayout({ children, user, breadcrumbs }: MainLayoutProps) {
           </div>
           <div className="flex items-center gap-3 px-4">
             <VPDisplay />
-            <CartButton />
             <NotificationsBell />
           </div>
         </header>

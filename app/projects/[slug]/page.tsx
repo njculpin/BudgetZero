@@ -1,5 +1,4 @@
 import { ProjectAssetReferences } from "@/components/blocks/projects/project-asset-references";
-import { RevenueSplitPreview } from "@/components/blocks/projects/project-revenue-split";
 import { ProjectTagsManager } from "@/components/blocks/projects/project-tags-manager";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
@@ -226,9 +225,7 @@ export default async function ProjectDetailPage({
               <CardContent>
                 <ProjectTagsManager
                   projectId={project.id}
-                  initialTags={
-                    project.project_tags?.map((t) => t.tag) || []
-                  }
+                  initialTags={project.project_tags?.map((t) => t.tag) || []}
                   isOwner={isOwner}
                 />
               </CardContent>

@@ -9,6 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- CUSTOM TYPES
 -- ============================================================================
 
+CREATE TYPE asset_type AS ENUM ('model', 'illustration', 'audio', 'texture', 'animation', 'other');
 CREATE TYPE project_status AS ENUM ('draft', 'active', 'archived', 'published');
 CREATE TYPE asset_status AS ENUM ('draft', 'active', 'archived', 'published');
 CREATE TYPE invitation_status AS ENUM ('pending', 'accepted', 'declined', 'revoked');

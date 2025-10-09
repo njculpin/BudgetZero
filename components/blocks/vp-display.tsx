@@ -1,15 +1,15 @@
 "use client";
 
-import { TrendingUp, Trophy } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { formatTimeAgo } from "@/lib/utils/date";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { formatTimeAgo } from "@/lib/utils/date";
+import { TrendingUp, Trophy } from "lucide-react";
+import { useState } from "react";
 
 interface VPTransaction {
   id: string;
@@ -41,7 +41,9 @@ export function VPDisplay() {
     try {
       const response = await fetch("/api/victory-points?transactions=true");
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
         console.error("VP API error:", response.status, errorData);
         throw new Error(errorData.error || "Failed to load VP balance");
       }
@@ -56,10 +58,10 @@ export function VPDisplay() {
     }
   };
 
-  useEffect(() => {
-    fetchVP();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   fetchVP();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   const getTransactionColor = (points: number) => {
     return points > 0 ? "text-green-600" : "text-red-600";
