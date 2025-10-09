@@ -1,17 +1,10 @@
+import { useAdminGetMe } from "@/lib/sdk/server";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Redirect logged-in users to dashboard
+  const user = await useAdminGetMe();
   if (user) {
     redirect("/dashboard");
   }
-
-  // Redirect unauthenticated users to login
-  redirect("/auth/login");
+  return <div></div>;
 }

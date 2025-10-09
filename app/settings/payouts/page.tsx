@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { createClient } from "@/lib/supabase/server";
 import {
   AlertCircle,
   Calendar,
@@ -19,22 +18,12 @@ import {
   Settings as SettingsIcon,
   TrendingUp,
 } from "lucide-react";
-import { redirect } from "next/navigation";
 
 export default async function PayoutsPage({
   searchParams,
 }: {
   searchParams: Promise<{ success?: string; refresh?: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
-
   const params = await searchParams;
   const showSuccess = params.success === "true";
 

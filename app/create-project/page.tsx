@@ -1,17 +1,9 @@
-import { redirect } from "next/navigation";
-import { MainLayout } from "@/components/layouts/main-layout";
 import { ProjectForm } from "@/components/blocks/projects/project-form";
-import { createClient } from "@/lib/supabase/server";
+import { MainLayout } from "@/components/layouts/main-layout";
+import { useAdminGetMe } from "@/lib/sdk/server";
 
 export default async function NewProjectPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
+  const user = await useAdminGetMe();
 
   const breadcrumbs = [
     { label: "My Projects", href: "/projects" },

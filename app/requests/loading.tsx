@@ -1,8 +1,10 @@
+import { LoadingLayout } from "@/components/layouts/loading-layout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function RequestsLoading() {
+export default async function RequestsLoading() {
   return (
+    <LoadingLayout>
     <div className="space-y-6">
       <div className="space-y-2">
         <Skeleton className="h-9 w-64" />
@@ -48,5 +50,6 @@ export default function RequestsLoading() {
         </Card>
       </div>
     </div>
+    </LoadingLayout>
   );
 }
