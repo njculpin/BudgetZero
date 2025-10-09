@@ -1,17 +1,16 @@
 "use client";
 
+import { RequestComments } from "@/components/blocks/projects/project-request-comment";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { Box, Check, Clock, FileText, Loader2, Palette, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { RequestComments } from "@/components/blocks/projects/project-request-comment";
-import { RevenueSplitPreview } from "@/components/blocks/projects/project-revenue-split";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
 interface AttributionRequestCardProps {
   referenceId: string;
@@ -148,12 +147,12 @@ export function AttributionRequestCard({
               </div>
 
               {/* Revenue Split Preview */}
-              <RevenueSplitPreview
+              {/* <RevenueSplitPreview
                 royaltyContributors={[
                   { name: "Your royalty", percentage: royaltyPercentage },
                 ]}
                 variant="default"
-              />
+              /> */}
 
               {/* Timestamp */}
               <div className="flex items-center gap-1 text-xs text-gray-500">
