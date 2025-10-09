@@ -1,6 +1,4 @@
 import { ProjectAssetReferences } from "@/components/blocks/projects/project-asset-references";
-import { AddToCartButton } from "@/components/blocks/projects/project-card-add-button";
-import { PricingTiersManager } from "@/components/blocks/projects/project-pricing-manager";
 import { RevenueSplitPreview } from "@/components/blocks/projects/project-revenue-split";
 import { ProjectTagsManager } from "@/components/blocks/projects/project-tags-manager";
 import { MainLayout } from "@/components/layouts/main-layout";
@@ -14,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { GameProjectService } from "@/lib/services/game-projects";
 import { createClient } from "@/lib/supabase/server";
 import {
   Box,
@@ -48,98 +45,83 @@ export default async function ProjectDetailPage({
     redirect("/auth/login");
   }
 
-  const gameProjectService = new GameProjectService(supabase);
-  const result = await gameProjectService.getProject(slug);
+  // Fetch project with settings and tags
+  const { data: project, error } = await supabase
+    .from("projects")
+    .select(
+      `
+      *,
+      project_settings (*),
+      project_tags (tag),
+      creator:creator_id (id, full_name, username, email)
+    `,
+    )
+    .eq("slug", slug)
+    .single();
 
-  if (result.error || !result.data) {
+  if (error || !project) {
     notFound();
   }
 
-  const project = result.data;
   const isOwner = project.creator_id === user.id;
+  const settings = project.project_settings?.[0];
+  const isPublic = settings?.is_public || false;
 
-  // Check user access permissions
-  const accessResult = await gameProjectService.checkProjectAccess(
-    project.id,
-    user.id,
-  );
-  const canRead = accessResult.data?.canRead ?? false;
-
-  if (!canRead) {
+  // Check access: owner OR public project
+  if (!isOwner && !isPublic) {
     notFound();
   }
 
-  // Fetch project documents
-  const { data: documents } = await supabase
-    .from("documents")
-    .select("id, title, document_type, status, created_at, updated_at")
-    .eq("project_id", project.id)
-    .order("created_at", { ascending: false });
-
-  // Fetch project assets (documents, models and illustrations)
+  // Fetch project assets
   const { data: assets } = await supabase
     .from("assets")
     .select("id, title, asset_type, thumbnail_url, created_at, updated_at")
     .eq("project_id", project.id)
     .order("created_at", { ascending: false });
 
-  // Fetch project collaborators
+  // Fetch project collaborators with user info
   const { data: collaborators } = await supabase
     .from("project_collaborators")
-    .select(`
+    .select(
+      `
       id,
-      role,
-      revenue_percentage,
       contribution_description,
       joined_at,
-      profiles!project_collaborators_collaborator_id_fkey(id, full_name, email, avatar_url)
-    `)
+      user:user_id (id, full_name, username, email, avatar_url)
+    `,
+    )
     .eq("project_id", project.id)
     .eq("is_active", true)
     .eq("invitation_status", "accepted")
     .order("joined_at", { ascending: true });
-
-  // Fetch pricing tiers
-  const { data: pricingTiers } = await supabase
-    .from("pricing_tiers")
-    .select(`
-      *,
-      pricing_tier_assets(asset_id),
-      pricing_tier_documents(document_id)
-    `)
-    .eq("project_id", project.id)
-    .order("display_order", { ascending: true });
-
-  const enrichedTiers = (pricingTiers || []).map((tier) => ({
-    id: tier.id,
-    name: tier.name,
-    description: tier.description,
-    price_cents: tier.price_cents,
-    display_order: tier.display_order,
-    is_active: tier.is_active,
-    included_assets:
-      tier.pricing_tier_assets?.map((a: { asset_id: string }) => a.asset_id) ||
-      [],
-    included_documents:
-      tier.pricing_tier_documents?.map(
-        (d: { document_id: string }) => d.document_id,
-      ) || [],
-  }));
 
   // Fetch referenced assets (approved references from other creators) - optimized
   const [{ data: refs }, { data: refAssets }, { data: assetCreators }] =
     await Promise.all([
       supabase
         .from("project_asset_references")
-        .select("id, royalty_percentage, status, asset_id")
+        .select("id, asset_id, asset_royalty_id, status")
         .eq("project_id", project.id)
         .eq("status", "approved")
         .order("created_at", { ascending: false }),
       supabase
         .from("assets")
         .select("id, title, asset_type, thumbnail_url, creator_id"),
-      supabase.from("users").select("id, full_name"),
+      supabase.from("users").select("id, full_name, username"),
     ]);
+
+  // Get royalty percentages
+  const royaltyIds = refs?.map((r) => r.asset_royalty_id).filter(Boolean) || [];
+  let royaltyMap = new Map<string, number>();
+
+  if (royaltyIds.length > 0) {
+    const { data: royalties } = await supabase
+      .from("asset_royalties")
+      .select("id, percentage")
+      .in("id", royaltyIds);
+
+    royaltyMap = new Map(royalties?.map((r) => [r.id, r.percentage]));
+  }
 
   const assetMap = new Map(refAssets?.map((a) => [a.id, a]));
   const creatorMap = new Map(assetCreators?.map((c) => [c.id, c]));
@@ -152,11 +134,16 @@ export default async function ProjectDetailPage({
       const creator = creatorMap.get(asset.creator_id) || {
         id: asset.creator_id,
         full_name: null,
+        username: null,
       };
+
+      const royaltyPercentage = ref.asset_royalty_id
+        ? royaltyMap.get(ref.asset_royalty_id) || 0
+        : 0;
 
       return {
         id: ref.id,
-        royalty_percentage: ref.royalty_percentage,
+        royalty_percentage: royaltyPercentage,
         status: ref.status,
         asset: { ...asset, creator },
       };
@@ -183,7 +170,7 @@ export default async function ProjectDetailPage({
               >
                 {project.status}
               </Badge>
-              {project.is_public ? (
+              {isPublic ? (
                 <Badge variant="outline" className="flex items-center gap-1">
                   <Eye className="w-3 h-3" />
                   Public
@@ -196,7 +183,10 @@ export default async function ProjectDetailPage({
               )}
             </div>
             <p className="text-slate-600">
-              Created by {project.creator.full_name || project.creator.email}
+              Created by{" "}
+              {project.creator.full_name ||
+                project.creator.username ||
+                project.creator.email}
             </p>
           </div>
         </div>
@@ -236,7 +226,9 @@ export default async function ProjectDetailPage({
               <CardContent>
                 <ProjectTagsManager
                   projectId={project.id}
-                  initialTags={project.tags || []}
+                  initialTags={
+                    project.project_tags?.map((t) => t.tag) || []
+                  }
                   isOwner={isOwner}
                 />
               </CardContent>
@@ -256,9 +248,11 @@ export default async function ProjectDetailPage({
                     </CardDescription>
                   </div>
                   {isOwner && (
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Asset
+                    <Button asChild>
+                      <Link href="/assets/upload">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Asset
+                      </Link>
                     </Button>
                   )}
                 </div>
@@ -282,7 +276,7 @@ export default async function ProjectDetailPage({
                               variant="secondary"
                               className="absolute top-2 left-2 z-10 text-xs"
                             >
-                              Mine
+                              {asset.asset_type || "Asset"}
                             </Badge>
                             {asset.thumbnail_url ? (
                               <img
@@ -309,21 +303,29 @@ export default async function ProjectDetailPage({
                   )}
 
                   {/* Referenced Assets */}
-                  <ProjectAssetReferences
-                    projectId={project.id}
-                    embedded={true}
-                  />
-
-                  {/* Empty State */}
-                  {(!assets || assets.length === 0) && (
-                    <div className="text-center py-8">
-                      <Box className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm text-gray-500">No content yet</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Add documents, models, or illustrations to get started
-                      </p>
+                  {enrichedReferences.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Referenced Assets
+                      </h4>
+                      <ProjectAssetReferences
+                        projectId={project.id}
+                        embedded={true}
+                      />
                     </div>
                   )}
+
+                  {/* Empty State */}
+                  {(!assets || assets.length === 0) &&
+                    enrichedReferences.length === 0 && (
+                      <div className="text-center py-8">
+                        <Box className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-sm text-gray-500">No content yet</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Add assets or reference work from other creators
+                        </p>
+                      </div>
+                    )}
                 </div>
               </CardContent>
             </Card>
@@ -343,7 +345,10 @@ export default async function ProjectDetailPage({
                 <CardContent>
                   <RevenueSplitPreview
                     royaltyContributors={enrichedReferences.map((ref) => ({
-                      name: ref.asset.creator.full_name || "Anonymous",
+                      name:
+                        ref.asset.creator.full_name ||
+                        ref.asset.creator.username ||
+                        "Anonymous",
                       percentage: ref.royalty_percentage,
                     }))}
                     variant="compact"
@@ -353,49 +358,43 @@ export default async function ProjectDetailPage({
               </Card>
             )}
 
-            {/* Game Details */}
-            {(project.genre ||
-              project.player_count_min ||
-              project.play_time_minutes ||
-              project.complexity_rating) && (
+            {/* Collaborators */}
+            {collaborators && collaborators.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Game Details</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Collaborators
+                  </CardTitle>
+                  <CardDescription>
+                    People working on this project
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {project.genre && (
-                      <div>
-                        <h4 className="font-medium text-slate-900 mb-1">
-                          Genre
-                        </h4>
-                        <p className="text-slate-600 capitalize">
-                          {project.genre}
-                        </p>
+                <CardContent>
+                  <div className="space-y-3">
+                    {collaborators.map((collab) => (
+                      <div
+                        key={collab.id}
+                        className="flex items-center gap-3 p-3 border rounded"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium">
+                            {collab.user.full_name ||
+                              collab.user.username ||
+                              collab.user.email}
+                          </p>
+                          {collab.contribution_description && (
+                            <p className="text-sm text-muted-foreground">
+                              {collab.contribution_description}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Joined{" "}
+                            {new Date(collab.joined_at).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                    {(project.player_count_min || project.player_count_max) && (
-                      <div>
-                        <h4 className="font-medium text-slate-900 mb-1">
-                          Players
-                        </h4>
-                        <p className="text-slate-600">
-                          {project.player_count_min === project.player_count_max
-                            ? project.player_count_min
-                            : `${project.player_count_min || "?"}–${project.player_count_max || "?"}`}
-                        </p>
-                      </div>
-                    )}
-                    {project.play_time_minutes && (
-                      <div>
-                        <h4 className="font-medium text-slate-900 mb-1">
-                          Play Time
-                        </h4>
-                        <p className="text-slate-600">
-                          {project.play_time_minutes} minutes
-                        </p>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -431,72 +430,40 @@ export default async function ProjectDetailPage({
               </CardContent>
             </Card>
 
-            {/* License & Pricing */}
-            <Card>
-              <CardHeader>
-                <CardTitle>License & Pricing</CardTitle>
-                <CardDescription>
-                  Configure pricing tiers and license terms
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* License Info */}
-                <div className="space-y-4">
+            {/* Settings */}
+            {isOwner && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-slate-900">
-                        License Type
-                      </h4>
-                      <p className="text-slate-600 capitalize">
-                        {project.license_type}
-                      </p>
-                    </div>
+                    <span className="text-sm">Visibility</span>
+                    <Badge variant={isPublic ? "default" : "secondary"}>
+                      {isPublic ? "Public" : "Private"}
+                    </Badge>
                   </div>
-                  {project.license_terms && (
-                    <div>
-                      <h4 className="font-medium text-slate-900 mb-2">
-                        License Terms
-                      </h4>
-                      <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-md">
-                        {project.license_terms}
-                      </p>
+                  {settings?.allow_comments && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Comments</span>
+                      <Badge variant="outline">Enabled</Badge>
                     </div>
                   )}
-                </div>
-
-                {/* Pricing Tiers */}
-                <div className="space-y-3 pt-4 border-t">
-                  <h4 className="font-medium text-slate-900">Pricing Tiers</h4>
-                  <PricingTiersManager
-                    projectId={project.id}
-                    initialTiers={enrichedTiers}
-                    assets={assets || []}
-                    documents={documents || []}
-                    isOwner={isOwner}
-                  />
-                </div>
-
-                {/* Add to Cart - Only show if published and has pricing */}
-                {project.status === "published" && enrichedTiers.length > 0 && (
-                  <div className="space-y-3 pt-4 border-t">
-                    <h4 className="font-medium text-slate-900">
-                      Purchase This Project
-                    </h4>
-                    <AddToCartButton
-                      projectId={project.id}
-                      projectTitle={project.title}
-                      pricingTiers={enrichedTiers.map((tier) => ({
-                        id: tier.id,
-                        name: tier.name,
-                        price: tier.price_cents / 100,
-                      }))}
-                      coverImageUrl={project.cover_image_url || undefined}
-                      size="lg"
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  {settings?.allow_forks && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Forks</span>
+                      <Badge variant="outline">Enabled</Badge>
+                    </div>
+                  )}
+                  {settings?.allow_downloads && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Downloads</span>
+                      <Badge variant="outline">Enabled</Badge>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

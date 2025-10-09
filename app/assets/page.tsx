@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 
 interface AssetsPageProps {
@@ -40,18 +41,50 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
     redirect("/auth/login");
   }
 
-  // Build query
+  // First get asset IDs that match the search criteria and are public
+  const { data: assetSettings } = await supabase
+    .from("asset_settings")
+    .select("asset_id")
+    .eq("is_public", true);
+
+  const publicAssetIds = assetSettings?.map((s) => s.asset_id) || [];
+
+  if (publicAssetIds.length === 0) {
+    // No public assets
+    const breadcrumbs = [{ label: "Asset Library" }];
+    return (
+      <MainLayout user={user} breadcrumbs={breadcrumbs}>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold">Asset Library</h1>
+              <p className="text-muted-foreground mt-2">
+                Browse and discover 3D models, illustrations, and more
+              </p>
+            </div>
+          </div>
+          <Card className="text-center py-12">
+            <CardContent>
+              <p>No public assets available yet.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // Build query for assets
   let query = supabase
     .from("assets")
     .select(
       `
       *,
-      creator:profiles!creator_id(id, full_name, username, avatar_url)
+      creator:creator_id(id, full_name, username, avatar_url)
     `,
       { count: "exact" },
     )
-    .eq("is_public", true)
-    .eq("status", "published")
+    .in("id", publicAssetIds)
+    .eq("status", "active")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -137,11 +170,9 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                 <Link key={asset.id} href={`/assets/${asset.id}`}>
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full">
                     <div className="aspect-square bg-muted relative">
-                      {asset.asset_type === "illustration" ||
-                      asset.asset_type === "photo" ||
-                      asset.asset_type === "texture" ? (
+                      {asset.thumbnail_url ? (
                         <img
-                          src={asset.file_url}
+                          src={asset.thumbnail_url}
                           alt={asset.title}
                           className="w-full h-full object-cover"
                         />
@@ -158,7 +189,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                       )}
                       <div className="absolute top-2 right-2">
                         <Badge variant="secondary" className="capitalize">
-                          {asset.asset_type}
+                          {asset.status}
                         </Badge>
                       </div>
                     </div>
@@ -171,21 +202,9 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex gap-2">
-                          <Badge
-                            variant="outline"
-                            className="capitalize text-xs"
-                          >
-                            {asset.license_type}
-                          </Badge>
-                        </div>
-                        {asset.price_cents > 0 && (
-                          <span className="font-medium">
-                            ${(asset.price_cents / 100).toFixed(2)}
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {asset.description || "No description provided"}
+                      </p>
                     </CardContent>
                   </Card>
                 </Link>
@@ -228,36 +247,36 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
             )}
           </>
         ) : (
-          <Card className="text-center py-12">
-            <CardHeader>
-              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                {search ? (
-                  <SearchIcon className="h-8 w-8 text-muted-foreground" />
+          <Card>
+            <EmptyState
+              icon={
+                search ? (
+                  <SearchIcon className="w-6 h-6" />
                 ) : (
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                )}
-              </div>
-              <CardTitle>No assets found</CardTitle>
-              <CardDescription className="max-w-md mx-auto">
-                {search
+                  <Upload className="w-6 h-6" />
+                )
+              }
+              title="No assets found"
+              description={
+                search
                   ? "Try adjusting your search terms or browse all assets"
-                  : "Start building your library by uploading your first asset"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {search ? (
-                <Button variant="outline" asChild>
-                  <Link href="/assets">View All Assets</Link>
-                </Button>
-              ) : (
-                <Button asChild>
-                  <Link href="/assets/upload">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Your First Asset
-                  </Link>
-                </Button>
-              )}
-            </CardContent>
+                  : "Start building your library by uploading your first asset"
+              }
+              action={
+                search ? (
+                  <Button variant="outline" asChild>
+                    <Link href="/assets">View All Assets</Link>
+                  </Button>
+                ) : (
+                  <Button asChild>
+                    <Link href="/assets/upload">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Your First Asset
+                    </Link>
+                  </Button>
+                )
+              }
+            />
           </Card>
         )}
       </div>

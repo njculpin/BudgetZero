@@ -13,7 +13,7 @@ export default async function PrivacySettingsPage() {
 
   // Fetch user profile with privacy settings
   const { data: profile } = await supabase
-    .from("profiles")
+    .from("users")
     .select("is_profile_public, show_email_public, allow_collaboration_requests")
     .eq("id", user.id)
     .single();
