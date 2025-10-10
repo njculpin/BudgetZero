@@ -1,9 +1,9 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 
 export function useClientGetMe() {
   const [user, setUser] = useState<User | null>(null);

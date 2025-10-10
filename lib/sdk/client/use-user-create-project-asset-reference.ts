@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserCreateProjectAssetReference() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function createProjectAssetReference(reference: {
-    project_id: string
-    asset_id: string
-    royalty_percentage?: number
-    status?: 'pending' | 'approved' | 'rejected'
-    requested_by: string
+    project_id: string;
+    asset_id: string;
+    royalty_percentage?: number;
+    status?: "pending" | "approved" | "rejected";
+    requested_by: string;
   }) {
     const { data, error } = await supabase
-      .from('project_asset_references')
+      .from("project_asset_references")
       .insert(reference)
       .select(`
         *,
@@ -21,10 +21,10 @@ export function useUserCreateProjectAssetReference() {
         asset:asset_id(id, title, creator_id),
         requester:requested_by(id, full_name, username)
       `)
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { createProjectAssetReference }
+  return { createProjectAssetReference };
 }

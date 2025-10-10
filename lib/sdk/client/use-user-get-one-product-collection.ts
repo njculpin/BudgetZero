@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserGetOneProductCollection() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function getProductCollection(handle: string) {
     const { data, error } = await supabase
-      .from('product_collections')
+      .from("product_collections")
       .select(`
         *,
         product_collection_items (
@@ -16,11 +16,11 @@ export function useUserGetOneProductCollection() {
           products (*)
         )
       `)
-      .eq('handle', handle)
-      .single()
+      .eq("handle", handle)
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { getProductCollection }
+  return { getProductCollection };
 }

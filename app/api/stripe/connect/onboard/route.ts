@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import {
+  useAdminCreateConnectedAccount,
+  useAdminGetConnectedAccount,
+  useAdminGetMe,
+} from "@/lib/sdk/server";
 import { stripe } from "@/lib/stripe/config";
-import { createClient } from "@/lib/supabase/server";
 
 // POST /api/stripe/connect/onboard - Create Stripe Connect account and onboarding link
 export async function POST(request: Request) {
@@ -12,21 +16,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await useAdminGetMe();
 
     // Check if user already has a connected account
-    const { data: existingAccount } = await supabase
-      .from("stripe_connected_accounts")
-      .select("stripe_account_id, details_submitted")
-      .eq("user_id", user.id)
-      .single();
+    const { data: existingAccount } = await useAdminGetConnectedAccount(
+      user.id,
+    );
 
     let accountId = existingAccount?.stripe_account_id;
 
@@ -48,7 +43,7 @@ export async function POST(request: Request) {
       accountId = account.id;
 
       // Save to database
-      await supabase.from("stripe_connected_accounts").insert({
+      await useAdminCreateConnectedAccount({
         user_id: user.id,
         stripe_account_id: accountId,
         account_type: "express",

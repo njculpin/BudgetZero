@@ -1,28 +1,28 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserUpdateAssetPricing() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function updateAssetPricing(
     id: string,
     updates: {
-      name?: string
-      description?: string
-      price_cents?: number
-      is_active?: boolean
-    }
+      name?: string;
+      description?: string;
+      price_cents?: number;
+      is_active?: boolean;
+    },
   ) {
     const { data, error } = await supabase
-      .from('asset_pricing')
+      .from("asset_pricing")
       .update(updates)
-      .eq('id', id)
+      .eq("id", id)
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { updateAssetPricing }
+  return { updateAssetPricing };
 }

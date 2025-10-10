@@ -1,3 +1,13 @@
+import {
+  CheckCircle,
+  DollarSign,
+  Eye,
+  FileBox,
+  FolderOpen,
+  Search,
+  Upload,
+} from "lucide-react";
+import Link from "next/link";
 import { AttributionRequestCard } from "@/components/blocks/projects/project-request-card";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
@@ -23,16 +33,6 @@ import {
 } from "@/lib/sdk/server";
 import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
 import type { EnrichedAssetReference } from "@/lib/types/database";
-import {
-  CheckCircle,
-  DollarSign,
-  Eye,
-  FileBox,
-  FolderOpen,
-  Search,
-  Upload,
-} from "lucide-react";
-import Link from "next/link";
 
 export default async function DashboardPage() {
   const user = await useAdminGetMe();
@@ -73,10 +73,7 @@ export default async function DashboardPage() {
   ]);
 
   // Get royalty percentages if they exist
-  const royaltyIds =
-    refs
-      ?.map((r: { asset_royalty_id?: string }) => r.asset_royalty_id)
-      .filter(Boolean) || [];
+  const royaltyIds = refs?.map((r) => r.asset_royalty_id).filter(Boolean) || [];
 
   const { data: royalties } = await useAdminGetAssetRoyalties(
     royaltyIds as string[],

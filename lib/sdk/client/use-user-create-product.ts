@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
-import type { CreateProductData } from '@/lib/types/database'
+import { createClient } from "@/lib/supabase/client";
+import type { CreateProductData } from "@/lib/types/database";
 
 export function useUserCreateProduct() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function createProduct(productData: CreateProductData) {
     const { data, error } = await supabase
-      .from('products')
+      .from("products")
       .insert(productData)
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { createProduct }
+  return { createProduct };
 }

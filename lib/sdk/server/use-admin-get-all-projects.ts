@@ -29,10 +29,7 @@ export async function useAdminGetAllProjects(options?: {
   }
 
   if (options?.limit && options?.offset !== undefined) {
-    query = query.range(
-      options.offset,
-      options.offset + options.limit - 1,
-    );
+    query = query.range(options.offset, options.offset + options.limit - 1);
   }
 
   const { data, error, count } = await query;

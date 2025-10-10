@@ -1,28 +1,28 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserUpdateProjectComment() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function updateProjectComment(
     id: string,
     updates: {
-      content?: string
-    }
+      content?: string;
+    },
   ) {
     const { data, error } = await supabase
-      .from('project_comments')
+      .from("project_comments")
       .update(updates)
-      .eq('id', id)
+      .eq("id", id)
       .select(`
         *,
         author:author_id(id, full_name, username, avatar_url)
       `)
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { updateProjectComment }
+  return { updateProjectComment };
 }

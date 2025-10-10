@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserDeleteProductProject() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function deleteProductProject(id: string) {
     const { error } = await supabase
-      .from('product_projects')
+      .from("product_projects")
       .delete()
-      .eq('id', id)
+      .eq("id", id);
 
-    return { error }
+    return { error };
   }
 
-  return { deleteProductProject }
+  return { deleteProductProject };
 }

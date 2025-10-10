@@ -1,8 +1,18 @@
-import { NextResponse } from "next/server";
 import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import {
+  useAdminCheckWebhookEvent,
+  useAdminCreateNotification,
+  useAdminGetOrderByPaymentIntent,
+  useAdminGetOrderDetails,
+  useAdminGetOrderItems,
+  useAdminGetRevenueSplitsByItems,
+  useAdminRecordWebhookEvent,
+  useAdminUpdateOrder,
+  useAdminUpdateRevenueSplits,
+} from "@/lib/sdk/server";
 import { stripe } from "@/lib/stripe/config";
-import { createClient } from "@/lib/supabase/server";
 
 // POST /api/webhooks/stripe - Handle Stripe webhook events
 export async function POST(request: Request) {
@@ -39,21 +49,12 @@ export async function POST(request: Request) {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
-    return NextResponse.json(
-      { error: "Invalid signature" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
-
-  const supabase = await createClient();
 
   try {
     // Check for duplicate webhook events (idempotency)
-    const { data: existingEvent } = await supabase
-      .from("webhook_events")
-      .select("id")
-      .eq("stripe_event_id", event.id)
-      .single();
+    const { data: existingEvent } = await useAdminCheckWebhookEvent(event.id);
 
     if (existingEvent) {
       console.log("Duplicate webhook event, skipping:", event.id);
@@ -71,14 +72,11 @@ export async function POST(request: Request) {
         }
 
         // Update order status to completed
-        const { error: orderError } = await supabase
-          .from("orders")
-          .update({
-            status: "completed",
-            stripe_payment_intent_id: session.payment_intent as string,
-            completed_at: new Date().toISOString(),
-          })
-          .eq("id", orderId);
+        const { error: orderError } = await useAdminUpdateOrder(orderId, {
+          status: "completed",
+          stripe_payment_intent_id: session.payment_intent as string,
+          completed_at: new Date().toISOString(),
+        });
 
         if (orderError) {
           console.error("Error updating order:", orderError);
@@ -86,38 +84,19 @@ export async function POST(request: Request) {
         }
 
         // Update revenue splits to processing
-        const { data: orderItems } = await supabase
-          .from("order_items")
-          .select("id")
-          .eq("order_id", orderId);
+        const { data: orderItems } = await useAdminGetOrderItems(orderId);
 
         if (orderItems) {
           const itemIds = orderItems.map((item) => item.id);
-          await supabase
-            .from("revenue_splits")
-            .update({ status: "processing" })
-            .in("order_item_id", itemIds);
+          await useAdminUpdateRevenueSplits(itemIds, "processing");
         }
 
         // Get order details for notification
-        const { data: order } = await supabase
-          .from("orders")
-          .select(
-            `
-            order_number,
-            buyer_id,
-            order_items (
-              project_id,
-              project_title
-            )
-          `,
-          )
-          .eq("id", orderId)
-          .single();
+        const { data: order } = await useAdminGetOrderDetails(orderId);
 
         if (order) {
           // Create notification for buyer
-          await supabase.from("notifications").insert({
+          await useAdminCreateNotification({
             user_id: order.buyer_id,
             type: "purchase_complete",
             title: "Purchase Complete!",
@@ -129,13 +108,9 @@ export async function POST(request: Request) {
           });
 
           // Create notifications for creators (revenue earned)
-          const { data: splits } = await supabase
-            .from("revenue_splits")
-            .select("recipient_id, amount")
-            .in(
-              "order_item_id",
-              orderItems?.map((i) => i.id) || [],
-            );
+          const { data: splits } = await useAdminGetRevenueSplitsByItems(
+            orderItems?.map((i) => i.id) || [],
+          );
 
           if (splits) {
             const recipientAmounts = splits.reduce(
@@ -150,7 +125,7 @@ export async function POST(request: Request) {
             for (const [recipientId, amount] of Object.entries(
               recipientAmounts,
             )) {
-              await supabase.from("notifications").insert({
+              await useAdminCreateNotification({
                 user_id: recipientId,
                 type: "revenue_earned",
                 title: "You Earned Revenue!",
@@ -172,10 +147,7 @@ export async function POST(request: Request) {
         const orderId = session.metadata?.order_id;
 
         if (orderId) {
-          await supabase
-            .from("orders")
-            .update({ status: "failed" })
-            .eq("id", orderId);
+          await useAdminUpdateOrder(orderId, { status: "failed" });
         }
         break;
       }
@@ -184,20 +156,15 @@ export async function POST(request: Request) {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
 
         // Find order by payment intent
-        const { data: order } = await supabase
-          .from("orders")
-          .select("id, buyer_id")
-          .eq("stripe_payment_intent_id", paymentIntent.id)
-          .single();
+        const { data: order } = await useAdminGetOrderByPaymentIntent(
+          paymentIntent.id,
+        );
 
         if (order) {
-          await supabase
-            .from("orders")
-            .update({ status: "failed" })
-            .eq("id", order.id);
+          await useAdminUpdateOrder(order.id, { status: "failed" });
 
           // Notify buyer
-          await supabase.from("notifications").insert({
+          await useAdminCreateNotification({
             user_id: order.buyer_id,
             type: "payment_failed",
             title: "Payment Failed",
@@ -216,11 +183,7 @@ export async function POST(request: Request) {
     }
 
     // Record successful webhook processing
-    await supabase.from("webhook_events").insert({
-      stripe_event_id: event.id,
-      event_type: event.type,
-      processed_at: new Date().toISOString(),
-    });
+    await useAdminRecordWebhookEvent(event.id, event.type);
 
     return NextResponse.json({ received: true });
   } catch (error) {

@@ -3,16 +3,16 @@
 import { NotificationsBell } from "@/components/blocks/notifications-bell";
 import { VPDisplay } from "@/components/blocks/vp-display";
 import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 
@@ -29,17 +29,17 @@ export function LoadingLayout({ children }: LoadingLayoutProps) {
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-                <Breadcrumb>
-                <BreadcrumbList>
-                    <div className="flex items-center gap-2">
-                      <BreadcrumbItem>
-                        <BreadcrumbPage className="max-w-[120px] truncate md:max-w-none">
-                            -
-                        </BreadcrumbPage>
-                      </BreadcrumbItem>
-                    </div>
-                </BreadcrumbList>
-              </Breadcrumb>
+            <Breadcrumb>
+              <BreadcrumbList>
+                <div className="flex items-center gap-2">
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="max-w-[120px] truncate md:max-w-none">
+                      -
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </div>
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
           <div className="flex items-center gap-3 px-4">
             <VPDisplay />

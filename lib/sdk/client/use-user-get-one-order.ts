@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserGetOneOrder() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function getOrder(id: string) {
     const { data, error } = await supabase
-      .from('orders')
+      .from("orders")
       .select(`
         *,
         buyer:buyer_id(id, full_name, username, email),
@@ -21,15 +21,15 @@ export function useUserGetOneOrder() {
         order_revenue_splits(*),
         order_metadata(*)
       `)
-      .eq('id', id)
-      .single()
+      .eq("id", id)
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
   async function getOrderByNumber(orderNumber: string) {
     const { data, error } = await supabase
-      .from('orders')
+      .from("orders")
       .select(`
         *,
         buyer:buyer_id(id, full_name, username, email),
@@ -43,11 +43,11 @@ export function useUserGetOneOrder() {
         order_revenue_splits(*),
         order_metadata(*)
       `)
-      .eq('order_number', orderNumber)
-      .single()
+      .eq("order_number", orderNumber)
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { getOrder, getOrderByNumber }
+  return { getOrder, getOrderByNumber };
 }

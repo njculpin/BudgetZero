@@ -1,3 +1,11 @@
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle2,
+  Download,
+  Settings as SettingsIcon,
+  TrendingUp,
+} from "lucide-react";
 import { PayoutConnectButton } from "@/components/blocks/projects/project-payout-connect-button";
 import { PayoutScheduleManager } from "@/components/blocks/projects/project-payout-manager";
 import { PayoutRequestButton } from "@/components/blocks/projects/project-payout-pay-button";
@@ -10,14 +18,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  AlertCircle,
-  Calendar,
-  CheckCircle2,
-  Download,
-  Settings as SettingsIcon,
-  TrendingUp,
-} from "lucide-react";
 
 export default async function PayoutsPage({
   searchParams,

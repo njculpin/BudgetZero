@@ -1,18 +1,15 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserDeleteAsset() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function deleteAsset(id: string) {
-    const { error } = await supabase
-      .from('assets')
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from("assets").delete().eq("id", id);
 
-    return { error }
+    return { error };
   }
 
-  return { deleteAsset }
+  return { deleteAsset };
 }

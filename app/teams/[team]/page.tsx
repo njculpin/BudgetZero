@@ -1,3 +1,3 @@
-export async function TeamPage(){
-    return <div></div>
+export default async function TeamPage() {
+  return <div>Team Page</div>;
 }

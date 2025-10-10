@@ -1,22 +1,22 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserGetOneLicense() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function getLicense(id: string) {
     const { data, error } = await supabase
-      .from('licenses')
+      .from("licenses")
       .select(`
         *,
         creator:creator_id(id, full_name, username)
       `)
-      .eq('id', id)
-      .single()
+      .eq("id", id)
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { getLicense }
+  return { getLicense };
 }

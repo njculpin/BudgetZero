@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
-import type { CreateProductVariantData } from '@/lib/types/database'
+import { createClient } from "@/lib/supabase/client";
+import type { CreateProductVariantData } from "@/lib/types/database";
 
 export function useUserCreateProductVariant() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function createProductVariant(data: CreateProductVariantData) {
     const { data: result, error } = await supabase
-      .from('product_variants')
+      .from("product_variants")
       .insert(data)
       .select()
-      .single()
+      .single();
 
-    return { data: result, error }
+    return { data: result, error };
   }
 
-  return { createProductVariant }
+  return { createProductVariant };
 }

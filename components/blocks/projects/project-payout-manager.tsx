@@ -1,10 +1,11 @@
 "use client";
 
 import { Calendar, Check, Loader2 } from "lucide-react";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -13,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 
 interface PayoutScheduleManagerProps {
@@ -69,9 +69,7 @@ export function PayoutScheduleManager({
       }
 
       toast.success(
-        enabled
-          ? "Automatic payouts enabled!"
-          : "Automatic payouts disabled",
+        enabled ? "Automatic payouts enabled!" : "Automatic payouts disabled",
       );
       router.refresh();
     } catch (error) {
@@ -110,7 +108,12 @@ export function PayoutScheduleManager({
         <>
           <div className="space-y-2">
             <Label htmlFor="frequency">Payout Frequency</Label>
-            <Select value={frequency} onValueChange={(value: "weekly" | "biweekly" | "monthly") => setFrequency(value)}>
+            <Select
+              value={frequency}
+              onValueChange={(value: "weekly" | "biweekly" | "monthly") =>
+                setFrequency(value)
+              }
+            >
               <SelectTrigger id="frequency">
                 <SelectValue />
               </SelectTrigger>

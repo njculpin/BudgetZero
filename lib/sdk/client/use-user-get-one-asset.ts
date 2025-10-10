@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserGetOneAsset() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function getAsset(id: string) {
     const { data, error } = await supabase
-      .from('assets')
+      .from("assets")
       .select(`
         *,
         creator:creator_id(id, full_name, username, avatar_url),
@@ -20,11 +20,11 @@ export function useUserGetOneAsset() {
         asset_tags(*),
         asset_stats(*)
       `)
-      .eq('id', id)
-      .single()
+      .eq("id", id)
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { getAsset }
+  return { getAsset };
 }

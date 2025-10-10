@@ -1,24 +1,27 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserUpdateProductVariantPrice() {
-  const supabase = createClient()
+  const supabase = createClient();
 
-  async function updateProductVariantPrice(id: string, updates: {
-    amount_cents?: number
-    compare_at_amount_cents?: number
-    is_active?: boolean
-  }) {
+  async function updateProductVariantPrice(
+    id: string,
+    updates: {
+      amount_cents?: number;
+      compare_at_amount_cents?: number;
+      is_active?: boolean;
+    },
+  ) {
     const { data, error } = await supabase
-      .from('product_variant_prices')
+      .from("product_variant_prices")
       .update(updates)
-      .eq('id', id)
+      .eq("id", id)
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { updateProductVariantPrice }
+  return { updateProductVariantPrice };
 }

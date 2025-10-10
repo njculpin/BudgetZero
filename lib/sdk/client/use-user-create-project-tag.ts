@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserCreateProjectTag() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function createProjectTag(project_id: string, tag: string) {
     const { data, error } = await supabase
-      .from('project_tags')
+      .from("project_tags")
       .insert({ project_id, tag })
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { createProjectTag }
+  return { createProjectTag };
 }

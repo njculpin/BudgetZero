@@ -1,29 +1,29 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserUpdateAssetSettings() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function updateAssetSettings(
     asset_id: string,
     updates: {
-      is_public?: boolean
-      is_featured?: boolean
-      seeking_collaborators?: boolean
-      allow_comments?: boolean
-      allow_downloads?: boolean
-    }
+      is_public?: boolean;
+      is_featured?: boolean;
+      seeking_collaborators?: boolean;
+      allow_comments?: boolean;
+      allow_downloads?: boolean;
+    },
   ) {
     const { data, error } = await supabase
-      .from('asset_settings')
+      .from("asset_settings")
       .update(updates)
-      .eq('asset_id', asset_id)
+      .eq("asset_id", asset_id)
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { updateAssetSettings }
+  return { updateAssetSettings };
 }

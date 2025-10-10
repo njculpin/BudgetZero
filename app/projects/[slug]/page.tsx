@@ -1,3 +1,15 @@
+import {
+  Box,
+  Calendar,
+  Clock,
+  Eye,
+  EyeOff,
+  Plus,
+  Tag,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ProjectAssetReferences } from "@/components/blocks/projects/project-asset-references";
 import { ProjectTagsManager } from "@/components/blocks/projects/project-tags-manager";
 import { MainLayout } from "@/components/layouts/main-layout";
@@ -11,19 +23,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { createClient } from "@/lib/supabase/server";
 import {
-  Box,
-  Calendar,
-  Clock,
-  Eye,
-  EyeOff,
-  Plus,
-  Tag,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+  useAdminGetApprovedReferences,
+  useAdminGetAssetsByIds,
+  useAdminGetAssetsByProject,
+  useAdminGetMe,
+  useAdminGetProjectCollaboratorsWithUsers,
+  useAdminGetProjectWithDetails,
+  useAdminGetRoyaltiesByIds,
+  useAdminGetUsersByIds,
+} from "@/lib/sdk/server";
 
 interface ProjectDetailPageProps {
   params: Promise<{
@@ -35,28 +44,10 @@ export default async function ProjectDetailPage({
   params,
 }: ProjectDetailPageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
+  const user = await useAdminGetMe();
 
   // Fetch project with settings and tags
-  const { data: project, error } = await supabase
-    .from("projects")
-    .select(
-      `
-      *,
-      project_settings (*),
-      project_tags (tag),
-      creator:creator_id (id, full_name, username, email)
-    `,
-    )
-    .eq("slug", slug)
-    .single();
+  const { data: project, error } = await useAdminGetProjectWithDetails(slug);
 
   if (error || !project) {
     notFound();
@@ -72,55 +63,44 @@ export default async function ProjectDetailPage({
   }
 
   // Fetch project assets
-  const { data: assets } = await supabase
-    .from("assets")
-    .select("id, title, asset_type, thumbnail_url, created_at, updated_at")
-    .eq("project_id", project.id)
-    .order("created_at", { ascending: false });
+  const { data: assets } = await useAdminGetAssetsByProject(project.id);
 
   // Fetch project collaborators with user info
-  const { data: collaborators } = await supabase
-    .from("project_collaborators")
-    .select(
-      `
-      id,
-      contribution_description,
-      joined_at,
-      user:user_id (id, full_name, username, email, avatar_url)
-    `,
-    )
-    .eq("project_id", project.id)
-    .eq("is_active", true)
-    .eq("invitation_status", "accepted")
-    .order("joined_at", { ascending: true });
+  const { data: collaboratorsRaw } =
+    await useAdminGetProjectCollaboratorsWithUsers(project.id);
+
+  type CollaboratorWithUser = {
+    id: string;
+    contribution_description: string | null;
+    joined_at: string;
+    user: {
+      id: string;
+      full_name: string | null;
+      username: string | null;
+      email: string;
+      avatar_url: string | null;
+    };
+  };
+
+  const collaborators = collaboratorsRaw as unknown as
+    | CollaboratorWithUser[]
+    | null;
 
   // Fetch referenced assets (approved references from other creators) - optimized
-  const [{ data: refs }, { data: refAssets }, { data: assetCreators }] =
-    await Promise.all([
-      supabase
-        .from("project_asset_references")
-        .select("id, asset_id, asset_royalty_id, status")
-        .eq("project_id", project.id)
-        .eq("status", "approved")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("assets")
-        .select("id, title, asset_type, thumbnail_url, creator_id"),
-      supabase.from("users").select("id, full_name, username"),
-    ]);
+  const { data: refs } = await useAdminGetApprovedReferences(project.id);
+
+  // Get all asset IDs and user IDs to fetch in bulk
+  const assetIds = refs?.map((r) => r.asset_id) || [];
+  const { data: refAssets } = await useAdminGetAssetsByIds(assetIds);
+
+  const creatorIds = refAssets?.map((a) => a.creator_id) || [];
+  const { data: assetCreators } = await useAdminGetUsersByIds(creatorIds);
 
   // Get royalty percentages
-  const royaltyIds = refs?.map((r) => r.asset_royalty_id).filter(Boolean) || [];
-  let royaltyMap = new Map<string, number>();
-
-  if (royaltyIds.length > 0) {
-    const { data: royalties } = await supabase
-      .from("asset_royalties")
-      .select("id, percentage")
-      .in("id", royaltyIds);
-
-    royaltyMap = new Map(royalties?.map((r) => [r.id, r.percentage]));
-  }
+  const royaltyIds =
+    (refs?.map((r) => r.asset_royalty_id).filter(Boolean) as string[]) || [];
+  const { data: royalties } = await useAdminGetRoyaltiesByIds(royaltyIds);
+  const royaltyMap = new Map(royalties?.map((r) => [r.id, r.percentage]));
 
   const assetMap = new Map(refAssets?.map((a) => [a.id, a]));
   const creatorMap = new Map(assetCreators?.map((c) => [c.id, c]));
@@ -225,7 +205,10 @@ export default async function ProjectDetailPage({
               <CardContent>
                 <ProjectTagsManager
                   projectId={project.id}
-                  initialTags={project.project_tags?.map((t) => t.tag) || []}
+                  initialTags={
+                    project.project_tags?.map((t: { tag: string }) => t.tag) ||
+                    []
+                  }
                   isOwner={isOwner}
                 />
               </CardContent>
@@ -327,8 +310,8 @@ export default async function ProjectDetailPage({
               </CardContent>
             </Card>
 
-            {/* Revenue Split Summary - Only show if there are approved references */}
-            {enrichedReferences.length > 0 && (
+            {/* Revenue Split Summary - TODO: Create RevenueSplitPreview component */}
+            {/* {enrichedReferences.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -340,20 +323,17 @@ export default async function ProjectDetailPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <RevenueSplitPreview
-                    royaltyContributors={enrichedReferences.map((ref) => ({
-                      name:
-                        ref.asset.creator.full_name ||
-                        ref.asset.creator.username ||
-                        "Anonymous",
-                      percentage: ref.royalty_percentage,
-                    }))}
-                    variant="compact"
-                    className="bg-blue-50 p-4 rounded-lg"
-                  />
+                  <div className="space-y-2">
+                    {enrichedReferences.map((ref) => (
+                      <div key={ref.id} className="flex justify-between items-center p-2 bg-blue-50 rounded">
+                        <span className="text-sm">{ref.asset.creator.full_name || ref.asset.creator.username || "Anonymous"}</span>
+                        <span className="text-sm font-semibold">{ref.royalty_percentage}%</span>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
-            )}
+            )} */}
 
             {/* Collaborators */}
             {collaborators && collaborators.length > 0 && (
