@@ -185,6 +185,7 @@ CREATE TABLE assets (
   project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
   title TEXT NOT NULL CHECK (length(title) >= 1 AND length(title) <= 100),
   description TEXT CHECK (length(description) <= 500),
+  asset_type asset_type,
   thumbnail_url TEXT,
   preview_url TEXT,
   status asset_status DEFAULT 'draft',
@@ -574,7 +575,7 @@ CREATE TABLE project_review (
   content TEXT NOT NULL CHECK (length(content) >= 1 AND length(content) <= 5000),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
-)
+);
 
 CREATE TABLE project_chat (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

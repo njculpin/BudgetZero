@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Save, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Save, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,7 +32,11 @@ const profileSchema = z.object({
   bio: z.string().max(500).optional(),
   location: z.string().max(100).optional(),
   website: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-  portfolio_url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  portfolio_url: z
+    .string()
+    .url("Must be a valid URL")
+    .optional()
+    .or(z.literal("")),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -54,7 +58,10 @@ interface ProfileSettingsFormProps {
   } | null;
 }
 
-export function ProfileSettingsForm({ user, profile }: ProfileSettingsFormProps) {
+export function ProfileSettingsForm({
+  user,
+  profile,
+}: ProfileSettingsFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -89,7 +96,7 @@ export function ProfileSettingsForm({ user, profile }: ProfileSettingsFormProps)
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update profile"
+        error instanceof Error ? error.message : "Failed to update profile",
       );
     } finally {
       setIsLoading(false);

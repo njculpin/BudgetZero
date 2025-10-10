@@ -1,25 +1,25 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserCreateWebhookEvent() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function createWebhookEvent(event: {
-    event: string
-    event_type: string
-    payload: Record<string, unknown>
-    processed?: boolean
-    error_message?: string
+    event: string;
+    event_type: string;
+    payload: Record<string, unknown>;
+    processed?: boolean;
+    error_message?: string;
   }) {
     const { data, error } = await supabase
-      .from('webhook_events')
+      .from("webhook_events")
       .insert(event)
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { createWebhookEvent }
+  return { createWebhookEvent };
 }

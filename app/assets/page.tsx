@@ -1,3 +1,5 @@
+import { Box, Image, Plus, Search as SearchIcon, Upload } from "lucide-react";
+import Link from "next/link";
 import { AssetSearch } from "@/components/blocks/assets/asset-search";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +14,6 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAdminGetAllAssets } from "@/lib/sdk/server/use-admin-get-all-assets";
 import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
-import { Box, Image, Plus, Search as SearchIcon, Upload } from "lucide-react";
-import Link from "next/link";
 
 interface AssetsPageProps {
   searchParams: Promise<{

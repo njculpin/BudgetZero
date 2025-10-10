@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Rocket, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";

@@ -1,6 +1,5 @@
 import { BookOpen, Plus } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,18 +26,21 @@ export default async function ProjectsPage() {
     return (
       <MainLayout user={user} breadcrumbs={[{ label: "My Projects" }]}>
         <Card className="p-12 text-center">
-          <p className="text-red-600">Error loading projects: {error.message}</p>
+          <p className="text-red-600">
+            Error loading projects: {error.message}
+          </p>
         </Card>
       </MainLayout>
     );
   }
 
   // Transform data to include is_public and tags array
-  const projects = projectsData?.map((project) => ({
-    ...project,
-    is_public: project.project_settings?.[0]?.is_public || false,
-    tags: project.project_tags?.map((t) => t.tag) || [],
-  })) || [];
+  const projects =
+    projectsData?.map((project) => ({
+      ...project,
+      is_public: project.project_settings?.[0]?.is_public || false,
+      tags: project.project_tags?.map((t: { tag: string }) => t.tag) || [],
+    })) || [];
 
   return (
     <MainLayout user={user} breadcrumbs={[{ label: "My Projects" }]}>
@@ -110,7 +112,7 @@ export default async function ProjectsPage() {
                     <div className="space-y-4">
                       {project.tags && project.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {project.tags.slice(0, 3).map((tag) => (
+                          {project.tags.slice(0, 3).map((tag: string) => (
                             <Badge
                               key={tag}
                               variant="outline"

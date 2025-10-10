@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserDeleteAssetLicense() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function deleteAssetLicense(id: string) {
     const { error } = await supabase
-      .from('asset_licenses')
+      .from("asset_licenses")
       .delete()
-      .eq('id', id)
+      .eq("id", id);
 
-    return { error }
+    return { error };
   }
 
-  return { deleteAssetLicense }
+  return { deleteAssetLicense };
 }

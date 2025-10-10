@@ -1,28 +1,28 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserUpdateAssetLicense() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function updateAssetLicense(
     id: string,
     updates: {
-      license_type?: 'free' | 'attribution' | 'commercial' | 'exclusive'
-      license_terms?: string
-      is_active?: boolean
-      effective_until?: string
-    }
+      license_type?: "free" | "attribution" | "commercial" | "exclusive";
+      license_terms?: string;
+      is_active?: boolean;
+      effective_until?: string;
+    },
   ) {
     const { data, error } = await supabase
-      .from('asset_licenses')
+      .from("asset_licenses")
       .update(updates)
-      .eq('id', id)
+      .eq("id", id)
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { updateAssetLicense }
+  return { updateAssetLicense };
 }

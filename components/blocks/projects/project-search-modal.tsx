@@ -13,7 +13,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
-import type { GameProject } from "@/lib/types/database";
+
+interface GameProject {
+  id: string;
+  title: string;
+  description: string | null;
+  genre: string | null;
+  license_type: string | null;
+  price_cents: number;
+}
 
 interface ProjectSearchModalProps {
   open: boolean;

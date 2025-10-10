@@ -1,21 +1,21 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserCreateAssetLicenseGrant() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function createAssetLicenseGrant(data: {
-    licensor_id: string
-    licensee_id: string
-    asset_id: string
-    license_id: string
-    granted_at?: string
-    expires_at?: string
-    is_active?: boolean
+    licensor_id: string;
+    licensee_id: string;
+    asset_id: string;
+    license_id: string;
+    granted_at?: string;
+    expires_at?: string;
+    is_active?: boolean;
   }) {
     const { data: grant, error } = await supabase
-      .from('asset_license_grants')
+      .from("asset_license_grants")
       .insert(data)
       .select(`
         *,
@@ -24,10 +24,10 @@ export function useUserCreateAssetLicenseGrant() {
         asset:asset_id(id, title),
         license:license_id(id, title)
       `)
-      .single()
+      .single();
 
-    return { data: grant, error }
+    return { data: grant, error };
   }
 
-  return { createAssetLicenseGrant }
+  return { createAssetLicenseGrant };
 }

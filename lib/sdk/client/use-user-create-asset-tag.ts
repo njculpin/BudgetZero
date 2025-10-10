@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserCreateAssetTag() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function createAssetTag(asset_id: string, tag: string) {
     const { data, error } = await supabase
-      .from('asset_tags')
+      .from("asset_tags")
       .insert({ asset_id, tag })
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { createAssetTag }
+  return { createAssetTag };
 }

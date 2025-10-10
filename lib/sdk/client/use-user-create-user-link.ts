@@ -1,23 +1,23 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserCreateUserLink() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function createUserLink(link: {
-    user_id: string
-    title?: string
-    url?: string
+    user_id: string;
+    title?: string;
+    url?: string;
   }) {
     const { data, error } = await supabase
-      .from('users_links')
+      .from("users_links")
       .insert(link)
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { createUserLink }
+  return { createUserLink };
 }

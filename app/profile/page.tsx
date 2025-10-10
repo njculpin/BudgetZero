@@ -1,3 +1,14 @@
+import {
+  Activity,
+  Award,
+  Calendar,
+  Globe,
+  MapPin,
+  Settings,
+  Star,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -10,17 +21,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAdminGetMe } from "@/lib/sdk/server";
-import {
-  Activity,
-  Award,
-  Calendar,
-  Globe,
-  MapPin,
-  Settings,
-  Star,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
 
 export default async function ProfilePage() {
   const user = await useAdminGetMe();

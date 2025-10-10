@@ -12,7 +12,9 @@ export async function useAdminGetAssetReferences(options: {
 
   let query = supabase
     .from("project_asset_references")
-    .select("id, royalty_percentage, status, requested_at, asset_id, project_id")
+    .select(
+      "id, royalty_percentage, asset_royalty_id, status, requested_at, asset_id, project_id",
+    )
     .in("asset_id", options.assetIds)
     .order("requested_at", { ascending: false });
 

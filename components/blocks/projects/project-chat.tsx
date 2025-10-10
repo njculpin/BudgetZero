@@ -1,13 +1,13 @@
 "use client";
 
+import { Send } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChatMessageItem } from "@/components/blocks/projects/project-chat-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
 import { type ChatMessage, useRealtimeChat } from "@/hooks/use-realtime-chat";
 import { cn } from "@/lib/utils";
-import { Send } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface RealtimeChatProps {
   roomName: string;

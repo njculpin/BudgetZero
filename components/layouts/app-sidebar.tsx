@@ -1,5 +1,20 @@
 "use client";
 
+import {
+  BookOpen,
+  ChevronsUpDown,
+  GitPullRequestCreate,
+  Home,
+  Library,
+  LogOut,
+  Settings,
+  ShoppingBag,
+  User,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { PendingRequestsBadge } from "@/components/blocks/projects/project-request-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -23,21 +38,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/client";
-import {
-  BookOpen,
-  ChevronsUpDown,
-  GitPullRequestCreate,
-  Home,
-  Library,
-  LogOut,
-  Settings,
-  ShoppingBag,
-  User,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 
 interface AppSidebarProps {
   user?: {

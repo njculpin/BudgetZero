@@ -3,7 +3,8 @@
 import { Link2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { RevenueSplitPreview } from "@/components/blocks/projects/project-revenue-split";
+// TODO: Create RevenueSplitPreview component
+// import { RevenueSplitPreview } from "@/components/blocks/projects/project-revenue-split";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,7 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Project } from "@/lib/types/project";
+
+interface Project {
+  id: string;
+  title: string;
+}
 
 interface ReferenceAssetButtonProps {
   assetId: string;
@@ -126,12 +131,20 @@ export function ReferenceAssetButton({
             {/* Revenue Split Preview */}
             {selectedProject && (
               <>
-                <RevenueSplitPreview
-                  royaltyContributors={[
-                    { name: assetCreatorName, percentage: royaltyPercentage },
-                  ]}
-                  variant="card"
-                />
+                {/* TODO: Create RevenueSplitPreview component */}
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <p className="text-sm text-blue-900 font-semibold mb-2">
+                    Revenue Split
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-blue-800">
+                      {assetCreatorName}
+                    </span>
+                    <span className="text-sm font-semibold text-blue-900">
+                      {royaltyPercentage}%
+                    </span>
+                  </div>
+                </div>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                   <p className="text-xs text-yellow-800">
                     <strong>Note:</strong> {assetCreatorName} must approve this

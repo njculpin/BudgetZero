@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import {
+  useAdminGetConnectedAccount,
+  useAdminGetMe,
+  useAdminUpdateConnectedAccount,
+} from "@/lib/sdk/server";
 import { stripe } from "@/lib/stripe/config";
-import { createClient } from "@/lib/supabase/server";
 
 // GET /api/stripe/connect/account - Get user's connected account status
 export async function GET() {
@@ -12,21 +16,12 @@ export async function GET() {
       );
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await useAdminGetMe();
 
     // Get connected account from database
-    const { data: connectedAccount } = await supabase
-      .from("stripe_connected_accounts")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
+    const { data: connectedAccount } = await useAdminGetConnectedAccount(
+      user.id,
+    );
 
     if (!connectedAccount) {
       return NextResponse.json({ account: null, hasAccount: false });
@@ -38,17 +33,14 @@ export async function GET() {
     );
 
     // Update database with latest info
-    await supabase
-      .from("stripe_connected_accounts")
-      .update({
-        charges_enabled: account.charges_enabled,
-        payouts_enabled: account.payouts_enabled,
-        details_submitted: account.details_submitted || false,
-        country: account.country || null,
-        currency: account.default_currency || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", user.id);
+    await useAdminUpdateConnectedAccount(user.id, {
+      charges_enabled: account.charges_enabled,
+      payouts_enabled: account.payouts_enabled,
+      details_submitted: account.details_submitted || false,
+      country: account.country || null,
+      currency: account.default_currency || null,
+      updated_at: new Date().toISOString(),
+    });
 
     return NextResponse.json({
       account: {

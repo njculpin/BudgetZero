@@ -1,28 +1,28 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserUpdateAssetRoyalty() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function updateAssetRoyalty(
     id: string,
     updates: {
-      percentage?: number
-      is_active?: boolean
-      effective_until?: string
-      notes?: string
-    }
+      percentage?: number;
+      is_active?: boolean;
+      effective_until?: string;
+      notes?: string;
+    },
   ) {
     const { data, error } = await supabase
-      .from('asset_royalties')
+      .from("asset_royalties")
       .update(updates)
-      .eq('id', id)
+      .eq("id", id)
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { updateAssetRoyalty }
+  return { updateAssetRoyalty };
 }

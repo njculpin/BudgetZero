@@ -23,7 +23,28 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { GameProjectWithCreator } from "@/lib/types/database";
+
+interface GameProjectWithCreator {
+  id: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  seeking_collaborators: boolean;
+  tags: string[];
+  genre: string | null;
+  player_count_min: number | null;
+  player_count_max: number | null;
+  play_time_minutes: number | null;
+  license_type: string | null;
+  creator: {
+    id: string;
+    full_name: string | null;
+    email: string;
+  };
+}
 
 interface ProjectDiscoveryProps {
   initialProjects: GameProjectWithCreator[];

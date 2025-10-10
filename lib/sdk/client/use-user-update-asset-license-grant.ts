@@ -1,26 +1,26 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserUpdateAssetLicenseGrant() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function updateAssetLicenseGrant(
     id: string,
     updates: {
-      expires_at?: string
-      is_active?: boolean
-    }
+      expires_at?: string;
+      is_active?: boolean;
+    },
   ) {
     const { data, error } = await supabase
-      .from('asset_license_grants')
+      .from("asset_license_grants")
       .update(updates)
-      .eq('id', id)
+      .eq("id", id)
       .select()
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { updateAssetLicenseGrant }
+  return { updateAssetLicenseGrant };
 }

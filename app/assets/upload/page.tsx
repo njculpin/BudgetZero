@@ -1,5 +1,5 @@
-import { MainLayout } from "@/components/layouts/main-layout";
 import { AssetUploadForm } from "@/components/blocks/assets/asset-upload-form";
+import { MainLayout } from "@/components/layouts/main-layout";
 import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
 
 export default async function AssetUploadPage() {
@@ -16,7 +16,8 @@ export default async function AssetUploadPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Upload Asset</h1>
           <p className="text-muted-foreground">
-            Upload documents, models, illustrations, photos, audio, or any other media for your projects
+            Upload documents, models, illustrations, photos, audio, or any other
+            media for your projects
           </p>
         </div>
         <AssetUploadForm />

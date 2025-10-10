@@ -1,18 +1,15 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserDeleteAssetTag() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function deleteAssetTag(id: string) {
-    const { error } = await supabase
-      .from('asset_tags')
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from("asset_tags").delete().eq("id", id);
 
-    return { error }
+    return { error };
   }
 
-  return { deleteAssetTag }
+  return { deleteAssetTag };
 }

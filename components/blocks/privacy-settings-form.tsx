@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertTriangle, Save, Shield, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { AlertTriangle, Save, Shield, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -56,8 +56,10 @@ export function PrivacySettingsForm({ profile }: PrivacySettingsFormProps) {
   const form = useForm<PrivacyFormData>({
     resolver: zodResolver(privacySchema),
     defaultValues: {
-      is_profile_public: profile?.is_profile_public ?? defaultPrivacy.is_profile_public,
-      show_email_public: profile?.show_email_public ?? defaultPrivacy.show_email_public,
+      is_profile_public:
+        profile?.is_profile_public ?? defaultPrivacy.is_profile_public,
+      show_email_public:
+        profile?.show_email_public ?? defaultPrivacy.show_email_public,
       allow_collaboration_requests:
         profile?.allow_collaboration_requests ??
         defaultPrivacy.allow_collaboration_requests,
@@ -86,7 +88,7 @@ export function PrivacySettingsForm({ profile }: PrivacySettingsFormProps) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to update privacy settings"
+          : "Failed to update privacy settings",
       );
     } finally {
       setIsLoading(false);

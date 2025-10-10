@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { CreditCard, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -7,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 export default function BillingSettingsPage() {
   return (
@@ -44,7 +44,11 @@ export default function BillingSettingsPage() {
           <div className="border-t pt-6">
             <h4 className="font-semibold mb-4">Purchase History</h4>
             <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-between" asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between"
+                asChild
+              >
                 <Link href="/orders">
                   View All Orders
                   <ExternalLink className="w-4 h-4" />

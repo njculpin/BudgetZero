@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserDeleteProjectCollaboratorPermission() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function deleteCollaboratorPermission(id: string) {
     const { error } = await supabase
-      .from('project_collaborator_permissions')
+      .from("project_collaborator_permissions")
       .delete()
-      .eq('id', id)
+      .eq("id", id);
 
-    return { error }
+    return { error };
   }
 
-  return { deleteCollaboratorPermission }
+  return { deleteCollaboratorPermission };
 }

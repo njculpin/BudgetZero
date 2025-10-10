@@ -1,18 +1,15 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserDeleteProjectTag() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function deleteProjectTag(id: string) {
-    const { error } = await supabase
-      .from('project_tags')
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from("project_tags").delete().eq("id", id);
 
-    return { error }
+    return { error };
   }
 
-  return { deleteProjectTag }
+  return { deleteProjectTag };
 }

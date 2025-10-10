@@ -1,27 +1,33 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserCreateOrder() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function createOrder(order: {
-    order_number: string
-    buyer_id: string
-    product_id: string
-    variant_id: string
-    currency_code: string
-    subtotal_cents: number
-    platform_fee_cents: number
-    total_cents: number
-    status?: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'cancelled'
-    stripe_payment_intent_id?: string
-    stripe_charge_id?: string
-    billing_address_id?: string
-    shipping_address_id?: string
+    order_number: string;
+    buyer_id: string;
+    product_id: string;
+    variant_id: string;
+    currency_code: string;
+    subtotal_cents: number;
+    platform_fee_cents: number;
+    total_cents: number;
+    status?:
+      | "pending"
+      | "processing"
+      | "completed"
+      | "failed"
+      | "refunded"
+      | "cancelled";
+    stripe_payment_intent_id?: string;
+    stripe_charge_id?: string;
+    billing_address_id?: string;
+    shipping_address_id?: string;
   }) {
     const { data, error } = await supabase
-      .from('orders')
+      .from("orders")
       .insert(order)
       .select(`
         *,
@@ -36,10 +42,10 @@ export function useUserCreateOrder() {
         order_revenue_splits(*),
         order_metadata(*)
       `)
-      .single()
+      .single();
 
-    return { data, error }
+    return { data, error };
   }
 
-  return { createOrder }
+  return { createOrder };
 }

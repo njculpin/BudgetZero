@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
 export function useUserDeleteProductPrintOption() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   async function deleteProductPrintOption(id: string) {
     const { error } = await supabase
-      .from('product_print_options')
+      .from("product_print_options")
       .delete()
-      .eq('id', id)
+      .eq("id", id);
 
-    return { error }
+    return { error };
   }
 
-  return { deleteProductPrintOption }
+  return { deleteProductPrintOption };
 }
