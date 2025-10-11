@@ -10,6 +10,20 @@ export default async function AssetUploadPage() {
     { label: "Upload Asset" },
   ];
 
+  // Suggested tags for tabletop gaming assets
+  const suggestedTags = [
+    "Miniature",
+    "Terrain",
+    "Hero",
+    "Monster",
+    "Vehicle",
+    "Building",
+    "Scatter Terrain",
+    "Fantasy",
+    "Sci-Fi",
+    "Historical",
+  ];
+
   return (
     <MainLayout user={user} breadcrumbs={breadcrumbs}>
       <div className="max-w-4xl">
@@ -20,7 +34,7 @@ export default async function AssetUploadPage() {
             media for your projects
           </p>
         </div>
-        <AssetUploadForm />
+        <AssetUploadForm suggestedTags={suggestedTags} />
       </div>
     </MainLayout>
   );

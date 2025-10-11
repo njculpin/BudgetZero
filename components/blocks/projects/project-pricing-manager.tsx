@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Check,
-  DollarSign,
-  Edit,
-  FileText,
-  Package,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { Check, DollarSign, Edit, Package, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,7 +32,6 @@ interface PricingTier {
   display_order: number;
   is_active: boolean;
   included_assets: string[];
-  included_documents: string[];
 }
 
 interface Asset {
@@ -49,17 +40,10 @@ interface Asset {
   asset_type: string;
 }
 
-interface Document {
-  id: string;
-  title: string;
-  document_type: string;
-}
-
 interface PricingTiersManagerProps {
   projectId: string;
   initialTiers: PricingTier[];
   assets: Asset[];
-  documents: Document[];
   isOwner: boolean;
 }
 
@@ -67,7 +51,6 @@ export function PricingTiersManager({
   projectId,
   initialTiers,
   assets,
-  documents,
   isOwner,
 }: PricingTiersManagerProps) {
   const [tiers, setTiers] = useState<PricingTier[]>(initialTiers);
@@ -81,7 +64,6 @@ export function PricingTiersManager({
     description: "",
     price_dollars: "",
     included_assets: [] as string[],
-    included_documents: [] as string[],
   });
 
   function openCreateDialog() {
@@ -91,7 +73,6 @@ export function PricingTiersManager({
       description: "",
       price_dollars: "",
       included_assets: [],
-      included_documents: [],
     });
     setIsDialogOpen(true);
   }
@@ -103,7 +84,6 @@ export function PricingTiersManager({
       description: tier.description || "",
       price_dollars: (tier.price_cents / 100).toFixed(2),
       included_assets: tier.included_assets,
-      included_documents: tier.included_documents,
     });
     setIsDialogOpen(true);
   }
@@ -122,7 +102,6 @@ export function PricingTiersManager({
           description: formData.description || null,
           price_cents: priceCents,
           included_assets: formData.included_assets,
-          included_documents: formData.included_documents,
         }),
       });
 
@@ -189,15 +168,6 @@ export function PricingTiersManager({
     });
   }
 
-  function toggleDocument(documentId: string) {
-    setFormData({
-      ...formData,
-      included_documents: formData.included_documents.includes(documentId)
-        ? formData.included_documents.filter((id) => id !== documentId)
-        : [...formData.included_documents, documentId],
-    });
-  }
-
   function selectAllAssets() {
     setFormData({
       ...formData,
@@ -209,20 +179,6 @@ export function PricingTiersManager({
     setFormData({
       ...formData,
       included_assets: [],
-    });
-  }
-
-  function selectAllDocuments() {
-    setFormData({
-      ...formData,
-      included_documents: documents.map((d) => d.id),
-    });
-  }
-
-  function deselectAllDocuments() {
-    setFormData({
-      ...formData,
-      included_documents: [],
     });
   }
 
@@ -293,35 +249,6 @@ export function PricingTiersManager({
                     What's Included
                   </p>
 
-                  {/* Documents */}
-                  {tier.included_documents.length > 0 && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-medium flex items-center gap-1">
-                        <FileText className="h-3.5 w-3.5 text-blue-500" />
-                        Documents
-                      </p>
-                      <div className="flex flex-wrap gap-1 pl-5">
-                        {tier.included_documents.slice(0, 3).map((docId) => {
-                          const doc = documents.find((d) => d.id === docId);
-                          return doc ? (
-                            <Badge
-                              key={docId}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {doc.title}
-                            </Badge>
-                          ) : null;
-                        })}
-                        {tier.included_documents.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{tier.included_documents.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Assets */}
                   {tier.included_assets.length > 0 && (
                     <div className="space-y-1.5">
@@ -352,12 +279,11 @@ export function PricingTiersManager({
                   )}
 
                   {/* Empty state */}
-                  {tier.included_documents.length === 0 &&
-                    tier.included_assets.length === 0 && (
-                      <div className="text-xs text-muted-foreground italic bg-muted/50 rounded p-2">
-                        No content selected - license only
-                      </div>
-                    )}
+                  {tier.included_assets.length === 0 && (
+                    <div className="text-xs text-muted-foreground italic bg-muted/50 rounded p-2">
+                      No assets selected - license only
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -437,62 +363,6 @@ export function PricingTiersManager({
               />
             </div>
 
-            {/* Included Documents */}
-            {documents.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Included Documents</Label>
-                  <div className="flex gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={selectAllDocuments}
-                    >
-                      Select All
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={deselectAllDocuments}
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                </div>
-                <div className="border rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`doc-${doc.id}`}
-                        checked={formData.included_documents.includes(doc.id)}
-                        onCheckedChange={() => toggleDocument(doc.id)}
-                      />
-                      <Label
-                        htmlFor={`doc-${doc.id}`}
-                        className="flex-1 cursor-pointer text-sm font-normal"
-                      >
-                        {doc.title}
-                        <span className="text-xs text-muted-foreground ml-2">
-                          ({doc.document_type})
-                        </span>
-                      </Label>
-                      {formData.included_documents.includes(doc.id) && (
-                        <Check className="h-4 w-4 text-green-600" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {formData.included_documents.length} of {documents.length}{" "}
-                  selected
-                </p>
-              </div>
-            )}
-
             {/* Included Assets */}
             {assets.length > 0 && (
               <div className="space-y-2">
@@ -549,8 +419,7 @@ export function PricingTiersManager({
             )}
 
             {/* Selection Summary */}
-            {(formData.included_documents.length > 0 ||
-              formData.included_assets.length > 0) && (
+            {formData.included_assets.length > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <div className="h-5 w-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -561,20 +430,11 @@ export function PricingTiersManager({
                       Selection Summary
                     </p>
                     <div className="text-sm text-blue-700 space-y-0.5">
-                      {formData.included_documents.length > 0 && (
-                        <p>
-                          {formData.included_documents.length} document
-                          {formData.included_documents.length !== 1 ? "s" : ""}{" "}
-                          selected
-                        </p>
-                      )}
-                      {formData.included_assets.length > 0 && (
-                        <p>
-                          {formData.included_assets.length} asset
-                          {formData.included_assets.length !== 1 ? "s" : ""}{" "}
-                          selected
-                        </p>
-                      )}
+                      <p>
+                        {formData.included_assets.length} asset
+                        {formData.included_assets.length !== 1 ? "s" : ""}{" "}
+                        selected
+                      </p>
                     </div>
                   </div>
                 </div>

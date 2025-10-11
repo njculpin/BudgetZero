@@ -53,7 +53,7 @@ export default async function ProjectsPage() {
             </p>
           </div>
           <Button asChild size="lg">
-            <Link href="/projects/new">
+            <Link href="/projects/create">
               <Plus className="w-4 h-4 mr-2" />
               New Project
             </Link>
@@ -68,7 +68,7 @@ export default async function ProjectsPage() {
               description="Create your first game project to get started"
               action={
                 <Button asChild>
-                  <Link href="/projects/new">
+                  <Link href="/projects/create">
                     <Plus className="w-4 h-4 mr-2" />
                     Create Your First Project
                   </Link>

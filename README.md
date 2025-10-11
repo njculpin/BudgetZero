@@ -29,12 +29,14 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 ## Architecture
 
 ### Core Concept
-Game projects serve as containers for multiple types of content:
-- **Documents** (rulebooks, expansions, quick-start guides)
+Game projects serve as containers for multiple types of assets:
 - **3D Models** (miniatures, terrain, tokens)
 - **Illustrations** (artwork, covers, icons)
+- **Audio** (sound effects, music)
+- **Textures** (materials, patterns)
+- **Animations** (character movements, effects)
 
-All content can be **cross-referenced** between projects with automatic attribution and royalty tracking.
+All assets can be **cross-referenced** between projects with automatic attribution and royalty tracking.
 
 ### Attribution System
 1. Creator uploads content to their project with royalty percentage (0-50%)
@@ -46,7 +48,7 @@ All content can be **cross-referenced** between projects with automatic attribut
 ### Example Flow
 ```
 Designer creates "Fantasy Quest" project
-├─ Uploads rulebook document (10% royalty)
+├─ Creates assets: Character models (10% royalty)
 ├─ References Modeler's "Goblin Mini" (15% royalty)
 └─ References Illustrator's "Cover Art" (20% royalty)
 
@@ -54,7 +56,7 @@ $30 Sale Revenue Split:
 - Platform: $0.60 (2%)
 - Modeler: $4.50 (15%)
 - Illustrator: $6.00 (20%)
-- Rulebook creator: $3.00 (10%)
+- Character creator: $3.00 (10%)
 - Designer: $15.90 (remainder)
 ```
 
@@ -77,31 +79,30 @@ $30 Sale Revenue Split:
 - **React Hook Form** with **Zod** resolvers
 - Type-safe form validation
 
-### Editor
-- **TipTap** rich text editor for documents
-- **JSONB** storage for content
-
 ## Project Structure
 
 ```
 /app
   /projects/[slug]              # Project detail page
-    /create-document            # Add document to project
-    /create-model               # Upload 3D model
-    /create-illustration        # Upload illustration
-    /documents/[document_id]    # Document editor
-  /dashboard                    # Attribution approval dashboard
+  /assets                       # Asset library and upload
+    /[id]                       # Asset detail page
+    /upload                     # Upload new asset
+  /requests                     # Attribution approval dashboard
+  /teams                        # Collaboration hub
+  /shop                         # Marketplace
   /api                          # API routes
 
 /components
   /ui                           # ShadCN components
-  /dashboard                    # Dashboard-specific components
-  /documents                    # Document forms
-  /assets                       # Asset upload/reference components
+  /blocks                       # Business logic components
+    /projects                   # Project-specific components
+    /assets                     # Asset upload/reference components
+    /auth                       # Authentication forms
+  /layouts                      # MainLayout wrapper
 
 /lib
   /supabase                     # Supabase clients (browser/server)
-  /services                     # Business logic services
+  /sdk                          # Database SDK functions
   /types                        # TypeScript type definitions
 ```
 
@@ -120,40 +121,43 @@ $30 Sale Revenue Split:
 ### ✅ Implemented
 - User authentication (Supabase Auth)
 - Project creation and management
-- Document editor with TipTap
-- Model/Illustration upload with royalty settings
-- Asset reference system (request to use content)
-- Attribution approval dashboard
+- Asset upload (models, illustrations, audio, textures, animations) with royalty settings
+- Asset reference system (request to use assets in projects)
+- Attribution approval dashboard (`/requests`)
 - Real-time revenue split calculator
-- Toast notifications for approvals
-- Referenced content display on project pages
+- Referenced assets display on project pages
+- Marketplace pages (`/shop`, `/products`)
+- Asset library with search and filtering
+- Teams and collaboration structure
 
 ### 🔄 In Progress
-- Email notifications for reference requests
-- In-app notification center with badges
+- Email notifications for reference requests (Resend configured)
+- In-app notification center
 
 ### 📋 Planned
 - Revenue analytics dashboard
-- Marketplace for published projects
-- Collaboration invites
-- Export to PDF
+- Collaboration invites workflow
+- Victory points system (tables exist)
+- Asset comments and reviews
 - Print-on-demand integration
 
 ## Database Schema
 
 ### Core Tables
-- **users** - User profiles (Supabase Auth)
-- **projects** - Game projects (container for content)
-- **documents** - Rulebooks, expansions, guides
-- **assets** - Models and illustrations
-- **project_asset_references** - Cross-project asset attribution
-- **project_document_references** - Cross-project document attribution
+- **users** - User profiles (Supabase Auth extension)
+- **projects** - Game projects (container for assets)
+- **assets** - Models, illustrations, audio, textures, animations, etc.
+- **asset_royalties** - Royalty percentages for asset usage (0-50%)
+- **project_asset_references** - Cross-project asset attribution with approval workflow
+- **products** - Marketplace product listings with variants and pricing
+- **orders** - Stripe checkout sessions with revenue splits
+- **order_revenue_splits** - Automatic royalty distribution calculations
 
 ### Attribution Workflow
-1. Reference created with `status: 'pending'`
-2. Owner approves → `status: 'approved'`
-3. Owner rejects → `status: 'rejected'`
-4. Approved references appear on project pages with royalty info
+1. User requests to reference another user's asset → `status: 'pending'`
+2. Asset owner approves via `/requests` dashboard → `status: 'approved'`
+3. Asset owner can reject → `status: 'rejected'`
+4. Approved references appear on project pages with automatic revenue split tracking
 
 ## Code Quality
 

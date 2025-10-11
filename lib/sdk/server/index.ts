@@ -15,7 +15,9 @@ export * from "./use-admin-get-all-products";
 export * from "./use-admin-get-all-projects";
 export * from "./use-admin-get-approved-references";
 // Assets
+export * from "./use-admin-get-active-asset-pricing";
 export * from "./use-admin-get-asset-by-id";
+export * from "./use-admin-get-asset-pricing";
 export * from "./use-admin-get-asset-references";
 export * from "./use-admin-get-asset-royalties";
 export * from "./use-admin-get-asset-stats";

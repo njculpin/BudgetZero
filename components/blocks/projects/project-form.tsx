@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { TeamSelector } from "@/components/blocks/teams/team-selector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,7 @@ export function ProjectForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<string>("personal");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -59,6 +61,7 @@ export function ProjectForm() {
           project_type: "game", // Default type, will be enhanced later
           is_public: false,
           tags: ["Game"], // Default tag
+          team_id: selectedTeam !== "personal" ? selectedTeam : null,
         }),
       });
 
@@ -79,6 +82,19 @@ export function ProjectForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Team Selection */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Owner</label>
+          <TeamSelector
+            value={selectedTeam}
+            onChange={setSelectedTeam}
+            placeholder="Select project owner"
+          />
+          <p className="text-xs text-muted-foreground">
+            Choose whether this project belongs to you personally or to a team
+          </p>
+        </div>
+
         <FormField
           control={form.control}
           name="title"

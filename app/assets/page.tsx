@@ -1,4 +1,12 @@
-import { Box, Image, Plus, Search as SearchIcon, Upload } from "lucide-react";
+import {
+  Box,
+  DollarSign,
+  Image as ImageIcon,
+  Plus,
+  Search as SearchIcon,
+  Upload,
+} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { AssetSearch } from "@/components/blocks/assets/asset-search";
 import { MainLayout } from "@/components/layouts/main-layout";
@@ -23,6 +31,14 @@ interface AssetsPageProps {
   }>;
 }
 
+// Helper function to format price
+function formatPrice(cents: number) {
+  return (cents / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+}
+
 export default async function AssetsPage({ searchParams }: AssetsPageProps) {
   const params = await searchParams;
   const assetType = params.type;
@@ -33,7 +49,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
 
   const user = await useAdminGetMe();
 
-  // Use SDK to get all public assets
+  // Get all public assets OR user's own assets
   const {
     data: assets,
     count,
@@ -41,7 +57,8 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
   } = await useAdminGetAllAssets({
     assetType,
     search,
-    publicOnly: true,
+    publicOnly: false, // Show all assets (we'll filter for public + owned in SDK)
+    userId: user.id, // Pass user ID to include their assets
     limit,
     offset,
   });
@@ -123,7 +140,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
             asChild
           >
             <Link href="/assets?type=illustration">
-              <Image className="mr-2 h-4 w-4" />
+              <ImageIcon className="mr-2 h-4 w-4" />
               Illustrations
             </Link>
           </Button>
@@ -138,49 +155,97 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
         {assets && assets.length > 0 ? (
           <>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {assets.map((asset) => (
-                <Link key={asset.id} href={`/assets/${asset.id}`}>
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full">
-                    <div className="aspect-square bg-muted relative">
-                      {asset.thumbnail_url ? (
-                        <img
-                          src={asset.thumbnail_url}
-                          alt={asset.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : asset.preview_url ? (
-                        <img
-                          src={asset.preview_url}
-                          alt={asset.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <Box className="h-12 w-12 text-muted-foreground" />
+              {assets.map((asset) => {
+                // Get active pricing
+                const activePricing = asset.asset_pricing?.find(
+                  (p: { is_active: boolean }) => p.is_active,
+                );
+
+                return (
+                  <Link key={asset.id} href={`/assets/${asset.id}`}>
+                    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full">
+                      <div className="aspect-square bg-muted relative">
+                        {asset.asset_preview_images &&
+                        asset.asset_preview_images.length > 0 ? (
+                          <Image
+                            src={
+                              asset.asset_preview_images.sort(
+                                (
+                                  a: { display_order: number },
+                                  b: { display_order: number },
+                                ) => a.display_order - b.display_order,
+                              )[0].file_url
+                            }
+                            alt={asset.title}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : asset.thumbnail_url ? (
+                          <Image
+                            src={asset.thumbnail_url}
+                            alt={asset.title}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : asset.preview_url ? (
+                          <Image
+                            src={asset.preview_url}
+                            alt={asset.title}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <Box className="h-12 w-12 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute top-2 right-2 flex gap-2">
+                          <Badge variant="secondary" className="capitalize">
+                            {asset.status}
+                          </Badge>
                         </div>
-                      )}
-                      <div className="absolute top-2 right-2">
-                        <Badge variant="secondary" className="capitalize">
-                          {asset.status}
-                        </Badge>
+                        {/* Pricing Badge */}
+                        {activePricing && (
+                          <div className="absolute bottom-2 left-2">
+                            <Badge
+                              variant={
+                                activePricing.pricing_type === "free"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                              className="flex items-center gap-1"
+                            >
+                              {activePricing.pricing_type === "free" ? (
+                                "Free"
+                              ) : (
+                                <>
+                                  <DollarSign className="h-3 w-3" />
+                                  {formatPrice(activePricing.price_cents)}
+                                  {activePricing.pricing_type === "subscription" &&
+                                    `/${activePricing.billing_interval}`}
+                                </>
+                              )}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="line-clamp-1 text-base">
-                        {asset.title}
-                      </CardTitle>
-                      <CardDescription className="line-clamp-1">
-                        By {asset.creator.full_name || asset.creator.username}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {asset.description || "No description provided"}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                      <CardHeader>
+                        <CardTitle className="line-clamp-1 text-base">
+                          {asset.title}
+                        </CardTitle>
+                        <CardDescription className="line-clamp-1">
+                          By {asset.creator.full_name || asset.creator.username}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {asset.description || "No description provided"}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Pagination */}

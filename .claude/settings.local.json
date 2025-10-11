@@ -31,7 +31,9 @@
       "Bash(xargs rm:*)",
       "Bash(git checkout:*)",
       "Bash(lsof:*)",
-      "Bash(/dev/null)"
+      "Bash(/dev/null)",
+      "Bash(npm run dev:simple:*)",
+      "Bash(xargs kill:*)"
     ],
     "deny": [],
     "ask": []
