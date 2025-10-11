@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Workshop** is a tabletop game creator collaboration platform where designers, 3D modelers, illustrators, and editors collaborate on game projects with transparent attribution and automatic revenue sharing. Projects contain assets (models, illustrations) and documents (rulebooks, expansions), all with cross-project referencing and royalty tracking.
+**Workshop** is a tabletop game creator collaboration platform where designers, 3D modelers, illustrators, and editors collaborate on game projects with transparent attribution and automatic revenue sharing. Projects contain assets (models, illustrations, audio, textures, animations), all with cross-project referencing and royalty tracking.
 
 ## Development Commands
 
@@ -50,17 +50,16 @@ The core data model centers around **projects** as containers:
 
 ```
 projects
-├── assets (models, illustrations) - owned by creator
-├── documents (rulebooks, expansions) - owned by creator
+├── assets (models, illustrations, audio, textures, animations) - owned by creator
 ├── project_asset_references - references to OTHER creators' assets
 ├── project_collaborators - team members with revenue splits
-└── pricing_tiers - marketplace pricing with included content
+└── pricing_tiers - marketplace pricing with included assets
 ```
 
 ### Attribution & Revenue System
 
-1. **Asset Creation**: Creator uploads asset/document with royalty % (0-50%)
-2. **Cross-Reference Request**: Other creators request to use that content in their projects
+1. **Asset Creation**: Creator uploads asset with royalty % (0-50%)
+2. **Cross-Reference Request**: Other creators request to use that asset in their projects
 3. **Approval Flow**: Owner approves/rejects via `/requests` dashboard
 4. **Revenue Split**: On sale, platform takes 2%, then royalties distributed automatically
 5. **Stripe Connect**: Creators connect Stripe accounts for payouts
@@ -118,11 +117,11 @@ Server components fetch data, client components (`"use client"`) handle interact
 
 - **users**: Extended Supabase auth.users with profiles
 - **projects**: `status` enum (draft/active/archived/published), `is_public` visibility
-- **assets**: `asset_type` for models/illustrations, `seeking_collaborators` flag
-- **project_asset_references**: `status` ('pending'/'approved'/'rejected'), `royalty_percentage` (0-50)
-- **pricing_tiers**: Links to assets/documents via junction tables
-- **orders**: Stripe checkout sessions with order_items
-- **revenue_splits**: Automatic calculation per order_item for royalty distribution
+- **assets**: `asset_type` for models/illustrations/audio/textures/animations, `seeking_collaborators` flag
+- **project_asset_references**: `status` ('pending'/'approved'/'rejected'), links to asset royalties
+- **asset_pricing** and **project_pricing**: Marketplace pricing tiers
+- **orders**: Stripe checkout sessions with order metadata
+- **order_revenue_splits**: Automatic calculation per order for royalty distribution
 
 ### RLS Policies
 
@@ -132,15 +131,9 @@ Row-Level Security enforces:
 - Asset references require approval from asset owner
 - Revenue data only visible to recipients
 
-### Schema Syntax Errors
+### Schema Status
 
-**IMPORTANT**: The migration file `20250101000000_initial_workshop_schema.sql` contains syntax errors:
-- Line 35: Missing comma after `title TEXT NOT NULL`
-- Line 91: Double comma after `description TEXT`
-- Line 150: Missing comma after `updated_at TIMESTAMPTZ DEFAULT NOW()`
-- Line 218: Trailing comma before closing parenthesis
-
-Always validate SQL before running migrations: `npx supabase db reset`
+The migration file `20250101000000_initial_workshop_schema.sql` has been reviewed and validated. Always test migrations locally before pushing: `npx supabase db reset`
 
 ## Code Conventions
 
@@ -180,7 +173,7 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 
 ### Adding a New Asset Type
 
-1. Add enum value to `asset_type` if needed (currently: model, illustration)
+1. Add enum value to `asset_type` if needed (currently: model, illustration, audio, texture, animation, other)
 2. Update `AssetUploadForm` component for type-specific fields
 3. Add validation schema in `lib/validations/schemas.ts`
 4. Update asset display components in project pages
@@ -220,8 +213,9 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 
 ## Known Issues & TODOs
 
-1. Migration file has SQL syntax errors (see Database Schema Notes above)
-2. Many backup migrations in `supabase/migrations_backup/` - cleanup needed
-3. No email notifications implemented yet (Resend configured but not wired)
-4. Victory points system tables exist but not fully implemented in UI
-5. Document references (similar to asset references) partially implemented
+1. Many backup migrations in `supabase/migrations_backup/` - cleanup needed
+2. No email notifications implemented yet (Resend configured but not wired)
+3. Victory points system tables exist but not fully implemented in UI
+4. Asset comments system partially implemented (tables exist, UI needed)
+5. Project chat/collaboration features partially implemented
+- always use lib/sdk to make requests to supabase. do not write supabase logic or requests anywhere else. before writing a supabase call, check this directory for a solution before duplicating code.

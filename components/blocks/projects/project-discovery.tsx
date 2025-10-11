@@ -321,7 +321,7 @@ export function ProjectDiscovery({
               <Button onClick={clearFilters}>Clear Filters</Button>
             ) : (
               <Button asChild>
-                <Link href="/projects/new">Create Project</Link>
+                <Link href="/projects/create">Create Project</Link>
               </Button>
             )}
           </div>

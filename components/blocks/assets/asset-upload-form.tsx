@@ -7,6 +7,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { FileDropzone } from "@/components/blocks/assets/asset-file-dropzone";
+import { MultiImageUploader } from "@/components/blocks/assets/multi-image-uploader";
+import { TeamSelector } from "@/components/blocks/teams/team-selector";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,7 +65,8 @@ export function AssetUploadForm({
 
   // File states
   const [primaryFile, setPrimaryFile] = useState<File | null>(null);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [previewImages, setPreviewImages] = useState<File[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<string>("personal");
 
   // All file formats supported
   const allFormats = [
@@ -71,8 +74,9 @@ export function AssetUploadForm({
     ...ALLOWED_EXTENSIONS.illustration,
     ...ALLOWED_EXTENSIONS.photo,
     ...ALLOWED_EXTENSIONS.audio,
+    ...ALLOWED_EXTENSIONS.archive,
   ];
-  const maxSize = 500 * 1024 * 1024; // 500MB max
+  const maxSize = FILE_SIZE_LIMITS.ARCHIVE_MAX; // 1GB max (for compressed files)
   const uploadEndpoint = "/api/assets/upload";
 
   const form = useForm<FormValues>({
@@ -98,9 +102,11 @@ export function AssetUploadForm({
 
       const formData = new FormData();
       formData.append("primaryFile", primaryFile);
-      if (thumbnailFile) {
-        formData.append("thumbnailFile", thumbnailFile);
-      }
+
+      // Append preview images
+      previewImages.forEach((image) => {
+        formData.append("previewImages", image);
+      });
 
       // Append form values
       formData.append("title", values.title);
@@ -110,6 +116,9 @@ export function AssetUploadForm({
       formData.append("tags", JSON.stringify(values.tags));
       if (projectId) {
         formData.append("project_id", projectId);
+      }
+      if (selectedTeam !== "personal") {
+        formData.append("team_id", selectedTeam);
       }
 
       setUploadProgress(30);
@@ -148,14 +157,13 @@ export function AssetUploadForm({
     setPrimaryFile(file);
   }
 
-  function handleThumbnailFileSelect(file: File) {
-    setThumbnailFile(file);
-  }
+  const [tagInput, setTagInput] = useState("");
 
   function addTag(tag: string) {
     const currentTags = form.getValues("tags");
-    if (!currentTags.includes(tag) && currentTags.length < 10) {
-      form.setValue("tags", [...currentTags, tag]);
+    const normalizedTag = tag.trim();
+    if (!currentTags.includes(normalizedTag) && currentTags.length < 10 && normalizedTag) {
+      form.setValue("tags", [...currentTags, normalizedTag]);
     }
   }
 
@@ -164,6 +172,20 @@ export function AssetUploadForm({
       "tags",
       form.getValues("tags").filter((t) => t !== tag),
     );
+  }
+
+  function handleAddCustomTag() {
+    if (tagInput.trim()) {
+      addTag(tagInput);
+      setTagInput("");
+    }
+  }
+
+  function handleTagInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddCustomTag();
+    }
   }
 
   return (
@@ -191,25 +213,26 @@ export function AssetUploadForm({
                 currentFile={primaryFile}
                 onRemove={() => setPrimaryFile(null)}
                 label="Drop your file here"
-                description="Models, illustrations, photos, audio, and more"
+                description="Models, illustrations, photos, audio, and compressed files (ZIP, RAR, 7z)"
                 icon={<Upload className="h-8 w-8" />}
               />
             </FormControl>
           </FormItem>
 
-          {/* Thumbnail Upload */}
+          {/* Preview Images Upload */}
           <FormItem>
-            <FormLabel>Thumbnail (Optional)</FormLabel>
+            <FormLabel>Preview Images (Optional)</FormLabel>
+            <FormDescription className="mb-3">
+              Upload multiple images to showcase different views of your asset.
+              The first image will be used as the thumbnail.
+            </FormDescription>
             <FormControl>
-              <FileDropzone
-                accept={[".jpg", ".jpeg", ".png", ".webp"]}
-                maxSize={FILE_SIZE_LIMITS.THUMBNAIL_MAX}
-                onFileSelect={handleThumbnailFileSelect}
-                currentFile={thumbnailFile}
-                onRemove={() => setThumbnailFile(null)}
-                label="Drop a thumbnail image"
-                description="Recommended: Square image, at least 800x800px"
-                icon={<Upload className="h-6 w-6" />}
+              <MultiImageUploader
+                images={previewImages}
+                onImagesChange={setPreviewImages}
+                maxImages={10}
+                maxSizeBytes={FILE_SIZE_LIMITS.THUMBNAIL_MAX}
+                disabled={isUploading}
               />
             </FormControl>
           </FormItem>
@@ -218,6 +241,19 @@ export function AssetUploadForm({
         {/* Basic Info */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
+
+          {/* Team Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Owner</label>
+            <TeamSelector
+              value={selectedTeam}
+              onChange={setSelectedTeam}
+              placeholder="Select asset owner"
+            />
+            <p className="text-xs text-muted-foreground">
+              Choose whether this asset belongs to you personally or to a team
+            </p>
+          </div>
 
           <FormField
             control={form.control}
@@ -288,31 +324,52 @@ export function AssetUploadForm({
                     </div>
                   )}
 
-                  {/* Suggested Tags */}
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">Suggested tags:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {suggestedTags.map((tag) => {
-                        const isSelected = field.value.includes(tag);
-                        return (
-                          <Badge
-                            key={tag}
-                            variant={isSelected ? "default" : "outline"}
-                            className={`cursor-pointer ${
-                              isSelected
-                                ? "bg-blue-600"
-                                : "hover:bg-blue-50 hover:border-blue-300"
-                            }`}
-                            onClick={() =>
-                              isSelected ? removeTag(tag) : addTag(tag)
-                            }
-                          >
-                            {tag}
-                          </Badge>
-                        );
-                      })}
-                    </div>
+                  {/* Custom Tag Input */}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add custom tag..."
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleTagInputKeyDown}
+                      disabled={field.value.length >= 10}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddCustomTag}
+                      disabled={!tagInput.trim() || field.value.length >= 10}
+                    >
+                      Add
+                    </Button>
                   </div>
+
+                  {/* Suggested Tags */}
+                  {suggestedTags.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600">Suggested tags:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestedTags.map((tag) => {
+                          const isSelected = field.value.includes(tag);
+                          return (
+                            <Badge
+                              key={tag}
+                              variant={isSelected ? "default" : "outline"}
+                              className={`cursor-pointer ${
+                                isSelected
+                                  ? "bg-blue-600"
+                                  : "hover:bg-blue-50 hover:border-blue-300"
+                              }`}
+                              onClick={() =>
+                                isSelected ? removeTag(tag) : addTag(tag)
+                              }
+                            >
+                              {tag}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <FormDescription>
                   {field.value.length}/10 tags selected

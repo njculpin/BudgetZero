@@ -15,7 +15,8 @@ export async function useAdminGetAssetById(id: string) {
       asset_images(*),
       asset_files(*),
       asset_royalties(*),
-      asset_licenses(*)
+      asset_licenses(*),
+      asset_preview_images(*)
     `,
     )
     .eq("id", id)

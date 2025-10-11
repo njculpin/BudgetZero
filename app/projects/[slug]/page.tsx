@@ -8,8 +8,10 @@ import {
   Tag,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AddAssetDialog } from "@/components/blocks/projects/add-asset-dialog";
 import { ProjectAssetReferences } from "@/components/blocks/projects/project-asset-references";
 import { ProjectTagsManager } from "@/components/blocks/projects/project-tags-manager";
 import { MainLayout } from "@/components/layouts/main-layout";
@@ -31,6 +33,7 @@ import {
   useAdminGetProjectCollaboratorsWithUsers,
   useAdminGetProjectWithDetails,
   useAdminGetRoyaltiesByIds,
+  useAdminGetUserAssets,
   useAdminGetUsersByIds,
 } from "@/lib/sdk/server";
 
@@ -64,6 +67,9 @@ export default async function ProjectDetailPage({
 
   // Fetch project assets
   const { data: assets } = await useAdminGetAssetsByProject(project.id);
+
+  // Fetch user's assets for the AddAssetDialog
+  const { data: userAssets } = await useAdminGetUserAssets(user.id);
 
   // Fetch project collaborators with user info
   const { data: collaboratorsRaw } =
@@ -228,12 +234,15 @@ export default async function ProjectDetailPage({
                     </CardDescription>
                   </div>
                   {isOwner && (
-                    <Button asChild>
-                      <Link href="/assets/upload">
+                    <AddAssetDialog
+                      projectId={project.id}
+                      userAssets={userAssets || []}
+                    >
+                      <Button>
                         <Plus className="mr-2 h-4 w-4" />
                         Add Asset
-                      </Link>
-                    </Button>
+                      </Button>
+                    </AddAssetDialog>
                   )}
                 </div>
               </CardHeader>
@@ -259,10 +268,11 @@ export default async function ProjectDetailPage({
                               {asset.asset_type || "Asset"}
                             </Badge>
                             {asset.thumbnail_url ? (
-                              <img
+                              <Image
                                 src={asset.thumbnail_url}
                                 alt={asset.title}
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
                               />
                             ) : (
                               <div className="w-full h-full bg-purple-50 flex items-center justify-center">
