@@ -6,12 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getProductByIdWithDetails } from "@/lib/sdk/server/products";
 import { getMe } from "@/lib/sdk/server/users";
-import {
-    Download,
-    Heart,
-    Shield,
-    Star,
-} from "lucide-react";
+import { Download, Heart, Shield, Star } from "lucide-react";
 import { notFound } from "next/navigation";
 
 interface ProductDetailPageProps {
@@ -70,9 +65,7 @@ export default async function ProductDetailPage({
                 {product.is_featured && (
                   <Badge variant="default">Featured</Badge>
                 )}
-                {!isPublished && (
-                  <Badge variant="secondary">Draft</Badge>
-                )}
+                {!isPublished && <Badge variant="secondary">Draft</Badge>}
               </div>
             </div>
 
@@ -97,11 +90,11 @@ export default async function ProductDetailPage({
 
             {/* Price */}
             <div className="flex items-baseline gap-3">
-              <span className="text-4xl font-bold">{formatPrice(priceCents)}</span>
+              <span className="text-4xl font-bold">
+                {formatPrice(priceCents)}
+              </span>
               {variant && (
-                <span className="text-muted-foreground">
-                  {variant.title}
-                </span>
+                <span className="text-muted-foreground">{variant.title}</span>
               )}
             </div>
 
@@ -138,9 +131,7 @@ export default async function ProductDetailPage({
             <div className="grid gap-4 rounded-lg border bg-muted/50 p-4">
               <div className="flex items-center gap-3">
                 <Download className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm">
-                  Instant digital download
-                </span>
+                <span className="text-sm">Instant digital download</span>
               </div>
               <div className="flex items-center gap-3">
                 <Shield className="h-5 w-5 text-muted-foreground" />

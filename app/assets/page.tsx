@@ -1,4 +1,14 @@
+import {
+  Box,
+  DollarSign,
+  Image as ImageIcon,
+  Search as SearchIcon,
+  Upload,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import { AssetSearch } from "@/components/blocks/assets/asset-search";
+import { CreateAssetDialog } from "@/components/blocks/assets/create-asset-dialog";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,16 +22,6 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { listAssetsWithDetails } from "@/lib/sdk/server/assets";
 import { getMe } from "@/lib/sdk/server/users";
-import {
-  Box,
-  DollarSign,
-  Image as ImageIcon,
-  Plus,
-  Search as SearchIcon,
-  Upload,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 
 interface AssetsPageProps {
   searchParams: Promise<{
@@ -103,12 +103,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
               Browse and discover 3D models, illustrations, and more
             </p>
           </div>
-          <Button asChild>
-            <Link href="/assets/upload">
-              <Plus className="mr-2 h-4 w-4" />
-              Upload Asset
-            </Link>
-          </Button>
+          <CreateAssetDialog userId={user.id} />
         </div>
 
         {/* Search Bar */}
@@ -172,35 +167,22 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                   (p: { is_active: boolean }) => p.is_active,
                 );
 
+                // Get the first image (sorted by position)
+                const firstImage =
+                  asset.asset_images && asset.asset_images.length > 0
+                    ? asset.asset_images.sort(
+                        (a: { position: number }, b: { position: number }) =>
+                          a.position - b.position,
+                      )[0]
+                    : null;
+
                 return (
                   <Link key={asset.id} href={`/assets/${asset.id}`}>
                     <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full">
                       <div className="aspect-square bg-muted relative">
-                        {asset.asset_preview_images &&
-                        asset.asset_preview_images.length > 0 ? (
+                        {firstImage ? (
                           <Image
-                            src={
-                              asset.asset_preview_images.sort(
-                                (
-                                  a: { display_order: number },
-                                  b: { display_order: number },
-                                ) => a.display_order - b.display_order,
-                              )[0].file_url
-                            }
-                            alt={asset.title}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : asset.thumbnail_url ? (
-                          <Image
-                            src={asset.thumbnail_url}
-                            alt={asset.title}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : asset.preview_url ? (
-                          <Image
-                            src={asset.preview_url}
+                            src={firstImage.image_url}
                             alt={asset.title}
                             fill
                             className="object-cover"
@@ -317,12 +299,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                     <Link href="/assets">View All Assets</Link>
                   </Button>
                 ) : (
-                  <Button asChild>
-                    <Link href="/assets/upload">
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Your First Asset
-                    </Link>
-                  </Button>
+                  <CreateAssetDialog userId={user.id} />
                 )
               }
             />

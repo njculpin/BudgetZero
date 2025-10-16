@@ -89,10 +89,8 @@ export default async function ProductsPage({
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Marketplace</h1>
-            <p className="text-muted-foreground mt-2">
-              Browse and purchase tabletop game products
-            </p>
+            <h1 className="text-3xl font-bold">Products</h1>
+            <p className="text-muted-foreground mt-2">Browse your products</p>
           </div>
           <Button asChild>
             <Link href="/products/create">Create Product</Link>

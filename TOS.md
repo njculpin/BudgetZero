@@ -9,4 +9,7 @@ Unresponsive payments - 90 day hold. Every payment period (once a month from sig
 Basic Terms - An asset can be licensed on the platform indefefinitely. If a model is issued a license, it is copied to a public directory. If the account holder closes the account, the model will remain available for games using it but no new license agreements will be issued for it. A license will only cover those assets sold on our website.
 The website will provide a way to license off site, but disputes will be handled by those parties.
 
-Basic License - An asset can be added to a project. a Project can be added a product listing. A product listing can have multiple projects, a project can have multiple assets. Sales for a product will issue payment for asset providers within it.
+Basic License - An asset can be added to a project. a Project can be added a product listing. A product listing can have multiple assets. Sales for a product will issue payment for asset providers within it.
+License is limited to this website. Assets may not be sold off site.
+
+Future License - Extends the basic to allow off site sales and usage of assets.

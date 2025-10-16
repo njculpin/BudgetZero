@@ -1,8 +1,8 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { useState } from "react";
+import { Card } from "@/components/ui/card";
 
 interface ImageGalleryProps {
   images: {

@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ImagePlus, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface MultiImageUploaderProps {
   images: File[];

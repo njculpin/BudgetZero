@@ -40,10 +40,12 @@ export type Database = {
           caption: string | null
           created_at: string
           deleted_at: string | null
+          file_size_bytes: number | null
           file_url: string
           id: number
           is_deleted: boolean
           mime_type: string | null
+          storage_path: string
           updated_at: string
         }
         Insert: {
@@ -51,10 +53,12 @@ export type Database = {
           caption?: string | null
           created_at?: string
           deleted_at?: string | null
+          file_size_bytes?: number | null
           file_url: string
           id?: number
           is_deleted?: boolean
           mime_type?: string | null
+          storage_path: string
           updated_at?: string
         }
         Update: {
@@ -62,10 +66,12 @@ export type Database = {
           caption?: string | null
           created_at?: string
           deleted_at?: string | null
+          file_size_bytes?: number | null
           file_url?: string
           id?: number
           is_deleted?: boolean
           mime_type?: string | null
+          storage_path?: string
           updated_at?: string
         }
         Relationships: [
@@ -84,10 +90,12 @@ export type Database = {
           caption: string | null
           created_at: string
           deleted_at: string | null
+          file_size_bytes: number | null
           id: number
           image_url: string
           is_deleted: boolean
           position: number
+          storage_path: string
           updated_at: string
         }
         Insert: {
@@ -95,10 +103,12 @@ export type Database = {
           caption?: string | null
           created_at?: string
           deleted_at?: string | null
+          file_size_bytes?: number | null
           id?: number
           image_url: string
           is_deleted?: boolean
           position?: number
+          storage_path: string
           updated_at?: string
         }
         Update: {
@@ -106,10 +116,12 @@ export type Database = {
           caption?: string | null
           created_at?: string
           deleted_at?: string | null
+          file_size_bytes?: number | null
           id?: number
           image_url?: string
           is_deleted?: boolean
           position?: number
+          storage_path?: string
           updated_at?: string
         }
         Relationships: [
@@ -1635,7 +1647,7 @@ export type Database = {
           deleted_at: string | null
           email: string
           first_name: string | null
-          full_name: string
+          full_name: string | null
           id: string
           is_deleted: boolean
           last_name: string | null
@@ -1650,7 +1662,7 @@ export type Database = {
           deleted_at?: string | null
           email: string
           first_name?: string | null
-          full_name: string
+          full_name?: string | null
           id: string
           is_deleted?: boolean
           last_name?: string | null
@@ -1665,7 +1677,7 @@ export type Database = {
           deleted_at?: string | null
           email?: string
           first_name?: string | null
-          full_name?: string
+          full_name?: string | null
           id?: string
           is_deleted?: boolean
           last_name?: string | null
