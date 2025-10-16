@@ -1,6 +1,3 @@
-import { Search as SearchIcon, ShoppingBag, Star } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useAdminGetAllProducts, useAdminGetMe } from "@/lib/sdk/server";
+import { listProductsWithDetails } from "@/lib/sdk/server/products";
+import { getMe } from "@/lib/sdk/server/users";
+import { Search as SearchIcon, ShoppingBag, Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -31,9 +32,9 @@ export default async function ProductsPage({
   const limit = 12;
   const offset = (page - 1) * limit;
 
-  const user = await useAdminGetMe();
+  const user = await getMe();
 
-  const { data: products, count } = await useAdminGetAllProducts({
+  const { data: products, count } = await listProductsWithDetails({
     search,
     limit,
     offset,
@@ -90,9 +91,12 @@ export default async function ProductsPage({
           <div>
             <h1 className="text-3xl font-bold">Marketplace</h1>
             <p className="text-muted-foreground mt-2">
-              Browse and purchase tabletop game projects
+              Browse and purchase tabletop game products
             </p>
           </div>
+          <Button asChild>
+            <Link href="/products/create">Create Product</Link>
+          </Button>
         </div>
 
         {/* Results count */}

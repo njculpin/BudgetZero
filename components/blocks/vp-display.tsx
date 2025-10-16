@@ -1,7 +1,5 @@
 "use client";
 
-import { TrendingUp, Trophy } from "lucide-react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -10,6 +8,8 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { formatTimeAgo } from "@/lib/utils/date";
+import { TrendingUp, Trophy } from "lucide-react";
+import { useState } from "react";
 
 interface VPTransaction {
   id: string;
@@ -115,7 +115,7 @@ export function VPDisplay() {
               Victory Points
             </h4>
             <p className="text-sm text-muted-foreground">
-              Earn VP by playtesting and reviewing projects
+              Earn VP by playtesting and reviewing products
             </p>
           </div>
 

@@ -26,36 +26,6 @@ export default function DashboardLoading() {
             </Card>
           ))}
         </div>
-
-        {/* Attribution Requests Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-96" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Card key={i}>
-                  <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      <Skeleton className="h-20 w-20 rounded" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-5 w-64" />
-                        <Skeleton className="h-4 w-48" />
-                        <Skeleton className="h-4 w-32" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </LoadingLayout>
   );

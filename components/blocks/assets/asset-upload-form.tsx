@@ -1,11 +1,6 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Loader2, Upload, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { uploadAsset } from "@/app/assets/upload/actions";
 import { FileDropzone } from "@/components/blocks/assets/asset-file-dropzone";
 import { MultiImageUploader } from "@/components/blocks/assets/multi-image-uploader";
 import { TeamSelector } from "@/components/blocks/teams/team-selector";
@@ -28,6 +23,12 @@ import {
   ALLOWED_EXTENSIONS,
   FILE_SIZE_LIMITS,
 } from "@/lib/constants/file-sizes";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, Loader2, Upload, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const formSchema = z.object({
   title: z
@@ -77,7 +78,6 @@ export function AssetUploadForm({
     ...ALLOWED_EXTENSIONS.archive,
   ];
   const maxSize = FILE_SIZE_LIMITS.ARCHIVE_MAX; // 1GB max (for compressed files)
-  const uploadEndpoint = "/api/assets/upload";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -124,26 +124,22 @@ export function AssetUploadForm({
       setUploadProgress(30);
       setUploadStatus("Uploading file...");
 
-      const response = await fetch(uploadEndpoint, {
-        method: "POST",
-        body: formData,
-      });
+      // Call Server Action
+      const result = await uploadAsset(formData);
 
       setUploadProgress(90);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Upload failed");
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
 
-      const result = await response.json();
       setUploadProgress(100);
       setUploadStatus("Upload complete!");
 
-      if (onSuccess) {
-        onSuccess(result.asset.id);
-      } else {
-        router.push(`/assets/${result.asset.id}`);
+      if (onSuccess && result.assetId) {
+        onSuccess(result.assetId);
+      } else if (result.assetId) {
+        router.push(`/assets/${result.assetId}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -162,7 +158,11 @@ export function AssetUploadForm({
   function addTag(tag: string) {
     const currentTags = form.getValues("tags");
     const normalizedTag = tag.trim();
-    if (!currentTags.includes(normalizedTag) && currentTags.length < 10 && normalizedTag) {
+    if (
+      !currentTags.includes(normalizedTag) &&
+      currentTags.length < 10 &&
+      normalizedTag
+    ) {
       form.setValue("tags", [...currentTags, normalizedTag]);
     }
   }
@@ -244,7 +244,9 @@ export function AssetUploadForm({
 
           {/* Team Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Owner</label>
+            <label htmlFor="team_selector" className="text-sm font-medium">
+              Owner
+            </label>
             <TeamSelector
               value={selectedTeam}
               onChange={setSelectedTeam}

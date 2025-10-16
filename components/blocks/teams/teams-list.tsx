@@ -1,13 +1,19 @@
 "use client";
 
-import { Users } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { CreateTeamDialog } from "@/components/blocks/teams/create-team-dialog";
 import { InviteMemberDialog } from "@/components/blocks/teams/invite-member-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface Team {
   id: string;
@@ -39,10 +45,6 @@ export function TeamsList() {
     }
   }
 
-  useEffect(() => {
-    fetchTeams();
-  }, []);
-
   const handleTeamCreated = () => {
     fetchTeams();
     router.refresh();
@@ -65,7 +67,7 @@ export function TeamsList() {
           <EmptyState
             icon={<Users className="w-6 h-6" />}
             title="No teams yet"
-            description="Create your first team to collaborate with others on projects and assets"
+            description="Create your first team to collaborate with others on products and assets"
             action={<CreateTeamDialog onTeamCreated={handleTeamCreated} />}
           />
         </CardContent>

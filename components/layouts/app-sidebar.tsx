@@ -1,21 +1,5 @@
 "use client";
 
-import {
-  BookOpen,
-  ChevronsUpDown,
-  GitPullRequestCreate,
-  Home,
-  Library,
-  LogOut,
-  Settings,
-  ShoppingBag,
-  User,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { PendingRequestsBadge } from "@/components/blocks/projects/project-request-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -38,6 +22,20 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/client";
+import {
+  BookOpen,
+  ChevronsUpDown,
+  Home,
+  Library,
+  LogOut,
+  Package,
+  Settings,
+  ShoppingBag,
+  User,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface AppSidebarProps {
   user?: {
@@ -59,16 +57,6 @@ const navigation = [
         url: "/dashboard",
         icon: Home,
       },
-      {
-        title: "Requests",
-        url: "/requests",
-        icon: GitPullRequestCreate,
-      },
-      {
-        title: "Teams",
-        url: "/teams",
-        icon: Users,
-      },
     ],
   },
   {
@@ -80,19 +68,19 @@ const navigation = [
         icon: Library,
       },
       {
-        title: "Licensing",
-        url: "/licensing",
+        title: "Create Asset",
+        url: "/assets/upload",
         icon: Library,
       },
     ],
   },
   {
-    title: "Projects",
+    title: "Create",
     items: [
       {
-        title: "My Projects",
-        url: "/projects",
-        icon: BookOpen,
+        title: "Create Product",
+        url: "/products/create",
+        icon: Package,
       },
     ],
   },
@@ -100,13 +88,8 @@ const navigation = [
     title: "Marketplace",
     items: [
       {
-        title: "My Products",
+        title: "Browse Products",
         url: "/products",
-        icon: ShoppingBag,
-      },
-      {
-        title: "Shop",
-        url: "/shop",
         icon: ShoppingBag,
       },
     ],
@@ -155,7 +138,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       <Link href={item.url}>
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>
-                        {item.url === "/requests" && <PendingRequestsBadge />}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

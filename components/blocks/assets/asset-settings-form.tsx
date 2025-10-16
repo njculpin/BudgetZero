@@ -1,11 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +28,12 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const assetSettingsSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
@@ -91,13 +91,7 @@ export function AssetSettingsForm({
 
       // Small delay so user sees the toast
       setTimeout(() => {
-        if (projectId) {
-          router.push(
-            `/projects/${projectId}/${assetType === "model" ? "models" : "illustrations"}/${assetId}`,
-          );
-        } else {
-          router.push(`/assets/${assetId}`);
-        }
+        router.push(`/assets/${assetId}`);
         router.refresh();
       }, 500);
     } catch (error) {
@@ -440,13 +434,7 @@ export function AssetSettingsForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              projectId
-                ? router.push(
-                    `/projects/${projectId}/${assetType === "model" ? "models" : "illustrations"}/${assetId}`,
-                  )
-                : router.push(`/assets/${assetId}`)
-            }
+            onClick={() => router.push(`/assets/${assetId}`)}
             disabled={isLoading}
           >
             Cancel

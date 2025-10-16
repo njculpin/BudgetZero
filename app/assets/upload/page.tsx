@@ -1,9 +1,9 @@
 import { AssetUploadForm } from "@/components/blocks/assets/asset-upload-form";
 import { MainLayout } from "@/components/layouts/main-layout";
-import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
+import { getMe } from "@/lib/sdk/server/users";
 
 export default async function AssetUploadPage() {
-  const user = await useAdminGetMe();
+  const user = await getMe();
 
   const breadcrumbs = [
     { label: "Asset Library", href: "/assets" },
