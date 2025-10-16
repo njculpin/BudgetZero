@@ -35,7 +35,8 @@
       "Bash(npm run dev:simple:*)",
       "Bash(xargs kill:*)",
       "Bash(perl -i -pe:*)",
-      "Bash(perl:*)"
+      "Bash(perl:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

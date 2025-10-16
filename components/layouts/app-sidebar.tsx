@@ -23,9 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/client";
 import {
-  BookOpen,
   ChevronsUpDown,
-  Home,
   Library,
   LogOut,
   Package,
@@ -50,36 +48,21 @@ interface AppSidebarProps {
 
 const navigation = [
   {
-    title: "Main",
-    items: [
-      {
-        title: "Dashboard",
-        url: "/dashboard",
-        icon: Home,
-      },
-    ],
-  },
-  {
     title: "Assets",
     items: [
       {
-        title: "Asset Library",
+        title: "Assets",
         url: "/assets",
-        icon: Library,
-      },
-      {
-        title: "Create Asset",
-        url: "/assets/upload",
         icon: Library,
       },
     ],
   },
   {
-    title: "Create",
+    title: "Products",
     items: [
       {
-        title: "Create Product",
-        url: "/products/create",
+        title: "Products",
+        url: "/products",
         icon: Package,
       },
     ],

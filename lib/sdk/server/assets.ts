@@ -17,14 +17,38 @@ export async function getAssetByIdWithDetails(id: string) {
     .select(`
       *,
       creator:user_id(id, full_name, username),
-      asset_tags(namespace, value),
-      asset_images(*),
-      asset_files(*),
-      asset_royalties(*),
-      asset_licenses(*)
+      asset_tags(id, namespace, value, is_deleted),
+      asset_images(id, image_url, caption, position, file_size_bytes, storage_path, is_deleted),
+      asset_files(id, file_url, caption, mime_type, file_size_bytes, storage_path, is_deleted),
+      asset_royalties(id, royalty_type, royalty_value, user_id, is_deleted),
+      asset_licenses(id, license_id, is_active, granted_at, expires_at, is_deleted)
     `)
     .eq("id", id)
     .single();
+
+  // Filter out soft-deleted items
+  if (data) {
+    data.asset_tags =
+      data.asset_tags?.filter(
+        (tag: { is_deleted: boolean }) => !tag.is_deleted,
+      ) ?? [];
+    data.asset_images =
+      data.asset_images?.filter(
+        (img: { is_deleted: boolean }) => !img.is_deleted,
+      ) ?? [];
+    data.asset_files =
+      data.asset_files?.filter(
+        (file: { is_deleted: boolean }) => !file.is_deleted,
+      ) ?? [];
+    data.asset_royalties =
+      data.asset_royalties?.filter(
+        (roy: { is_deleted: boolean }) => !roy.is_deleted,
+      ) ?? [];
+    data.asset_licenses =
+      data.asset_licenses?.filter(
+        (lic: { is_deleted: boolean }) => !lic.is_deleted,
+      ) ?? [];
+  }
 
   return { data, error };
 }
@@ -46,7 +70,7 @@ export async function listAssetsWithDetails(options?: {
       `
       *,
       creator:user_id(id, full_name, username),
-      asset_images(id, image_url, position)
+      asset_images(id, image_url, position, is_deleted)
     `,
       { count: "exact" },
     )
@@ -76,6 +100,17 @@ export async function listAssetsWithDetails(options?: {
   }
 
   const { data, error, count } = await query;
+
+  // Filter out soft-deleted images client-side
+  if (data) {
+    for (const asset of data) {
+      if (asset.asset_images) {
+        asset.asset_images = asset.asset_images.filter(
+          (img: { is_deleted: boolean }) => !img.is_deleted,
+        );
+      }
+    }
+  }
 
   return { data, error, count };
 }

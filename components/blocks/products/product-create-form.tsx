@@ -71,7 +71,10 @@ interface ProductCreateFormProps {
   userAssets: Asset[];
 }
 
-export function ProductCreateForm({ userId, userAssets }: ProductCreateFormProps) {
+export function ProductCreateForm({
+  userId,
+  userAssets,
+}: ProductCreateFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +95,7 @@ export function ProductCreateForm({ userId, userAssets }: ProductCreateFormProps
   const selectedAssets = useMemo(() => {
     const selectedIds = form.watch("asset_ids");
     return userAssets.filter((asset) => selectedIds.includes(asset.id));
-  }, [form.watch("asset_ids"), userAssets]);
+  }, [form.watch, userAssets]);
 
   // Auto-generate handle from title
   const handleTitleChange = (title: string) => {
@@ -222,7 +225,8 @@ export function ProductCreateForm({ userId, userAssets }: ProductCreateFormProps
                   </FormLabel>
                   <FormDescription className="mb-4">
                     Choose which assets to include in this product. Royalties
-                    will be automatically calculated based on asset contributors.
+                    will be automatically calculated based on asset
+                    contributors.
                   </FormDescription>
                   <FormControl>
                     <AssetSelector
@@ -282,10 +286,13 @@ export function ProductCreateForm({ userId, userAssets }: ProductCreateFormProps
                         placeholder="0.00"
                         {...field}
                         onChange={(e) => {
-                          const dollars = Number.parseFloat(e.target.value) || 0;
+                          const dollars =
+                            Number.parseFloat(e.target.value) || 0;
                           field.onChange(Math.round(dollars * 100));
                         }}
-                        value={field.value ? (field.value / 100).toFixed(2) : ""}
+                        value={
+                          field.value ? (field.value / 100).toFixed(2) : ""
+                        }
                         className="max-w-[200px]"
                       />
                     </div>
@@ -297,16 +304,6 @@ export function ProductCreateForm({ userId, userAssets }: ProductCreateFormProps
                 </FormItem>
               )}
             />
-
-            {/* Price Preview */}
-            <div className="rounded-lg border bg-muted/50 p-4">
-              <div className="text-sm font-medium text-muted-foreground mb-2">
-                Price Preview
-              </div>
-              <div className="text-2xl font-bold">
-                ${((form.watch("price_cents") || 0) / 100).toFixed(2)}
-              </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -316,6 +313,29 @@ export function ProductCreateForm({ userId, userAssets }: ProductCreateFormProps
           productPriceCents={form.watch("price_cents")}
           currentUserId={userId}
         />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tags</CardTitle>
+            {/* Price Preview */}
+            <CardContent></CardContent>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Preview</CardTitle>
+            {/* Price Preview */}
+            <CardContent>
+              <div className="text-sm font-medium text-muted-foreground mb-2">
+                Price Preview
+              </div>
+              <div className="text-2xl font-bold">
+                ${((form.watch("price_cents") || 0) / 100).toFixed(2)}
+              </div>
+            </CardContent>
+          </CardHeader>
+        </Card>
 
         {/* Error Display */}
         {error && (

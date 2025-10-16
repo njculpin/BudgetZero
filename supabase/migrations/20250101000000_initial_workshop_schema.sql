@@ -19,6 +19,7 @@ CREATE TYPE payout_status AS ENUM ('pending', 'paid', 'failed');
 CREATE TYPE order_status AS ENUM ('pending', 'paid', 'failed', 'refunded');
 CREATE TYPE royalty_transaction_status AS ENUM ('pending', 'ready_to_pay', 'paid', 'failed', 'refunded');
 CREATE TYPE entity_type AS ENUM ('user', 'asset', 'product', 'sale', 'sale_item', 'team', 'license');
+CREATE TYPE product_status AS ENUM ('draft', 'published', 'archived');
 
 -- ============================================================================
 -- USERS TABLES
@@ -26,7 +27,7 @@ CREATE TYPE entity_type AS ENUM ('user', 'asset', 'product', 'sale', 'sale_item'
 
 CREATE TABLE users (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  full_name TEXT NOT NULL,
+  full_name TEXT,
   first_name TEXT,
   last_name TEXT,
   bio TEXT,
@@ -41,6 +42,7 @@ CREATE TABLE users (
 );
 
 COMMENT ON TABLE users IS 'User profiles extending Supabase auth.users';
+COMMENT ON COLUMN users.full_name IS 'User full name - nullable to allow flexible profile completion';
 COMMENT ON COLUMN users.verified IS 'Whether user email/identity has been verified';
 COMMENT ON COLUMN users.is_deleted IS 'Soft delete flag - user account deactivated';
 
@@ -194,6 +196,49 @@ COMMENT ON TABLE team_chat_message_reactions IS 'Emoji reactions to chat message
 COMMENT ON COLUMN team_chat_message_reactions.reaction IS 'Emoji character or shortcode';
 
 -- ============================================================================
+-- STORAGE BUCKETS
+-- ============================================================================
+
+-- Create storage bucket for asset files (ZIP archives, images, etc.)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'assets',
+  'assets',
+  true, -- Public bucket for marketplace visibility
+  1073741824, -- 1GB file size limit
+  ARRAY[
+    -- Images (for preview images)
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/svg+xml',
+    'image/heic',
+    -- Documents
+    'application/pdf',
+    -- Archives (primary asset format)
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-rar-compressed',
+    'application/x-7z-compressed',
+    'application/x-tar',
+    'application/gzip',
+    -- Audio
+    'audio/mpeg',
+    'audio/wav',
+    'audio/ogg',
+    'audio/mp4',
+    'audio/flac',
+    -- 3D Models and CAD
+    'model/gltf-binary',
+    'model/gltf+json',
+    -- Generic binary (for STL, OBJ, FBX, etc.)
+    'application/octet-stream'
+  ]
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
 -- ASSETS TABLES
 -- ============================================================================
 
@@ -202,6 +247,7 @@ CREATE TABLE assets (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL CHECK (length(title) >= 1 AND length(title) <= 200),
   description TEXT,
+  is_public BOOLEAN DEFAULT FALSE NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   is_deleted BOOLEAN DEFAULT FALSE NOT NULL,
@@ -211,6 +257,7 @@ CREATE TABLE assets (
 COMMENT ON TABLE assets IS 'Uploadable assets (ZIP files containing PDFs, STLs, PNGs, etc.)';
 COMMENT ON COLUMN assets.title IS 'Asset name displayed to users';
 COMMENT ON COLUMN assets.description IS 'Detailed description of asset contents';
+COMMENT ON COLUMN assets.is_public IS 'Public visibility: true = visible to everyone in marketplace, false = visible only to owner and purchasers';
 
 CREATE TABLE asset_tags (
   id BIGSERIAL PRIMARY KEY,
@@ -233,6 +280,8 @@ CREATE TABLE asset_images (
   asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
   caption TEXT,
   image_url TEXT NOT NULL,
+  storage_path TEXT NOT NULL CHECK (storage_path ~ '^[a-f0-9-]+/.+$'),
+  file_size_bytes INTEGER CHECK (file_size_bytes >= 0),
   position INTEGER DEFAULT 0 NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -242,12 +291,16 @@ CREATE TABLE asset_images (
 
 COMMENT ON TABLE asset_images IS 'Preview images for assets (up to 6 images)';
 COMMENT ON COLUMN asset_images.position IS 'Display order for image gallery';
+COMMENT ON COLUMN asset_images.storage_path IS 'Supabase Storage path (format: user-id/filename)';
+COMMENT ON COLUMN asset_images.file_size_bytes IS 'File size in bytes for storage management';
 
 CREATE TABLE asset_files (
   id BIGSERIAL PRIMARY KEY,
   asset_id UUID REFERENCES assets(id) ON DELETE CASCADE NOT NULL,
   caption TEXT,
   file_url TEXT NOT NULL,
+  storage_path TEXT NOT NULL CHECK (storage_path ~ '^[a-f0-9-]+/.+$'),
+  file_size_bytes INTEGER CHECK (file_size_bytes >= 0),
   mime_type TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -256,6 +309,8 @@ CREATE TABLE asset_files (
 );
 
 COMMENT ON TABLE asset_files IS 'Downloadable files within asset (ZIP archives, individual files)';
+COMMENT ON COLUMN asset_files.storage_path IS 'Supabase Storage path (format: user-id/filename)';
+COMMENT ON COLUMN asset_files.file_size_bytes IS 'File size in bytes for storage management';
 
 CREATE TABLE asset_royalties (
   id BIGSERIAL PRIMARY KEY,
@@ -338,6 +393,9 @@ CREATE TABLE products (
   handle TEXT UNIQUE NOT NULL CHECK (length(handle) >= 1 AND length(handle) <= 100),
   title TEXT NOT NULL CHECK (length(title) >= 1 AND length(title) <= 200),
   description TEXT,
+  status product_status DEFAULT 'draft' NOT NULL,
+  is_featured BOOLEAN DEFAULT FALSE NOT NULL,
+  published_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   is_deleted BOOLEAN DEFAULT FALSE NOT NULL,
@@ -346,6 +404,9 @@ CREATE TABLE products (
 
 COMMENT ON TABLE products IS 'Products (collections of assets) for sale on marketplace';
 COMMENT ON COLUMN products.handle IS 'URL-friendly slug for product pages';
+COMMENT ON COLUMN products.status IS 'Publication status: draft (only owner), published (public), archived (only owner)';
+COMMENT ON COLUMN products.is_featured IS 'Whether product is featured on homepage';
+COMMENT ON COLUMN products.published_at IS 'Timestamp when product was first published';
 
 CREATE TABLE product_categories (
   id BIGSERIAL PRIMARY KEY,
@@ -645,6 +706,7 @@ CREATE INDEX idx_team_chat_messages_created_at ON team_chat_messages(created_at 
 CREATE INDEX idx_assets_user_id ON assets(user_id) WHERE NOT is_deleted;
 CREATE INDEX idx_assets_created_at ON assets(created_at DESC) WHERE NOT is_deleted;
 CREATE INDEX idx_assets_is_deleted ON assets(is_deleted);
+CREATE INDEX idx_assets_is_public ON assets(is_public) WHERE NOT is_deleted;
 
 -- Asset tags indexes
 CREATE INDEX idx_asset_tags_asset_id ON asset_tags(asset_id) WHERE NOT is_deleted;
@@ -653,9 +715,11 @@ CREATE INDEX idx_asset_tags_namespace_value ON asset_tags(namespace, value) WHER
 -- Asset images indexes
 CREATE INDEX idx_asset_images_asset_id ON asset_images(asset_id) WHERE NOT is_deleted;
 CREATE INDEX idx_asset_images_position ON asset_images(asset_id, position) WHERE NOT is_deleted;
+CREATE INDEX idx_asset_images_storage_path ON asset_images(storage_path) WHERE NOT is_deleted;
 
 -- Asset files indexes
 CREATE INDEX idx_asset_files_asset_id ON asset_files(asset_id) WHERE NOT is_deleted;
+CREATE INDEX idx_asset_files_storage_path ON asset_files(storage_path) WHERE NOT is_deleted;
 
 -- Asset royalties indexes
 CREATE INDEX idx_asset_royalties_asset_id ON asset_royalties(asset_id) WHERE NOT is_deleted;
@@ -678,6 +742,9 @@ CREATE INDEX idx_asset_license_acceptances_asset_id ON asset_license_acceptances
 CREATE INDEX idx_products_handle ON products(handle) WHERE NOT is_deleted;
 CREATE INDEX idx_products_created_at ON products(created_at DESC) WHERE NOT is_deleted;
 CREATE INDEX idx_products_is_deleted ON products(is_deleted);
+CREATE INDEX idx_products_status ON products(status) WHERE NOT is_deleted;
+CREATE INDEX idx_products_is_featured ON products(is_featured) WHERE NOT is_deleted;
+CREATE INDEX idx_products_published_at ON products(published_at DESC) WHERE NOT is_deleted;
 
 -- Product categories indexes
 CREATE INDEX idx_product_categories_title ON product_categories(title) WHERE NOT is_deleted;
@@ -830,6 +897,20 @@ CREATE TRIGGER update_product_ratings_updated_at BEFORE UPDATE ON product_rating
 
 CREATE TRIGGER update_stripe_prices_updated_at BEFORE UPDATE ON stripe_prices
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to auto-set published_at when status changes to 'published'
+CREATE OR REPLACE FUNCTION set_published_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.status = 'published' AND OLD.status != 'published' AND NEW.published_at IS NULL THEN
+    NEW.published_at = NOW();
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_product_published_at BEFORE UPDATE ON products
+  FOR EACH ROW EXECUTE FUNCTION set_published_at();
 
 -- Trigger to create user profile when auth.users record is created
 CREATE OR REPLACE FUNCTION handle_new_user()
@@ -1022,20 +1103,62 @@ CREATE POLICY "Team members can create messages" ON team_chat_messages FOR INSER
   )
 );
 
--- Assets policies (public read for marketplace)
-CREATE POLICY "Anyone can view non-deleted assets" ON assets FOR SELECT USING (NOT is_deleted);
+-- Assets policies
+-- Public assets visible to everyone, private assets only visible to owner and purchasers
+CREATE POLICY "Anyone can view public assets" ON assets FOR SELECT USING (
+  NOT is_deleted AND is_public = true
+);
+
+CREATE POLICY "Asset owners can view their own assets" ON assets FOR SELECT USING (
+  NOT is_deleted AND auth.uid() = user_id
+);
+
+CREATE POLICY "Buyers can view purchased private assets" ON assets FOR SELECT USING (
+  NOT is_deleted AND is_public = false AND
+  EXISTS (
+    SELECT 1 FROM sale_item_assets sia
+    JOIN sale_items si ON si.id = sia.sale_item_id
+    JOIN sales s ON s.id = si.sale_id
+    WHERE sia.asset_id = assets.id AND s.user_id = auth.uid() AND s.status = 'paid'
+  )
+);
+
 CREATE POLICY "Users can create their own assets" ON assets FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update their own assets" ON assets FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can soft delete their own assets" ON assets FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can soft delete their own assets" ON assets FOR DELETE USING (auth.uid() = user_id);
 
 -- Asset tags policies
-CREATE POLICY "Anyone can view asset tags" ON asset_tags FOR SELECT USING (NOT is_deleted);
+CREATE POLICY "Anyone can view tags for public assets" ON asset_tags FOR SELECT USING (
+  NOT is_deleted AND
+  EXISTS (SELECT 1 FROM assets WHERE id = asset_tags.asset_id AND is_public = true AND NOT is_deleted)
+);
+
 CREATE POLICY "Asset owners can manage tags" ON asset_tags FOR ALL USING (
   EXISTS (SELECT 1 FROM assets WHERE id = asset_tags.asset_id AND user_id = auth.uid())
 );
 
 -- Asset images policies
-CREATE POLICY "Anyone can view asset images" ON asset_images FOR SELECT USING (NOT is_deleted);
+CREATE POLICY "Anyone can view images for public assets" ON asset_images FOR SELECT USING (
+  NOT is_deleted AND
+  EXISTS (SELECT 1 FROM assets WHERE id = asset_images.asset_id AND is_public = true AND NOT is_deleted)
+);
+
+CREATE POLICY "Asset owners can view their asset images" ON asset_images FOR SELECT USING (
+  NOT is_deleted AND
+  EXISTS (SELECT 1 FROM assets WHERE id = asset_images.asset_id AND user_id = auth.uid())
+);
+
+CREATE POLICY "Buyers can view images of purchased private assets" ON asset_images FOR SELECT USING (
+  NOT is_deleted AND
+  EXISTS (
+    SELECT 1 FROM assets a
+    JOIN sale_item_assets sia ON sia.asset_id = a.id
+    JOIN sale_items si ON si.id = sia.sale_item_id
+    JOIN sales s ON s.id = si.sale_id
+    WHERE a.id = asset_images.asset_id AND a.is_public = false AND s.user_id = auth.uid() AND s.status = 'paid'
+  )
+);
+
 CREATE POLICY "Asset owners can manage images" ON asset_images FOR ALL USING (
   EXISTS (SELECT 1 FROM assets WHERE id = asset_images.asset_id AND user_id = auth.uid())
 );
@@ -1080,8 +1203,20 @@ CREATE POLICY "Asset owners can manage licenses" ON asset_licenses FOR ALL USING
 CREATE POLICY "Users can view their acceptances" ON asset_license_acceptances FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create acceptances" ON asset_license_acceptances FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- Products policies (public read for marketplace)
-CREATE POLICY "Anyone can view non-deleted products" ON products FOR SELECT USING (NOT is_deleted);
+-- Products policies
+-- Published products visible to everyone, draft/archived only visible to owner
+CREATE POLICY "Anyone can view published products" ON products FOR SELECT USING (
+  NOT is_deleted AND status = 'published'
+);
+
+CREATE POLICY "Product owners can view their products" ON products FOR SELECT USING (
+  NOT is_deleted AND
+  EXISTS (
+    SELECT 1 FROM product_teams pt
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE pt.product_id = products.id AND tu.user_id = auth.uid()
+  )
+);
 
 -- Product categories policies
 CREATE POLICY "Anyone can view product categories" ON product_categories FOR SELECT USING (NOT is_deleted);
@@ -1095,7 +1230,20 @@ CREATE POLICY "Team members can view product teams" ON product_teams FOR SELECT 
 );
 
 -- Product variants policies
-CREATE POLICY "Anyone can view non-deleted variants" ON product_variants FOR SELECT USING (NOT is_deleted);
+CREATE POLICY "Anyone can view variants of published products" ON product_variants FOR SELECT USING (
+  NOT is_deleted AND
+  EXISTS (SELECT 1 FROM products WHERE id = product_variants.product_id AND status = 'published' AND NOT is_deleted)
+);
+
+CREATE POLICY "Product owners can view their product variants" ON product_variants FOR SELECT USING (
+  NOT is_deleted AND
+  EXISTS (
+    SELECT 1 FROM products p
+    JOIN product_teams pt ON pt.product_id = p.id
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE p.id = product_variants.product_id AND tu.user_id = auth.uid()
+  )
+);
 
 -- Product variant assets policies
 CREATE POLICY "Anyone can view variant assets" ON product_variant_assets FOR SELECT USING (true);
@@ -1151,6 +1299,40 @@ CREATE POLICY "Buyers can view their license grants" ON sale_license_transaction
 
 -- Audit logs policies (users can only see their own actions)
 CREATE POLICY "Users can view their own audit logs" ON audit_logs FOR SELECT USING (auth.uid() = user_id);
+
+-- ============================================================================
+-- STORAGE POLICIES
+-- ============================================================================
+
+-- Storage policies for assets bucket
+CREATE POLICY "Anyone can view asset files"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'assets');
+
+CREATE POLICY "Authenticated users can upload assets"
+ON storage.objects FOR INSERT
+WITH CHECK (
+  bucket_id = 'assets' AND
+  auth.uid() IS NOT NULL
+);
+
+CREATE POLICY "Users can update their own asset files"
+ON storage.objects FOR UPDATE
+USING (
+  bucket_id = 'assets' AND
+  auth.uid()::text = (storage.foldername(name))[1]
+)
+WITH CHECK (
+  bucket_id = 'assets' AND
+  auth.uid()::text = (storage.foldername(name))[1]
+);
+
+CREATE POLICY "Users can delete their own asset files"
+ON storage.objects FOR DELETE
+USING (
+  bucket_id = 'assets' AND
+  auth.uid()::text = (storage.foldername(name))[1]
+);
 
 -- ============================================================================
 -- SEED DATA: Platform Default License
