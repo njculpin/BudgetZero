@@ -1,9 +1,5 @@
 "use client";
 
-import { Bell } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { formatTimeAgo } from "@/lib/utils/date";
+import { Bell } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface Notification {
   id: string;
@@ -46,15 +46,6 @@ export function NotificationsBell() {
       setUnreadCount(notifs.filter((n: Notification) => !n.is_read).length);
     }
   };
-
-  useEffect(() => {
-    fetchNotifications();
-
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const markAsRead = async (notificationId: string) => {
     await fetch("/api/notifications", {
@@ -147,7 +138,6 @@ export function NotificationsBell() {
             ))}
           </div>
         )}
-
         {notifications.length > 0 && (
           <>
             <DropdownMenuSeparator />

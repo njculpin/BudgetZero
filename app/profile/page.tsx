@@ -1,14 +1,3 @@
-import {
-  Activity,
-  Award,
-  Calendar,
-  Globe,
-  MapPin,
-  Settings,
-  Star,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,29 +9,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAdminGetMe } from "@/lib/sdk/server";
+import { getMe, getUserProfile } from "@/lib/sdk/server";
+import {
+  Activity,
+  Award,
+  Calendar,
+  Globe,
+  MapPin,
+  Settings,
+  Star,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
 
 export default async function ProfilePage() {
-  const user = await useAdminGetMe();
+  const user = await getMe();
 
-  const userName = user.user_metadata?.full_name || user.email || "User";
+  // Fetch user profile data from users table
+  const { data: profile } = await getUserProfile(user.id);
+
+  const userName =
+    profile?.full_name || user.user_metadata?.full_name || user.email || "User";
   const userInitials = userName
     .split(" ")
     .map((name: string) => name.charAt(0))
     .join("")
     .toUpperCase()
     .slice(0, 2);
-
-  // TODO: Fetch user profile data from profiles table when available
-  const profile = {
-    bio: "",
-    location: "",
-    website_url: "",
-    skills: [],
-    creator_roles: [],
-    experience_level: "beginner",
-    // Placeholder data
-  };
 
   return (
     <MainLayout user={user} breadcrumbs={[{ label: "Profile" }]}>
@@ -54,10 +47,6 @@ export default async function ProfilePage() {
               Manage your creator profile and public information
             </p>
           </div>
-          <Button>
-            <Settings className="w-4 h-4 mr-2" />
-            Edit Profile
-          </Button>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -69,7 +58,9 @@ export default async function ProfilePage() {
                 <div className="flex items-center gap-4">
                   <Avatar className="w-20 h-20">
                     <AvatarImage
-                      src={user.user_metadata?.avatar_url}
+                      src={
+                        profile?.avatar_url || user.user_metadata?.avatar_url
+                      }
                       alt={userName}
                     />
                     <AvatarFallback className="text-xl">
@@ -77,20 +68,31 @@ export default async function ProfilePage() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <CardTitle className="text-2xl">{userName}</CardTitle>
-                    <p className="text-slate-600">{user.email}</p>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-2xl">{userName}</CardTitle>
+                      {profile?.is_verified && (
+                        <Badge variant="default" className="text-xs">
+                          Verified
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-slate-600">
+                      {profile?.username ? `@${profile.username}` : user.email}
+                    </p>
                     <div className="flex items-center gap-2 mt-2">
                       <Calendar className="w-4 h-4 text-slate-400" />
                       <span className="text-sm text-slate-600">
                         Joined{" "}
-                        {new Date(user.created_at || "").toLocaleDateString()}
+                        {new Date(
+                          profile?.created_at || user.created_at || "",
+                        ).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                {profile.bio ? (
+                {profile?.bio ? (
                   <p className="text-slate-700">{profile.bio}</p>
                 ) : (
                   <p className="text-slate-500 italic">
@@ -100,13 +102,13 @@ export default async function ProfilePage() {
                 )}
 
                 <div className="flex flex-wrap gap-4 mt-4 text-sm text-slate-600">
-                  {profile.location && (
+                  {profile?.location && (
                     <div className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
                       <span>{profile.location}</span>
                     </div>
                   )}
-                  {profile.website_url && (
+                  {profile?.website_url && (
                     <div className="flex items-center gap-1">
                       <Globe className="w-4 h-4" />
                       <a
@@ -119,60 +121,6 @@ export default async function ProfilePage() {
                       </a>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Creator Roles & Skills */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Creator Profile</CardTitle>
-                <CardDescription>
-                  Your roles and expertise in game creation
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">Creator Roles</h4>
-                  {profile.creator_roles.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.creator_roles.map((role) => (
-                        <Badge
-                          key={role}
-                          variant="default"
-                          className="capitalize"
-                        >
-                          {role}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-500">
-                      No creator roles selected
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-2">Skills</h4>
-                  {profile.skills.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.skills.map((skill) => (
-                        <Badge key={skill} variant="outline">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-500">No skills added</p>
-                  )}
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-2">Experience Level</h4>
-                  <Badge variant="secondary" className="capitalize">
-                    {profile.experience_level || "Not specified"}
-                  </Badge>
                 </div>
               </CardContent>
             </Card>
@@ -264,9 +212,9 @@ export default async function ProfilePage() {
                   variant="outline"
                   className="w-full justify-start"
                 >
-                  <Link href="/projects">
+                  <Link href="/products">
                     <Activity className="w-4 h-4 mr-2" />
-                    My Projects
+                    My Products
                   </Link>
                 </Button>
                 <Button

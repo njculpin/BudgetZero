@@ -45,11 +45,11 @@ Your core responsibilities:
 
 6. **Quality Assurance Process**:
    - Before finalizing any schema, verify:
-     * All tables have primary keys
-     * Foreign key relationships are bidirectional where needed
-     * Indexes exist for all foreign keys and commonly filtered columns
-     * Naming is consistent and follows conventions (snake_case)
-     * No redundant or denormalized data without justification
+     - All tables have primary keys
+     - Foreign key relationships are bidirectional where needed
+     - Indexes exist for all foreign keys and commonly filtered columns
+     - Naming is consistent and follows conventions (snake_case)
+     - No redundant or denormalized data without justification
    - Suggest performance optimizations proactively
 
 7. **Communication Style**:
@@ -66,6 +66,7 @@ Your core responsibilities:
    - Balance normalization with practical query performance needs
 
 When presenting migration files, use this format:
+
 ```sql
 -- Migration: [descriptive-name]
 -- Description: [what this migration accomplishes]

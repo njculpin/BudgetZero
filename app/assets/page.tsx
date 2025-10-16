@@ -1,13 +1,3 @@
-import {
-  Box,
-  DollarSign,
-  Image as ImageIcon,
-  Plus,
-  Search as SearchIcon,
-  Upload,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { AssetSearch } from "@/components/blocks/assets/asset-search";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +10,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useAdminGetAllAssets } from "@/lib/sdk/server/use-admin-get-all-assets";
-import { useAdminGetMe } from "@/lib/sdk/server/use-admin-get-me";
+import { listAssetsWithDetails } from "@/lib/sdk/server/assets";
+import { getMe } from "@/lib/sdk/server/users";
+import {
+  Box,
+  DollarSign,
+  Image as ImageIcon,
+  Plus,
+  Search as SearchIcon,
+  Upload,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 interface AssetsPageProps {
   searchParams: Promise<{
@@ -47,14 +47,14 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
   const limit = 24;
   const offset = (page - 1) * limit;
 
-  const user = await useAdminGetMe();
+  const user = await getMe();
 
   // Get all public assets OR user's own assets
   const {
     data: assets,
     count,
     error,
-  } = await useAdminGetAllAssets({
+  } = await listAssetsWithDetails({
     assetType,
     search,
     publicOnly: false, // Show all assets (we'll filter for public + owned in SDK)
@@ -73,7 +73,8 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
             <div>
               <h1 className="text-3xl font-bold">Asset Library</h1>
               <p className="text-muted-foreground mt-2">
-                Browse and discover 3D models, illustrations, and more
+                Browse and discover Documents, 3D models, illustrations, and
+                more
               </p>
             </div>
           </div>
@@ -123,6 +124,16 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
             asChild
           >
             <Link href="/assets">All Assets</Link>
+          </Button>
+          <Button
+            variant={assetType === "document" ? "default" : "outline"}
+            size="sm"
+            asChild
+          >
+            <Link href="/assets?type=document">
+              <Box className="mr-2 h-4 w-4" />
+              Documents
+            </Link>
           </Button>
           <Button
             variant={assetType === "model" ? "default" : "outline"}
@@ -221,7 +232,8 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                                 <>
                                   <DollarSign className="h-3 w-3" />
                                   {formatPrice(activePricing.price_cents)}
-                                  {activePricing.pricing_type === "subscription" &&
+                                  {activePricing.pricing_type ===
+                                    "subscription" &&
                                     `/${activePricing.billing_interval}`}
                                 </>
                               )}
@@ -234,7 +246,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                           {asset.title}
                         </CardTitle>
                         <CardDescription className="line-clamp-1">
-                          By {asset.creator.full_name || asset.creator.username}
+                          By {asset.creator.username}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
