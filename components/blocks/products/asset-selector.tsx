@@ -90,13 +90,13 @@ export function AssetSelector({
 
       {/* Asset Grid */}
       {filteredAssets.length > 0 ? (
-        <div className="h-[400px] overflow-y-auto rounded-lg border p-4">
+        <div className="h-[400px] overflow-y-auto rounded-lg p-4">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredAssets.map((asset) => {
               const isSelected = selectedAssetIds.includes(asset.id);
-              const primaryImage = asset.asset_images?.find(
-                (img) => img.position === 0,
-              ) || asset.asset_images?.[0];
+              const primaryImage =
+                asset.asset_images?.find((img) => img.position === 0) ||
+                asset.asset_images?.[0];
               const hasRoyalties =
                 asset.asset_royalties && asset.asset_royalties.length > 0;
 

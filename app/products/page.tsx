@@ -1,3 +1,7 @@
+import { Search as SearchIcon, ShoppingBag, Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { CreateProductDialog } from "@/components/blocks/products/create-product-dialog";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,11 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { listProductsWithDetails } from "@/lib/sdk/server/products";
+import { listMyProductsWithDetails } from "@/lib/sdk/server/products";
 import { getMe } from "@/lib/sdk/server/users";
-import { Search as SearchIcon, ShoppingBag, Star } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -34,10 +35,21 @@ export default async function ProductsPage({
 
   const user = await getMe();
 
-  const { data: products, count } = await listProductsWithDetails({
+  const {
+    data: products,
+    error,
+    count,
+  } = await listMyProductsWithDetails({
     search,
     limit,
     offset,
+  });
+
+  console.log("[PRODUCTS PAGE] Products query result:", {
+    productsCount: products?.length,
+    totalCount: count,
+    error: error?.message,
+    firstProduct: products?.[0]?.title,
   });
 
   const totalPages = count ? Math.ceil(count / limit) : 0;
@@ -92,9 +104,7 @@ export default async function ProductsPage({
             <h1 className="text-3xl font-bold">Products</h1>
             <p className="text-muted-foreground mt-2">Browse your products</p>
           </div>
-          <Button asChild>
-            <Link href="/products/create">Create Product</Link>
-          </Button>
+          <CreateProductDialog />
         </div>
 
         {/* Results count */}
@@ -116,7 +126,7 @@ export default async function ProductsPage({
                   ) || product.product_images?.[0];
 
                 return (
-                  <Link key={product.id} href={`/shop/${product.handle}`}>
+                  <Link key={product.id} href={`/products/${product.id}`}>
                     <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
                       <div className="aspect-square bg-muted relative">
                         {primaryImage ? (
