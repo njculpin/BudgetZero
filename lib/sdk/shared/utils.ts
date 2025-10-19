@@ -7,6 +7,13 @@ export function handleError(error: unknown): Error {
   if (typeof error === 'string') {
     return new Error(error);
   }
+  // Handle Supabase errors which have message, code, details, hint properties
+  if (typeof error === 'object' && error !== null) {
+    const supabaseError = error as { message?: string; code?: string; details?: string; hint?: string };
+    const errorMessage = supabaseError.message || supabaseError.details || supabaseError.hint || 'An unknown error occurred';
+    console.error('[SDK ERROR] Supabase error:', supabaseError);
+    return new Error(errorMessage);
+  }
   return new Error('An unknown error occurred');
 }
 

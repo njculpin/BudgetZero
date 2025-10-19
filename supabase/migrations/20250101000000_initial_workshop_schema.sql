@@ -916,16 +916,31 @@ CREATE TRIGGER set_product_published_at BEFORE UPDATE ON products
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO users (id, email, created_at, updated_at)
-  VALUES (NEW.id, NEW.email, NOW(), NOW())
-  ON CONFLICT (id) DO NOTHING;
+  -- Insert user profile with username derived from email or metadata
+  INSERT INTO public.users (id, email, username, created_at, updated_at)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    username = COALESCE(EXCLUDED.username, public.users.username),
+    updated_at = NOW();
+
   RETURN NEW;
 EXCEPTION
   WHEN OTHERS THEN
-    RAISE WARNING 'Error creating user profile: %', SQLERRM;
+    -- Log error but don't fail auth user creation
+    RAISE WARNING 'Error creating user profile for %: %', NEW.id, SQLERRM;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Set proper search path for security
+ALTER FUNCTION handle_new_user() SET search_path = public, auth;
 
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
@@ -1075,9 +1090,29 @@ CREATE POLICY "Team members can view their teams" ON teams FOR SELECT USING (
   EXISTS (SELECT 1 FROM team_users WHERE team_id = teams.id AND user_id = auth.uid())
 );
 
+CREATE POLICY "Authenticated users can create teams" ON teams FOR INSERT WITH CHECK (
+  auth.uid() IS NOT NULL
+);
+
+CREATE POLICY "Team members can update their teams" ON teams FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM team_users WHERE team_id = teams.id AND user_id = auth.uid())
+);
+
+CREATE POLICY "Team members can delete their teams" ON teams FOR DELETE USING (
+  EXISTS (SELECT 1 FROM team_users WHERE team_id = teams.id AND user_id = auth.uid())
+);
+
 -- Team users policies
-CREATE POLICY "Team members can view team membership" ON team_users FOR SELECT USING (
-  EXISTS (SELECT 1 FROM team_users tu WHERE tu.team_id = team_users.team_id AND tu.user_id = auth.uid())
+CREATE POLICY "Users can view their own team memberships" ON team_users FOR SELECT USING (
+  auth.uid() = user_id
+);
+
+CREATE POLICY "Authenticated users can add themselves to teams" ON team_users FOR INSERT WITH CHECK (
+  auth.uid() = user_id
+);
+
+CREATE POLICY "Users can remove themselves from teams" ON team_users FOR DELETE USING (
+  auth.uid() = user_id
 );
 
 -- Team channels policies
@@ -1218,6 +1253,30 @@ CREATE POLICY "Product owners can view their products" ON products FOR SELECT US
   )
 );
 
+CREATE POLICY "Authenticated users can create products" ON products FOR INSERT WITH CHECK (
+  true
+);
+
+COMMENT ON POLICY "Authenticated users can create products" ON products IS
+'Allow product creation. Access control is enforced through product_teams relationship.';
+
+
+CREATE POLICY "Product owners can update their products" ON products FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM product_teams pt
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE pt.product_id = products.id AND tu.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Product owners can delete their products" ON products FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM product_teams pt
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE pt.product_id = products.id AND tu.user_id = auth.uid()
+  )
+);
+
 -- Product categories policies
 CREATE POLICY "Anyone can view product categories" ON product_categories FOR SELECT USING (NOT is_deleted);
 
@@ -1227,6 +1286,19 @@ CREATE POLICY "Anyone can view product categorization" ON product_to_product_cat
 -- Product teams policies
 CREATE POLICY "Team members can view product teams" ON product_teams FOR SELECT USING (
   NOT is_deleted AND EXISTS (SELECT 1 FROM team_users WHERE team_id = product_teams.team_id AND user_id = auth.uid())
+);
+
+CREATE POLICY "Authenticated users can create product teams" ON product_teams FOR INSERT WITH CHECK (
+  auth.uid() IS NOT NULL AND
+  EXISTS (SELECT 1 FROM team_users WHERE team_id = product_teams.team_id AND user_id = auth.uid())
+);
+
+CREATE POLICY "Team members can update product teams" ON product_teams FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM team_users WHERE team_id = product_teams.team_id AND user_id = auth.uid())
+);
+
+CREATE POLICY "Team members can delete product teams" ON product_teams FOR DELETE USING (
+  EXISTS (SELECT 1 FROM team_users WHERE team_id = product_teams.team_id AND user_id = auth.uid())
 );
 
 -- Product variants policies
@@ -1245,14 +1317,91 @@ CREATE POLICY "Product owners can view their product variants" ON product_varian
   )
 );
 
+CREATE POLICY "Product owners can create variants" ON product_variants FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM products p
+    JOIN product_teams pt ON pt.product_id = p.id
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE p.id = product_variants.product_id AND tu.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Product owners can update their product variants" ON product_variants FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM products p
+    JOIN product_teams pt ON pt.product_id = p.id
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE p.id = product_variants.product_id AND tu.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Product owners can delete their product variants" ON product_variants FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM products p
+    JOIN product_teams pt ON pt.product_id = p.id
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE p.id = product_variants.product_id AND tu.user_id = auth.uid()
+  )
+);
+
 -- Product variant assets policies
 CREATE POLICY "Anyone can view variant assets" ON product_variant_assets FOR SELECT USING (true);
+
+CREATE POLICY "Product owners can create variant assets" ON product_variant_assets FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM product_variants pv
+    JOIN products p ON p.id = pv.product_id
+    JOIN product_teams pt ON pt.product_id = p.id
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE pv.id = product_variant_assets.variant_id AND tu.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Product owners can delete variant assets" ON product_variant_assets FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM product_variants pv
+    JOIN products p ON p.id = pv.product_id
+    JOIN product_teams pt ON pt.product_id = p.id
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE pv.id = product_variant_assets.variant_id AND tu.user_id = auth.uid()
+  )
+);
 
 -- Product variant images policies
 CREATE POLICY "Anyone can view visible variant images" ON product_variant_images FOR SELECT USING (NOT is_deleted AND visible);
 
 -- Product prices policies
 CREATE POLICY "Anyone can view non-deleted prices" ON product_prices FOR SELECT USING (NOT is_deleted);
+
+CREATE POLICY "Product owners can create prices" ON product_prices FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM product_variants pv
+    JOIN products p ON p.id = pv.product_id
+    JOIN product_teams pt ON pt.product_id = p.id
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE pv.id = product_prices.variant_id AND tu.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Product owners can update prices" ON product_prices FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM product_variants pv
+    JOIN products p ON p.id = pv.product_id
+    JOIN product_teams pt ON pt.product_id = p.id
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE pv.id = product_prices.variant_id AND tu.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Product owners can delete prices" ON product_prices FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM product_variants pv
+    JOIN products p ON p.id = pv.product_id
+    JOIN product_teams pt ON pt.product_id = p.id
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE pv.id = product_prices.variant_id AND tu.user_id = auth.uid()
+  )
+);
 
 -- Product ratings policies
 CREATE POLICY "Anyone can view non-deleted ratings" ON product_ratings FOR SELECT USING (NOT is_deleted);
@@ -1350,3 +1499,189 @@ VALUES (
   FALSE,
   NULL
 );
+
+-- ============================================================================
+-- SEED DATA: Common Creative Commons Licenses
+-- ============================================================================
+
+INSERT INTO licenses (id, title, version, agreement, tags, created_at, updated_at, is_deleted, deleted_at)
+VALUES
+  -- CC0 (Public Domain)
+  (
+    'a0000000-0000-0000-0000-000000000001'::uuid,
+    'CC0 1.0 Universal (Public Domain)',
+    '1.0',
+    'The person who associated a work with this deed has dedicated the work to the public domain by waiving all of his or her rights to the work worldwide under copyright law, including all related and neighboring rights, to the extent allowed by law. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.',
+    'cc0,public-domain,free,commercial',
+    NOW(),
+    NOW(),
+    FALSE,
+    NULL
+  ),
+  -- CC BY
+  (
+    'a0000000-0000-0000-0000-000000000002'::uuid,
+    'CC BY 4.0 (Attribution)',
+    '4.0',
+    'You are free to: Share — copy and redistribute the material in any medium or format; Adapt — remix, transform, and build upon the material for any purpose, even commercially. Under the following terms: Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.',
+    'cc-by,attribution,free,commercial',
+    NOW(),
+    NOW(),
+    FALSE,
+    NULL
+  ),
+  -- CC BY-SA
+  (
+    'a0000000-0000-0000-0000-000000000003'::uuid,
+    'CC BY-SA 4.0 (Attribution-ShareAlike)',
+    '4.0',
+    'You are free to: Share — copy and redistribute the material in any medium or format; Adapt — remix, transform, and build upon the material for any purpose, even commercially. Under the following terms: Attribution — You must give appropriate credit; ShareAlike — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.',
+    'cc-by-sa,attribution,share-alike,copyleft,commercial',
+    NOW(),
+    NOW(),
+    FALSE,
+    NULL
+  ),
+  -- CC BY-NC
+  (
+    'a0000000-0000-0000-0000-000000000004'::uuid,
+    'CC BY-NC 4.0 (Attribution-NonCommercial)',
+    '4.0',
+    'You are free to: Share — copy and redistribute the material in any medium or format; Adapt — remix, transform, and build upon the material. Under the following terms: Attribution — You must give appropriate credit; NonCommercial — You may not use the material for commercial purposes.',
+    'cc-by-nc,attribution,non-commercial',
+    NOW(),
+    NOW(),
+    FALSE,
+    NULL
+  ),
+  -- Custom License Template
+  (
+    'a0000000-0000-0000-0000-000000000005'::uuid,
+    'Custom License',
+    '1.0',
+    'This asset is licensed under custom terms defined by the creator. Please contact the asset owner for specific usage rights and restrictions.',
+    'custom,contact-owner',
+    NOW(),
+    NOW(),
+    FALSE,
+    NULL
+  )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- PRODUCT TAGS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS product_tags (
+  id BIGSERIAL PRIMARY KEY,
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  namespace TEXT NOT NULL DEFAULT 'general',
+  value TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_product_tags_product_id ON product_tags(product_id) WHERE NOT is_deleted;
+CREATE INDEX idx_product_tags_value ON product_tags(value) WHERE NOT is_deleted;
+CREATE INDEX idx_product_tags_namespace ON product_tags(namespace) WHERE NOT is_deleted;
+CREATE INDEX idx_product_tags_is_deleted ON product_tags(is_deleted);
+
+ALTER TABLE product_tags
+  ADD CONSTRAINT product_tags_value_check CHECK (LENGTH(value) >= 1 AND LENGTH(value) <= 50);
+
+ALTER TABLE product_tags
+  ADD CONSTRAINT product_tags_namespace_check CHECK (LENGTH(namespace) >= 1 AND LENGTH(namespace) <= 50);
+
+CREATE UNIQUE INDEX product_tags_product_id_namespace_value_key
+  ON product_tags(product_id, namespace, value)
+  WHERE NOT is_deleted;
+
+ALTER TABLE product_tags ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view tags for published products"
+  ON product_tags FOR SELECT
+  USING (
+    NOT is_deleted
+    AND EXISTS (
+      SELECT 1 FROM products
+      WHERE products.id = product_tags.product_id
+      AND NOT products.is_deleted
+      AND products.status = 'published'
+    )
+  );
+
+CREATE POLICY "Product team members can view their product tags"
+  ON product_tags FOR SELECT
+  USING (
+    NOT is_deleted
+    AND EXISTS (
+      SELECT 1 FROM products p
+      JOIN product_teams pt ON pt.product_id = p.id
+      JOIN team_users tu ON tu.team_id = pt.team_id
+      WHERE p.id = product_tags.product_id
+      AND tu.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Product team members can insert tags"
+  ON product_tags FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM products p
+      JOIN product_teams pt ON pt.product_id = p.id
+      JOIN team_users tu ON tu.team_id = pt.team_id
+      WHERE p.id = product_tags.product_id
+      AND tu.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Product team members can update their product tags"
+  ON product_tags FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM products p
+      JOIN product_teams pt ON pt.product_id = p.id
+      JOIN team_users tu ON tu.team_id = pt.team_id
+      WHERE p.id = product_tags.product_id
+      AND tu.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Product team members can delete their product tags"
+  ON product_tags FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM products p
+      JOIN product_teams pt ON pt.product_id = p.id
+      JOIN team_users tu ON tu.team_id = pt.team_id
+      WHERE p.id = product_tags.product_id
+      AND tu.user_id = auth.uid()
+    )
+  );
+
+CREATE TRIGGER update_product_tags_updated_at
+  BEFORE UPDATE ON product_tags
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER cascade_soft_delete_product_tags
+  BEFORE UPDATE ON product_tags
+  FOR EACH ROW
+  EXECUTE FUNCTION cascade_soft_delete();
+
+-- ============================================================================
+-- SYNC AUTH USERS TO USERS TABLE
+-- ============================================================================
+
+INSERT INTO users (id, email, username, created_at, updated_at)
+SELECT
+  id,
+  email,
+  COALESCE(raw_user_meta_data->>'username', split_part(email, '@', 1)) as username,
+  COALESCE(created_at, NOW()) as created_at,
+  NOW() as updated_at
+FROM auth.users
+WHERE id NOT IN (SELECT id FROM users)
+ON CONFLICT (id) DO NOTHING;

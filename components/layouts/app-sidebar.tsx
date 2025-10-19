@@ -28,8 +28,7 @@ import {
   LogOut,
   Package,
   Settings,
-  ShoppingBag,
-  User,
+  User
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -64,16 +63,6 @@ const navigation = [
         title: "Products",
         url: "/products",
         icon: Package,
-      },
-    ],
-  },
-  {
-    title: "Marketplace",
-    items: [
-      {
-        title: "Browse Products",
-        url: "/products",
-        icon: ShoppingBag,
       },
     ],
   },

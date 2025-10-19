@@ -15,6 +15,30 @@ export async function getMe() {
     redirect('/auth/login');
   }
 
+  // Verify user profile exists in users table
+  const { data: profile, error: profileError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile) {
+    // Try to create the profile if it doesn't exist
+    const { error: createError } = await supabase
+      .from('users')
+      .insert({
+        id: user.id,
+        email: user.email!,
+        username: user.user_metadata?.username || user.email!.split('@')[0],
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      throw new Error(`User profile error: ${createError.message}`);
+    }
+  }
+
   return user;
 }
 

@@ -36,7 +36,9 @@
       "Bash(xargs kill:*)",
       "Bash(perl -i -pe:*)",
       "Bash(perl:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(tee:*)",
+      "Read(//private/tmp/**)"
     ],
     "deny": [],
     "ask": []

@@ -107,7 +107,7 @@ export default async function HomePage({ searchParams }: ProductsPageProps) {
                 ) || product.product_images?.[0];
 
               return (
-                <Link key={product.id} href={`/shop/${product.handle}`}>
+                <Link key={product.id} href={`/products/${product.handle}`}>
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col">
                     <div className="aspect-square bg-muted relative">
                       {primaryImage ? (

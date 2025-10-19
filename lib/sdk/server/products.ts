@@ -1,7 +1,13 @@
-import type { TablesInsert, TablesUpdate, Tables } from '@/lib/types/database';
-import type { ApiResponse, DbClient, PaginatedResponse, PaginationParams } from '../shared/types';
-import { calculatePagination, failure, success } from '../shared/utils';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
+import type {
+  ApiResponse,
+  DbClient,
+  PaginatedResponse,
+  PaginationParams,
+} from "../shared/types";
+import { calculatePagination, failure, success } from "../shared/utils";
 
 // Extended Product Queries (with joins for UI)
 export async function listProductsWithDetails(options?: {
@@ -12,7 +18,7 @@ export async function listProductsWithDetails(options?: {
   const supabase = await createClient();
 
   let query = supabase
-    .from('products')
+    .from("products")
     .select(
       `
       *,
@@ -22,10 +28,11 @@ export async function listProductsWithDetails(options?: {
         product_variant_prices (*)
       )
     `,
-      { count: 'exact' },
+      { count: "exact" },
     )
-    .eq('status', 'active')
-    .order('published_at', { ascending: false });
+    .eq("status", "published")
+    .eq("is_deleted", false)
+    .order("published_at", { ascending: false });
 
   if (options?.search) {
     query = query.or(
@@ -42,36 +49,160 @@ export async function listProductsWithDetails(options?: {
   return { data, error, count };
 }
 
-export async function getProductByIdWithDetails(id: string) {
-  const supabase = await createClient();
+// List all products (including drafts) - for user's product management page
+export async function listMyProductsWithDetails(options?: {
+  search?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  // Use service client to bypass RLS for user's own products
+  // (authentication already verified by calling page via getMe())
+  const supabase = createServiceClient();
 
-  const { data, error } = await supabase
-    .from('products')
-    .select(`
-      *,
-      product_images (*),
-      product_variants (
-        *,
-        product_variant_prices (*),
-        product_variant_images (*),
-        product_variant_assets (
-          *,
-          assets (*)
-        )
-      ),
-      product_ratings (*)
-    `)
-    .eq('id', id)
+  // First get products
+  let query = supabase
+    .from("products")
+    .select("*", { count: "exact" })
+    .eq("is_deleted", false)
+    .order("created_at", { ascending: false });
+
+  if (options?.search) {
+    query = query.or(
+      `title.ilike.%${options.search}%,description.ilike.%${options.search}%`,
+    );
+  }
+
+  if (options?.limit && options?.offset !== undefined) {
+    query = query.range(options.offset, options.offset + options.limit - 1);
+  }
+
+  const { data: products, error, count } = await query;
+
+  if (error || !products) {
+    return { data: products, error, count };
+  }
+
+  // Manually fetch related data for each product
+  const productsWithDetails = await Promise.all(
+    products.map(async (product) => {
+      const [images, variants] = await Promise.all([
+        supabase
+          .from("product_images")
+          .select("*")
+          .eq("product_id", product.id),
+        supabase
+          .from("product_variants")
+          .select("*")
+          .eq("product_id", product.id),
+      ]);
+
+      // Fetch prices for each variant
+      const variantsWithPrices = await Promise.all(
+        (variants.data || []).map(async (variant) => {
+          const { data: prices } = await supabase
+            .from("product_prices")
+            .select("*")
+            .eq("variant_id", variant.id);
+
+          return {
+            ...variant,
+            product_variant_prices: prices || [],
+          };
+        }),
+      );
+
+      return {
+        ...product,
+        product_images: images.data || [],
+        product_variants: variantsWithPrices,
+      };
+    }),
+  );
+
+  return { data: productsWithDetails, error, count };
+}
+
+export async function getProductByIdWithDetails(id: string) {
+  // Use service client to allow viewing draft products
+  // (authentication verified by calling page via getMe())
+  const supabase = createServiceClient();
+
+  const { data: product, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
     .single();
 
-  return { data, error };
+  if (error || !product) {
+    return { data: product, error };
+  }
+
+  // Manually fetch related data
+  const [images, variants, ratings] = await Promise.all([
+    supabase.from("product_images").select("*").eq("product_id", id),
+    supabase.from("product_variants").select("*").eq("product_id", id),
+    supabase.from("product_ratings").select("*").eq("product_id", id),
+  ]);
+
+  // Fetch nested data for variants
+  const variantsWithDetails = await Promise.all(
+    (variants.data || []).map(async (variant) => {
+      const [prices, variantImages, variantAssets] = await Promise.all([
+        supabase
+          .from("product_prices")
+          .select("*")
+          .eq("variant_id", variant.id),
+        supabase
+          .from("product_variant_images")
+          .select("*")
+          .eq("variant_id", variant.id),
+        supabase
+          .from("product_variant_assets")
+          .select("*")
+          .eq("variant_id", variant.id),
+      ]);
+
+      // Fetch assets for variant assets
+      const assetsWithDetails = await Promise.all(
+        (variantAssets.data || []).map(async (va) => {
+          const { data: asset } = await supabase
+            .from("assets")
+            .select("*")
+            .eq("id", va.asset_id)
+            .single();
+
+          return {
+            ...va,
+            assets: asset,
+          };
+        }),
+      );
+
+      return {
+        ...variant,
+        product_variant_prices: prices.data || [],
+        product_variant_images: variantImages.data || [],
+        product_variant_assets: assetsWithDetails,
+      };
+    }),
+  );
+
+  return {
+    data: {
+      ...product,
+      product_images: images.data || [],
+      product_variants: variantsWithDetails,
+      product_ratings: ratings.data || [],
+    },
+    error,
+  };
 }
 
 export async function getProductByHandleWithDetails(handle: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from('products')
+    .from("products")
     .select(`
       *,
       product_images (*),
@@ -82,7 +213,7 @@ export async function getProductByHandleWithDetails(handle: string) {
       ),
       product_ratings (*)
     `)
-    .eq('handle', handle)
+    .eq("handle", handle)
     .single();
 
   return { data, error };
@@ -91,11 +222,11 @@ export async function getProductByHandleWithDetails(handle: string) {
 // Products CRUD
 export async function createProduct(
   client: DbClient,
-  data: TablesInsert<'products'>
-): Promise<ApiResponse<Tables<'products'>>> {
+  data: TablesInsert<"products">,
+): Promise<ApiResponse<Tables<"products">>> {
   try {
     const { data: product, error } = await client
-      .from('products')
+      .from("products")
       .insert(data)
       .select()
       .single();
@@ -109,14 +240,14 @@ export async function createProduct(
 
 export async function getProductById(
   client: DbClient,
-  id: string
-): Promise<ApiResponse<Tables<'products'>>> {
+  id: string,
+): Promise<ApiResponse<Tables<"products">>> {
   try {
     const { data, error } = await client
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .eq('is_deleted', false)
+      .from("products")
+      .select("*")
+      .eq("id", id)
+      .eq("is_deleted", false)
       .single();
 
     if (error) return failure(error);
@@ -128,14 +259,14 @@ export async function getProductById(
 
 export async function getProductByHandle(
   client: DbClient,
-  handle: string
-): Promise<ApiResponse<Tables<'products'>>> {
+  handle: string,
+): Promise<ApiResponse<Tables<"products">>> {
   try {
     const { data, error } = await client
-      .from('products')
-      .select('*')
-      .eq('handle', handle)
-      .eq('is_deleted', false)
+      .from("products")
+      .select("*")
+      .eq("handle", handle)
+      .eq("is_deleted", false)
       .single();
 
     if (error) return failure(error);
@@ -147,18 +278,18 @@ export async function getProductByHandle(
 
 export async function listProducts(
   client: DbClient,
-  params?: PaginationParams
-): Promise<ApiResponse<PaginatedResponse<Tables<'products'>>>> {
+  params?: PaginationParams,
+): Promise<ApiResponse<PaginatedResponse<Tables<"products">>>> {
   try {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 20;
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await client
-      .from('products')
-      .select('*', { count: 'exact' })
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false })
+      .from("products")
+      .select("*", { count: "exact" })
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) return failure(error);
@@ -175,13 +306,13 @@ export async function listProducts(
 export async function updateProduct(
   client: DbClient,
   id: string,
-  data: TablesUpdate<'products'>
-): Promise<ApiResponse<Tables<'products'>>> {
+  data: TablesUpdate<"products">,
+): Promise<ApiResponse<Tables<"products">>> {
   try {
     const { data: product, error } = await client
-      .from('products')
+      .from("products")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -194,16 +325,16 @@ export async function updateProduct(
 
 export async function softDeleteProduct(
   client: DbClient,
-  id: string
-): Promise<ApiResponse<Tables<'products'>>> {
+  id: string,
+): Promise<ApiResponse<Tables<"products">>> {
   try {
     const { data, error } = await client
-      .from('products')
+      .from("products")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -217,11 +348,11 @@ export async function softDeleteProduct(
 // Product Teams CRUD
 export async function addProductTeam(
   client: DbClient,
-  data: TablesInsert<'product_teams'>
-): Promise<ApiResponse<Tables<'product_teams'>>> {
+  data: TablesInsert<"product_teams">,
+): Promise<ApiResponse<Tables<"product_teams">>> {
   try {
     const { data: productTeam, error } = await client
-      .from('product_teams')
+      .from("product_teams")
       .insert(data)
       .select()
       .single();
@@ -235,14 +366,14 @@ export async function addProductTeam(
 
 export async function getProductTeams(
   client: DbClient,
-  productId: string
-): Promise<ApiResponse<Tables<'product_teams'>[]>> {
+  productId: string,
+): Promise<ApiResponse<Tables<"product_teams">[]>> {
   try {
     const { data, error } = await client
-      .from('product_teams')
-      .select('*')
-      .eq('product_id', productId)
-      .eq('is_deleted', false);
+      .from("product_teams")
+      .select("*")
+      .eq("product_id", productId)
+      .eq("is_deleted", false);
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -253,16 +384,16 @@ export async function getProductTeams(
 
 export async function removeProductTeam(
   client: DbClient,
-  id: string
-): Promise<ApiResponse<Tables<'product_teams'>>> {
+  id: string,
+): Promise<ApiResponse<Tables<"product_teams">>> {
   try {
     const { data, error } = await client
-      .from('product_teams')
+      .from("product_teams")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -276,11 +407,11 @@ export async function removeProductTeam(
 // Product Variants CRUD
 export async function createProductVariant(
   client: DbClient,
-  data: TablesInsert<'product_variants'>
-): Promise<ApiResponse<Tables<'product_variants'>>> {
+  data: TablesInsert<"product_variants">,
+): Promise<ApiResponse<Tables<"product_variants">>> {
   try {
     const { data: variant, error } = await client
-      .from('product_variants')
+      .from("product_variants")
       .insert(data)
       .select()
       .single();
@@ -294,15 +425,15 @@ export async function createProductVariant(
 
 export async function getProductVariants(
   client: DbClient,
-  productId: string
-): Promise<ApiResponse<Tables<'product_variants'>[]>> {
+  productId: string,
+): Promise<ApiResponse<Tables<"product_variants">[]>> {
   try {
     const { data, error } = await client
-      .from('product_variants')
-      .select('*')
-      .eq('product_id', productId)
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: true });
+      .from("product_variants")
+      .select("*")
+      .eq("product_id", productId)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: true });
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -314,13 +445,13 @@ export async function getProductVariants(
 export async function updateProductVariant(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'product_variants'>
-): Promise<ApiResponse<Tables<'product_variants'>>> {
+  data: TablesUpdate<"product_variants">,
+): Promise<ApiResponse<Tables<"product_variants">>> {
   try {
     const { data: variant, error } = await client
-      .from('product_variants')
+      .from("product_variants")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -333,16 +464,16 @@ export async function updateProductVariant(
 
 export async function softDeleteProductVariant(
   client: DbClient,
-  id: number
-): Promise<ApiResponse<Tables<'product_variants'>>> {
+  id: number,
+): Promise<ApiResponse<Tables<"product_variants">>> {
   try {
     const { data, error } = await client
-      .from('product_variants')
+      .from("product_variants")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -356,11 +487,11 @@ export async function softDeleteProductVariant(
 // Product Variant Assets CRUD
 export async function addProductVariantAsset(
   client: DbClient,
-  data: TablesInsert<'product_variant_assets'>
-): Promise<ApiResponse<Tables<'product_variant_assets'>>> {
+  data: TablesInsert<"product_variant_assets">,
+): Promise<ApiResponse<Tables<"product_variant_assets">>> {
   try {
     const { data: link, error } = await client
-      .from('product_variant_assets')
+      .from("product_variant_assets")
       .insert(data)
       .select()
       .single();
@@ -374,13 +505,13 @@ export async function addProductVariantAsset(
 
 export async function getProductVariantAssets(
   client: DbClient,
-  variantId: number
-): Promise<ApiResponse<Tables<'product_variant_assets'>[]>> {
+  variantId: number,
+): Promise<ApiResponse<Tables<"product_variant_assets">[]>> {
   try {
     const { data, error } = await client
-      .from('product_variant_assets')
-      .select('*')
-      .eq('variant_id', variantId);
+      .from("product_variant_assets")
+      .select("*")
+      .eq("variant_id", variantId);
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -391,13 +522,13 @@ export async function getProductVariantAssets(
 
 export async function removeProductVariantAsset(
   client: DbClient,
-  id: number
+  id: number,
 ): Promise<ApiResponse<void>> {
   try {
     const { error } = await client
-      .from('product_variant_assets')
+      .from("product_variant_assets")
       .delete()
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) return failure(error);
     return success(undefined);
@@ -409,11 +540,11 @@ export async function removeProductVariantAsset(
 // Product Variant Images CRUD
 export async function createProductVariantImage(
   client: DbClient,
-  data: TablesInsert<'product_variant_images'>
-): Promise<ApiResponse<Tables<'product_variant_images'>>> {
+  data: TablesInsert<"product_variant_images">,
+): Promise<ApiResponse<Tables<"product_variant_images">>> {
   try {
     const { data: image, error } = await client
-      .from('product_variant_images')
+      .from("product_variant_images")
       .insert(data)
       .select()
       .single();
@@ -427,15 +558,15 @@ export async function createProductVariantImage(
 
 export async function getProductVariantImages(
   client: DbClient,
-  variantId: number
-): Promise<ApiResponse<Tables<'product_variant_images'>[]>> {
+  variantId: number,
+): Promise<ApiResponse<Tables<"product_variant_images">[]>> {
   try {
     const { data, error } = await client
-      .from('product_variant_images')
-      .select('*')
-      .eq('variant_id', variantId)
-      .eq('is_deleted', false)
-      .order('position', { ascending: true });
+      .from("product_variant_images")
+      .select("*")
+      .eq("variant_id", variantId)
+      .eq("is_deleted", false)
+      .order("position", { ascending: true });
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -447,13 +578,13 @@ export async function getProductVariantImages(
 export async function updateProductVariantImage(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'product_variant_images'>
-): Promise<ApiResponse<Tables<'product_variant_images'>>> {
+  data: TablesUpdate<"product_variant_images">,
+): Promise<ApiResponse<Tables<"product_variant_images">>> {
   try {
     const { data: image, error } = await client
-      .from('product_variant_images')
+      .from("product_variant_images")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -466,16 +597,16 @@ export async function updateProductVariantImage(
 
 export async function softDeleteProductVariantImage(
   client: DbClient,
-  id: number
-): Promise<ApiResponse<Tables<'product_variant_images'>>> {
+  id: number,
+): Promise<ApiResponse<Tables<"product_variant_images">>> {
   try {
     const { data, error } = await client
-      .from('product_variant_images')
+      .from("product_variant_images")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -489,11 +620,11 @@ export async function softDeleteProductVariantImage(
 // Product Prices CRUD
 export async function createProductPrice(
   client: DbClient,
-  data: TablesInsert<'product_prices'>
-): Promise<ApiResponse<Tables<'product_prices'>>> {
+  data: TablesInsert<"product_prices">,
+): Promise<ApiResponse<Tables<"product_prices">>> {
   try {
     const { data: price, error } = await client
-      .from('product_prices')
+      .from("product_prices")
       .insert(data)
       .select()
       .single();
@@ -507,14 +638,14 @@ export async function createProductPrice(
 
 export async function getProductPrices(
   client: DbClient,
-  variantId: number
-): Promise<ApiResponse<Tables<'product_prices'>[]>> {
+  variantId: number,
+): Promise<ApiResponse<Tables<"product_prices">[]>> {
   try {
     const { data, error } = await client
-      .from('product_prices')
-      .select('*')
-      .eq('variant_id', variantId)
-      .eq('is_deleted', false);
+      .from("product_prices")
+      .select("*")
+      .eq("variant_id", variantId)
+      .eq("is_deleted", false);
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -526,13 +657,13 @@ export async function getProductPrices(
 export async function updateProductPrice(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'product_prices'>
-): Promise<ApiResponse<Tables<'product_prices'>>> {
+  data: TablesUpdate<"product_prices">,
+): Promise<ApiResponse<Tables<"product_prices">>> {
   try {
     const { data: price, error } = await client
-      .from('product_prices')
+      .from("product_prices")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -545,16 +676,16 @@ export async function updateProductPrice(
 
 export async function softDeleteProductPrice(
   client: DbClient,
-  id: number
-): Promise<ApiResponse<Tables<'product_prices'>>> {
+  id: number,
+): Promise<ApiResponse<Tables<"product_prices">>> {
   try {
     const { data, error } = await client
-      .from('product_prices')
+      .from("product_prices")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -568,11 +699,11 @@ export async function softDeleteProductPrice(
 // Product Ratings CRUD
 export async function createProductRating(
   client: DbClient,
-  data: TablesInsert<'product_ratings'>
-): Promise<ApiResponse<Tables<'product_ratings'>>> {
+  data: TablesInsert<"product_ratings">,
+): Promise<ApiResponse<Tables<"product_ratings">>> {
   try {
     const { data: rating, error } = await client
-      .from('product_ratings')
+      .from("product_ratings")
       .insert(data)
       .select()
       .single();
@@ -587,19 +718,19 @@ export async function createProductRating(
 export async function getProductRatings(
   client: DbClient,
   productId: string,
-  params?: PaginationParams
-): Promise<ApiResponse<PaginatedResponse<Tables<'product_ratings'>>>> {
+  params?: PaginationParams,
+): Promise<ApiResponse<PaginatedResponse<Tables<"product_ratings">>>> {
   try {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 20;
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await client
-      .from('product_ratings')
-      .select('*', { count: 'exact' })
-      .eq('product_id', productId)
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false })
+      .from("product_ratings")
+      .select("*", { count: "exact" })
+      .eq("product_id", productId)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) return failure(error);
@@ -616,13 +747,13 @@ export async function getProductRatings(
 export async function updateProductRating(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'product_ratings'>
-): Promise<ApiResponse<Tables<'product_ratings'>>> {
+  data: TablesUpdate<"product_ratings">,
+): Promise<ApiResponse<Tables<"product_ratings">>> {
   try {
     const { data: rating, error } = await client
-      .from('product_ratings')
+      .from("product_ratings")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -635,16 +766,16 @@ export async function updateProductRating(
 
 export async function softDeleteProductRating(
   client: DbClient,
-  id: number
-): Promise<ApiResponse<Tables<'product_ratings'>>> {
+  id: number,
+): Promise<ApiResponse<Tables<"product_ratings">>> {
   try {
     const { data, error } = await client
-      .from('product_ratings')
+      .from("product_ratings")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -658,11 +789,11 @@ export async function softDeleteProductRating(
 // Product Categories CRUD
 export async function createProductCategory(
   client: DbClient,
-  data: TablesInsert<'product_categories'>
-): Promise<ApiResponse<Tables<'product_categories'>>> {
+  data: TablesInsert<"product_categories">,
+): Promise<ApiResponse<Tables<"product_categories">>> {
   try {
     const { data: category, error } = await client
-      .from('product_categories')
+      .from("product_categories")
       .insert(data)
       .select()
       .single();
@@ -675,14 +806,14 @@ export async function createProductCategory(
 }
 
 export async function listProductCategories(
-  client: DbClient
-): Promise<ApiResponse<Tables<'product_categories'>[]>> {
+  client: DbClient,
+): Promise<ApiResponse<Tables<"product_categories">[]>> {
   try {
     const { data, error } = await client
-      .from('product_categories')
-      .select('*')
-      .eq('is_deleted', false)
-      .order('title', { ascending: true });
+      .from("product_categories")
+      .select("*")
+      .eq("is_deleted", false)
+      .order("title", { ascending: true });
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -694,13 +825,13 @@ export async function listProductCategories(
 export async function updateProductCategory(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'product_categories'>
-): Promise<ApiResponse<Tables<'product_categories'>>> {
+  data: TablesUpdate<"product_categories">,
+): Promise<ApiResponse<Tables<"product_categories">>> {
   try {
     const { data: category, error } = await client
-      .from('product_categories')
+      .from("product_categories")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -713,16 +844,16 @@ export async function updateProductCategory(
 
 export async function softDeleteProductCategory(
   client: DbClient,
-  id: number
-): Promise<ApiResponse<Tables<'product_categories'>>> {
+  id: number,
+): Promise<ApiResponse<Tables<"product_categories">>> {
   try {
     const { data, error } = await client
-      .from('product_categories')
+      .from("product_categories")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -736,11 +867,11 @@ export async function softDeleteProductCategory(
 // Product To Product Categories CRUD
 export async function addProductToCategory(
   client: DbClient,
-  data: TablesInsert<'product_to_product_categories'>
-): Promise<ApiResponse<Tables<'product_to_product_categories'>>> {
+  data: TablesInsert<"product_to_product_categories">,
+): Promise<ApiResponse<Tables<"product_to_product_categories">>> {
   try {
     const { data: link, error } = await client
-      .from('product_to_product_categories')
+      .from("product_to_product_categories")
       .insert(data)
       .select()
       .single();
@@ -754,13 +885,13 @@ export async function addProductToCategory(
 
 export async function getProductCategories(
   client: DbClient,
-  productId: string
-): Promise<ApiResponse<Tables<'product_to_product_categories'>[]>> {
+  productId: string,
+): Promise<ApiResponse<Tables<"product_to_product_categories">[]>> {
   try {
     const { data, error } = await client
-      .from('product_to_product_categories')
-      .select('*')
-      .eq('product_id', productId);
+      .from("product_to_product_categories")
+      .select("*")
+      .eq("product_id", productId);
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -771,13 +902,13 @@ export async function getProductCategories(
 
 export async function removeProductFromCategory(
   client: DbClient,
-  id: string
+  id: string,
 ): Promise<ApiResponse<void>> {
   try {
     const { error } = await client
-      .from('product_to_product_categories')
+      .from("product_to_product_categories")
       .delete()
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) return failure(error);
     return success(undefined);
