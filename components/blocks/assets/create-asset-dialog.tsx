@@ -63,7 +63,10 @@ export function CreateAssetDialog({ userId, trigger }: CreateAssetDialogProps) {
       const supabase = createClient();
 
       // Verify user session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
       if (sessionError || !session) {
         throw new Error("You must be logged in to create assets");
@@ -83,12 +86,18 @@ export function CreateAssetDialog({ userId, trigger }: CreateAssetDialogProps) {
 
       if (userCheckError || !userProfile) {
         // Try to create the profile if it doesn't exist
+        if (!session.user.email) {
+          throw new Error("User email is required");
+        }
+
         const { error: createProfileError } = await supabase
           .from("users")
           .insert({
             id: userId,
-            email: session.user.email!,
-            username: session.user.user_metadata?.username || session.user.email!.split('@')[0],
+            email: session.user.email,
+            username:
+              session.user.user_metadata?.username ||
+              session.user.email.split("@")[0],
           });
 
         if (createProfileError) {
@@ -99,12 +108,15 @@ export function CreateAssetDialog({ userId, trigger }: CreateAssetDialogProps) {
       const assetId = uuidv4();
 
       // Create the asset record
-      const { data, error } = await supabase.from("assets").insert({
-        id: assetId,
-        user_id: userId,
-        title: values.title,
-        is_public: false,
-      }).select();
+      const { data, error } = await supabase
+        .from("assets")
+        .insert({
+          id: assetId,
+          user_id: userId,
+          title: values.title,
+          is_public: false,
+        })
+        .select();
 
       if (error) {
         console.error("Create asset error details:", {
@@ -114,7 +126,9 @@ export function CreateAssetDialog({ userId, trigger }: CreateAssetDialogProps) {
           details: error.details,
           hint: error.hint,
         });
-        throw new Error(error.message || error.details || "Failed to create asset");
+        throw new Error(
+          error.message || error.details || "Failed to create asset",
+        );
       }
 
       console.log("Asset created successfully:", data);
@@ -133,8 +147,16 @@ export function CreateAssetDialog({ userId, trigger }: CreateAssetDialogProps) {
         errorMessage = error.message;
       } else if (typeof error === "object" && error !== null) {
         // Supabase error object
-        const supabaseError = error as { message?: string; details?: string; hint?: string };
-        errorMessage = supabaseError.message || supabaseError.details || supabaseError.hint || JSON.stringify(error);
+        const supabaseError = error as {
+          message?: string;
+          details?: string;
+          hint?: string;
+        };
+        errorMessage =
+          supabaseError.message ||
+          supabaseError.details ||
+          supabaseError.hint ||
+          JSON.stringify(error);
       }
 
       toast.error(`Failed to create asset: ${errorMessage}`);

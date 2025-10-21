@@ -1,21 +1,28 @@
-import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getAssetRoyalties } from "@/lib/sdk/server/assets";
+import { getProductVariantAssets } from "@/lib/sdk/server/products";
 import {
   createSale,
   createSaleItem,
   createSaleItemAsset,
   createSaleRoyaltyTransaction,
 } from "@/lib/sdk/server/sales";
-import { getAssetRoyalties } from "@/lib/sdk/server/assets";
-import { getProductVariantAssets } from "@/lib/sdk/server/products";
+import { createClient } from "@/lib/supabase/server";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+}
+if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  throw new Error("Missing STRIPE_WEBHOOK_SECRET environment variable");
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-09-30.clover",
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -36,7 +43,9 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
     return NextResponse.json(
-      { error: `Webhook Error: ${err instanceof Error ? err.message : "Unknown error"}` },
+      {
+        error: `Webhook Error: ${err instanceof Error ? err.message : "Unknown error"}`,
+      },
       { status: 400 },
     );
   }
@@ -279,7 +288,7 @@ async function handlePaymentFailed(
 }
 
 async function handleSubscriptionChange(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  _supabase: Awaited<ReturnType<typeof createClient>>,
   subscription: Stripe.Subscription,
 ) {
   // TODO: Handle subscription lifecycle

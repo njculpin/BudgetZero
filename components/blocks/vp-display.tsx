@@ -1,5 +1,7 @@
 "use client";
 
+import { TrendingUp, Trophy } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -8,8 +10,6 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { formatTimeAgo } from "@/lib/utils/date";
-import { TrendingUp, Trophy } from "lucide-react";
-import { useState } from "react";
 
 interface VPTransaction {
   id: string;

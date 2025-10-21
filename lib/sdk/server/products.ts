@@ -19,17 +19,7 @@ export async function listProductsWithDetails(options?: {
 
   let query = supabase
     .from("products")
-    .select(
-      `
-      *,
-      product_images (*),
-      product_variants (
-        *,
-        product_variant_prices (*)
-      )
-    `,
-      { count: "exact" },
-    )
+    .select("*")
     .eq("status", "published")
     .eq("is_deleted", false)
     .order("published_at", { ascending: false });
@@ -45,6 +35,8 @@ export async function listProductsWithDetails(options?: {
   }
 
   const { data, error, count } = await query;
+
+  console.log(data, error, count)
 
   return { data, error, count };
 }
@@ -203,16 +195,7 @@ export async function getProductByHandleWithDetails(handle: string) {
 
   const { data, error } = await supabase
     .from("products")
-    .select(`
-      *,
-      product_images (*),
-      product_variants (
-        *,
-        product_variant_prices (*),
-        product_variant_images (*)
-      ),
-      product_ratings (*)
-    `)
+    .select(`*`)
     .eq("handle", handle)
     .single();
 
@@ -303,6 +286,109 @@ export async function listProducts(
   }
 }
 
+// retrieve products that contain assets for a user
+export async function listProductsByUserId(
+  userId: string,
+  options?: {
+    search?: string;
+    limit?: number;
+    offset?: number;
+    includeDetails?: boolean;
+  },
+) {
+  const supabase = await createClient();
+
+  // Get products created by this user via product_teams
+  let query = supabase
+    .from("products")
+    .select(
+      `
+      *,
+      product_images (*),
+      product_variants (
+        *,
+        product_variant_prices (*)
+      ),
+      product_teams!inner (
+        teams!inner (
+          team_users!inner (
+            user_id
+          )
+        )
+      )
+    `,
+      { count: "exact" },
+    )
+    .eq("product_teams.teams.team_users.user_id", userId)
+    .eq("status", "published")
+    .eq("is_deleted", false)
+    .order("published_at", { ascending: false });
+
+  if (options?.search) {
+    query = query.or(
+      `title.ilike.%${options.search}%,description.ilike.%${options.search}%`,
+    );
+  }
+
+  if (options?.limit && options?.offset !== undefined) {
+    query = query.range(options.offset, options.offset + options.limit - 1);
+  }
+
+  const { data, error, count } = await query;
+
+  return { data, error, count };
+}
+
+// Get products that contain assets created by a specific user
+export async function listProductsWithUserAssets(
+  userId: string,
+  options?: {
+    search?: string;
+    limit?: number;
+    offset?: number;
+  },
+) {
+  const supabase = await createClient();
+
+  // Get products that have variants containing assets by this user
+  let query = supabase
+    .from("products")
+    .select(
+      `
+      *,
+      product_images (*),
+      product_variants!inner (
+        *,
+        product_variant_prices (*),
+        product_variant_assets!inner (
+          assets!inner (
+            user_id
+          )
+        )
+      )
+    `,
+      { count: "exact" },
+    )
+    .eq("product_variants.product_variant_assets.assets.user_id", userId)
+    .eq("status", "published")
+    .eq("is_deleted", false)
+    .order("published_at", { ascending: false });
+
+  if (options?.search) {
+    query = query.or(
+      `title.ilike.%${options.search}%,description.ilike.%${options.search}%`,
+    );
+  }
+
+  if (options?.limit && options?.offset !== undefined) {
+    query = query.range(options.offset, options.offset + options.limit - 1);
+  }
+
+  const { data, error, count } = await query;
+
+  return { data, error, count };
+}
+
 export async function updateProduct(
   client: DbClient,
   id: string,
@@ -340,6 +426,20 @@ export async function softDeleteProduct(
 
     if (error) return failure(error);
     return success(data);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function hardDeleteProduct(
+  client: DbClient,
+  id: string,
+): Promise<ApiResponse<void>> {
+  try {
+    const { error } = await client.from("products").delete().eq("id", id);
+
+    if (error) return failure(error);
+    return success(undefined);
   } catch (error) {
     return failure(error);
   }
@@ -909,6 +1009,38 @@ export async function removeProductFromCategory(
       .from("product_to_product_categories")
       .delete()
       .eq("id", id);
+
+    if (error) return failure(error);
+    return success(undefined);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+// Product Tags CRUD
+export async function deleteProductTags(
+  client: DbClient,
+  productId: string,
+): Promise<ApiResponse<void>> {
+  try {
+    const { error } = await client
+      .from("product_tags")
+      .delete()
+      .eq("product_id", productId);
+
+    if (error) return failure(error);
+    return success(undefined);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function createProductTags(
+  client: DbClient,
+  tags: Array<{ product_id: string; namespace: string; value: string }>,
+): Promise<ApiResponse<void>> {
+  try {
+    const { error } = await client.from("product_tags").insert(tags);
 
     if (error) return failure(error);
     return success(undefined);

@@ -1,14 +1,16 @@
-import { notFound } from "next/navigation";
-import { ProductEditor } from "@/components/blocks/products/product-editor";
 import { MainLayout } from "@/components/layouts/main-layout";
 import {
+  getAssetFiles,
   getAssetImages,
+  getAssetLicenses,
   getAssetRoyalties,
+  getAssetTags,
   listAssets,
 } from "@/lib/sdk/server/assets";
 import { getProductByIdWithDetails } from "@/lib/sdk/server/products";
 import { getMe } from "@/lib/sdk/server/users";
 import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 
 interface ProductEditorPageProps {
   params: Promise<{
@@ -38,10 +40,16 @@ export default async function ProductEditorPage({
     (assetsData?.data || []).map(async (asset) => {
       const { data: images } = await getAssetImages(supabase, asset.id);
       const { data: royalties } = await getAssetRoyalties(supabase, asset.id);
+      const { data: tags } = await getAssetTags(supabase, asset.id);
+      const { data: files } = await getAssetFiles(supabase, asset.id);
+      const { data: license } = await getAssetLicenses(supabase, asset.id);
       return {
         ...asset,
-        asset_images: images || [],
-        asset_royalties: royalties || [],
+        licenses: license || [],
+        images: images || [],
+        royalties: royalties || [],
+        tags: tags || [],
+        files: files || [],
       };
     }),
   );
@@ -60,11 +68,6 @@ export default async function ProductEditorPage({
             Configure your product details, pricing, and asset bundles
           </p>
         </div>
-        <ProductEditor
-          userId={user.id}
-          userAssets={assets}
-          existingProduct={product}
-        />
       </div>
     </MainLayout>
   );

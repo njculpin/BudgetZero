@@ -51,7 +51,7 @@ interface AssetRoyaltySelectorProps {
 
 const formSchema = z.object({
   royalty_type: z.enum(["percentage", "fixed"]),
-  royalty_value: z.coerce.number().min(0).max(10000),
+  royalty_value: z.number().min(0).max(10000),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -69,7 +69,7 @@ export function AssetRoyaltySelector({
     resolver: zodResolver(formSchema),
     defaultValues: {
       royalty_type: currentRoyalty?.royalty_type || "percentage",
-      royalty_value: currentRoyalty?.royalty_value || 0,
+      royalty_value: Number(currentRoyalty?.royalty_value) || 0,
     },
   });
 
@@ -228,6 +228,7 @@ export function AssetRoyaltySelector({
                         step={royaltyType === "percentage" ? "1" : "0.01"}
                         className={royaltyType === "fixed" ? "pl-7" : ""}
                         {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                       />
                       {royaltyType === "percentage" && (
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">

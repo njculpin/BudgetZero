@@ -1,10 +1,10 @@
 "use client";
 
+import { AlertCircle, CheckCircle2, DollarSign, Users } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, CheckCircle2, DollarSign, Users } from "lucide-react";
 
 interface Asset {
   id: string;
@@ -37,6 +37,7 @@ export function RoyaltyPreview({
 }: RoyaltyPreviewProps) {
   // Calculate total royalty percentage from all assets
   const calculateRoyalties = () => {
+    const PLATFORM_FEE_PERCENTAGE = 1; // 1% platform fee
     const recipients = new Map<string, RoyaltyRecipient>();
 
     selectedAssets.forEach((asset) => {
@@ -75,9 +76,15 @@ export function RoyaltyPreview({
       0,
     );
 
+    // Deduct platform fee first
+    const platformFeeCents = Math.round(
+      (productPriceCents * PLATFORM_FEE_PERCENTAGE) / 100,
+    );
+    const availableForRoyalties = productPriceCents - platformFeeCents;
+
     recipients.forEach((recipient) => {
       recipient.amountCents = Math.round(
-        (productPriceCents * recipient.totalPercentage) / totalPercentage,
+        (availableForRoyalties * recipient.totalPercentage) / totalPercentage,
       );
     });
 
@@ -86,6 +93,7 @@ export function RoyaltyPreview({
         (a, b) => b.amountCents - a.amountCents,
       ),
       totalPercentage,
+      platformFeeCents,
     };
   };
 
@@ -101,7 +109,8 @@ export function RoyaltyPreview({
     );
   }
 
-  const { recipients, totalPercentage } = calculateRoyalties();
+  const { recipients, totalPercentage, platformFeeCents } =
+    calculateRoyalties();
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
   const isValid = totalPercentage > 0;
 
@@ -115,7 +124,7 @@ export function RoyaltyPreview({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Summary */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <div className="text-sm text-muted-foreground">Product Price</div>
             <div className="text-2xl font-bold">
@@ -124,8 +133,14 @@ export function RoyaltyPreview({
           </div>
           <div>
             <div className="text-sm text-muted-foreground">
-              Assets Included
+              Platform Fee (1%)
             </div>
+            <div className="text-2xl font-bold text-muted-foreground">
+              {formatPrice(platformFeeCents)}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-muted-foreground">Assets Included</div>
             <div className="text-2xl font-bold">{selectedAssets.length}</div>
           </div>
         </div>
@@ -176,7 +191,9 @@ export function RoyaltyPreview({
                           {index + 1}
                         </div>
                         <span className="font-medium">
-                          {isCurrentUser ? "You" : `User ${recipient.userId.substring(0, 8)}`}
+                          {isCurrentUser
+                            ? "You"
+                            : `User ${recipient.userId.substring(0, 8)}`}
                         </span>
                       </div>
                       {isCurrentUser && (

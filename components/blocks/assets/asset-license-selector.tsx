@@ -1,9 +1,4 @@
 "use client";
-
-import { Info } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,6 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
+import { Info } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface AssetLicense {
   id: number;
@@ -38,31 +37,15 @@ interface AssetLicenseSelectorProps {
 
 const LICENSE_OPTIONS = [
   {
-    id: "a0000000-0000-0000-0000-000000000001",
-    name: "CC0 (Public Domain)",
+    id: "1",
+    name: "Public",
     description:
       "No rights reserved. Free for any use, commercial or personal.",
   },
   {
-    id: "a0000000-0000-0000-0000-000000000002",
-    name: "CC BY (Attribution)",
-    description: "Free to use with attribution. Commercial use allowed.",
-  },
-  {
-    id: "a0000000-0000-0000-0000-000000000003",
-    name: "CC BY-SA (Attribution-ShareAlike)",
-    description:
-      "Free to use with attribution. Derivatives must use same license.",
-  },
-  {
-    id: "a0000000-0000-0000-0000-000000000004",
-    name: "CC BY-NC (Attribution-NonCommercial)",
-    description: "Free for non-commercial use only. Attribution required.",
-  },
-  {
-    id: "a0000000-0000-0000-0000-000000000005",
-    name: "Custom License",
-    description: "Define your own licensing terms.",
+    id: "2",
+    name: "Platform Standard License",
+    description: "Used on Platform only",
   },
 ];
 

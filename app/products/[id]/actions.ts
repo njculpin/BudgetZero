@@ -4,9 +4,12 @@ import { revalidatePath } from "next/cache";
 import Stripe from "stripe";
 import {
   addProductVariantAsset,
+  createProductTags,
+  deleteProductTags,
   getProductByIdWithDetails,
   getProductVariantAssets,
   removeProductVariantAsset,
+  softDeleteProduct,
   updateProduct,
   updateProductPrice,
   updateProductVariant,
@@ -14,7 +17,11 @@ import {
 import { getMe } from "@/lib/sdk/server/users";
 import { createServiceClient } from "@/lib/supabase/service";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-09-30.clover",
 });
 
@@ -289,7 +296,7 @@ export async function updateProductAction(
 
     // Update tags
     // First delete existing tags
-    await supabase.from("product_tags").delete().eq("product_id", productId);
+    await deleteProductTags(supabase, productId);
 
     // Then add new tags
     if (tags.length > 0) {
@@ -299,9 +306,10 @@ export async function updateProductAction(
         value: tag.toLowerCase().trim(),
       }));
 
-      const { error: tagsError } = await supabase
-        .from("product_tags")
-        .insert(tagRecords);
+      const { error: tagsError } = await createProductTags(
+        supabase,
+        tagRecords,
+      );
 
       if (tagsError) {
         console.error("Failed to update tags:", tagsError);
@@ -339,14 +347,8 @@ export async function deleteProductAction(
 
     const supabase = createServiceClient();
 
-    // Soft delete the product
-    const { error: deleteError } = await supabase
-      .from("products")
-      .update({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("id", productId);
+    // Soft delete the product using SDK
+    const { error: deleteError } = await softDeleteProduct(supabase, productId);
 
     if (deleteError) {
       console.error("[DELETE PRODUCT] Failed:", deleteError);

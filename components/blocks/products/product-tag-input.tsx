@@ -1,10 +1,10 @@
 "use client";
 
+import { Plus, X } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, X } from "lucide-react";
-import { useState } from "react";
 
 interface ProductTagInputProps {
   tags: string[];
@@ -12,16 +12,7 @@ interface ProductTagInputProps {
   maxTags?: number;
 }
 
-const SUGGESTED_TAGS = [
-  "3D Model",
-  "Illustration",
-  "Template",
-  "Asset Pack",
-  "Game Ready",
-  "PBR",
-  "Animated",
-  "Low Poly",
-];
+const SUGGESTED_TAGS = ["Tactical"];
 
 export function ProductTagInput({
   tags,
@@ -59,8 +50,7 @@ export function ProductTagInput({
   };
 
   const availableSuggestedTags = SUGGESTED_TAGS.filter(
-    (suggestedTag) =>
-      !tags.some((t) => t === suggestedTag.toLowerCase()),
+    (suggestedTag) => !tags.some((t) => t === suggestedTag.toLowerCase()),
   );
 
   return (
@@ -68,12 +58,8 @@ export function ProductTagInput({
       {/* Current Tags */}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {tags.map((tag, index) => (
-            <Badge
-              key={`${tag}-${index}`}
-              variant="secondary"
-              className="gap-2"
-            >
+          {tags.map((tag) => (
+            <Badge key={`${tag}`} variant="secondary" className="gap-2">
               {tag}
               <button
                 type="button"

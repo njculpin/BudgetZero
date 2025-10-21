@@ -540,6 +540,59 @@ export type Database = {
         }
         Relationships: []
       }
+      product_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          deleted_at: string | null
+          file_size_bytes: number | null
+          id: number
+          image_url: string
+          is_deleted: boolean
+          position: number
+          product_id: string
+          storage_path: string
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          file_size_bytes?: number | null
+          id?: number
+          image_url: string
+          is_deleted?: boolean
+          position?: number
+          product_id: string
+          storage_path: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          file_size_bytes?: number | null
+          id?: number
+          image_url?: string
+          is_deleted?: boolean
+          position?: number
+          product_id?: string
+          storage_path?: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_prices: {
         Row: {
           created_at: string
@@ -628,6 +681,47 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_tags: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          id: number
+          is_deleted: boolean
+          namespace: string
+          product_id: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: number
+          is_deleted?: boolean
+          namespace?: string
+          product_id: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: number
+          is_deleted?: boolean
+          namespace?: string
+          product_id?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_tags_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -1542,6 +1636,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_payouts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_share_settings: {
+        Row: {
+          created_at: string
+          id: number
+          show_created_assets: boolean
+          show_created_products: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          show_created_assets?: boolean
+          show_created_products?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          show_created_assets?: boolean
+          show_created_products?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_share_settings_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
