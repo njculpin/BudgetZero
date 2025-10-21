@@ -38,7 +38,8 @@
       "Bash(perl:*)",
       "WebSearch",
       "Bash(tee:*)",
-      "Read(//private/tmp/**)"
+      "Read(//private/tmp/**)",
+      "Bash(ls -la app/(marketing)/page.tsx)"
     ],
     "deny": [],
     "ask": []

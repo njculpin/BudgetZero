@@ -17,9 +17,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    return [
-
-    ];
+    return [];
   },
 };
 

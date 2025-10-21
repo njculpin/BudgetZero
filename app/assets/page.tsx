@@ -1,12 +1,3 @@
-import {
-  Box,
-  DollarSign,
-  Image as ImageIcon,
-  Search as SearchIcon,
-  Upload,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { AssetSearch } from "@/components/blocks/assets/asset-search";
 import { CreateAssetDialog } from "@/components/blocks/assets/create-asset-dialog";
 import { MainLayout } from "@/components/layouts/main-layout";
@@ -22,6 +13,15 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { listAssetsWithDetails } from "@/lib/sdk/server/assets";
 import { getMe } from "@/lib/sdk/server/users";
+import {
+  Box,
+  DollarSign,
+  Image as ImageIcon,
+  Search as SearchIcon,
+  Upload,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 interface AssetsPageProps {
   searchParams: Promise<{
@@ -65,13 +65,13 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
 
   if (error) {
     // Handle error gracefully
-    const breadcrumbs = [{ label: "Asset Library" }];
+    const breadcrumbs = [{ label: "Assets" }];
     return (
       <MainLayout user={user} breadcrumbs={breadcrumbs}>
         <div className="space-y-6">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold">Asset Library</h1>
+              <h1 className="text-3xl font-bold">Assets</h1>
               <p className="text-muted-foreground mt-2">
                 Browse and discover Documents, 3D models, illustrations, and
                 more
@@ -90,7 +90,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
 
   const totalPages = count ? Math.ceil(count / limit) : 0;
 
-  const breadcrumbs = [{ label: "Asset Library" }];
+  const breadcrumbs = [{ label: "Assets" }];
 
   return (
     <MainLayout user={user} breadcrumbs={breadcrumbs}>
@@ -98,7 +98,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Asset Library</h1>
+            <h1 className="text-3xl font-bold">Assets</h1>
             <p className="text-muted-foreground mt-2">
               Browse and discover 3D models, illustrations, and more
             </p>

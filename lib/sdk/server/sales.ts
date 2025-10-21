@@ -1,15 +1,20 @@
-import type { TablesInsert, TablesUpdate, Tables } from '@/lib/types/database';
-import type { ApiResponse, DbClient, PaginatedResponse, PaginationParams } from '../shared/types';
-import { calculatePagination, failure, success } from '../shared/utils';
+import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
+import type {
+  ApiResponse,
+  DbClient,
+  PaginatedResponse,
+  PaginationParams,
+} from "../shared/types";
+import { calculatePagination, failure, success } from "../shared/utils";
 
 // Sales CRUD
 export async function createSale(
   client: DbClient,
-  data: TablesInsert<'sales'>
-): Promise<ApiResponse<Tables<'sales'>>> {
+  data: TablesInsert<"sales">,
+): Promise<ApiResponse<Tables<"sales">>> {
   try {
     const { data: sale, error } = await client
-      .from('sales')
+      .from("sales")
       .insert(data)
       .select()
       .single();
@@ -23,13 +28,13 @@ export async function createSale(
 
 export async function getSaleById(
   client: DbClient,
-  id: number
-): Promise<ApiResponse<Tables<'sales'>>> {
+  id: number,
+): Promise<ApiResponse<Tables<"sales">>> {
   try {
     const { data, error } = await client
-      .from('sales')
-      .select('*')
-      .eq('id', id)
+      .from("sales")
+      .select("*")
+      .eq("id", id)
       .single();
 
     if (error) return failure(error);
@@ -42,18 +47,18 @@ export async function getSaleById(
 export async function getUserSales(
   client: DbClient,
   userId: string,
-  params?: PaginationParams
-): Promise<ApiResponse<PaginatedResponse<Tables<'sales'>>>> {
+  params?: PaginationParams,
+): Promise<ApiResponse<PaginatedResponse<Tables<"sales">>>> {
   try {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 20;
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await client
-      .from('sales')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .from("sales")
+      .select("*", { count: "exact" })
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) return failure(error);
@@ -70,13 +75,13 @@ export async function getUserSales(
 export async function updateSale(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'sales'>
-): Promise<ApiResponse<Tables<'sales'>>> {
+  data: TablesUpdate<"sales">,
+): Promise<ApiResponse<Tables<"sales">>> {
   try {
     const { data: sale, error } = await client
-      .from('sales')
+      .from("sales")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -90,11 +95,11 @@ export async function updateSale(
 // Sale Items CRUD
 export async function createSaleItem(
   client: DbClient,
-  data: TablesInsert<'sale_items'>
-): Promise<ApiResponse<Tables<'sale_items'>>> {
+  data: TablesInsert<"sale_items">,
+): Promise<ApiResponse<Tables<"sale_items">>> {
   try {
     const { data: saleItem, error } = await client
-      .from('sale_items')
+      .from("sale_items")
       .insert(data)
       .select()
       .single();
@@ -108,14 +113,14 @@ export async function createSaleItem(
 
 export async function getSaleItems(
   client: DbClient,
-  saleId: number
-): Promise<ApiResponse<Tables<'sale_items'>[]>> {
+  saleId: number,
+): Promise<ApiResponse<Tables<"sale_items">[]>> {
   try {
     const { data, error } = await client
-      .from('sale_items')
-      .select('*')
-      .eq('sale_id', saleId)
-      .order('created_at', { ascending: true });
+      .from("sale_items")
+      .select("*")
+      .eq("sale_id", saleId)
+      .order("created_at", { ascending: true });
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -127,11 +132,11 @@ export async function getSaleItems(
 // Sale Item Assets CRUD
 export async function createSaleItemAsset(
   client: DbClient,
-  data: TablesInsert<'sale_item_assets'>
-): Promise<ApiResponse<Tables<'sale_item_assets'>>> {
+  data: TablesInsert<"sale_item_assets">,
+): Promise<ApiResponse<Tables<"sale_item_assets">>> {
   try {
     const { data: saleItemAsset, error } = await client
-      .from('sale_item_assets')
+      .from("sale_item_assets")
       .insert(data)
       .select()
       .single();
@@ -145,13 +150,13 @@ export async function createSaleItemAsset(
 
 export async function getSaleItemAssets(
   client: DbClient,
-  saleItemId: number
-): Promise<ApiResponse<Tables<'sale_item_assets'>[]>> {
+  saleItemId: number,
+): Promise<ApiResponse<Tables<"sale_item_assets">[]>> {
   try {
     const { data, error } = await client
-      .from('sale_item_assets')
-      .select('*')
-      .eq('sale_item_id', saleItemId);
+      .from("sale_item_assets")
+      .select("*")
+      .eq("sale_item_id", saleItemId);
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -163,11 +168,11 @@ export async function getSaleItemAssets(
 // Sale Royalty Transactions CRUD
 export async function createSaleRoyaltyTransaction(
   client: DbClient,
-  data: TablesInsert<'sale_royalty_transactions'>
-): Promise<ApiResponse<Tables<'sale_royalty_transactions'>>> {
+  data: TablesInsert<"sale_royalty_transactions">,
+): Promise<ApiResponse<Tables<"sale_royalty_transactions">>> {
   try {
     const { data: transaction, error } = await client
-      .from('sale_royalty_transactions')
+      .from("sale_royalty_transactions")
       .insert(data)
       .select()
       .single();
@@ -181,14 +186,14 @@ export async function createSaleRoyaltyTransaction(
 
 export async function getSaleRoyaltyTransactions(
   client: DbClient,
-  saleId: number
-): Promise<ApiResponse<Tables<'sale_royalty_transactions'>[]>> {
+  saleId: number,
+): Promise<ApiResponse<Tables<"sale_royalty_transactions">[]>> {
   try {
     const { data, error } = await client
-      .from('sale_royalty_transactions')
-      .select('*')
-      .eq('sale_id', saleId)
-      .order('created_at', { ascending: true });
+      .from("sale_royalty_transactions")
+      .select("*")
+      .eq("sale_id", saleId)
+      .order("created_at", { ascending: true });
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -200,18 +205,20 @@ export async function getSaleRoyaltyTransactions(
 export async function getUserRoyaltyTransactions(
   client: DbClient,
   userId: string,
-  params?: PaginationParams
-): Promise<ApiResponse<PaginatedResponse<Tables<'sale_royalty_transactions'>>>> {
+  params?: PaginationParams,
+): Promise<
+  ApiResponse<PaginatedResponse<Tables<"sale_royalty_transactions">>>
+> {
   try {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 20;
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await client
-      .from('sale_royalty_transactions')
-      .select('*', { count: 'exact' })
-      .eq('recipient_user_id', userId)
-      .order('created_at', { ascending: false })
+      .from("sale_royalty_transactions")
+      .select("*", { count: "exact" })
+      .eq("recipient_user_id", userId)
+      .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) return failure(error);
@@ -228,13 +235,13 @@ export async function getUserRoyaltyTransactions(
 export async function updateSaleRoyaltyTransaction(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'sale_royalty_transactions'>
-): Promise<ApiResponse<Tables<'sale_royalty_transactions'>>> {
+  data: TablesUpdate<"sale_royalty_transactions">,
+): Promise<ApiResponse<Tables<"sale_royalty_transactions">>> {
   try {
     const { data: transaction, error } = await client
-      .from('sale_royalty_transactions')
+      .from("sale_royalty_transactions")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -248,11 +255,11 @@ export async function updateSaleRoyaltyTransaction(
 // Sale License Transactions CRUD
 export async function createSaleLicenseTransaction(
   client: DbClient,
-  data: TablesInsert<'sale_license_transactions'>
-): Promise<ApiResponse<Tables<'sale_license_transactions'>>> {
+  data: TablesInsert<"sale_license_transactions">,
+): Promise<ApiResponse<Tables<"sale_license_transactions">>> {
   try {
     const { data: transaction, error } = await client
-      .from('sale_license_transactions')
+      .from("sale_license_transactions")
       .insert(data)
       .select()
       .single();
@@ -266,14 +273,14 @@ export async function createSaleLicenseTransaction(
 
 export async function getSaleLicenseTransactions(
   client: DbClient,
-  saleId: number
-): Promise<ApiResponse<Tables<'sale_license_transactions'>[]>> {
+  saleId: number,
+): Promise<ApiResponse<Tables<"sale_license_transactions">[]>> {
   try {
     const { data, error } = await client
-      .from('sale_license_transactions')
-      .select('*')
-      .eq('sale_id', saleId)
-      .order('created_at', { ascending: true });
+      .from("sale_license_transactions")
+      .select("*")
+      .eq("sale_id", saleId)
+      .order("created_at", { ascending: true });
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -285,13 +292,13 @@ export async function getSaleLicenseTransactions(
 export async function updateSaleLicenseTransaction(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'sale_license_transactions'>
-): Promise<ApiResponse<Tables<'sale_license_transactions'>>> {
+  data: TablesUpdate<"sale_license_transactions">,
+): Promise<ApiResponse<Tables<"sale_license_transactions">>> {
   try {
     const { data: transaction, error } = await client
-      .from('sale_license_transactions')
+      .from("sale_license_transactions")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -305,11 +312,11 @@ export async function updateSaleLicenseTransaction(
 // Stripe Prices CRUD
 export async function createStripePrice(
   client: DbClient,
-  data: TablesInsert<'stripe_prices'>
-): Promise<ApiResponse<Tables<'stripe_prices'>>> {
+  data: TablesInsert<"stripe_prices">,
+): Promise<ApiResponse<Tables<"stripe_prices">>> {
   try {
     const { data: price, error } = await client
-      .from('stripe_prices')
+      .from("stripe_prices")
       .insert(data)
       .select()
       .single();
@@ -323,14 +330,14 @@ export async function createStripePrice(
 
 export async function getStripePriceByLookupName(
   client: DbClient,
-  lookupName: string
-): Promise<ApiResponse<Tables<'stripe_prices'>>> {
+  lookupName: string,
+): Promise<ApiResponse<Tables<"stripe_prices">>> {
   try {
     const { data, error } = await client
-      .from('stripe_prices')
-      .select('*')
-      .eq('lookup_name', lookupName)
-      .eq('is_deleted', false)
+      .from("stripe_prices")
+      .select("*")
+      .eq("lookup_name", lookupName)
+      .eq("is_deleted", false)
       .single();
 
     if (error) return failure(error);
@@ -341,14 +348,14 @@ export async function getStripePriceByLookupName(
 }
 
 export async function listStripePrices(
-  client: DbClient
-): Promise<ApiResponse<Tables<'stripe_prices'>[]>> {
+  client: DbClient,
+): Promise<ApiResponse<Tables<"stripe_prices">[]>> {
   try {
     const { data, error } = await client
-      .from('stripe_prices')
-      .select('*')
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false});
+      .from("stripe_prices")
+      .select("*")
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false });
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -360,13 +367,13 @@ export async function listStripePrices(
 export async function updateStripePrice(
   client: DbClient,
   id: string,
-  data: TablesUpdate<'stripe_prices'>
-): Promise<ApiResponse<Tables<'stripe_prices'>>> {
+  data: TablesUpdate<"stripe_prices">,
+): Promise<ApiResponse<Tables<"stripe_prices">>> {
   try {
     const { data: price, error } = await client
-      .from('stripe_prices')
+      .from("stripe_prices")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -379,16 +386,16 @@ export async function updateStripePrice(
 
 export async function softDeleteStripePrice(
   client: DbClient,
-  id: string
-): Promise<ApiResponse<Tables<'stripe_prices'>>> {
+  id: string,
+): Promise<ApiResponse<Tables<"stripe_prices">>> {
   try {
     const { data, error } = await client
-      .from('stripe_prices')
+      .from("stripe_prices")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -402,11 +409,11 @@ export async function softDeleteStripePrice(
 // Audit Logs CRUD
 export async function createAuditLog(
   client: DbClient,
-  data: TablesInsert<'audit_logs'>
-): Promise<ApiResponse<Tables<'audit_logs'>>> {
+  data: TablesInsert<"audit_logs">,
+): Promise<ApiResponse<Tables<"audit_logs">>> {
   try {
     const { data: log, error } = await client
-      .from('audit_logs')
+      .from("audit_logs")
       .insert(data)
       .select()
       .single();
@@ -421,32 +428,30 @@ export async function createAuditLog(
 export async function getAuditLogs(
   client: DbClient,
   params?: PaginationParams & {
-    entityType?: Tables<'audit_logs'>['entity_type'];
+    entityType?: Tables<"audit_logs">["entity_type"];
     entityId?: string;
     userId?: string;
-  }
-): Promise<ApiResponse<PaginatedResponse<Tables<'audit_logs'>>>> {
+  },
+): Promise<ApiResponse<PaginatedResponse<Tables<"audit_logs">>>> {
   try {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 50;
     const offset = (page - 1) * limit;
 
-    let query = client
-      .from('audit_logs')
-      .select('*', { count: 'exact' });
+    let query = client.from("audit_logs").select("*", { count: "exact" });
 
     if (params?.entityType) {
-      query = query.eq('entity_type', params.entityType);
+      query = query.eq("entity_type", params.entityType);
     }
     if (params?.entityId) {
-      query = query.eq('entity_id', params.entityId);
+      query = query.eq("entity_id", params.entityId);
     }
     if (params?.userId) {
-      query = query.eq('user_id', params.userId);
+      query = query.eq("user_id", params.userId);
     }
 
     const { data, error, count } = await query
-      .order('created_at', { ascending: false })
+      .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) return failure(error);

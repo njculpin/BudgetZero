@@ -8,7 +8,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-09-30.clover",
 });
 
@@ -93,9 +97,7 @@ export default async function ProductSuccessPage({
               <div className="rounded-lg border border-green-300 bg-white p-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <div className="text-sm text-muted-foreground">
-                      Product
-                    </div>
+                    <div className="text-sm text-muted-foreground">Product</div>
                     <div className="font-semibold">{product.title}</div>
                   </div>
                   <div className="text-right">
@@ -127,36 +129,38 @@ export default async function ProductSuccessPage({
                     are also available in your library at any time.
                   </p>
                   <div className="space-y-2">
-                    {variantAssets.map((variantAsset: {
-                      id: number;
-                      assets: {
-                        id: string;
-                        title: string;
-                        description: string | null;
-                      } | null;
-                    }) => {
-                      const asset = variantAsset.assets;
-                      return (
-                        <div
-                          key={variantAsset.id}
-                          className="flex items-center justify-between rounded-lg border p-4"
-                        >
-                          <div>
-                            <div className="font-medium">{asset?.title}</div>
-                            {asset?.description && (
-                              <div className="text-sm text-muted-foreground">
-                                {asset.description}
-                              </div>
-                            )}
+                    {variantAssets.map(
+                      (variantAsset: {
+                        id: number;
+                        assets: {
+                          id: string;
+                          title: string;
+                          description: string | null;
+                        } | null;
+                      }) => {
+                        const asset = variantAsset.assets;
+                        return (
+                          <div
+                            key={variantAsset.id}
+                            className="flex items-center justify-between rounded-lg border p-4"
+                          >
+                            <div>
+                              <div className="font-medium">{asset?.title}</div>
+                              {asset?.description && (
+                                <div className="text-sm text-muted-foreground">
+                                  {asset.description}
+                                </div>
+                              )}
+                            </div>
+                            <Button asChild>
+                              <Link href={`/assets/${asset?.id}`}>
+                                View Asset
+                              </Link>
+                            </Button>
                           </div>
-                          <Button asChild>
-                            <Link href={`/assets/${asset?.id}`}>
-                              View Asset
-                            </Link>
-                          </Button>
-                        </div>
-                      );
-                    })}
+                        );
+                      },
+                    )}
                   </div>
                 </div>
               ) : (
@@ -180,7 +184,7 @@ export default async function ProductSuccessPage({
                 <div>
                   <div className="font-medium">Access Your Assets</div>
                   <div className="text-sm text-muted-foreground">
-                    All purchased assets are available in your asset library
+                    All purchased assets are available in your assets
                   </div>
                 </div>
               </div>

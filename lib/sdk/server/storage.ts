@@ -1,6 +1,6 @@
-import { createClient } from '@/lib/supabase/server';
-import type { ApiResponse } from '../shared/types';
-import { failure, success } from '../shared/utils';
+import { createClient } from "@/lib/supabase/server";
+import type { ApiResponse } from "../shared/types";
+import { failure, success } from "../shared/utils";
 
 export type UploadFileOptions = {
   bucket: string;
@@ -19,7 +19,7 @@ export type UploadFileResult = {
  * Upload a file to Supabase Storage
  */
 export async function uploadFile(
-  options: UploadFileOptions
+  options: UploadFileOptions,
 ): Promise<ApiResponse<UploadFileResult>> {
   try {
     const supabase = await createClient();
@@ -54,7 +54,7 @@ export async function uploadFile(
  */
 export async function deleteFile(
   bucket: string,
-  path: string
+  path: string,
 ): Promise<ApiResponse<void>> {
   try {
     const supabase = await createClient();
@@ -77,9 +77,9 @@ export async function deleteFile(
 export function generateFilePath(
   userId: string,
   fileName: string,
-  subPath?: string
+  subPath?: string,
 ): string {
-  const fileExt = fileName.split('.').pop();
+  const fileExt = fileName.split(".").pop();
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(7);
   const uniqueName = `${timestamp}-${random}.${fileExt}`;
@@ -96,7 +96,7 @@ export function generateFilePath(
  */
 export async function getPublicUrl(
   bucket: string,
-  path: string
+  path: string,
 ): Promise<string> {
   const supabase = await createClient();
   const {

@@ -1,8 +1,13 @@
-import type { TablesInsert, TablesUpdate, Tables } from '@/lib/types/database';
-import type { ApiResponse, DbClient, PaginatedResponse, PaginationParams } from '../shared/types';
-import { calculatePagination, failure, success } from '../shared/utils';
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import { createClient } from "@/lib/supabase/server";
+import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
+import { redirect } from "next/navigation";
+import type {
+  ApiResponse,
+  DbClient,
+  PaginatedResponse,
+  PaginationParams,
+} from "../shared/types";
+import { calculatePagination, failure, success } from "../shared/utils";
 
 // Auth Helpers
 export async function getMe() {
@@ -12,24 +17,24 @@ export async function getMe() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login');
+    redirect("/auth/login");
   }
 
   // Verify user profile exists in users table
   const { data: profile, error: profileError } = await supabase
-    .from('users')
-    .select('id')
-    .eq('id', user.id)
+    .from("users")
+    .select("id")
+    .eq("id", user.id)
     .single();
 
   if (profileError || !profile) {
     // Try to create the profile if it doesn't exist
     const { error: createError } = await supabase
-      .from('users')
+      .from("users")
       .insert({
         id: user.id,
         email: user.email!,
-        username: user.user_metadata?.username || user.email!.split('@')[0],
+        username: user.user_metadata?.username || user.email!.split("@")[0],
       })
       .select()
       .single();
@@ -47,11 +52,21 @@ export async function getUserProfile(userId: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
+    .from("users")
+    .select("*")
+    .eq("id", userId)
     .single();
 
+  return { data, error };
+}
+
+export async function getUserProfileByHandle(handle: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("handle", handle)
+    .single();
   return { data, error };
 }
 
@@ -69,11 +84,11 @@ export async function getMyProfile() {
 // Users CRUD
 export async function createUser(
   client: DbClient,
-  data: TablesInsert<'users'>
-): Promise<ApiResponse<Tables<'users'>>> {
+  data: TablesInsert<"users">,
+): Promise<ApiResponse<Tables<"users">>> {
   try {
     const { data: user, error } = await client
-      .from('users')
+      .from("users")
       .insert(data)
       .select()
       .single();
@@ -87,13 +102,13 @@ export async function createUser(
 
 export async function getUserById(
   client: DbClient,
-  id: string
-): Promise<ApiResponse<Tables<'users'>>> {
+  id: string,
+): Promise<ApiResponse<Tables<"users">>> {
   try {
     const { data, error } = await client
-      .from('users')
-      .select('*')
-      .eq('id', id)
+      .from("users")
+      .select("*")
+      .eq("id", id)
       .single();
 
     if (error) return failure(error);
@@ -105,13 +120,13 @@ export async function getUserById(
 
 export async function getUserByEmail(
   client: DbClient,
-  email: string
-): Promise<ApiResponse<Tables<'users'>>> {
+  email: string,
+): Promise<ApiResponse<Tables<"users">>> {
   try {
     const { data, error } = await client
-      .from('users')
-      .select('*')
-      .eq('email', email)
+      .from("users")
+      .select("*")
+      .eq("email", email)
       .single();
 
     if (error) return failure(error);
@@ -123,13 +138,13 @@ export async function getUserByEmail(
 
 export async function getUserByUsername(
   client: DbClient,
-  username: string
-): Promise<ApiResponse<Tables<'users'>>> {
+  username: string,
+): Promise<ApiResponse<Tables<"users">>> {
   try {
     const { data, error } = await client
-      .from('users')
-      .select('*')
-      .eq('username', username)
+      .from("users")
+      .select("*")
+      .eq("username", username)
       .single();
 
     if (error) return failure(error);
@@ -142,13 +157,13 @@ export async function getUserByUsername(
 export async function updateUser(
   client: DbClient,
   id: string,
-  data: TablesUpdate<'users'>
-): Promise<ApiResponse<Tables<'users'>>> {
+  data: TablesUpdate<"users">,
+): Promise<ApiResponse<Tables<"users">>> {
   try {
     const { data: user, error } = await client
-      .from('users')
+      .from("users")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -161,16 +176,16 @@ export async function updateUser(
 
 export async function softDeleteUser(
   client: DbClient,
-  id: string
-): Promise<ApiResponse<Tables<'users'>>> {
+  id: string,
+): Promise<ApiResponse<Tables<"users">>> {
   try {
     const { data, error } = await client
-      .from('users')
+      .from("users")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -183,18 +198,18 @@ export async function softDeleteUser(
 
 export async function listUsers(
   client: DbClient,
-  params?: PaginationParams
-): Promise<ApiResponse<PaginatedResponse<Tables<'users'>>>> {
+  params?: PaginationParams,
+): Promise<ApiResponse<PaginatedResponse<Tables<"users">>>> {
   try {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 20;
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await client
-      .from('users')
-      .select('*', { count: 'exact' })
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false })
+      .from("users")
+      .select("*", { count: "exact" })
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) return failure(error);
@@ -211,11 +226,11 @@ export async function listUsers(
 // User Addresses CRUD
 export async function createUserAddress(
   client: DbClient,
-  data: TablesInsert<'user_addresses'>
-): Promise<ApiResponse<Tables<'user_addresses'>>> {
+  data: TablesInsert<"user_addresses">,
+): Promise<ApiResponse<Tables<"user_addresses">>> {
   try {
     const { data: address, error } = await client
-      .from('user_addresses')
+      .from("user_addresses")
       .insert(data)
       .select()
       .single();
@@ -229,15 +244,15 @@ export async function createUserAddress(
 
 export async function getUserAddresses(
   client: DbClient,
-  userId: string
-): Promise<ApiResponse<Tables<'user_addresses'>[]>> {
+  userId: string,
+): Promise<ApiResponse<Tables<"user_addresses">[]>> {
   try {
     const { data, error } = await client
-      .from('user_addresses')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_deleted', false)
-      .order('is_primary', { ascending: false });
+      .from("user_addresses")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_deleted", false)
+      .order("is_primary", { ascending: false });
 
     if (error) return failure(error);
     return success(data ?? []);
@@ -249,13 +264,13 @@ export async function getUserAddresses(
 export async function updateUserAddress(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'user_addresses'>
-): Promise<ApiResponse<Tables<'user_addresses'>>> {
+  data: TablesUpdate<"user_addresses">,
+): Promise<ApiResponse<Tables<"user_addresses">>> {
   try {
     const { data: address, error } = await client
-      .from('user_addresses')
+      .from("user_addresses")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -268,16 +283,16 @@ export async function updateUserAddress(
 
 export async function softDeleteUserAddress(
   client: DbClient,
-  id: number
-): Promise<ApiResponse<Tables<'user_addresses'>>> {
+  id: number,
+): Promise<ApiResponse<Tables<"user_addresses">>> {
   try {
     const { data, error } = await client
-      .from('user_addresses')
+      .from("user_addresses")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -291,11 +306,11 @@ export async function softDeleteUserAddress(
 // User Stripe Accounts CRUD
 export async function createUserStripeAccount(
   client: DbClient,
-  data: TablesInsert<'user_stripe_accounts'>
-): Promise<ApiResponse<Tables<'user_stripe_accounts'>>> {
+  data: TablesInsert<"user_stripe_accounts">,
+): Promise<ApiResponse<Tables<"user_stripe_accounts">>> {
   try {
     const { data: account, error } = await client
-      .from('user_stripe_accounts')
+      .from("user_stripe_accounts")
       .insert(data)
       .select()
       .single();
@@ -309,14 +324,14 @@ export async function createUserStripeAccount(
 
 export async function getUserStripeAccount(
   client: DbClient,
-  userId: string
-): Promise<ApiResponse<Tables<'user_stripe_accounts'>>> {
+  userId: string,
+): Promise<ApiResponse<Tables<"user_stripe_accounts">>> {
   try {
     const { data, error } = await client
-      .from('user_stripe_accounts')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_deleted', false)
+      .from("user_stripe_accounts")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_deleted", false)
       .single();
 
     if (error) return failure(error);
@@ -329,13 +344,13 @@ export async function getUserStripeAccount(
 export async function updateUserStripeAccount(
   client: DbClient,
   id: string,
-  data: TablesUpdate<'user_stripe_accounts'>
-): Promise<ApiResponse<Tables<'user_stripe_accounts'>>> {
+  data: TablesUpdate<"user_stripe_accounts">,
+): Promise<ApiResponse<Tables<"user_stripe_accounts">>> {
   try {
     const { data: account, error } = await client
-      .from('user_stripe_accounts')
+      .from("user_stripe_accounts")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -349,11 +364,11 @@ export async function updateUserStripeAccount(
 // User Payouts CRUD
 export async function createUserPayout(
   client: DbClient,
-  data: TablesInsert<'user_payouts'>
-): Promise<ApiResponse<Tables<'user_payouts'>>> {
+  data: TablesInsert<"user_payouts">,
+): Promise<ApiResponse<Tables<"user_payouts">>> {
   try {
     const { data: payout, error } = await client
-      .from('user_payouts')
+      .from("user_payouts")
       .insert(data)
       .select()
       .single();
@@ -368,18 +383,18 @@ export async function createUserPayout(
 export async function getUserPayouts(
   client: DbClient,
   userId: string,
-  params?: PaginationParams
-): Promise<ApiResponse<PaginatedResponse<Tables<'user_payouts'>>>> {
+  params?: PaginationParams,
+): Promise<ApiResponse<PaginatedResponse<Tables<"user_payouts">>>> {
   try {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 20;
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await client
-      .from('user_payouts')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .from("user_payouts")
+      .select("*", { count: "exact" })
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) return failure(error);
@@ -396,13 +411,13 @@ export async function getUserPayouts(
 export async function updateUserPayout(
   client: DbClient,
   id: string,
-  data: TablesUpdate<'user_payouts'>
-): Promise<ApiResponse<Tables<'user_payouts'>>> {
+  data: TablesUpdate<"user_payouts">,
+): Promise<ApiResponse<Tables<"user_payouts">>> {
   try {
     const { data: payout, error } = await client
-      .from('user_payouts')
+      .from("user_payouts")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -416,11 +431,11 @@ export async function updateUserPayout(
 // User Stripe Invoices CRUD
 export async function createUserStripeInvoice(
   client: DbClient,
-  data: TablesInsert<'user_stripe_invoices'>
-): Promise<ApiResponse<Tables<'user_stripe_invoices'>>> {
+  data: TablesInsert<"user_stripe_invoices">,
+): Promise<ApiResponse<Tables<"user_stripe_invoices">>> {
   try {
     const { data: invoice, error } = await client
-      .from('user_stripe_invoices')
+      .from("user_stripe_invoices")
       .insert(data)
       .select()
       .single();
@@ -435,18 +450,18 @@ export async function createUserStripeInvoice(
 export async function getUserStripeInvoices(
   client: DbClient,
   userId: string,
-  params?: PaginationParams
-): Promise<ApiResponse<PaginatedResponse<Tables<'user_stripe_invoices'>>>> {
+  params?: PaginationParams,
+): Promise<ApiResponse<PaginatedResponse<Tables<"user_stripe_invoices">>>> {
   try {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 20;
     const offset = (page - 1) * limit;
 
     const { data, error, count } = await client
-      .from('user_stripe_invoices')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .from("user_stripe_invoices")
+      .select("*", { count: "exact" })
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) return failure(error);
@@ -460,16 +475,79 @@ export async function getUserStripeInvoices(
   }
 }
 
+// User Share Settings CRUD
+export async function getUserShareSettings(
+  userId: string,
+): Promise<ApiResponse<Tables<"user_share_settings"> | null>> {
+  const supabase = await createClient();
+  try {
+    const { data, error } = await supabase
+      .from("user_share_settings")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    // If no settings exist, return default settings
+    if (error?.code === "PGRST116") {
+      return success({
+        id: 0,
+        user_id: userId,
+        show_created_assets: true,
+        show_created_products: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    if (error) return failure(error);
+    return success(data);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function upsertUserShareSettings(
+  client: DbClient,
+  userId: string,
+  data: {
+    show_created_assets: boolean;
+    show_created_products: boolean;
+  },
+): Promise<ApiResponse<Tables<"user_share_settings">>> {
+  try {
+    const { data: settings, error } = await client
+      .from("user_share_settings")
+      .upsert(
+        {
+          user_id: userId,
+          show_created_assets: data.show_created_assets,
+          show_created_products: data.show_created_products,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id",
+        },
+      )
+      .select()
+      .single();
+
+    if (error) return failure(error);
+    return success(settings);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
 export async function updateUserStripeInvoice(
   client: DbClient,
   id: number,
-  data: TablesUpdate<'user_stripe_invoices'>
-): Promise<ApiResponse<Tables<'user_stripe_invoices'>>> {
+  data: TablesUpdate<"user_stripe_invoices">,
+): Promise<ApiResponse<Tables<"user_stripe_invoices">>> {
   try {
-    const { data: invoice, error} = await client
-      .from('user_stripe_invoices')
+    const { data: invoice, error } = await client
+      .from("user_stripe_invoices")
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 

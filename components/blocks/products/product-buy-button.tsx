@@ -1,10 +1,10 @@
 "use client";
 
-import { createCheckoutSession } from "@/app/products/[id]/actions";
-import { Button } from "@/components/ui/button";
 import { Loader2, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { createCheckoutSession } from "@/app/products/[id]/actions";
+import { Button } from "@/components/ui/button";
 
 interface ProductBuyButtonProps {
   productId: string;
@@ -15,7 +15,7 @@ interface ProductBuyButtonProps {
 
 export function ProductBuyButton({
   productId,
-  productTitle,
+  productTitle: _productTitle,
   priceCents,
   disabled,
 }: ProductBuyButtonProps) {

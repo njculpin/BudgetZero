@@ -8,51 +8,6 @@ import type {
 } from "../shared/types";
 import { calculatePagination, failure, success } from "../shared/utils";
 
-// Extended Asset Queries (with joins for UI)
-export async function getAssetByIdWithDetails(id: string) {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("assets")
-    .select(`
-      *,
-      creator:user_id(id, full_name, username),
-      asset_tags(id, namespace, value, is_deleted),
-      asset_images(id, image_url, caption, position, file_size_bytes, storage_path, is_deleted),
-      asset_files(id, file_url, caption, mime_type, file_size_bytes, storage_path, is_deleted),
-      asset_royalties(id, royalty_type, royalty_value, user_id, is_deleted),
-      asset_licenses(id, license_id, is_active, granted_at, expires_at, is_deleted)
-    `)
-    .eq("id", id)
-    .single();
-
-  // Filter out soft-deleted items
-  if (data) {
-    data.asset_tags =
-      data.asset_tags?.filter(
-        (tag: { is_deleted: boolean }) => !tag.is_deleted,
-      ) ?? [];
-    data.asset_images =
-      data.asset_images?.filter(
-        (img: { is_deleted: boolean }) => !img.is_deleted,
-      ) ?? [];
-    data.asset_files =
-      data.asset_files?.filter(
-        (file: { is_deleted: boolean }) => !file.is_deleted,
-      ) ?? [];
-    data.asset_royalties =
-      data.asset_royalties?.filter(
-        (roy: { is_deleted: boolean }) => !roy.is_deleted,
-      ) ?? [];
-    data.asset_licenses =
-      data.asset_licenses?.filter(
-        (lic: { is_deleted: boolean }) => !lic.is_deleted,
-      ) ?? [];
-  }
-
-  return { data, error };
-}
-
 export async function listAssetsWithDetails(options?: {
   assetType?: string;
   search?: string;
@@ -135,11 +90,11 @@ export async function createAsset(
 }
 
 export async function getAssetById(
-  client: DbClient,
   id: string,
 ): Promise<ApiResponse<Tables<"assets">>> {
+  const supabase = await createClient();
   try {
-    const { data, error } = await client
+    const { data, error } = await supabase
       .from("assets")
       .select("*")
       .eq("id", id)

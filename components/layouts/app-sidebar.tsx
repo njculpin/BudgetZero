@@ -28,7 +28,8 @@ import {
   LogOut,
   Package,
   Settings,
-  User
+  ShoppingBag,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -63,6 +64,16 @@ const navigation = [
         title: "Products",
         url: "/products",
         icon: Package,
+      },
+    ],
+  },
+  {
+    title: "Marketplace",
+    items: [
+      {
+        title: "Browse",
+        url: "/",
+        icon: ShoppingBag,
       },
     ],
   },
@@ -114,6 +125,18 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+                {user && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === `/u/${user.id}`}
+                    >
+                      <Link href={`/u/${user.id}`}>
+                        <span>Share</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

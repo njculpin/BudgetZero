@@ -1,5 +1,5 @@
 -- ============================================================================
--- BudgetZero Platform - Initial Schema Migration
+-- GameLoopers Platform - Initial Schema Migration
 -- Description: Complete database schema for asset marketplace with teams,
 --              products, sales tracking, and royalty distribution
 -- ============================================================================
@@ -67,6 +67,19 @@ CREATE TABLE user_addresses (
 
 COMMENT ON TABLE user_addresses IS 'User shipping and billing addresses';
 COMMENT ON COLUMN user_addresses.address_type IS 'Type of address: shipping, billing, both';
+
+CREATE TABLE user_share_settings (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  show_created_assets BOOLEAN DEFAULT TRUE NOT NULL,
+  show_created_products BOOLEAN DEFAULT TRUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+COMMENT ON TABLE user_share_settings IS 'User settings for /u/[handle] share page';
+COMMENT ON COLUMN user_share_settings.show_created_assets IS 'Show products using my assets';
+COMMENT ON COLUMN user_share_settings.show_created_products IS 'Show products user has created';
 
 CREATE TABLE user_stripe_accounts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -483,6 +496,23 @@ CREATE TABLE product_variant_images (
 
 COMMENT ON TABLE product_variant_images IS 'Preview images for product variants';
 
+CREATE TABLE product_images (
+  id BIGSERIAL PRIMARY KEY,
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  storage_path TEXT NOT NULL CHECK (storage_path ~ '^[a-f0-9-]+/.+$'),
+  file_size_bytes INTEGER CHECK (file_size_bytes >= 0),
+  caption TEXT,
+  position INTEGER DEFAULT 0 NOT NULL,
+  visible BOOLEAN DEFAULT TRUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  is_deleted BOOLEAN DEFAULT FALSE NOT NULL,
+  deleted_at TIMESTAMPTZ
+);
+
+COMMENT ON TABLE product_images IS 'Marketing and preview images for products (separate from variant images)';
+
 CREATE TABLE product_prices (
   id BIGSERIAL PRIMARY KEY,
   variant_id BIGINT REFERENCES product_variants(id) ON DELETE CASCADE NOT NULL,
@@ -769,6 +799,10 @@ CREATE INDEX idx_product_variant_assets_asset_id ON product_variant_assets(asset
 CREATE INDEX idx_product_variant_images_variant_id ON product_variant_images(variant_id) WHERE NOT is_deleted;
 CREATE INDEX idx_product_variant_images_visible ON product_variant_images(visible) WHERE NOT is_deleted;
 
+-- Product images indexes
+CREATE INDEX idx_product_images_product_id ON product_images(product_id) WHERE NOT is_deleted;
+CREATE INDEX idx_product_images_position ON product_images(product_id, position) WHERE NOT is_deleted AND visible;
+
 -- Product prices indexes
 CREATE INDEX idx_product_prices_variant_id ON product_prices(variant_id) WHERE NOT is_deleted;
 
@@ -889,6 +923,9 @@ CREATE TRIGGER update_product_variants_updated_at BEFORE UPDATE ON product_varia
 CREATE TRIGGER update_product_variant_images_updated_at BEFORE UPDATE ON product_variant_images
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_product_images_updated_at BEFORE UPDATE ON product_images
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_product_prices_updated_at BEFORE UPDATE ON product_prices
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -982,6 +1019,7 @@ BEGIN
 
       WHEN 'products' THEN
         UPDATE product_variants SET is_deleted = TRUE, deleted_at = NOW() WHERE product_id = NEW.id AND NOT is_deleted;
+        UPDATE product_images SET is_deleted = TRUE, deleted_at = NOW() WHERE product_id = NEW.id AND NOT is_deleted;
         UPDATE product_ratings SET is_deleted = TRUE, deleted_at = NOW() WHERE product_id = NEW.id AND NOT is_deleted;
         UPDATE product_teams SET is_deleted = TRUE, deleted_at = NOW() WHERE product_id = NEW.id AND NOT is_deleted;
 
@@ -1058,6 +1096,7 @@ ALTER TABLE product_teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_variant_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_variant_images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_prices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE asset_to_products ENABLE ROW LEVEL SECURITY;
@@ -1370,6 +1409,19 @@ CREATE POLICY "Product owners can delete variant assets" ON product_variant_asse
 -- Product variant images policies
 CREATE POLICY "Anyone can view visible variant images" ON product_variant_images FOR SELECT USING (NOT is_deleted AND visible);
 
+-- Product images policies
+CREATE POLICY "Anyone can view visible product images" ON product_images FOR SELECT USING (NOT is_deleted AND visible);
+
+CREATE POLICY "Product team members can manage product images" ON product_images FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM product_teams pt
+    JOIN team_users tu ON tu.team_id = pt.team_id
+    WHERE pt.product_id = product_images.product_id
+    AND tu.user_id = auth.uid()
+    AND NOT pt.is_deleted
+  )
+);
+
 -- Product prices policies
 CREATE POLICY "Anyone can view non-deleted prices" ON product_prices FOR SELECT USING (NOT is_deleted);
 
@@ -1454,9 +1506,39 @@ CREATE POLICY "Users can view their own audit logs" ON audit_logs FOR SELECT USI
 -- ============================================================================
 
 -- Storage policies for assets bucket
-CREATE POLICY "Anyone can view asset files"
+-- Users can view asset files if:
+-- 1. They own the asset
+-- 2. The asset is public
+-- 3. They have purchased the asset through a sale
+CREATE POLICY "Users can view permitted asset files"
 ON storage.objects FOR SELECT
-USING (bucket_id = 'assets');
+USING (
+  bucket_id = 'assets' AND (
+    -- Owner can view their own files
+    auth.uid()::text = (storage.foldername(name))[1]
+    OR
+    -- Public assets are viewable by anyone
+    EXISTS (
+      SELECT 1 FROM asset_files af
+      JOIN assets a ON a.id = af.asset_id
+      WHERE af.storage_path = name
+      AND a.is_public = true
+      AND NOT a.is_deleted
+    )
+    OR
+    -- Users who purchased the asset can view it
+    EXISTS (
+      SELECT 1 FROM asset_files af
+      JOIN assets a ON a.id = af.asset_id
+      JOIN sale_item_assets sia ON sia.asset_id = a.id
+      JOIN sale_items si ON si.id = sia.sale_item_id
+      JOIN sales s ON s.id = si.sale_id
+      WHERE af.storage_path = name
+      AND s.user_id = auth.uid()
+      AND s.status = 'paid'
+    )
+  )
+);
 
 CREATE POLICY "Authenticated users can upload assets"
 ON storage.objects FOR INSERT

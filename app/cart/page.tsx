@@ -1,3 +1,3 @@
-export async function CartPage(){
-    return <div></div>
+export default async function CartPage() {
+  return <div></div>;
 }

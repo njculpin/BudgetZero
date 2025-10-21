@@ -6,8 +6,14 @@ import {
   createProduct,
   createProductPrice,
   createProductVariant,
+  hardDeleteProduct,
 } from "@/lib/sdk/server/products";
-import { addTeamUser, createTeam } from "@/lib/sdk/server/teams";
+import {
+  addTeamUser,
+  createTeam,
+  getUserTeams,
+  hardDeleteTeam,
+} from "@/lib/sdk/server/teams";
 import { getMe } from "@/lib/sdk/server/users";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -68,17 +74,13 @@ export async function createSimpleProductAction(
     // Find or create user's team
     let team: { id: string; name: string } | null = null;
 
-    const { data: userTeams } = await supabase
-      .from("team_users")
-      .select("teams(id, name)")
-      .eq("user_id", user.id)
-      .limit(1);
+    const { data: userTeams, error: getUserTeamsError } = await getUserTeams(
+      supabase,
+      user.id,
+    );
 
-    if (userTeams && userTeams.length > 0) {
-      const teamData = userTeams[0].teams;
-      if (teamData && !Array.isArray(teamData)) {
-        team = teamData as { id: string; name: string };
-      }
+    if (!getUserTeamsError && userTeams && userTeams.length > 0) {
+      team = userTeams[0];
     }
 
     if (!team) {
@@ -87,7 +89,7 @@ export async function createSimpleProductAction(
       });
 
       if (teamError || !newTeam) {
-        await supabase.from("products").delete().eq("id", product.id);
+        await hardDeleteProduct(supabase, product.id);
         return {
           success: false,
           error: teamError?.message || "Failed to create team for product",
@@ -102,8 +104,8 @@ export async function createSimpleProductAction(
       });
 
       if (teamUserError) {
-        await supabase.from("products").delete().eq("id", product.id);
-        await supabase.from("teams").delete().eq("id", team.id);
+        await hardDeleteProduct(supabase, product.id);
+        await hardDeleteTeam(supabase, team.id);
         return {
           success: false,
           error: teamUserError.message || "Failed to add user to team",
@@ -118,7 +120,7 @@ export async function createSimpleProductAction(
     });
 
     if (productTeamError) {
-      await supabase.from("products").delete().eq("id", product.id);
+      await hardDeleteProduct(supabase, product.id);
       return {
         success: false,
         error: productTeamError.message || "Failed to link team to product",
@@ -136,7 +138,7 @@ export async function createSimpleProductAction(
     );
 
     if (variantError || !variant) {
-      await supabase.from("products").delete().eq("id", product.id);
+      await hardDeleteProduct(supabase, product.id);
       return {
         success: false,
         error: variantError?.message || "Failed to create product variant",
@@ -151,7 +153,7 @@ export async function createSimpleProductAction(
     });
 
     if (priceError) {
-      await supabase.from("products").delete().eq("id", product.id);
+      await hardDeleteProduct(supabase, product.id);
       return {
         success: false,
         error: priceError.message || "Failed to create product price",

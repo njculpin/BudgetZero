@@ -1,6 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  createAssetLicense,
+  createAssetRoyalty,
+  getAssetById,
+  getAssetFiles,
+  getAssetImages,
+  updateAsset as sdkUpdateAsset,
+  updateAssetLicense as sdkUpdateAssetLicense,
+  updateAssetRoyalty as sdkUpdateAssetRoyalty,
+  softDeleteAsset,
+} from "@/lib/sdk/server/assets";
 import { getMe } from "@/lib/sdk/server/users";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,36 +25,33 @@ export async function updateAsset(
 ) {
   try {
     const user = await getMe();
-    const supabase = await createClient();
+    const client = await createClient();
 
-    // Verify ownership
-    const { data: asset, error: fetchError } = await supabase
-      .from("assets")
-      .select("user_id")
-      .eq("id", assetId)
-      .single();
-
-    if (fetchError || !asset) {
-      return { success: false, error: "Asset not found" };
+    // Verify ownership using SDK
+    const assetResult = await getAssetById(assetId);
+    if (assetResult.error || !assetResult.data) {
+      return {
+        success: false,
+        error: assetResult.error?.message || "Asset not found",
+      };
     }
 
-    if (asset.user_id !== user.id) {
+    if (assetResult.data.user_id !== user.id) {
       return { success: false, error: "Unauthorized" };
     }
 
-    // Update asset
-    const { error: updateError } = await supabase
-      .from("assets")
-      .update({
-        title: data.title,
-        description: data.description || null,
-        is_public: data.is_public,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", assetId);
+    // Update asset using SDK
+    const updateResult = await sdkUpdateAsset(client, assetId, {
+      title: data.title,
+      description: data.description || null,
+      is_public: data.is_public,
+    });
 
-    if (updateError) {
-      return { success: false, error: updateError.message };
+    if (updateResult.error) {
+      return {
+        success: false,
+        error: updateResult.error?.message || "Update failed",
+      };
     }
 
     revalidatePath(`/assets/${assetId}`);
@@ -59,100 +67,49 @@ export async function updateAsset(
 export async function deleteAsset(assetId: string) {
   try {
     const user = await getMe();
-    const supabase = await createClient();
+    const client = await createClient();
 
-    // Verify ownership
-    const { data: asset, error: fetchError } = await supabase
-      .from("assets")
-      .select("user_id")
-      .eq("id", assetId)
-      .single();
-
-    if (fetchError || !asset) {
-      return { success: false, error: "Asset not found" };
+    // Verify ownership using SDK
+    const assetResult = await getAssetById(assetId);
+    if (assetResult.error || !assetResult.data) {
+      return {
+        success: false,
+        error: assetResult.error?.message || "Asset not found",
+      };
     }
 
-    if (asset.user_id !== user.id) {
+    if (assetResult.data.user_id !== user.id) {
       return { success: false, error: "Unauthorized" };
     }
 
-    // Get all files and images to delete from storage
-    const { data: files } = await supabase
-      .from("asset_files")
-      .select("storage_path")
-      .eq("asset_id", assetId)
-      .eq("is_deleted", false);
+    // Get all files and images to delete from storage using SDK
+    const filesResult = await getAssetFiles(client, assetId);
+    const imagesResult = await getAssetImages(client, assetId);
 
-    const { data: images } = await supabase
-      .from("asset_images")
-      .select("storage_path")
-      .eq("asset_id", assetId)
-      .eq("is_deleted", false);
-
-    // Delete files from storage
-    if (files && files.length > 0) {
-      const filePaths = files.map((f) => f.storage_path);
-      await supabase.storage.from("assets").remove(filePaths);
+    // Delete files from storage (direct storage access needed)
+    if (!filesResult.error && filesResult.data && filesResult.data.length > 0) {
+      const filePaths = filesResult.data.map((f) => f.storage_path);
+      await client.storage.from("assets").remove(filePaths);
     }
 
-    // Delete images from storage
-    if (images && images.length > 0) {
-      const imagePaths = images.map((i) => i.storage_path);
-      await supabase.storage.from("assets").remove(imagePaths);
+    // Delete images from storage (direct storage access needed)
+    if (
+      !imagesResult.error &&
+      imagesResult.data &&
+      imagesResult.data.length > 0
+    ) {
+      const imagePaths = imagesResult.data.map((i) => i.storage_path);
+      await client.storage.from("assets").remove(imagePaths);
     }
 
-    // Soft delete all related records
-    await supabase
-      .from("asset_files")
-      .update({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("asset_id", assetId);
+    // Soft delete the asset (cascading soft deletes handled by database triggers)
+    const deleteResult = await softDeleteAsset(client, assetId);
 
-    await supabase
-      .from("asset_images")
-      .update({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("asset_id", assetId);
-
-    await supabase
-      .from("asset_tags")
-      .update({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("asset_id", assetId);
-
-    await supabase
-      .from("asset_royalties")
-      .update({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("asset_id", assetId);
-
-    await supabase
-      .from("asset_licenses")
-      .update({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("asset_id", assetId);
-
-    // Soft delete the asset itself
-    const { error: deleteError } = await supabase
-      .from("assets")
-      .update({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("id", assetId);
-
-    if (deleteError) {
-      return { success: false, error: deleteError.message };
+    if (deleteResult.error) {
+      return {
+        success: false,
+        error: deleteResult.error?.message || "Delete failed",
+      };
     }
 
     revalidatePath("/assets");
@@ -161,5 +118,130 @@ export async function deleteAsset(assetId: string) {
   } catch (error) {
     console.error("Delete asset error:", error);
     return { success: false, error: "Failed to delete asset" };
+  }
+}
+
+export async function upsertAssetRoyalty(
+  assetId: string,
+  userId: string,
+  royaltyId: number | null,
+  data: {
+    royalty_type: "percentage" | "fixed";
+    royalty_value: number;
+  },
+) {
+  try {
+    const user = await getMe();
+    const client = await createClient();
+
+    // Verify ownership
+    const assetResult = await getAssetById(assetId);
+    if (assetResult.error || !assetResult.data) {
+      return {
+        success: false,
+        error: assetResult.error?.message || "Asset not found",
+      };
+    }
+
+    if (assetResult.data.user_id !== user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    if (royaltyId) {
+      // Update existing royalty
+      const updateResult = await sdkUpdateAssetRoyalty(client, royaltyId, {
+        royalty_type: data.royalty_type,
+        royalty_value: data.royalty_value,
+      });
+
+      if (updateResult.error) {
+        return {
+          success: false,
+          error: updateResult.error?.message || "Update failed",
+        };
+      }
+    } else {
+      // Create new royalty
+      const createResult = await createAssetRoyalty(client, {
+        asset_id: assetId,
+        user_id: userId,
+        royalty_type: data.royalty_type,
+        royalty_value: data.royalty_value,
+      });
+
+      if (createResult.error) {
+        return {
+          success: false,
+          error: createResult.error?.message || "Create failed",
+        };
+      }
+    }
+
+    revalidatePath(`/assets/${assetId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Upsert asset royalty error:", error);
+    return { success: false, error: "Failed to save royalty settings" };
+  }
+}
+
+export async function upsertAssetLicense(
+  assetId: string,
+  licenseId: number | null,
+  data: {
+    license_id: number;
+  },
+) {
+  try {
+    const user = await getMe();
+    const client = await createClient();
+
+    // Verify ownership
+    const assetResult = await getAssetById(assetId);
+    if (assetResult.error || !assetResult.data) {
+      return {
+        success: false,
+        error: assetResult.error?.message || "Asset not found",
+      };
+    }
+
+    if (assetResult.data.user_id !== user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    if (licenseId) {
+      // Update existing license
+      const updateResult = await sdkUpdateAssetLicense(client, licenseId, {
+        license_id: String(data.license_id),
+        is_active: true,
+      });
+
+      if (updateResult.error) {
+        return {
+          success: false,
+          error: updateResult.error?.message || "Update failed",
+        };
+      }
+    } else {
+      // Create new license
+      const createResult = await createAssetLicense(client, {
+        asset_id: assetId,
+        license_id: String(data.license_id),
+        is_active: true,
+      });
+
+      if (createResult.error) {
+        return {
+          success: false,
+          error: createResult.error?.message || "Create failed",
+        };
+      }
+    }
+
+    revalidatePath(`/assets/${assetId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Upsert asset license error:", error);
+    return { success: false, error: "Failed to save license settings" };
   }
 }

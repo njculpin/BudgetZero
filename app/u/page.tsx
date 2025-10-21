@@ -9,7 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getMe, getUserProfile } from "@/lib/sdk/server";
+import { getMe, getUserProfile, getUserShareSettings } from "@/lib/sdk/server";
+import { ProfileVisibilitySettings } from "@/components/blocks/users/profile-visibility-settings";
 import {
   Activity,
   Award,
@@ -22,11 +23,18 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * TODO: Share Profile Settings (show my products, show products that contain my assets, etc...)
+ */
+
 export default async function ProfilePage() {
   const user = await getMe();
 
   // Fetch user profile data from users table
   const { data: profile } = await getUserProfile(user.id);
+
+  // Fetch user share settings
+  const { data: shareSettings } = await getUserShareSettings(user.id);
 
   const userName =
     profile?.full_name || user.user_metadata?.full_name || user.email || "User";
@@ -124,6 +132,12 @@ export default async function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Profile Visibility Settings */}
+            <ProfileVisibilitySettings
+              userId={user.id}
+              initialSettings={shareSettings}
+            />
 
             {/* Recent Activity - Placeholder */}
             <Card>
