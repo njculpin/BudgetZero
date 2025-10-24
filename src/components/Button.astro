@@ -1,0 +1,27 @@
+---
+// Button.astro
+---
+<button class="button button--primary">
+  <span class="button__icon">🚀</span>
+  <span class="button__text">Launch</span>
+</button>
+
+<style>
+.button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.button--primary {
+  background-color: #0070f3;
+  color: white;
+}
+
+.button__icon {
+  margin-right: 0.5rem;
+}
+</style>
