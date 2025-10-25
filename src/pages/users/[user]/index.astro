@@ -1,7 +1,286 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardContent from "@/components/CardContent.astro";
+import Button from "@/components/Button.astro";
+import { getUserByHandle } from "@/lib/data-access/users";
+import { setSession } from "@/lib/auth";
+
+const { user } = Astro.params;
+
+if (!user) {
+  return Astro.redirect('/404');
+}
+
+// Fetch the profile user
+const profileUser = await getUserByHandle(user);
+
+if (!profileUser) {
+  return Astro.redirect('/404');
+}
+
+// Check if viewing own profile
+let currentUser = null;
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {
+    // User not authenticated, continue as guest
+  }
+}
+
+const isOwnProfile = currentUser?.id === profileUser.id;
 ---
 
-<Layout title="User - Game Loopers">
+<Layout title={`${profileUser.name || profileUser.handle} - Game Loopers`}>
+  <div class="profile-page">
+    <div class="profile-page__container">
+      <!-- Profile Header -->
+      <Card className="profile-card">
+        <CardHeader>
+          <div class="profile-header">
+            <div class="profile-header__avatar">
+              {profileUser.avatar_url ? (
+                <img
+                  src={profileUser.avatar_url}
+                  alt={profileUser.name || profileUser.handle}
+                  class="profile-header__avatar-img"
+                />
+              ) : (
+                <div class="profile-header__avatar-placeholder">
+                  {(profileUser.name || profileUser.handle).charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div class="profile-header__info">
+              <CardTitle>
+                {profileUser.name || profileUser.handle}
+              </CardTitle>
+              <p class="profile-header__handle">@{profileUser.handle}</p>
+              {profileUser.bio && (
+                <p class="profile-header__bio">{profileUser.bio}</p>
+              )}
+            </div>
+            {isOwnProfile && (
+              <div class="profile-header__actions">
+                <a href={`/users/${user}/edit`}>
+                  <Button variant="outline" size="md">
+                    <span slot="text">Edit Profile</span>
+                  </Button>
+                </a>
+              </div>
+            )}
+          </div>
+        </CardHeader>
 
+        <CardContent>
+          <div class="profile-stats">
+            <div class="profile-stats__item">
+              <span class="profile-stats__value">0</span>
+              <span class="profile-stats__label">Products</span>
+            </div>
+            <div class="profile-stats__item">
+              <span class="profile-stats__value">0</span>
+              <span class="profile-stats__label">Assets</span>
+            </div>
+            <div class="profile-stats__item">
+              <span class="profile-stats__value">0</span>
+              <span class="profile-stats__label">Followers</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Content Tabs -->
+      <div class="profile-content">
+        <div class="profile-tabs">
+          <button class="profile-tabs__tab profile-tabs__tab--active">Products</button>
+          <button class="profile-tabs__tab">Assets</button>
+          <button class="profile-tabs__tab">Activity</button>
+        </div>
+
+        <div class="profile-empty">
+          <p class="profile-empty__text">
+            {isOwnProfile
+              ? "You haven't created any products yet."
+              : `${profileUser.name || profileUser.handle} hasn't created any products yet.`
+            }
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 </Layout>
+
+<style>
+/* ===== Profile Page Layout ===== */
+.profile-page {
+  min-height: 100vh;
+  background-color: var(--color-background, #f9fafb);
+  padding: 2rem 1rem;
+}
+
+.profile-page__container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* ===== Profile Card ===== */
+.profile-card {
+  margin-bottom: 2rem;
+}
+
+/* ===== Profile Header ===== */
+.profile-header {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.profile-header__avatar {
+  flex-shrink: 0;
+}
+
+.profile-header__avatar-img {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-header__avatar-placeholder {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background-color: var(--color-primary, #0070f3);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 600;
+}
+
+.profile-header__info {
+  flex: 1;
+}
+
+.profile-header__handle {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.profile-header__bio {
+  color: var(--color-text, #111);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.profile-header__actions {
+  flex-shrink: 0;
+}
+
+/* ===== Profile Stats ===== */
+.profile-stats {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem 0;
+}
+
+.profile-stats__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.profile-stats__value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text, #111);
+}
+
+.profile-stats__label {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* ===== Profile Tabs ===== */
+.profile-content {
+  background-color: var(--color-surface, #fff);
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  overflow: hidden;
+}
+
+.profile-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.profile-tabs__tab {
+  flex: 1;
+  padding: 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #6b7280);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-tabs__tab:hover {
+  color: var(--color-text, #111);
+  background-color: var(--color-background, #f9fafb);
+}
+
+.profile-tabs__tab--active {
+  color: var(--color-primary, #0070f3);
+  border-bottom-color: var(--color-primary, #0070f3);
+}
+
+/* ===== Empty State ===== */
+.profile-empty {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.profile-empty__text {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.9375rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .profile-header__avatar {
+    align-self: center;
+  }
+
+  .profile-header__actions {
+    align-self: center;
+  }
+
+  .profile-stats {
+    justify-content: center;
+  }
+}
+</style>
