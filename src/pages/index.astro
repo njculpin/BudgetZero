@@ -2,13 +2,260 @@
 // Game Loopers Landing Page
 import Layout from "@/layouts/Layout.astro";
 import Button from "@/components/Button.astro";
-import '@/styles/global.css'
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardContent from "@/components/CardContent.astro";
 ---
-<Layout title="Game Loopers">
-<Button>Test</Button>
- <a href="/sign-in">Signin</a>
- <a href="/sign-in">Signup</a>
- <a href="/privacy">Privacy Policy</a>
- <a href="/terms">Terms of Service</a>
+
+<Layout title="Game Loopers - Collaborate, Create, Sell Tabletop Games">
+
+  <main class="landing">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero__container">
+        <div class="hero__content">
+          <h1 class="hero__title">
+            The Social Commerce Platform for Tabletop Game Creators
+          </h1>
+          <p class="hero__description">
+            Collaborate with designers, modelers, and artists. Manage licensing, royalties, and sales—all in one place.
+          </p>
+          <div class="hero__actions">
+            <a href="/sign-up">
+              <Button variant="primary" size="lg">
+                <span slot="text">Get Started</span>
+              </Button>
+            </a>
+            <a href="/products">
+              <Button variant="outline" size="lg">
+                <span slot="text">Browse Products</span>
+              </Button>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+      <div class="features__container">
+        <div class="features__header">
+          <h2 class="features__title">Built for Creators</h2>
+          <p class="features__description">
+            Everything you need to collaborate, publish, and earn from your tabletop game projects
+          </p>
+        </div>
+
+        <div class="features__grid">
+          <Card className="feature-card">
+            <CardHeader>
+              <CardTitle>Collaborate Seamlessly</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="feature-card__text">
+                Work with designers, 3D modelers, illustrators, and printers. Assign royalties and track contributions effortlessly.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="feature-card">
+            <CardHeader>
+              <CardTitle>License & Royalties</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="feature-card__text">
+                Set up flexible licensing agreements and automatic royalty splits. Contributors get paid when your game sells.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="feature-card">
+            <CardHeader>
+              <CardTitle>Digital Downloads</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="feature-card__text">
+                Sell STL files, PDFs, illustrations, and complete game packages. Customers download instantly after purchase.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="feature-card">
+            <CardHeader>
+              <CardTitle>Game Jams</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="feature-card__text">
+                Host or participate in game jams. Showcase your creativity, compete for prizes, and build your portfolio.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+      <div class="cta__container">
+        <h2 class="cta__title">Ready to Start Creating?</h2>
+        <p class="cta__description">
+          Join thousands of tabletop game creators already using Game Loopers
+        </p>
+        <a href="/sign-up">
+          <Button variant="primary" size="lg">
+            <span slot="text">Create Your Account</span>
+          </Button>
+        </a>
+      </div>
+    </section>
+  </main>
 </Layout>
+
+<style>
+/* ===== Landing Page ===== */
+.landing {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Hero Section ===== */
+.hero {
+  padding: 4rem 1.5rem;
+  background: linear-gradient(to bottom, #f9fafb, #ffffff);
+}
+
+.hero__container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.hero__content {
+  max-width: 48rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hero__title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--color-text, #111);
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .hero__title {
+    font-size: 3.5rem;
+  }
+}
+
+.hero__description {
+  font-size: 1.25rem;
+  line-height: 1.75;
+  color: var(--color-text-muted, #6b7280);
+  margin-bottom: 2rem;
+}
+
+.hero__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .hero__actions {
+    flex-direction: row;
+  }
+}
+
+.hero__actions a {
+  text-decoration: none;
+}
+
+/* ===== Features Section ===== */
+.features {
+  padding: 4rem 1.5rem;
+  background-color: #ffffff;
+}
+
+.features__container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.features__header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.features__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text, #111);
+  margin-bottom: 1rem;
+}
+
+.features__description {
+  font-size: 1.125rem;
+  color: var(--color-text-muted, #6b7280);
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.features__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .features__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .features__grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.feature-card__text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* ===== CTA Section ===== */
+.cta {
+  padding: 4rem 1.5rem;
+  background: linear-gradient(to bottom, #ffffff, #f9fafb);
+}
+
+.cta__container {
+  max-width: 48rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.cta__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text, #111);
+  margin-bottom: 1rem;
+}
+
+.cta__description {
+  font-size: 1.125rem;
+  color: var(--color-text-muted, #6b7280);
+  margin-bottom: 2rem;
+}
+
+.cta a {
+  text-decoration: none;
+}
+</style>
 

@@ -1,0 +1,22 @@
+---
+const { icon = "›" } = Astro.props;
+---
+
+<li
+  class="breadcrumb__separator"
+  role="presentation"
+  aria-hidden="true"
+>
+  {icon}
+</li>
+
+<style>
+.breadcrumb__separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #9ca3af);
+  padding: 0 0.25rem;
+}
+</style>

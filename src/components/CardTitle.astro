@@ -1,0 +1,14 @@
+---
+const { className = "" } = Astro.props;
+---
+
+<h3 class={`card__title ${className}`}>
+  <slot />
+</h3>
+
+<style>
+.card__title {
+  font-weight: 600;
+  line-height: 1.25;
+}
+</style>

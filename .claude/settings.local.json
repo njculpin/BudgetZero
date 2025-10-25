@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(git ls-tree:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(supabase init:*)",
+      "Bash(supabase start:*)",
+      "WebFetch(domain:docs.astro.build)",
+      "Bash(supabase db reset:*)",
+      "Bash(npx playwright install)",
+      "Bash(supabase status:*)",
+      "Bash(psql:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(npm run test:*)"
     ],
     "deny": [],
     "ask": []

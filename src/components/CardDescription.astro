@@ -1,0 +1,14 @@
+---
+const { className = "" } = Astro.props;
+---
+
+<p class={`card__description ${className}`}>
+  <slot />
+</p>
+
+<style>
+.card__description {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+</style>
