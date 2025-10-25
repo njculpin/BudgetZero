@@ -14,7 +14,9 @@
       "Bash(supabase status:*)",
       "Bash(psql:*)",
       "Bash(npm run test:e2e:*)",
-      "Bash(npm run test:*)"
+      "Bash(npm run test:*)",
+      "Bash(mkdir:*)",
+      "Bash(xargs cat:*)"
     ],
     "deny": [],
     "ask": []

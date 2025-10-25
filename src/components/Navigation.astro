@@ -1,11 +1,30 @@
 ---
 import Button from "./Button.astro";
+import { setSession } from '@/lib/auth';
 
-const { className = "", isAuthenticated = false } = Astro.props;
 const currentPath = Astro.url.pathname;
+
+// Check authentication via cookies
+let isAuthenticated = false;
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      isAuthenticated = true;
+    }
+  } catch (error) {
+    // User not authenticated
+  }
+}
 ---
 
-<nav class={`navigation ${className}`}>
+<nav class={`navigation`}>
   <div class="navigation__container">
     <a href="/" class="navigation__brand">
       <span class="navigation__logo">Game Loopers</span>
@@ -13,28 +32,10 @@ const currentPath = Astro.url.pathname;
 
     <div class="navigation__menu">
       <a
-        href="/products"
-        class={`navigation__link ${currentPath === '/products' ? 'navigation__link--active' : ''}`}
-      >
-        Products
-      </a>
-      <a
-        href="/assets"
-        class={`navigation__link ${currentPath === '/assets' ? 'navigation__link--active' : ''}`}
-      >
-        Assets
-      </a>
-      <a
         href="/jams"
         class={`navigation__link ${currentPath === '/jams' ? 'navigation__link--active' : ''}`}
       >
         Jams
-      </a>
-      <a
-        href="/users"
-        class={`navigation__link ${currentPath === '/users' ? 'navigation__link--active' : ''}`}
-      >
-        Users
       </a>
     </div>
 

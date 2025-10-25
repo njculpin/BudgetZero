@@ -1,0 +1,199 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+import Label from "@/components/Label.astro";
+import Input from "@/components/Input.astro";
+import Button from "@/components/Button.astro";
+import { getUserByHandle } from "@/lib/data-access/users";
+import { setSession } from "@/lib/auth";
+
+const { user } = Astro.params;
+
+if (!user) {
+  return Astro.redirect('/404');
+}
+
+// Check authentication
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect('/sign-in');
+}
+
+let session;
+try {
+  session = await setSession({
+    refresh_token: refreshToken.value,
+    access_token: accessToken.value,
+  });
+  if (session.error || !session.data.user) {
+    return Astro.redirect('/sign-in');
+  }
+} catch (error) {
+  return Astro.redirect('/sign-in');
+}
+
+const currentUser = session.data.user;
+
+// Fetch the profile
+const profileUser = await getUserByHandle(user);
+
+if (!profileUser) {
+  return Astro.redirect('/404');
+}
+
+// Verify user owns this profile
+if (currentUser.id !== profileUser.id) {
+  return Astro.redirect(`/users/${user}`);
+}
+---
+
+<Layout title="Edit Profile - Game Loopers">
+  <div class="edit-profile-page">
+    <div class="edit-profile-page__container">
+      <Card className="edit-profile-card">
+        <CardHeader>
+          <CardTitle>Edit Profile</CardTitle>
+          <CardDescription>
+            Update your public profile information
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <form action="/api/users/update-profile" method="post" class="edit-profile-form">
+            <div class="edit-profile-form__field">
+              <Label for="handle">Handle</Label>
+              <Input
+                type="text"
+                name="handle"
+                id="handle"
+                value={profileUser.handle}
+                placeholder="your-handle"
+                required
+              />
+              <p class="edit-profile-form__help">
+                Your unique username. This will be part of your profile URL.
+              </p>
+            </div>
+
+            <div class="edit-profile-form__field">
+              <Label for="name">Display Name</Label>
+              <Input
+                type="text"
+                name="name"
+                id="name"
+                value={profileUser.name || ''}
+                placeholder="Your Name"
+              />
+              <p class="edit-profile-form__help">
+                Your full name or display name.
+              </p>
+            </div>
+
+            <div class="edit-profile-form__field">
+              <Label for="bio">Bio</Label>
+              <textarea
+                name="bio"
+                id="bio"
+                class="edit-profile-form__textarea"
+                placeholder="Tell us about yourself..."
+                rows="4"
+              >{profileUser.bio || ''}</textarea>
+              <p class="edit-profile-form__help">
+                A short description about yourself and what you create.
+              </p>
+            </div>
+
+            <div class="edit-profile-form__field">
+              <Label for="avatar_url">Avatar URL</Label>
+              <Input
+                type="url"
+                name="avatar_url"
+                id="avatar_url"
+                value={profileUser.avatar_url || ''}
+                placeholder="https://example.com/avatar.jpg"
+              />
+              <p class="edit-profile-form__help">
+                URL to your profile picture. Avatar upload coming soon!
+              </p>
+            </div>
+
+            <div class="edit-profile-form__actions">
+              <a href={`/users/${user}`}>
+                <Button type="button" variant="ghost" size="md">
+                  <span slot="text">Cancel</span>
+                </Button>
+              </a>
+              <Button type="submit" variant="primary" size="md">
+                <span slot="text">Save Changes</span>
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</Layout>
+
+<style>
+/* ===== Edit Profile Page Layout ===== */
+.edit-profile-page {
+  min-height: 100vh;
+  background-color: var(--color-background, #f9fafb);
+  padding: 2rem 1rem;
+}
+
+.edit-profile-page__container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ===== Edit Profile Form ===== */
+.edit-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.edit-profile-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.edit-profile-form__textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.edit-profile-form__textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #0070f3);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.edit-profile-form__help {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7280);
+  margin: 0;
+}
+
+.edit-profile-form__actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+}
+</style>

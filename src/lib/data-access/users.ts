@@ -1,4 +1,4 @@
-import { dataClient } from './client';
+import { dataClient, createAuthenticatedClient } from './client';
 import type { User } from '@/types';
 
 export interface UpdateUserProfileParams {
@@ -6,6 +6,11 @@ export interface UpdateUserProfileParams {
   bio?: string;
   handle?: string;
   avatar_url?: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
 }
 
 /**
@@ -49,10 +54,12 @@ export const getUserByHandle = async (handle: string): Promise<User | null> => {
 /**
  * Update user profile
  * Throws error if handle is taken by another user
+ * Requires authenticated client for RLS
  */
 export const updateUserProfile = async (
   userId: string,
-  updates: UpdateUserProfileParams
+  updates: UpdateUserProfileParams,
+  authTokens?: AuthTokens
 ): Promise<User | null> => {
   // If updating handle, check availability first
   if (updates.handle) {
@@ -62,7 +69,12 @@ export const updateUserProfile = async (
     }
   }
 
-  const { error } = await dataClient
+  // Use authenticated client if tokens provided (for RLS)
+  const client = authTokens
+    ? createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
+    : dataClient;
+
+  const { error } = await client
     .from('users')
     .update({
       ...updates,

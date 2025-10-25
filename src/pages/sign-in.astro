@@ -9,15 +9,26 @@ import CardFooter from "@/components/CardFooter.astro";
 import Label from "@/components/Label.astro";
 import Input from "@/components/Input.astro";
 import Button from "@/components/Button.astro";
-import '@/styles/global.css'
+import { setSession } from "@/lib/auth";
 
 const { cookies, redirect } = Astro;
 
+// Check if already authenticated
 const accessToken = cookies.get("sb-access-token");
 const refreshToken = cookies.get("sb-refresh-token");
 
 if (accessToken && refreshToken) {
-  return redirect("/dashboard");
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      return redirect("/dashboard");
+    }
+  } catch (error) {
+    // Session invalid, continue to sign-in
+  }
 }
 ---
 
