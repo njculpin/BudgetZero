@@ -145,7 +145,7 @@ if (currentUser.id !== profileUser.id) {
 .edit-profile-page {
   min-height: 100vh;
   background-color: var(--color-background, #f9fafb);
-  padding: 2rem 1rem;
+  padding: var(--spacing-4xl) var(--spacing-2xl);
 }
 
 .edit-profile-page__container {
@@ -157,25 +157,25 @@ if (currentUser.id !== profileUser.id) {
 .edit-profile-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--gap-xl);
 }
 
 .edit-profile-form__field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--gap-sm);
 }
 
 .edit-profile-form__textarea {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: 1px solid var(--color-border, #d1d5db);
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
   font-family: inherit;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   resize: vertical;
-  transition: border-color 0.2s ease;
+  transition: border-color var(--duration-normal) var(--ease-in-out);
 }
 
 .edit-profile-form__textarea:focus {
@@ -185,15 +185,15 @@ if (currentUser.id !== profileUser.id) {
 }
 
 .edit-profile-form__help {
-  font-size: 0.8125rem;
-  color: var(--color-text-muted, #6b7280);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
   margin: 0;
 }
 
 .edit-profile-form__actions {
   display: flex;
-  gap: 1rem;
+  gap: var(--gap-lg);
   justify-content: flex-end;
-  padding-top: 1rem;
+  padding-top: var(--spacing-2xl);
 }
 </style>

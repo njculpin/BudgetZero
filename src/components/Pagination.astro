@@ -25,7 +25,7 @@ const { className = "" } = Astro.props;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.25rem; /* same as Tailwind gap-1 */
+  gap: 0.25rem;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -39,26 +39,26 @@ const { className = "" } = Astro.props;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text, #111);
+  padding: var(--spacing-xs) 0.75rem;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
   background-color: transparent;
   border: 1px solid transparent;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: background-color 0.2s var(--ease-in-out), color 0.2s var(--ease-in-out), border-color 0.2s var(--ease-in-out);
   cursor: pointer;
   text-decoration: none;
 }
 
 .pagination__link:hover {
-  background-color: var(--color-hover, #f3f4f6);
+  background-color: var(--accent);
 }
 
 .pagination__link[data-active="true"] {
-  border-color: var(--color-border, #d1d5db);
-  background-color: var(--color-surface, #fff);
-  color: var(--color-text, #111);
+  border-color: var(--border);
+  background-color: var(--card);
+  color: var(--foreground);
 }
 
 .pagination__previous,
@@ -67,7 +67,7 @@ const { className = "" } = Astro.props;
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
+  padding: var(--spacing-xs) 0.75rem;
 }
 
 .pagination__icon {
@@ -84,6 +84,6 @@ const { className = "" } = Astro.props;
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  color: var(--color-text-muted, #6b7280);
+  color: var(--muted-foreground);
 }
 </style>

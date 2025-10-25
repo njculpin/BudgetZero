@@ -1,11 +1,12 @@
 ---
-import Layout from "@/layouts/Layout.astro";
+import ProfileLayout from "@/layouts/ProfileLayout.astro";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import { getUserByHandle } from "@/lib/data-access/users";
+import { getUserAssets } from "@/lib/data-access/assets";
 import { setSession } from "@/lib/auth";
 
 const { user } = Astro.params;
@@ -20,6 +21,9 @@ const profileUser = await getUserByHandle(user);
 if (!profileUser) {
   return Astro.redirect('/404');
 }
+
+// Fetch user's assets (show published assets for non-owners, all for owners)
+let userAssets = await getUserAssets(profileUser.id);
 
 // Check if viewing own profile
 let currentUser = null;
@@ -41,9 +45,17 @@ if (accessToken && refreshToken) {
 }
 
 const isOwnProfile = currentUser?.id === profileUser.id;
+
+// Filter assets based on ownership
+if (!isOwnProfile) {
+  userAssets = userAssets.filter(asset => asset.status === 'published');
+}
 ---
 
-<Layout title={`${profileUser.name || profileUser.handle} - Game Loopers`}>
+<ProfileLayout
+  title={`${profileUser.name || profileUser.handle} - Game Loopers`}
+  showCTA={!currentUser}
+>
   <div class="profile-page">
     <div class="profile-page__container">
       <!-- Profile Header -->
@@ -91,7 +103,7 @@ const isOwnProfile = currentUser?.id === profileUser.id;
               <span class="profile-stats__label">Products</span>
             </div>
             <div class="profile-stats__item">
-              <span class="profile-stats__value">0</span>
+              <span class="profile-stats__value">{userAssets.length}</span>
               <span class="profile-stats__label">Assets</span>
             </div>
             <div class="profile-stats__item">
@@ -105,30 +117,95 @@ const isOwnProfile = currentUser?.id === profileUser.id;
       <!-- Content Tabs -->
       <div class="profile-content">
         <div class="profile-tabs">
-          <button class="profile-tabs__tab profile-tabs__tab--active">Products</button>
-          <button class="profile-tabs__tab">Assets</button>
-          <button class="profile-tabs__tab">Activity</button>
+          <button class="profile-tabs__tab profile-tabs__tab--active" data-tab="documents">Documents</button>
+          <button class="profile-tabs__tab" data-tab="assets">Assets</button>
+          <button class="profile-tabs__tab" data-tab="products">Products</button>
         </div>
 
-        <div class="profile-empty">
-          <p class="profile-empty__text">
-            {isOwnProfile
-              ? "You haven't created any products yet."
-              : `${profileUser.name || profileUser.handle} hasn't created any products yet.`
-            }
-          </p>
+        <div class="profile-tab-content" id="tab-documents">
+          <div class="profile-empty">
+            <p class="profile-empty__text">
+              {isOwnProfile
+                ? "You haven't created any documents yet."
+                : `${profileUser.name || profileUser.handle} hasn't created any documents yet.`
+              }
+            </p>
+          </div>
+        </div>
+
+        <div class="profile-tab-content profile-tab-content--hidden" id="tab-assets">
+          {userAssets.length > 0 ? (
+            <div class="profile-asset-grid">
+              {userAssets.map((asset) => (
+                <a href={`/assets/${asset.handle}`} class="profile-asset-card" key={asset.id}>
+                  <div class="profile-asset-card__header">
+                    <h3 class="profile-asset-card__title">{asset.title}</h3>
+                    <span class={`profile-asset-card__status profile-asset-card__status--${asset.status}`}>
+                      {asset.status}
+                    </span>
+                  </div>
+                  {asset.description && (
+                    <p class="profile-asset-card__description">
+                      {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
+                    </p>
+                  )}
+                  <div class="profile-asset-card__meta">
+                    <span>{asset.download_count} downloads</span>
+                    <span>{asset.file_count} files</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div class="profile-empty">
+              <p class="profile-empty__text">
+                {isOwnProfile
+                  ? "You haven't created any assets yet."
+                  : `${profileUser.name || profileUser.handle} hasn't created any assets yet.`
+                }
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div class="profile-tab-content profile-tab-content--hidden" id="tab-products">
+          <div class="profile-empty">
+            <p class="profile-empty__text">
+              {isOwnProfile
+                ? "You haven't created any products yet."
+                : `${profileUser.name || profileUser.handle} hasn't created any products yet.`
+              }
+            </p>
+          </div>
         </div>
       </div>
+
+      <!-- Activity Feed -->
+      <Card className="activity-card">
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="profile-empty">
+            <p class="profile-empty__text">
+              {isOwnProfile
+                ? "No recent activity yet."
+                : `${profileUser.name || profileUser.handle} hasn't had any recent activity.`
+              }
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   </div>
-</Layout>
+</ProfileLayout>
 
 <style>
 /* ===== Profile Page Layout ===== */
 .profile-page {
   min-height: 100vh;
   background-color: var(--color-background, #f9fafb);
-  padding: 2rem 1rem;
+  padding: var(--spacing-4xl) var(--spacing-2xl);
 }
 
 .profile-page__container {
@@ -138,13 +215,13 @@ const isOwnProfile = currentUser?.id === profileUser.id;
 
 /* ===== Profile Card ===== */
 .profile-card {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-4xl);
 }
 
 /* ===== Profile Header ===== */
 .profile-header {
   display: flex;
-  gap: 1.5rem;
+  gap: var(--gap-xl);
   align-items: flex-start;
 }
 
@@ -168,8 +245,8 @@ const isOwnProfile = currentUser?.id === profileUser.id;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  font-weight: 600;
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-semibold);
 }
 
 .profile-header__info {
@@ -177,15 +254,15 @@ const isOwnProfile = currentUser?.id === profileUser.id;
 }
 
 .profile-header__handle {
-  color: var(--color-text-muted, #6b7280);
-  font-size: 0.875rem;
-  margin: 0.25rem 0 0.75rem;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  margin: var(--spacing-xxs) 0 var(--spacing-lg);
 }
 
 .profile-header__bio {
   color: var(--color-text, #111);
-  font-size: 0.9375rem;
-  line-height: 1.5;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
   margin: 0;
 }
 
@@ -196,31 +273,31 @@ const isOwnProfile = currentUser?.id === profileUser.id;
 /* ===== Profile Stats ===== */
 .profile-stats {
   display: flex;
-  gap: 2rem;
-  padding: 1rem 0;
+  gap: var(--spacing-4xl);
+  padding: var(--spacing-2xl) 0;
 }
 
 .profile-stats__item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--gap-xxs);
 }
 
 .profile-stats__value {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text, #111);
 }
 
 .profile-stats__label {
-  font-size: 0.875rem;
-  color: var(--color-text-muted, #6b7280);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
 }
 
 /* ===== Profile Tabs ===== */
 .profile-content {
   background-color: var(--color-surface, #fff);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border, #e5e7eb);
   overflow: hidden;
 }
@@ -232,15 +309,15 @@ const isOwnProfile = currentUser?.id === profileUser.id;
 
 .profile-tabs__tab {
   flex: 1;
-  padding: 1rem;
+  padding: var(--spacing-2xl);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-muted, #6b7280);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 .profile-tabs__tab:hover {
@@ -253,15 +330,108 @@ const isOwnProfile = currentUser?.id === profileUser.id;
   border-bottom-color: var(--color-primary, #0070f3);
 }
 
+/* ===== Tab Content ===== */
+.profile-tab-content {
+  display: block;
+}
+
+.profile-tab-content--hidden {
+  display: none;
+}
+
 /* ===== Empty State ===== */
 .profile-empty {
-  padding: 4rem 2rem;
+  padding: var(--spacing-5xl) var(--spacing-4xl);
   text-align: center;
 }
 
 .profile-empty__text {
-  color: var(--color-text-muted, #6b7280);
-  font-size: 0.9375rem;
+  color: var(--muted-foreground);
+  font-size: var(--text-base);
+}
+
+/* ===== Activity Card ===== */
+.activity-card {
+  margin-top: var(--spacing-4xl);
+}
+
+/* ===== Asset Grid ===== */
+.profile-asset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--gap-xl);
+  padding: var(--spacing-4xl);
+}
+
+.profile-asset-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  padding: var(--spacing-3xl);
+  background-color: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.profile-asset-card:hover {
+  border-color: var(--color-primary, #0070f3);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.profile-asset-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gap-md);
+}
+
+.profile-asset-card__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text, #111);
+}
+
+.profile-asset-card__status {
+  display: inline-block;
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.profile-asset-card__status--draft {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.profile-asset-card__status--published {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.profile-asset-card__status--archived {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.profile-asset-card__description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-normal);
+}
+
+.profile-asset-card__meta {
+  display: flex;
+  gap: var(--gap-lg);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
 }
 
 /* ===== Responsive ===== */
@@ -284,3 +454,30 @@ const isOwnProfile = currentUser?.id === profileUser.id;
   }
 }
 </style>
+
+<script>
+  // Tab switching functionality
+  const tabs = document.querySelectorAll('.profile-tabs__tab');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.getAttribute('data-tab');
+
+      // Remove active class from all tabs
+      tabs.forEach(t => t.classList.remove('profile-tabs__tab--active'));
+
+      // Add active class to clicked tab
+      tab.classList.add('profile-tabs__tab--active');
+
+      // Hide all tab content
+      const allContent = document.querySelectorAll('.profile-tab-content');
+      allContent.forEach(content => content.classList.add('profile-tab-content--hidden'));
+
+      // Show selected tab content
+      const selectedContent = document.getElementById(`tab-${tabName}`);
+      if (selectedContent) {
+        selectedContent.classList.remove('profile-tab-content--hidden');
+      }
+    });
+  });
+</script>

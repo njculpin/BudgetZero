@@ -1,7 +1,403 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardContent from "@/components/CardContent.astro";
+import Input from "@/components/Input.astro";
+import Tag from "@/components/Tag.astro";
+import { getPublishedAssets, getPopularTags } from "@/lib/data-access/assets";
+import { getUserById } from "@/lib/data-access/users";
+
+const { url } = Astro;
+const searchParams = url.searchParams;
+
+// Get search and filter parameters
+const searchQuery = searchParams.get('search') || '';
+const tagFilter = searchParams.get('tag') || '';
+const page = parseInt(searchParams.get('page') || '1');
+const limit = 20;
+const offset = (page - 1) * limit;
+
+// Fetch assets with filters
+const tagArray = tagFilter ? [tagFilter] : undefined;
+const assets = await getPublishedAssets(searchQuery, tagArray, limit, offset);
+
+// Fetch popular tags for filter suggestions
+const popularTags = await getPopularTags(10);
+
+// Fetch asset owners (batch fetch to avoid N+1 queries)
+const ownerIds = [...new Set(assets.map(a => a.user_id))];
+const owners = await Promise.all(ownerIds.map(id => getUserById(id)));
+const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 ---
 
-<Layout title="Assets - Game Loopers">
+<Layout title="Browse Assets - Game Loopers">
+  <div class="assets-page">
+    <div class="assets-page__container">
+      <!-- Page Header -->
+      <div class="assets-header">
+        <h1 class="assets-header__title">Browse Assets</h1>
+        <p class="assets-header__description">
+          Discover digital assets created by the Game Loopers community
+        </p>
+      </div>
 
+      <!-- Search and Filters -->
+      <Card>
+        <CardContent>
+          <form method="GET" action="/assets" class="assets-filters">
+            <div class="assets-filters__search">
+              <Input
+                type="search"
+                name="search"
+                placeholder="Search assets..."
+                value={searchQuery}
+              />
+            </div>
+
+            <div class="assets-filters__tags">
+              <p class="assets-filters__label">Popular Tags:</p>
+              <div class="assets-filters__tag-list">
+                {popularTags.length > 0 ? (
+                  popularTags.map((tag) => (
+                    <a
+                      href={`/assets?tag=${encodeURIComponent(tag.value)}`}
+                      class={`assets-filters__tag-link ${tagFilter === tag.value ? 'assets-filters__tag-link--active' : ''}`}
+                      key={tag.value}
+                    >
+                      <Tag variant={tagFilter === tag.value ? 'primary' : 'default'}>
+                        {tag.value} ({tag.count})
+                      </Tag>
+                    </a>
+                  ))
+                ) : (
+                  <p class="assets-filters__no-tags">No tags available yet</p>
+                )}
+              </div>
+            </div>
+
+            {(searchQuery || tagFilter) && (
+              <div class="assets-filters__active">
+                <p class="assets-filters__label">Active Filters:</p>
+                <div class="assets-filters__active-list">
+                  {searchQuery && (
+                    <span class="assets-filters__active-item">
+                      Search: "{searchQuery}"
+                      <a href="/assets" class="assets-filters__clear">×</a>
+                    </span>
+                  )}
+                  {tagFilter && (
+                    <span class="assets-filters__active-item">
+                      Tag: {tagFilter}
+                      <a href={searchQuery ? `/assets?search=${encodeURIComponent(searchQuery)}` : '/assets'} class="assets-filters__clear">×</a>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+
+      <!-- Assets Grid -->
+      {assets.length > 0 ? (
+        <div class="assets-grid">
+          {assets.map((asset) => {
+            const owner = ownersMap.get(asset.user_id);
+            return (
+              <a href={`/assets/${asset.handle}`} class="asset-card" key={asset.id}>
+                <div class="asset-card__content">
+                  <h3 class="asset-card__title">{asset.title}</h3>
+                  {asset.description && (
+                    <p class="asset-card__description">
+                      {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
+                    </p>
+                  )}
+                  <div class="asset-card__meta">
+                    <span class="asset-card__author">
+                      by {owner?.name || owner?.handle || 'Unknown'}
+                    </span>
+                  </div>
+                  <div class="asset-card__stats">
+                    <span class="asset-card__stat">
+                      {asset.file_count} file{asset.file_count !== 1 ? 's' : ''}
+                    </span>
+                    <span class="asset-card__stat">
+                      {asset.download_count} download{asset.download_count !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      ) : (
+        <Card>
+          <CardContent>
+            <div class="assets-empty">
+              <p class="assets-empty__text">
+                {searchQuery || tagFilter
+                  ? "No assets found matching your search criteria."
+                  : "No assets available yet."}
+              </p>
+              {(searchQuery || tagFilter) && (
+                <a href="/assets" class="assets-empty__link">Clear filters</a>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <!-- Pagination -->
+      {assets.length === limit && (
+        <div class="assets-pagination">
+          {page > 1 && (
+            <a
+              href={`/assets?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
+              class="assets-pagination__link"
+            >
+              ← Previous
+            </a>
+          )}
+          <span class="assets-pagination__current">Page {page}</span>
+          <a
+            href={`/assets?page=${page + 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
+            class="assets-pagination__link"
+          >
+            Next →
+          </a>
+        </div>
+      )}
+    </div>
+  </div>
 </Layout>
+
+<style>
+/* ===== Page Layout ===== */
+.assets-page {
+  min-height: 100vh;
+  padding: var(--spacing-4xl) var(--spacing-2xl);
+  background-color: var(--color-background, #f9fafb);
+}
+
+.assets-page__container {
+  max-width: 75rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4xl);
+}
+
+/* ===== Header ===== */
+.assets-header {
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.assets-header__title {
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text, #111);
+}
+
+.assets-header__description {
+  margin: 0;
+  font-size: var(--text-lg);
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* ===== Filters ===== */
+.assets-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xl);
+}
+
+.assets-filters__search {
+  width: 100%;
+}
+
+.assets-filters__label {
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text, #111);
+}
+
+.assets-filters__tags {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.assets-filters__tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+.assets-filters__tag-link {
+  text-decoration: none;
+}
+
+.assets-filters__tag-link--active {
+  font-weight: 600;
+}
+
+.assets-filters__no-tags {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted, #6b7280);
+}
+
+.assets-filters__active {
+  padding-top: var(--spacing-2xl);
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.assets-filters__active-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+.assets-filters__active-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--spacing-xs) var(--spacing-lg);
+  background-color: var(--color-primary, #0070f3);
+  color: white;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.assets-filters__clear {
+  color: white;
+  text-decoration: none;
+  font-size: var(--text-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.assets-filters__clear:hover {
+  opacity: 0.8;
+}
+
+/* ===== Assets Grid ===== */
+.assets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--gap-xl);
+}
+
+.asset-card {
+  display: block;
+  padding: var(--spacing-3xl);
+  background-color: white;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.asset-card:hover {
+  border-color: var(--color-primary, #0070f3);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.asset-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.asset-card__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text, #111);
+}
+
+.asset-card__description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted, #6b7280);
+  line-height: var(--leading-normal);
+}
+
+.asset-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.asset-card__author {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted, #6b7280);
+}
+
+.asset-card__stats {
+  display: flex;
+  gap: var(--gap-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.asset-card__stat {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* ===== Empty State ===== */
+.assets-empty {
+  text-align: center;
+  padding: var(--spacing-5xl) var(--spacing-3xl);
+}
+
+.assets-empty__text {
+  margin: 0 0 var(--spacing-2xl);
+  font-size: var(--text-base);
+  color: var(--color-text-muted, #6b7280);
+}
+
+.assets-empty__link {
+  display: inline-block;
+  color: var(--color-primary, #0070f3);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+}
+
+.assets-empty__link:hover {
+  text-decoration: underline;
+}
+
+/* ===== Pagination ===== */
+.assets-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--gap-xl);
+  padding: var(--spacing-3xl) 0;
+}
+
+.assets-pagination__link {
+  color: var(--color-primary, #0070f3);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-sm) var(--spacing-2xl);
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-normal) var(--ease-in-out);
+}
+
+.assets-pagination__link:hover {
+  background-color: var(--color-background, #f9fafb);
+}
+
+.assets-pagination__current {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted, #6b7280);
+}
+</style>

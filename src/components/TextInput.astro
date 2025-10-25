@@ -12,18 +12,18 @@ const { className = "", ...props } = Astro.props;
 /* ===== Base Textarea ===== */
 .textarea {
   width: 100%;
-  min-height: 4rem; /* ~min-h-16 */
-  padding: 0.5rem 0.75rem; /* ~py-2 px-3 */
-  border-radius: 0.375rem; /* rounded-md */
-  border: 1px solid var(--color-border, #d1d5db);
+  min-height: 4rem;
+  padding: var(--spacing-xs) 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--input);
   background-color: transparent;
-  color: var(--color-text, #111);
-  font-size: 1rem; /* text-base */
-  line-height: 1.5;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
-  transition: color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  color: var(--foreground);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  box-shadow: var(--shadow-xs);
+  transition: color 0.2s var(--ease-in-out), box-shadow 0.2s var(--ease-in-out), border-color 0.2s var(--ease-in-out);
   outline: none;
-  resize: vertical; /* allow vertical resizing */
+  resize: vertical;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -31,13 +31,13 @@ const { className = "", ...props } = Astro.props;
 
 /* ===== Placeholder ===== */
 .textarea::placeholder {
-  color: var(--color-text-muted, #6b7280);
+  color: var(--muted-foreground);
 }
 
 /* ===== Focus ===== */
 .textarea:focus-visible {
-  border-color: var(--color-ring, #2563eb);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5);
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
 }
 
 /* ===== Disabled ===== */
@@ -48,7 +48,7 @@ const { className = "", ...props } = Astro.props;
 
 /* ===== Invalid / aria-invalid ===== */
 .textarea[aria-invalid="true"] {
-  border-color: var(--color-destructive, #ef4444);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 3px oklch(from var(--destructive) l c h / 0.2);
 }
 </style>

@@ -99,12 +99,12 @@ if (accessToken && refreshToken) {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background-color: var(--color-background, #f9fafb);
+  background-color: var(--muted);
 }
 
 .auth-page__container {
   width: 100%;
-  max-width: 400px;
+  max-width: var(--container-sm);
 }
 
 .auth-page__card {
@@ -121,13 +121,13 @@ if (accessToken && refreshToken) {
 .auth-form__field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--gap-xs);
 }
 
 .auth-form__divider {
   position: relative;
   text-align: center;
-  margin: 0.5rem 0;
+  margin: var(--spacing-xs) 0;
 }
 
 .auth-form__divider::before {
@@ -137,29 +137,29 @@ if (accessToken && refreshToken) {
   left: 0;
   right: 0;
   height: 1px;
-  background-color: var(--color-border, #e5e7eb);
+  background-color: var(--border);
 }
 
 .auth-form__divider-text {
   position: relative;
   display: inline-block;
   padding: 0 0.75rem;
-  background-color: var(--color-surface, #fff);
-  font-size: 0.875rem;
-  color: var(--color-text-muted, #6b7280);
+  background-color: var(--card);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
 }
 
 /* ===== Footer ===== */
 .auth-page__footer-text {
   text-align: center;
-  font-size: 0.875rem;
-  color: var(--color-text-muted, #6b7280);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
 }
 
 .auth-page__link {
-  color: var(--color-primary, #0070f3);
+  color: var(--primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .auth-page__link:hover {

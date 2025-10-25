@@ -27,15 +27,21 @@ if (accessToken && refreshToken) {
 <nav class={`navigation`}>
   <div class="navigation__container">
     <a href="/" class="navigation__brand">
-      <span class="navigation__logo">Game Loopers</span>
+      <span class="navigation__logo"><h3>Game Loopers</h3></span>
     </a>
 
     <div class="navigation__menu">
       <a
+        href="/assets"
+        class={`navigation__link ${currentPath === '/assets' || currentPath.startsWith('/assets/') ? 'navigation__link--active' : ''}`}
+      >
+        <p>Browse Assets</p>
+      </a>
+      <a
         href="/jams"
         class={`navigation__link ${currentPath === '/jams' ? 'navigation__link--active' : ''}`}
       >
-        Jams
+        <p>Jams</p>
       </a>
     </div>
 
@@ -44,7 +50,7 @@ if (accessToken && refreshToken) {
         <>
           <a href="/dashboard">
             <Button variant="ghost" size="sm">
-              <span slot="text">Dashboard</span>
+              <span slot="text"><h3>Dashboard</h3></span>
             </Button>
           </a>
           <form action="/api/auth/sign-out" method="post" class="navigation__signout-form">
@@ -78,14 +84,13 @@ if (accessToken && refreshToken) {
   top: 0;
   z-index: 50;
   width: 100%;
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
-  background-color: var(--color-surface, #fff);
+  border-bottom: 1px solid var(--border);
+  background-color: oklch(from var(--background) l c h / 0.8);
   backdrop-filter: blur(8px);
-  background-color: rgba(255, 255, 255, 0.8);
 }
 
 .navigation__container {
-  max-width: 1280px;
+  max-width: var(--container-7xl);
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -98,15 +103,15 @@ if (accessToken && refreshToken) {
 .navigation__brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--gap-xs);
   text-decoration: none;
-  color: var(--color-text, #111);
+  color: var(--foreground);
 }
 
 .navigation__logo {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-primary, #0070f3);
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
 }
 
 /* ===== Menu ===== */
@@ -125,30 +130,30 @@ if (accessToken && refreshToken) {
 
 .navigation__link {
   position: relative;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-muted, #6b7280);
+  padding: var(--spacing-xs) 0.75rem;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
   text-decoration: none;
-  border-radius: 0.375rem;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  border-radius: var(--radius-md);
+  transition: color 0.2s var(--ease-in-out), background-color 0.2s var(--ease-in-out);
 }
 
 .navigation__link:hover {
-  color: var(--color-text, #111);
-  background-color: var(--color-background, #f9fafb);
+  color: var(--foreground);
+  background-color: var(--accent);
 }
 
 .navigation__link--active {
-  color: var(--color-text, #111);
-  background-color: var(--color-background, #f9fafb);
+  color: var(--foreground);
+  background-color: var(--accent);
 }
 
 /* ===== Actions ===== */
 .navigation__actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--gap-xs);
 }
 
 .navigation__actions a {

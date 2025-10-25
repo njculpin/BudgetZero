@@ -3,11 +3,12 @@ import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
-import CardDescription from "@/components/CardDescription.astro";
+import CardDescription from "@/components/CardDescription.astro"
 import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 
 import { setSession } from "../lib/auth";
+import { getUserById } from "@/lib/data-access/users";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -42,6 +43,11 @@ try {
 }
 
 const email = session.data.user?.email;
+const userId = session.data.user?.id;
+
+// Get user profile to access handle
+const userProfile = userId ? await getUserById(userId) : null;
+const userHandle = userProfile?.handle;
 ---
 
 <Layout title="Dashboard - Game Loopers">
@@ -55,11 +61,27 @@ const email = session.data.user?.email;
             <h1 class="dashboard__title">Welcome back!</h1>
             <p class="dashboard__subtitle">{email}</p>
           </div>
-          <form action="/api/auth/sign-out" method="post">
-            <Button type="submit" variant="ghost" size="sm">
-              <span slot="text">Sign out</span>
-            </Button>
-          </form>
+          <div class="dashboard__header-actions">
+            {userHandle && (
+              <>
+                <a href={`/users/${userHandle}`}>
+                  <Button variant="outline" size="sm">
+                    <span slot="text">View Profile</span>
+                  </Button>
+                </a>
+                <a href={`/users/${userHandle}/edit`}>
+                  <Button variant="ghost" size="sm">
+                    <span slot="text">Edit Profile</span>
+                  </Button>
+                </a>
+              </>
+            )}
+            <form action="/api/auth/sign-out" method="post">
+              <Button type="submit" variant="ghost" size="sm">
+                <span slot="text">Sign out</span>
+              </Button>
+            </form>
+          </div>
         </div>
       </section>
 
@@ -193,12 +215,12 @@ const email = session.data.user?.email;
 <style>
 /* ===== Dashboard Layout ===== */
 .dashboard {
-  min-height: calc(100vh - 64px); /* Account for navigation height */
-  background-color: var(--color-background, #f9fafb);
+  min-height: calc(100vh - 64px);
+  background-color: var(--muted);
 }
 
 .dashboard__container {
-  max-width: 1280px;
+  max-width: var(--container-7xl);
   margin: 0 auto;
   padding: 2rem 1.5rem;
   display: flex;
@@ -222,16 +244,30 @@ const email = session.data.user?.email;
   flex: 1;
 }
 
+.dashboard__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-xs);
+}
+
+.dashboard__header-actions a {
+  text-decoration: none;
+}
+
+.dashboard__header-actions form {
+  margin: 0;
+}
+
 .dashboard__title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--color-text, #111);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
   margin-bottom: 0.25rem;
 }
 
 .dashboard__subtitle {
-  font-size: 1rem;
-  color: var(--color-text-muted, #6b7280);
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
 }
 
 /* ===== Stats Grid ===== */
@@ -256,19 +292,19 @@ const email = session.data.user?.email;
 .stat-card__content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--gap-xs);
 }
 
 .stat-card__label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-muted, #6b7280);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
 }
 
 .stat-card__value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--color-text, #111);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
 }
 
 /* ===== Sections ===== */
@@ -279,9 +315,9 @@ const email = session.data.user?.email;
 }
 
 .dashboard__section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-text, #111);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
 }
 
 /* ===== Actions Grid ===== */
@@ -314,14 +350,27 @@ const email = session.data.user?.email;
 }
 
 .dashboard__empty-text {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--color-text, #111);
-  margin-bottom: 0.5rem;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+  margin-bottom: var(--spacing-xs);
 }
 
 .dashboard__empty-description {
-  font-size: 0.875rem;
-  color: var(--color-text-muted, #6b7280);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .dashboard__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard__header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
 }
 </style>

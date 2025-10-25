@@ -1,0 +1,514 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+import Label from "@/components/Label.astro";
+import Input from "@/components/Input.astro";
+import Button from "@/components/Button.astro";
+import Tag from "@/components/Tag.astro";
+import TagInput from "@/components/TagInput.astro";
+import { setSession } from "@/lib/auth";
+import {
+  getAssetByHandle,
+  updateAsset,
+  createAssetFile,
+  createAssetImage,
+  createAssetTag,
+  getAssetTags,
+  getAssetFiles,
+  getAssetImages,
+} from "@/lib/data-access/assets";
+import { uploadAssetFile, uploadAssetImage } from "@/lib/storage";
+
+const { cookies, redirect, request } = Astro;
+const { asset: assetHandle } = Astro.params;
+
+if (!assetHandle) {
+  return redirect('/404');
+}
+
+// Check authentication
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return redirect("/sign-in");
+}
+
+let session;
+try {
+  session = await setSession({
+    refresh_token: refreshToken.value,
+    access_token: accessToken.value,
+  });
+  if (session.error) {
+    cookies.delete("sb-access-token", { path: "/" });
+    cookies.delete("sb-refresh-token", { path: "/" });
+    return redirect("/sign-in");
+  }
+} catch (error) {
+  cookies.delete("sb-access-token", { path: "/" });
+  cookies.delete("sb-refresh-token", { path: "/" });
+  return redirect("/sign-in");
+}
+
+const userId = session.data.user?.id;
+
+if (!userId) {
+  return redirect("/sign-in");
+}
+
+// Fetch the asset
+const assetData = await getAssetByHandle(assetHandle);
+
+if (!assetData) {
+  return redirect('/404');
+}
+
+// Check if user is the owner
+if (assetData.user_id !== userId) {
+  return redirect(`/assets/${assetHandle}`);
+}
+
+// Fetch existing tags, files, and images
+const existingTags = await getAssetTags(assetData.id);
+const existingFiles = await getAssetFiles(assetData.id);
+const existingImages = await getAssetImages(assetData.id);
+
+// Handle form submission
+let errorMessage = "";
+let successMessage = "";
+
+if (request.method === "POST") {
+  try {
+    const formData = await request.formData();
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const status = formData.get("status") as "draft" | "published";
+    const files = formData.getAll("files") as File[];
+    const images = formData.getAll("images") as File[];
+    const tagsString = formData.get("tags") as string;
+
+    if (!title) {
+      errorMessage = "Title is required";
+    } else {
+      // Update the asset
+      const updatedAsset = await updateAsset(
+        assetData.id,
+        {
+          title,
+          description,
+          status: status || "draft",
+        },
+        {
+          accessToken: accessToken.value,
+          refreshToken: refreshToken.value,
+        }
+      );
+
+      if (!updatedAsset) {
+        errorMessage = "Failed to update asset";
+      } else {
+        // Handle tags - for now, create new tags (we'll add delete functionality later)
+        if (tagsString) {
+          const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+          for (const tag of tags) {
+            await createAssetTag(
+              assetData.id,
+              tag,
+              {
+                accessToken: accessToken.value,
+                refreshToken: refreshToken.value,
+              }
+            );
+          }
+        }
+
+        // Upload new files if provided
+        if (files && files.length > 0) {
+          for (const file of files) {
+            if (file.size > 0) {
+              const fileUpload = await uploadAssetFile(file, userId, assetData.id);
+              if (fileUpload) {
+                await createAssetFile(
+                  assetData.id,
+                  {
+                    title: file.name,
+                    description: `Uploaded file: ${file.name}`,
+                    file_url: fileUpload.url,
+                    storage_path: fileUpload.path,
+                    file_size_bytes: fileUpload.size,
+                    mime_type: file.type,
+                  },
+                  {
+                    accessToken: accessToken.value,
+                    refreshToken: refreshToken.value,
+                  }
+                );
+              }
+            }
+          }
+        }
+
+        // Upload new images if provided
+        if (images && images.length > 0) {
+          for (const image of images) {
+            if (image.size > 0) {
+              const imageUpload = await uploadAssetImage(image, userId, assetData.id);
+              if (imageUpload) {
+                await createAssetImage(
+                  assetData.id,
+                  {
+                    title: image.name,
+                    description: `Cover image: ${image.name}`,
+                    file_url: imageUpload.url,
+                    storage_path: imageUpload.path,
+                    file_size_bytes: imageUpload.size,
+                    mime_type: image.type,
+                  },
+                  {
+                    accessToken: accessToken.value,
+                    refreshToken: refreshToken.value,
+                  }
+                );
+              }
+            }
+          }
+        }
+
+        // Redirect to the asset detail page
+        successMessage = "Asset updated successfully!";
+        return redirect(`/assets/${assetHandle}`);
+      }
+    }
+  } catch (error) {
+    console.error("Error updating asset:", error);
+    errorMessage = error instanceof Error ? error.message : "An error occurred";
+  }
+}
+---
+
+<Layout title={`Edit ${assetData.title} - Game Loopers`}>
+  <div class="asset-edit-page">
+    <div class="asset-edit-container">
+      <Card>
+        <CardHeader>
+          <div class="asset-edit-header">
+            <CardTitle>Edit Asset</CardTitle>
+            <CardDescription>Update your asset details, files, and images</CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {errorMessage && (
+            <div class="asset-edit-error">
+              <p>{errorMessage}</p>
+            </div>
+          )}
+
+          <form method="POST" class="asset-form" enctype="multipart/form-data">
+            <div class="asset-form__field">
+              <Label for="title">Title</Label>
+              <Input
+                type="text"
+                name="title"
+                id="title"
+                value={assetData.title}
+                placeholder="Enter asset title"
+                required
+              />
+            </div>
+
+            <div class="asset-form__field">
+              <Label for="description">Description</Label>
+              <textarea
+                name="description"
+                id="description"
+                placeholder="Describe your asset..."
+                rows="4"
+                class="asset-form__textarea"
+              >{assetData.description}</textarea>
+            </div>
+
+            <div class="asset-form__field">
+              <Label for="tags">Tags</Label>
+              <div class="asset-form__existing-tags">
+                <p class="asset-form__label">Existing tags:</p>
+                <div class="asset-form__tag-list">
+                  {existingTags.length > 0 ? (
+                    existingTags.map((tag) => (
+                      <Tag key={tag.id}>{tag.value}</Tag>
+                    ))
+                  ) : (
+                    <p class="asset-form__no-tags">No tags yet</p>
+                  )}
+                </div>
+              </div>
+              <TagInput name="tags" placeholder="Add new tags (press Enter)" />
+            </div>
+
+            <div class="asset-form__field">
+              <Label for="files">Asset Files</Label>
+              <div class="asset-form__existing-files">
+                <p class="asset-form__label">Existing files ({existingFiles.length}):</p>
+                {existingFiles.length > 0 && (
+                  <ul class="asset-form__file-list">
+                    {existingFiles.map((file) => (
+                      <li key={file.id} class="asset-form__file-item">
+                        <span>{file.title}</span>
+                        <span class="asset-form__file-size">
+                          {(file.file_size_bytes / 1024 / 1024).toFixed(2)} MB
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <input
+                type="file"
+                name="files"
+                id="files"
+                multiple
+                class="asset-form__file-input"
+              />
+              <p class="asset-form__help-text">
+                Add more asset files (PDF, STL, OBJ, ZIP, etc.)
+              </p>
+            </div>
+
+            <div class="asset-form__field">
+              <Label for="images">Cover Images</Label>
+              <div class="asset-form__existing-images">
+                <p class="asset-form__label">Existing images ({existingImages.length}):</p>
+                {existingImages.length > 0 && (
+                  <div class="asset-form__image-grid">
+                    {existingImages.map((image) => (
+                      <div key={image.id} class="asset-form__image-item">
+                        <img src={image.file_url} alt={image.title} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <input
+                type="file"
+                name="images"
+                id="images"
+                accept="image/*"
+                multiple
+                class="asset-form__file-input"
+              />
+              <p class="asset-form__help-text">
+                Add more cover images
+              </p>
+            </div>
+
+            <div class="asset-form__field">
+              <Label for="status">Status</Label>
+              <select name="status" id="status" class="asset-form__select">
+                <option value="draft" selected={assetData.status === 'draft'}>Draft</option>
+                <option value="published" selected={assetData.status === 'published'}>Published</option>
+                <option value="archived" selected={assetData.status === 'archived'}>Archived</option>
+              </select>
+            </div>
+
+            <div class="asset-form__actions">
+              <a href={`/assets/${assetHandle}`}>
+                <Button variant="outline" size="md">
+                  <span slot="text">Cancel</span>
+                </Button>
+              </a>
+              <Button type="submit" variant="primary" size="md">
+                <span slot="text">Update Asset</span>
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</Layout>
+
+<style>
+/* ===== Page Layout ===== */
+.asset-edit-page {
+  min-height: 100vh;
+  padding: var(--spacing-4xl) var(--spacing-2xl);
+  background-color: var(--color-background, #f9fafb);
+}
+
+.asset-edit-container {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.asset-edit-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+/* ===== Error Message ===== */
+.asset-edit-error {
+  margin-bottom: var(--spacing-3xl);
+  padding: var(--spacing-2xl);
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  border-radius: var(--radius-md);
+  color: #991b1b;
+}
+
+.asset-edit-error p {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+/* ===== Form Styles ===== */
+.asset-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xl);
+}
+
+.asset-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.asset-form__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text, #111);
+  margin-bottom: var(--spacing-sm);
+}
+
+.asset-form__textarea {
+  width: 100%;
+  min-height: 6rem;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.asset-form__textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #0070f3);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.asset-form__select {
+  width: 100%;
+  height: var(--height-input-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  background-color: white;
+}
+
+.asset-form__select:focus {
+  outline: none;
+  border-color: var(--color-primary, #0070f3);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.asset-form__file-input {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+}
+
+.asset-form__help-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted, #6b7280);
+}
+
+.asset-form__actions {
+  display: flex;
+  gap: var(--gap-lg);
+  justify-content: flex-end;
+  padding-top: var(--spacing-2xl);
+}
+
+.asset-form__actions a {
+  text-decoration: none;
+}
+
+/* ===== Existing Content Display ===== */
+.asset-form__existing-tags,
+.asset-form__existing-files,
+.asset-form__existing-images {
+  padding: var(--spacing-2xl);
+  background-color: var(--color-background, #f9fafb);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.asset-form__tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.asset-form__no-tags {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted, #6b7280);
+}
+
+.asset-form__file-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--spacing-sm) 0 0 0;
+}
+
+.asset-form__file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  font-size: var(--text-sm);
+}
+
+.asset-form__file-item:last-child {
+  border-bottom: none;
+}
+
+.asset-form__file-size {
+  color: var(--color-text-muted, #6b7280);
+  font-size: var(--text-sm);
+}
+
+.asset-form__image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: var(--gap-md);
+  margin-top: var(--spacing-sm);
+}
+
+.asset-form__image-item {
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border, #e5e7eb);
+}
+
+.asset-form__image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+</style>
