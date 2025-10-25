@@ -1,10 +1,3 @@
-/**
- * Product Storage Functions
- *
- * Handles uploading product cover images to Supabase storage.
- * All Supabase Storage SDK interactions are isolated to this storage layer.
- */
-
 import { storageClient } from './client';
 
 const PRODUCT_IMAGES_BUCKET = 'product-images';
@@ -35,7 +28,7 @@ export async function uploadProductCover(
     const filePath = `${userId}/${productId}/${fileName}`;
 
     // Upload file
-    const { data, error } = await storageClient
+    const { data, error } = await await storageClient.storage
       .from(PRODUCT_IMAGES_BUCKET)
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -48,7 +41,7 @@ export async function uploadProductCover(
     }
 
     // Get public URL
-    const { data: urlData } = storageClient
+    const { data: urlData } = await storageClient.storage
       .from(PRODUCT_IMAGES_BUCKET)
       .getPublicUrl(data.path);
 
@@ -71,7 +64,7 @@ export async function uploadProductCover(
  */
 export async function deleteProductCover(filePath: string): Promise<boolean> {
   try {
-    const { error } = await storageClient
+    const { error } = await await storageClient.storage
       .from(PRODUCT_IMAGES_BUCKET)
       .remove([filePath]);
 
@@ -107,7 +100,7 @@ export async function uploadVariantImage(
     const fileName = `${variantId}-${Date.now()}.${fileExt}`;
     const filePath = `${userId}/${productId}/variants/${fileName}`;
 
-    const { data, error } = await storageClient
+    const { data, error } = await await storageClient.storage
       .from(PRODUCT_IMAGES_BUCKET)
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -119,7 +112,7 @@ export async function uploadVariantImage(
       return null;
     }
 
-    const { data: urlData } = storageClient
+    const { data: urlData } = await storageClient.storage
       .from(PRODUCT_IMAGES_BUCKET)
       .getPublicUrl(data.path);
 
