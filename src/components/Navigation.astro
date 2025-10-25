@@ -1,0 +1,161 @@
+---
+import Button from "./Button.astro";
+
+const { className = "", isAuthenticated = false } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<nav class={`navigation ${className}`}>
+  <div class="navigation__container">
+    <a href="/" class="navigation__brand">
+      <span class="navigation__logo">Game Loopers</span>
+    </a>
+
+    <div class="navigation__menu">
+      <a
+        href="/products"
+        class={`navigation__link ${currentPath === '/products' ? 'navigation__link--active' : ''}`}
+      >
+        Products
+      </a>
+      <a
+        href="/assets"
+        class={`navigation__link ${currentPath === '/assets' ? 'navigation__link--active' : ''}`}
+      >
+        Assets
+      </a>
+      <a
+        href="/jams"
+        class={`navigation__link ${currentPath === '/jams' ? 'navigation__link--active' : ''}`}
+      >
+        Jams
+      </a>
+      <a
+        href="/users"
+        class={`navigation__link ${currentPath === '/users' ? 'navigation__link--active' : ''}`}
+      >
+        Users
+      </a>
+    </div>
+
+    <div class="navigation__actions">
+      {isAuthenticated ? (
+        <>
+          <a href="/dashboard">
+            <Button variant="ghost" size="sm">
+              <span slot="text">Dashboard</span>
+            </Button>
+          </a>
+          <form action="/api/auth/sign-out" method="post" class="navigation__signout-form">
+            <Button type="submit" variant="outline" size="sm">
+              <span slot="text">Sign out</span>
+            </Button>
+          </form>
+        </>
+      ) : (
+        <>
+          <a href="/sign-in">
+            <Button variant="ghost" size="sm">
+              <span slot="text">Sign in</span>
+            </Button>
+          </a>
+          <a href="/sign-up">
+            <Button variant="primary" size="sm">
+              <span slot="text">Sign up</span>
+            </Button>
+          </a>
+        </>
+      )}
+    </div>
+  </div>
+</nav>
+
+<style>
+/* ===== Navigation Base ===== */
+.navigation {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  background-color: var(--color-surface, #fff);
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.navigation__container {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  gap: 2rem;
+}
+
+/* ===== Brand ===== */
+.navigation__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--color-text, #111);
+}
+
+.navigation__logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary, #0070f3);
+}
+
+/* ===== Menu ===== */
+.navigation__menu {
+  display: none;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+@media (min-width: 768px) {
+  .navigation__menu {
+    display: flex;
+  }
+}
+
+.navigation__link {
+  position: relative;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #6b7280);
+  text-decoration: none;
+  border-radius: 0.375rem;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.navigation__link:hover {
+  color: var(--color-text, #111);
+  background-color: var(--color-background, #f9fafb);
+}
+
+.navigation__link--active {
+  color: var(--color-text, #111);
+  background-color: var(--color-background, #f9fafb);
+}
+
+/* ===== Actions ===== */
+.navigation__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navigation__actions a {
+  text-decoration: none;
+}
+
+.navigation__signout-form {
+  margin: 0;
+  display: inline-flex;
+}
+</style>

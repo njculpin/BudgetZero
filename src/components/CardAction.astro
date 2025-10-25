@@ -1,0 +1,16 @@
+---
+const { className = "" } = Astro.props;
+---
+
+<div class={`card__action ${className}`}>
+  <slot />
+</div>
+
+<style>
+.card__action {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  justify-self: end;
+}
+</style>

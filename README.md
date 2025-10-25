@@ -19,8 +19,8 @@ Supabase Storage (with SDK, isolated in storage layer)
 Vercel
 
 ## UI
-Tailwind
-Shadcn
+BEM CSS (Block Element Modifier)
+Component examples in `/src/components/` demonstrate the BEM pattern
 
 ## Form Validation
 Zod
@@ -749,7 +749,7 @@ Vercel deploys automatically on git push to main branch
 - Never use "Any" Types
 - Never have unused imports
 - Components should be DRY as possible
-- Shadcn priority for components (Astro + SolidJS variants)
+- BEM CSS naming convention for all components (see examples in `/src/components/`)
 - **CRITICAL: All 3rd party service SDKs MUST be isolated in dedicated layers**
   - Supabase SDK only in `/src/lib/data-access/` and `/src/lib/storage/` and `/src/lib/auth/`
   - Stripe SDK only in `/src/lib/payments/`

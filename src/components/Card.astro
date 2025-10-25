@@ -1,0 +1,20 @@
+---
+const { className = "" } = Astro.props;
+---
+
+<div class={`card ${className}`}>
+  <slot />
+</div>
+
+<style>
+/* ========== Base Card ========== */
+.card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface, #fff);
+  color: var(--color-text, #111);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem; /* ~rounded-xl */
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+</style>

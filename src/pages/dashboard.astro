@@ -1,19 +1,25 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+import Button from "@/components/Button.astro";
 import '@/styles/global.css'
 
-import { supabase } from "../lib/supabase";
+import { setSession } from "../lib/auth";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
 
 if (!accessToken || !refreshToken) {
-  return Astro.redirect("/signin");
+  return Astro.redirect("/sign-in");
 }
 
 let session;
 try {
-  session = await supabase.auth.setSession({
+  session = await setSession({
     refresh_token: refreshToken.value,
     access_token: accessToken.value,
   });
@@ -24,7 +30,7 @@ try {
     Astro.cookies.delete("sb-refresh-token", {
       path: "/",
     });
-    return Astro.redirect("/signin");
+    return Astro.redirect("/sign-in");
   }
 } catch (error) {
   Astro.cookies.delete("sb-access-token", {
@@ -33,15 +39,290 @@ try {
   Astro.cookies.delete("sb-refresh-token", {
     path: "/",
   });
-  return Astro.redirect("/signin");
+  return Astro.redirect("/sign-in");
 }
 
 const email = session.data.user?.email;
 ---
-<Layout title="dashboard">
-  <h1>Welcome {email}</h1>
-  <p>We are happy to see you here</p>
-  <form action="/api/auth/signout">
-    <button type="submit">Sign out</button>
-  </form>
+
+<Layout title="Dashboard - Game Loopers">
+
+  <main class="dashboard">
+    <div class="dashboard__container">
+      <!-- Welcome Section -->
+      <section class="dashboard__welcome">
+        <div class="dashboard__header">
+          <div class="dashboard__header-content">
+            <h1 class="dashboard__title">Welcome back!</h1>
+            <p class="dashboard__subtitle">{email}</p>
+          </div>
+          <form action="/api/auth/sign-out" method="post">
+            <Button type="submit" variant="ghost" size="sm">
+              <span slot="text">Sign out</span>
+            </Button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Quick Stats -->
+      <section class="dashboard__stats">
+        <Card className="stat-card">
+          <CardContent>
+            <div class="stat-card__content">
+              <p class="stat-card__label">Products</p>
+              <p class="stat-card__value">0</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="stat-card">
+          <CardContent>
+            <div class="stat-card__content">
+              <p class="stat-card__label">Assets</p>
+              <p class="stat-card__value">0</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="stat-card">
+          <CardContent>
+            <div class="stat-card__content">
+              <p class="stat-card__label">Sales</p>
+              <p class="stat-card__value">$0</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="stat-card">
+          <CardContent>
+            <div class="stat-card__content">
+              <p class="stat-card__label">Followers</p>
+              <p class="stat-card__value">0</p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="dashboard__section">
+        <h2 class="dashboard__section-title">Quick Actions</h2>
+        <div class="dashboard__actions">
+          <Card className="action-card">
+            <CardHeader>
+              <CardTitle>Create Product</CardTitle>
+              <CardDescription>
+                Start selling your tabletop game
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="/products/new">
+                <Button variant="primary" size="md">
+                  <span slot="text">Create</span>
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+
+          <Card className="action-card">
+            <CardHeader>
+              <CardTitle>Upload Asset</CardTitle>
+              <CardDescription>
+                Share 3D models, PDFs, or artwork
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="/assets/new">
+                <Button variant="primary" size="md">
+                  <span slot="text">Upload</span>
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+
+          <Card className="action-card">
+            <CardHeader>
+              <CardTitle>Create Document</CardTitle>
+              <CardDescription>
+                Write and collaborate on game docs
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="/documents/new">
+                <Button variant="primary" size="md">
+                  <span slot="text">New Document</span>
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+
+          <Card className="action-card">
+            <CardHeader>
+              <CardTitle>Browse Jams</CardTitle>
+              <CardDescription>
+                Join game jams and competitions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="/jams">
+                <Button variant="outline" size="md">
+                  <span slot="text">Browse</span>
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <!-- Recent Activity -->
+      <section class="dashboard__section">
+        <h2 class="dashboard__section-title">Recent Activity</h2>
+        <Card>
+          <CardContent>
+            <div class="dashboard__empty">
+              <p class="dashboard__empty-text">No recent activity yet</p>
+              <p class="dashboard__empty-description">
+                Create your first product or upload an asset to get started
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  </main>
 </Layout>
+
+<style>
+/* ===== Dashboard Layout ===== */
+.dashboard {
+  min-height: calc(100vh - 64px); /* Account for navigation height */
+  background-color: var(--color-background, #f9fafb);
+}
+
+.dashboard__container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ===== Welcome Section ===== */
+.dashboard__welcome {
+  margin-bottom: 1rem;
+}
+
+.dashboard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard__header-content {
+  flex: 1;
+}
+
+.dashboard__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text, #111);
+  margin-bottom: 0.25rem;
+}
+
+.dashboard__subtitle {
+  font-size: 1rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* ===== Stats Grid ===== */
+.dashboard__stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .dashboard__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard__stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-card__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.stat-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text, #111);
+}
+
+/* ===== Sections ===== */
+.dashboard__section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard__section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text, #111);
+}
+
+/* ===== Actions Grid ===== */
+.dashboard__actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard__actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard__actions {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.action-card a {
+  text-decoration: none;
+}
+
+/* ===== Empty State ===== */
+.dashboard__empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.dashboard__empty-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text, #111);
+  margin-bottom: 0.5rem;
+}
+
+.dashboard__empty-description {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+</style>

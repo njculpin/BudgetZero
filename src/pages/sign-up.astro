@@ -1,5 +1,14 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+import CardFooter from "@/components/CardFooter.astro";
+import Label from "@/components/Label.astro";
+import Input from "@/components/Input.astro";
+import Button from "@/components/Button.astro";
 import '@/styles/global.css'
 
 const { cookies, redirect } = Astro;
@@ -12,15 +21,137 @@ if (accessToken && refreshToken) {
 }
 ---
 
-<Layout title="Sign in">
-  <h1>Sign in</h1>
-  <p>New here? <a href="/register">Create an account</a></p>
-  <form action="/api/auth/signin" method="post">
-    <label for="email">Email</label>
-    <input type="email" name="email" id="email" />
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" />
-    <button type="submit">Login</button>
-    <button value="github" name="provider" type="submit">Sign in with GitHub</button>
-  </form>
+<Layout title="Sign up">
+  <div class="auth-page">
+    <div class="auth-page__container">
+      <Card className="auth-page__card">
+        <CardHeader>
+          <CardTitle>Create your account</CardTitle>
+          <CardDescription>
+            Join Game Loopers and start collaborating with creators
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <form action="/api/auth/sign-up" method="post" class="auth-form">
+            <div class="auth-form__field">
+              <Label for="email">Email</Label>
+              <Input
+                type="email"
+                name="email"
+                id="email"
+                placeholder="your@email.com"
+                required
+              />
+            </div>
+
+            <div class="auth-form__field">
+              <Label for="password">Password</Label>
+              <Input
+                type="password"
+                name="password"
+                id="password"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <Button type="submit" variant="primary" size="md">
+              <span slot="text">Create account</span>
+            </Button>
+
+            <div class="auth-form__divider">
+              <span class="auth-form__divider-text">Or continue with</span>
+            </div>
+
+            <Button type="submit" name="provider" value="github" variant="secondary" size="md">
+              <span slot="text">GitHub</span>
+            </Button>
+          </form>
+        </CardContent>
+
+        <CardFooter>
+          <p class="auth-page__footer-text">
+            Already have an account? <a href="/sign-in" class="auth-page__link">Sign in</a>
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
+  </div>
 </Layout>
+
+<style>
+/* ===== Auth Page Layout ===== */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: var(--color-background, #f9fafb);
+}
+
+.auth-page__container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-page__card {
+  width: 100%;
+}
+
+/* ===== Auth Form ===== */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.auth-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.auth-form__divider {
+  position: relative;
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+.auth-form__divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--color-border, #e5e7eb);
+}
+
+.auth-form__divider-text {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.75rem;
+  background-color: var(--color-surface, #fff);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* ===== Footer ===== */
+.auth-page__footer-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.auth-page__link {
+  color: var(--color-primary, #0070f3);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-page__link:hover {
+  text-decoration: underline;
+}
+</style>

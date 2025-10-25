@@ -1,0 +1,29 @@
+<nav class="breadcrumb" aria-label="breadcrumb">
+  <ol class="breadcrumb__list">
+    <slot />
+  </ol>
+</nav>
+
+<style>
+/* ========== Base Breadcrumb ========== */
+.breadcrumb {
+  display: block;
+  width: 100%;
+}
+
+.breadcrumb__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem; /* ~gap-1.5 */
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+  word-break: break-word;
+}
+
+@media (min-width: 640px) {
+  .breadcrumb__list {
+    gap: 0.625rem; /* sm:gap-2.5 */
+  }
+}
+</style>

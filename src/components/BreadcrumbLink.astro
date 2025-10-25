@@ -1,0 +1,19 @@
+---
+const { href = "#", className = "" } = Astro.props;
+---
+
+<a href={href} class={`breadcrumb__link ${className}`}>
+  <slot />
+</a>
+
+<style>
+.breadcrumb__link {
+  color: var(--color-text-muted, #6b7280);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb__link:hover {
+  color: var(--color-text, #111);
+}
+</style>

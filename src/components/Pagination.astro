@@ -1,0 +1,89 @@
+---
+const { className = "" } = Astro.props;
+---
+
+<nav
+  class={`pagination ${className}`}
+  role="navigation"
+  aria-label="pagination"
+>
+  <ul class="pagination__list">
+    <slot />
+  </ul>
+</nav>
+
+<style>
+/* ===== Base ===== */
+.pagination {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.pagination__list {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem; /* same as Tailwind gap-1 */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pagination__item {
+  display: inline-flex;
+}
+
+.pagination__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text, #111);
+  background-color: transparent;
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.pagination__link:hover {
+  background-color: var(--color-hover, #f3f4f6);
+}
+
+.pagination__link[data-active="true"] {
+  border-color: var(--color-border, #d1d5db);
+  background-color: var(--color-surface, #fff);
+  color: var(--color-text, #111);
+}
+
+.pagination__previous,
+.pagination__next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.pagination__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+}
+
+.pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--color-text-muted, #6b7280);
+}
+</style>
