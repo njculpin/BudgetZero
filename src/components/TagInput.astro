@@ -1,0 +1,125 @@
+---
+import Input from './Input.astro';
+
+interface Props {
+  name?: string;
+  placeholder?: string;
+  maxLength?: number;
+}
+
+const {
+  name = 'tags',
+  placeholder = 'Add a tag (press Enter)',
+  maxLength = 50
+} = Astro.props;
+---
+
+<div class="tag-input">
+  <div class="tag-input__container">
+    <Input
+      type="text"
+      id="tag-input-field"
+      placeholder={placeholder}
+    />
+    <input type="hidden" name={name} id="tag-input-hidden" />
+  </div>
+  <div id="tag-input-list" class="tag-input__list"></div>
+  <p class="tag-input__help">
+    Add tags to help others find your asset (max {maxLength} characters each)
+  </p>
+</div>
+
+<style>
+.tag-input__container {
+  position: relative;
+}
+
+.tag-input__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  min-height: 2rem;
+}
+
+.tag-input__help {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground, #6b7280);
+}
+</style>
+
+<script define:vars={{ maxLength }}>
+  // Tag management
+  const tagInputField = document.getElementById('tag-input-field');
+  const tagInputList = document.getElementById('tag-input-list');
+  const tagInputHidden = document.getElementById('tag-input-hidden');
+  const tags = [];
+
+  const updateTagsField = () => {
+    if (tagInputHidden) {
+      tagInputHidden.value = tags.join(',');
+    }
+  };
+
+  const removeTag = (index) => {
+    tags.splice(index, 1);
+    renderTags();
+    updateTagsField();
+  };
+
+  const renderTags = () => {
+    if (!tagInputList) return;
+
+    tagInputList.innerHTML = '';
+    tags.forEach((tag, index) => {
+      const tagEl = document.createElement('span');
+      tagEl.className = 'tag tag--removable tag--md';
+      tagEl.innerHTML = `
+        <span>${tag}</span>
+        <button type="button" class="tag__remove" data-index="${index}">×</button>
+      `;
+      tagInputList.appendChild(tagEl);
+    });
+
+    // Add event listeners to remove buttons
+    const removeButtons = tagInputList.querySelectorAll('.tag__remove');
+    removeButtons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const index = parseInt(e.target.getAttribute('data-index') || '0');
+        removeTag(index);
+      });
+    });
+  };
+
+  const addTag = (value) => {
+    const trimmedValue = value.trim().toLowerCase();
+
+    // Validate tag
+    if (!trimmedValue) return;
+    if (trimmedValue.length > maxLength) {
+      alert(`Tag must be ${maxLength} characters or less`);
+      return;
+    }
+    if (tags.includes(trimmedValue)) {
+      alert('Tag already added');
+      return;
+    }
+
+    tags.push(trimmedValue);
+    renderTags();
+    updateTagsField();
+    if (tagInputField) {
+      tagInputField.value = '';
+    }
+  };
+
+  if (tagInputField) {
+    tagInputField.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addTag(tagInputField.value);
+      }
+    });
+  }
+</script>

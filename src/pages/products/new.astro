@@ -1,0 +1,336 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+import Label from "@/components/Label.astro";
+import Input from "@/components/Input.astro";
+import Button from "@/components/Button.astro";
+import TagInput from "@/components/TagInput.astro";
+import { setSession } from "@/lib/auth";
+import { createProduct, createProductTag } from "@/lib/data-access/products";
+
+const { cookies, redirect, request } = Astro;
+
+// Check authentication
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return redirect("/sign-in");
+}
+
+let session;
+try {
+  session = await setSession({
+    refresh_token: refreshToken.value,
+    access_token: accessToken.value,
+  });
+  if (session.error) {
+    cookies.delete("sb-access-token", { path: "/" });
+    cookies.delete("sb-refresh-token", { path: "/" });
+    return redirect("/sign-in");
+  }
+} catch (error) {
+  cookies.delete("sb-access-token", { path: "/" });
+  cookies.delete("sb-refresh-token", { path: "/" });
+  return redirect("/sign-in");
+}
+
+const userId = session.data.user?.id;
+
+if (!userId) {
+  return redirect("/sign-in");
+}
+
+// Handle form submission
+let errorMessage = "";
+let successMessage = "";
+
+if (request.method === "POST") {
+  try {
+    const formData = await request.formData();
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const status = formData.get("status") as "draft" | "published";
+    const tagsString = formData.get("tags") as string;
+
+    if (!title) {
+      errorMessage = "Title is required";
+    } else {
+      // Create the product
+      const product = await createProduct(
+        userId,
+        {
+          title,
+          description,
+          status: status || "draft",
+        },
+        {
+          accessToken: accessToken.value,
+          refreshToken: refreshToken.value,
+        }
+      );
+
+      if (!product) {
+        errorMessage = "Failed to create product";
+      } else {
+        // Create tags if provided
+        if (tagsString) {
+          const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+          for (const tag of tags) {
+            await createProductTag(
+              product.id,
+              tag,
+              {
+                accessToken: accessToken.value,
+                refreshToken: refreshToken.value,
+              }
+            );
+          }
+        }
+
+        // Redirect to the product detail page
+        return redirect(`/products/${product.handle}`);
+      }
+    }
+  } catch (error) {
+    console.error("Error creating product:", error);
+    errorMessage = error instanceof Error ? error.message : "An error occurred";
+  }
+}
+---
+
+<Layout title="Create Product - Game Loopers">
+  <div class="product-create-page">
+    <div class="product-create-page__container">
+      <Card className="product-create-card">
+        <CardHeader>
+          <CardTitle>Create New Product</CardTitle>
+          <CardDescription>
+            List your tabletop game, expansion, or accessory for sale
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          {errorMessage && (
+            <div class="product-create-page__error">
+              {errorMessage}
+            </div>
+          )}
+
+          {successMessage && (
+            <div class="product-create-page__success">
+              {successMessage}
+            </div>
+          )}
+
+          <form method="post" class="product-form">
+            <div class="product-form__field">
+              <Label for="title">Product Title *</Label>
+              <Input
+                type="text"
+                name="title"
+                id="title"
+                placeholder="My Awesome Board Game"
+                required
+              />
+              <p class="product-form__help-text">
+                Give your product a clear, descriptive title
+              </p>
+            </div>
+
+            <div class="product-form__field">
+              <Label for="description">Description</Label>
+              <textarea
+                name="description"
+                id="description"
+                placeholder="Describe your product in detail..."
+                rows="6"
+                class="product-form__textarea"
+              ></textarea>
+              <p class="product-form__help-text">
+                Explain what makes your product unique. Include gameplay details, components, player count, etc.
+              </p>
+            </div>
+
+            <div class="product-form__field">
+              <Label for="tags">Tags</Label>
+              <TagInput name="tags" />
+              <p class="product-form__help-text">
+                Add tags to help buyers find your product (e.g., "strategy", "family-friendly", "dungeon-crawler")
+              </p>
+            </div>
+
+            <div class="product-form__field">
+              <Label for="status">Status</Label>
+              <select name="status" id="status" class="product-form__select">
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+              <p class="product-form__help-text">
+                Published products are visible in the marketplace
+              </p>
+            </div>
+
+            <div class="product-form__info">
+              <h3 class="product-form__info-title">Next Steps</h3>
+              <p class="product-form__info-text">
+                After creating your product, you'll be able to:
+              </p>
+              <ul class="product-form__info-list">
+                <li>Add product variants (PDF, Physical, Bundle, etc.)</li>
+                <li>Set pricing for each variant</li>
+                <li>Link downloadable assets to variants</li>
+                <li>Upload a cover image</li>
+              </ul>
+            </div>
+
+            <div class="product-form__actions">
+              <a href="/dashboard">
+                <Button type="button" variant="ghost" size="md">
+                  <span slot="text">Cancel</span>
+                </Button>
+              </a>
+              <Button type="submit" variant="primary" size="md">
+                <span slot="text">Create Product</span>
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</Layout>
+
+<style>
+/* ===== Product Create Page ===== */
+.product-create-page {
+  min-height: calc(100vh - 64px);
+  background-color: var(--color-background, #f9fafb);
+  padding: var(--spacing-4xl) var(--spacing-2xl);
+}
+
+.product-create-page__container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.product-create-page__error {
+  padding: var(--spacing-2xl);
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  border-radius: var(--radius-md);
+  color: #dc2626;
+  margin-bottom: var(--spacing-3xl);
+}
+
+.product-create-page__success {
+  padding: var(--spacing-2xl);
+  background-color: #d1fae5;
+  border: 1px solid #10b981;
+  border-radius: var(--radius-md);
+  color: #059669;
+  margin-bottom: var(--spacing-3xl);
+}
+
+/* ===== Product Form ===== */
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xl);
+}
+
+.product-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.product-form__textarea {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--text-base);
+  font-family: inherit;
+  line-height: var(--leading-normal);
+  color: var(--foreground);
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-normal) var(--ease-in-out), box-shadow var(--duration-normal) var(--ease-in-out);
+  resize: vertical;
+}
+
+.product-form__textarea:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+}
+
+.product-form__select {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--text-base);
+  font-family: inherit;
+  color: var(--foreground);
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-normal) var(--ease-in-out);
+}
+
+.product-form__select:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+
+.product-form__help-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.product-form__info {
+  padding: var(--spacing-3xl);
+  background-color: var(--muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.product-form__info-title {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.product-form__info-text {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.product-form__info-list {
+  margin: 0;
+  padding-left: var(--spacing-3xl);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+}
+
+.product-form__info-list li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.product-form__actions {
+  display: flex;
+  gap: var(--gap-lg);
+  justify-content: flex-end;
+  padding-top: var(--spacing-2xl);
+}
+
+.product-form__actions a {
+  text-decoration: none;
+}
+</style>

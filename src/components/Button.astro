@@ -13,13 +13,13 @@ const { variant = "primary", size = "md" } = Astro.props;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+  gap: var(--gap-xs);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-in-out);
   white-space: nowrap;
 }
 
@@ -33,7 +33,7 @@ const { variant = "primary", size = "md" } = Astro.props;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-right: 0.5rem;
+  margin-right: var(--spacing-xs);
 }
 
 .button__text {
@@ -42,50 +42,50 @@ const { variant = "primary", size = "md" } = Astro.props;
 
 /* ===== Variants ===== */
 .button--primary {
-  background-color: var(--color-primary, #0070f3);
-  color: var(--color-on-primary, #fff);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
 }
 .button--primary:hover {
-  background-color: #005ad6;
+  opacity: 0.9;
 }
 
 .button--secondary {
-  background-color: var(--color-secondary, #e5e7eb);
-  color: var(--color-on-secondary, #111);
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
 }
 .button--secondary:hover {
-  background-color: #d1d5db;
+  opacity: 0.8;
 }
 
 .button--destructive {
-  background-color: var(--color-destructive, #ef4444);
-  color: #fff;
+  background-color: var(--destructive);
+  color: var(--color-white);
 }
 .button--destructive:hover {
-  background-color: #dc2626;
+  opacity: 0.9;
 }
 
 .button--outline {
   background-color: transparent;
-  border: 1px solid var(--color-border, #d1d5db);
-  color: var(--color-text, #111);
+  border: 1px solid var(--border);
+  color: var(--foreground);
 }
 .button--outline:hover {
-  background-color: #f9fafb;
+  background-color: var(--accent);
 }
 
 .button--ghost {
   background-color: transparent;
-  color: var(--color-text, #111);
+  color: var(--foreground);
 }
 .button--ghost:hover {
-  background-color: #f3f4f6;
+  background-color: var(--accent);
 }
 
 .button--link {
   background: none;
   border: none;
-  color: var(--color-primary, #0070f3);
+  color: var(--primary);
   text-decoration: underline;
   text-underline-offset: 4px;
 }
@@ -97,7 +97,7 @@ const { variant = "primary", size = "md" } = Astro.props;
 .button--sm {
   height: 2rem;
   padding: 0 0.75rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .button--md {

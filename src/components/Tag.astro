@@ -1,0 +1,78 @@
+---
+interface Props {
+  variant?: 'default' | 'primary' | 'removable';
+  size?: 'sm' | 'md';
+  onRemove?: string;
+}
+
+const { variant = 'default', size = 'md', onRemove } = Astro.props;
+---
+
+<span class={`tag tag--${variant} tag--${size}`}>
+  <slot />
+  {onRemove && variant === 'removable' && (
+    <button type="button" class="tag__remove" onclick={onRemove}>×</button>
+  )}
+</span>
+
+<style>
+/* ===== Base ===== */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.tag__remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-lg);
+  line-height: 1;
+  padding: 0;
+  width: var(--spacing-2xl);
+  height: var(--spacing-2xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  transition: opacity var(--duration-fast) var(--ease-in-out);
+}
+
+.tag__remove:hover {
+  opacity: 0.8;
+}
+
+/* ===== Variants ===== */
+.tag--default {
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.tag--primary {
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.tag--removable {
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* ===== Sizes ===== */
+.tag--sm {
+  padding: var(--spacing-xxs) var(--spacing-xs);
+  font-size: var(--text-xs);
+}
+
+.tag--md {
+  font-size: var(--text-sm);
+}
+</style>

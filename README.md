@@ -70,10 +70,24 @@ Documents {
     title: string
     description: string
     user_id: uuid ref to Users // owner id
+    current_version: number
     created_at: timestamp
     updated_at: timestamp
     deleted: boolean
     deleted_at: timestamp
+}
+
+DocumentVersions {
+    id: uuid
+    document_id: uuid ref to Documents
+    version_number: number
+    title: string
+    description: string
+    blocks_snapshot: jsonb
+    created_by: uuid ref to Users
+    created_at: timestamp
+    change_notes: string
+    UNIQUE(document_id, version_number)
 }
 
 DocumentBlocks {
@@ -125,6 +139,7 @@ Assets {
     title: string
     description: string
     status: 'draft' | 'published' | 'archived'
+    current_version: number
     download_count: number
     total_size_bytes: number
     file_count: number
@@ -132,6 +147,21 @@ Assets {
     updated_at: timestamp
     deleted: boolean
     deleted_at: timestamp
+}
+
+AssetVersions {
+    id: uuid
+    asset_id: uuid ref to Assets
+    version_number: number
+    title: string
+    description: string
+    status: 'draft' | 'published' | 'archived'
+    files_snapshot: jsonb
+    images_snapshot: jsonb
+    created_by: uuid ref to Users
+    created_at: timestamp
+    change_notes: string
+    UNIQUE(asset_id, version_number)
 }
 
 AssetCollaborators {
@@ -253,12 +283,24 @@ AssetChatMessageAttachments {
 Licenses {
     id: uuid
     title: string
-    version: number
+    current_version: number
     agreement: string
     created_at: timestamp
     updated_at: timestamp
     deleted: boolean
     deleted_at: timestamp
+}
+
+LicenseVersions {
+    id: uuid
+    license_id: uuid ref to Licenses
+    version_number: number
+    title: string
+    agreement: string
+    created_by: uuid ref to Users
+    created_at: timestamp
+    change_notes: string
+    UNIQUE(license_id, version_number)
 }
 
 Products {
@@ -268,12 +310,28 @@ Products {
     user_id: uuid ref to Users // owner
     description: string
     status: 'draft' | 'published'
+    current_version: number
     view_count: number
     published_at: timestamp
     created_at: timestamp
     updated_at: timestamp
     deleted: boolean
     deleted_at: timestamp
+}
+
+ProductVersions {
+    id: uuid
+    product_id: uuid ref to Products
+    version_number: number
+    title: string
+    description: string
+    status: 'draft' | 'published'
+    variants_snapshot: jsonb
+    assets_snapshot: jsonb
+    created_by: uuid ref to Users
+    created_at: timestamp
+    change_notes: string
+    UNIQUE(product_id, version_number)
 }
 
 ProductCollaborators {

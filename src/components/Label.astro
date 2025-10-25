@@ -10,11 +10,11 @@ const { className = "", for: htmlFor } = Astro.props;
 /* ===== Base Label ===== */
 .label {
   display: inline-block;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
   line-height: 1;
-  color: var(--color-text, #111);
-  margin-bottom: 0.5rem;
+  color: var(--foreground);
+  margin-bottom: var(--spacing-xs);
   cursor: pointer;
 }
 
@@ -26,6 +26,6 @@ const { className = "", for: htmlFor } = Astro.props;
 
 /* ===== Peer Invalid ===== */
 .label:has(+ .input[aria-invalid="true"]) {
-  color: var(--color-destructive, #ef4444);
+  color: var(--destructive);
 }
 </style>

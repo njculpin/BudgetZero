@@ -11,10 +11,10 @@ const { className = "" } = Astro.props;
 .card {
   display: flex;
   flex-direction: column;
-  background-color: var(--color-surface, #fff);
-  color: var(--color-text, #111);
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: 0.75rem; /* ~rounded-xl */
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
 }
 </style>

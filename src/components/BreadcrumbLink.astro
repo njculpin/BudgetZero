@@ -8,12 +8,12 @@ const { href = "#", className = "" } = Astro.props;
 
 <style>
 .breadcrumb__link {
-  color: var(--color-text-muted, #6b7280);
+  color: var(--muted-foreground);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color 0.2s var(--ease-in-out);
 }
 
 .breadcrumb__link:hover {
-  color: var(--color-text, #111);
+  color: var(--foreground);
 }
 </style>
