@@ -1,8 +1,9 @@
 ---
-const { variant = "primary", size = "md" } = Astro.props;
+const { variant = "primary", size = "md", class: className, ...rest } = Astro.props;
+const classNames = [`button`, `button--${variant}`, `button--${size}`, className].filter(Boolean).join(' ');
 ---
 
-<button class={`button button--${variant} button--${size}`}>
+<button class={classNames} {...rest}>
   <slot name="icon" class="button__icon"></slot>
   <slot name="text" class="button__text"></slot>
 </button>

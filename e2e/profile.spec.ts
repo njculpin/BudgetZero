@@ -21,14 +21,14 @@ test.describe('User Profile', () => {
     await page.fill('input[name="password"]', TEST_PASSWORD);
 
     // Submit and wait for navigation
-    await page.click('button:has-text("Create account")');
+    await page.click('form button[type="submit"]:has-text("Create account")');
     await page.waitForURL('/sign-in', { timeout: 10000 });
 
     // Sign in
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
 
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Get the actual handle from the database
@@ -61,7 +61,7 @@ test.describe('User Profile', () => {
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await expect(page).toHaveURL('/dashboard');
 
     // Navigate to own profile
@@ -76,7 +76,7 @@ test.describe('User Profile', () => {
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await expect(page).toHaveURL('/dashboard');
 
     // Navigate to profile
@@ -103,7 +103,7 @@ test.describe('User Profile', () => {
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
 
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
@@ -117,7 +117,7 @@ test.describe('User Profile', () => {
     await page.fill('textarea[name="bio"]', 'This is my test bio for Game Loopers');
 
     // Submit form
-    await page.click('button:has-text("Save Changes")');
+    await page.click('form button[type="submit"]:has-text("Save Changes")');
 
     // Should redirect to profile page
     await page.waitForURL(`/users/${testUserHandle}`, { timeout: 10000 });
@@ -141,7 +141,7 @@ test.describe('User Profile', () => {
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
 
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page with current handle
@@ -154,7 +154,7 @@ test.describe('User Profile', () => {
     await page.fill('input[name="handle"]', newHandle);
 
     // Submit form
-    await page.click('button:has-text("Save Changes")');
+    await page.click('form button[type="submit"]:has-text("Save Changes")');
 
     // Should redirect to new profile URL
     await page.waitForURL(`/users/${newHandle}`, { timeout: 10000 });
@@ -196,12 +196,12 @@ test.describe('User Profile', () => {
     await page.goto('/sign-up');
     await page.fill('input[name="email"]', otherEmail);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Create account")');
+    await page.click('form button[type="submit"]:has-text("Create account")');
     await page.waitForURL('/sign-in', { timeout: 10000 });
 
     await page.fill('input[name="email"]', otherEmail);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Try to access first user's edit page

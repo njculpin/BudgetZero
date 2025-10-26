@@ -16,12 +16,21 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
 
   const { access_token, refresh_token } = data.session;
 
+  // Set cookies with proper options for auth
   cookies.set("sb-access-token", access_token, {
     path: "/",
+    httpOnly: false,
+    secure: false, // Set to true in production with HTTPS
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
   });
   cookies.set("sb-refresh-token", refresh_token, {
     path: "/",
+    httpOnly: false,
+    secure: false, // Set to true in production with HTTPS
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
   });
 
-  return redirect("/dashboard");
+  return redirect("/dashboard", 303);
 };

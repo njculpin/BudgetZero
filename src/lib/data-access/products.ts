@@ -1,5 +1,5 @@
 import { dataClient, createAuthenticatedClient } from './client';
-import type { Product, ProductVariant, ProductVariantPrice, ProductTag, ProductStatus } from '@/types';
+import type { Product, ProductVariant, ProductVariantPrice, ProductTag, ProductStatus, Asset } from '@/types';
 
 export interface AuthTokens {
   accessToken: string;
@@ -19,11 +19,13 @@ export interface UpdateProductParams {
   status?: ProductStatus;
   coverImageUrl?: string;
   handle?: string;
+  tags?: string[];
 }
 
 export interface CreateVariantParams {
   name: string;
   description?: string;
+  sku?: string;
   isDigital?: boolean;
   sortOrder?: number;
 }
@@ -167,7 +169,7 @@ export const updateProduct = async (
   productId: string,
   updates: UpdateProductParams,
   authTokens: AuthTokens
-): Promise<Product | null> => {
+): Promise<boolean> => {
   if (updates.handle) {
     const isAvailable = await checkHandleAvailability(updates.handle, productId);
     if (!isAvailable) {
@@ -177,20 +179,40 @@ export const updateProduct = async (
 
   const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
 
+  const updateData: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (updates.title !== undefined) updateData.title = updates.title;
+  if (updates.description !== undefined) updateData.description = updates.description;
+  if (updates.status !== undefined) updateData.status = updates.status;
+  if (updates.coverImageUrl !== undefined) updateData.cover_image_url = updates.coverImageUrl;
+  if (updates.handle !== undefined) updateData.handle = updates.handle;
+
   const { error } = await client
     .from('products')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('id', productId);
 
   if (error) {
     console.error('Error updating product:', error);
-    return null;
+    return false;
   }
 
-  return await getProductById(productId);
+  if (updates.tags !== undefined) {
+    await client
+      .from('product_tags')
+      .delete()
+      .eq('product_id', productId);
+
+    if (updates.tags.length > 0) {
+      for (const tag of updates.tags) {
+        await createProductTag(productId, tag, authTokens);
+      }
+    }
+  }
+
+  return true;
 };
 
 /**
@@ -292,11 +314,13 @@ export const createVariant = async (
 ): Promise<ProductVariant | null> => {
   const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
 
-  // Generate SKU from product ID and variant name
-  const product = await getProductById(productId);
-  if (!product) return null;
+  let sku = params.sku;
 
-  const sku = `${product.handle}-${params.name.toLowerCase().replace(/\s+/g, '-')}`;
+  if (!sku) {
+    const product = await getProductById(productId);
+    if (!product) return null;
+    sku = `${product.handle}-${params.name.toLowerCase().replace(/\s+/g, '-')}`;
+  }
 
   const { data, error } = await client
     .from('product_variants')
@@ -353,6 +377,38 @@ export const getVariantById = async (variantId: string): Promise<ProductVariant 
   }
 
   return data as ProductVariant;
+};
+
+/**
+ * Update a variant
+ */
+export const updateVariant = async (
+  variantId: string,
+  updates: Partial<CreateVariantParams>,
+  authTokens: AuthTokens
+): Promise<ProductVariant | null> => {
+  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
+
+  const updateData: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (updates.name !== undefined) updateData.name = updates.name;
+  if (updates.description !== undefined) updateData.description = updates.description;
+  if (updates.isDigital !== undefined) updateData.is_digital = updates.isDigital;
+  if (updates.sortOrder !== undefined) updateData.sort_order = updates.sortOrder;
+
+  const { error } = await client
+    .from('product_variants')
+    .update(updateData)
+    .eq('id', variantId);
+
+  if (error) {
+    console.error('Error updating variant:', error);
+    return null;
+  }
+
+  return await getVariantById(variantId);
 };
 
 /**
@@ -459,17 +515,33 @@ export const linkAssetToVariant = async (
 /**
  * Get assets linked to a variant
  */
-export const getVariantAssets = async (variantId: string): Promise<string[]> => {
+export const getVariantAssets = async (variantId: string): Promise<Asset[]> => {
   const { data, error } = await dataClient
     .from('product_assets')
     .select('asset_id')
     .eq('variant_id', variantId);
 
-  if (error) {
+  if (error || !data) {
     return [];
   }
 
-  return data.map(pa => pa.asset_id);
+  const assetIds = data.map(pa => pa.asset_id);
+
+  if (assetIds.length === 0) {
+    return [];
+  }
+
+  const { data: assets, error: assetsError } = await dataClient
+    .from('assets')
+    .select('*')
+    .in('id', assetIds)
+    .eq('deleted', false);
+
+  if (assetsError || !assets) {
+    return [];
+  }
+
+  return assets as Asset[];
 };
 
 /**

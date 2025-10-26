@@ -17,7 +17,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.goto('/sign-up');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Create account")');
+    await page.click('form button[type="submit"]:has-text("Create account")');
     await page.waitForURL('/sign-in', { timeout: 10000 });
     await page.close();
   });
@@ -27,7 +27,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to create asset page
@@ -48,7 +48,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.selectOption('select[name="status"]', 'published');
 
     // Submit the form
-    await page.click('button:has-text("Create Asset")');
+    await page.click('form button[type="submit"]:has-text("Create Asset")');
 
     // Should redirect to asset detail page
     await page.waitForURL(/\/assets\/.*/, { timeout: 10000 });
@@ -68,7 +68,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to the asset
@@ -93,7 +93,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
@@ -116,7 +116,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.selectOption('select[name="status"]', 'draft');
 
     // Submit the form
-    await page.click('button:has-text("Update Asset")');
+    await page.click('form button[type="submit"]:has-text("Update Asset")');
 
     // Should redirect back to asset detail page
     await page.waitForURL(`/assets/${assetHandle}`, { timeout: 10000 });
@@ -132,7 +132,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
@@ -143,7 +143,7 @@ test.describe('Asset CRUD Operations', () => {
     await titleInput.clear();
 
     // Try to submit
-    await page.click('button:has-text("Update Asset")');
+    await page.click('form button[type="submit"]:has-text("Update Asset")');
 
     // Should stay on the same page and show validation error
     // The browser's built-in validation should prevent submission
@@ -155,7 +155,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to the asset
@@ -168,7 +168,7 @@ test.describe('Asset CRUD Operations', () => {
     });
 
     // Click delete button
-    await page.click('button:has-text("Delete")');
+    await page.click('form button[type="submit"]:has-text("Delete")');
 
     // Should redirect to user's profile
     await page.waitForURL(/\/users\/.*/, { timeout: 10000 });
@@ -186,13 +186,13 @@ test.describe('Asset CRUD Operations', () => {
     await page.goto('/sign-up');
     await page.fill('input[name="email"]', secondEmail);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Create account")');
+    await page.click('form button[type="submit"]:has-text("Create account")');
     await page.waitForURL('/sign-in', { timeout: 10000 });
 
     // Sign in with the second user
     await page.fill('input[name="email"]', secondEmail);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // First create an asset as the first user to get a valid handle
@@ -200,7 +200,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Create a test asset
@@ -208,7 +208,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.fill('input[name="title"]', 'Protected Asset');
     await page.fill('textarea[name="description"]', 'This asset should not be editable by others');
     await page.selectOption('select[name="status"]', 'published');
-    await page.click('button:has-text("Create Asset")');
+    await page.click('form button[type="submit"]:has-text("Create Asset")');
     await page.waitForURL(/\/assets\/.*/, { timeout: 10000 });
 
     // Get the asset handle
@@ -216,13 +216,13 @@ test.describe('Asset CRUD Operations', () => {
     const protectedHandle = url.split('/assets/')[1];
 
     // Sign out and sign in with second user
-    await page.click('button:has-text("Sign out")');
+    await page.click('form button[type="submit"]:has-text("Sign out")');
     await page.waitForURL('/', { timeout: 10000 });
 
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', secondEmail);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Try to access the edit page

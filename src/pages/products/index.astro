@@ -1,7 +1,161 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardContent from "@/components/CardContent.astro";
+import Input from "@/components/Input.astro";
+import Tag from "@/components/Tag.astro";
+import { getPublishedProducts, getPopularProductTags } from "@/lib/data-access/products";
+import { getUserById } from "@/lib/data-access/users";
+
+const { url } = Astro;
+const searchParams = url.searchParams;
+
+const searchQuery = searchParams.get('search') || '';
+const tagFilter = searchParams.get('tag') || '';
+const page = parseInt(searchParams.get('page') || '1');
+const limit = 20;
+const offset = (page - 1) * limit;
+
+const tagArray = tagFilter ? [tagFilter] : undefined;
+const products = await getPublishedProducts(searchQuery, tagArray, limit, offset);
+const popularTags = await getPopularProductTags(10);
+
+const ownerIds = [...new Set(products.map(p => p.user_id))];
+const owners = await Promise.all(ownerIds.map(id => getUserById(id)));
+const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 ---
 
-<Layout title="Products - Game Loopers">
+<Layout title="Browse Products - Game Loopers">
+  <div class="products-page">
+    <div class="products-page__container">
+      <div class="products-header">
+        <h1 class="products-header__title">Browse Products</h1>
+        <p class="products-header__description">Discover tabletop games from the community</p>
+      </div>
 
+      <Card>
+        <CardContent>
+          <form method="GET" action="/products" class="products-filters">
+            <div class="products-filters__search">
+              <Input type="search" name="search" placeholder="Search products..." value={searchQuery} />
+            </div>
+
+            <div class="products-filters__tags">
+              <p class="products-filters__label">Popular Tags:</p>
+              <div class="products-filters__tag-list">
+                {popularTags.length > 0 ? (
+                  popularTags.map((tag) => (
+                    <a href={`/products?tag=${encodeURIComponent(tag.value)}`}
+                       class={`products-filters__tag-link ${tagFilter === tag.value ? 'products-filters__tag-link--active' : ''}`}>
+                      <Tag variant={tagFilter === tag.value ? 'primary' : 'default'}>{tag.value} ({tag.count})</Tag>
+                    </a>
+                  ))
+                ) : (<p class="products-filters__no-tags">No tags available</p>)}
+              </div>
+            </div>
+
+            {(searchQuery || tagFilter) && (
+              <div class="products-filters__active">
+                <p class="products-filters__label">Active Filters:</p>
+                <div class="products-filters__active-list">
+                  {searchQuery && (
+                    <span class="products-filters__active-item">Search: "{searchQuery}"
+                      <a href="/products" class="products-filters__clear">×</a>
+                    </span>
+                  )}
+                  {tagFilter && (
+                    <span class="products-filters__active-item">Tag: {tagFilter}
+                      <a href={searchQuery ? `/products?search=${encodeURIComponent(searchQuery)}` : '/products'} class="products-filters__clear">×</a>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+
+      {products.length > 0 ? (
+        <div class="products-grid">
+          {products.map((product) => {
+            const owner = ownersMap.get(product.user_id);
+            return (
+              <a href={`/products/${product.handle}`} class="product-card">
+                <div class="product-card__content">
+                  <h3 class="product-card__title">{product.title}</h3>
+                  {product.description && (
+                    <p class="product-card__description">
+                      {product.description.substring(0, 100)}{product.description.length > 100 ? '...' : ''}
+                    </p>
+                  )}
+                  <div class="product-card__meta">
+                    <span class="product-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      ) : (
+        <Card>
+          <CardContent>
+            <div class="products-empty">
+              <p class="products-empty__text">
+                {searchQuery || tagFilter ? "No products found." : "No products available yet."}
+              </p>
+              {(searchQuery || tagFilter) && (
+                <a href="/products" class="products-empty__link">Clear filters</a>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {products.length === limit && (
+        <div class="products-pagination">
+          {page > 1 && (
+            <a href={`/products?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
+               class="products-pagination__link">← Previous</a>
+          )}
+          <span class="products-pagination__current">Page {page}</span>
+          <a href={`/products?page=${page + 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
+             class="products-pagination__link">Next →</a>
+        </div>
+      )}
+    </div>
+  </div>
 </Layout>
+
+<style>
+.products-page{min-height:100vh;padding:var(--spacing-4xl) var(--spacing-2xl);background-color:var(--color-background,#f9fafb)}
+.products-page__container{max-width:75rem;margin:0 auto;display:flex;flex-direction:column;gap:var(--spacing-4xl)}
+.products-header{text-align:center;margin-bottom:var(--spacing-2xl)}
+.products-header__title{margin:0 0 var(--spacing-sm);font-size:var(--text-4xl);font-weight:var(--font-weight-bold)}
+.products-header__description{margin:0;font-size:var(--text-lg);color:var(--muted-foreground)}
+.products-filters{display:flex;flex-direction:column;gap:var(--gap-xl)}
+.products-filters__search{width:100%}
+.products-filters__label{margin:0 0 var(--spacing-sm);font-size:var(--text-sm);font-weight:var(--font-weight-semibold)}
+.products-filters__tags{display:flex;flex-direction:column;gap:var(--gap-sm)}
+.products-filters__tag-list{display:flex;flex-wrap:wrap;gap:var(--gap-sm)}
+.products-filters__tag-link{text-decoration:none}
+.products-filters__no-tags{margin:0;font-size:var(--text-sm);color:var(--muted-foreground)}
+.products-filters__active{padding-top:var(--spacing-2xl);border-top:1px solid var(--border)}
+.products-filters__active-list{display:flex;flex-wrap:wrap;gap:var(--gap-sm)}
+.products-filters__active-item{display:inline-flex;align-items:center;gap:var(--gap-sm);padding:var(--spacing-xs) var(--spacing-lg);background-color:var(--primary);color:white;border-radius:var(--radius-full);font-size:var(--text-sm)}
+.products-filters__clear{color:white;text-decoration:none;font-size:var(--text-lg);cursor:pointer}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(18rem,1fr));gap:var(--gap-xl)}
+.product-card{display:block;padding:var(--spacing-3xl);background-color:white;border:1px solid var(--border);border-radius:var(--radius-lg);text-decoration:none;transition:all var(--duration-normal) var(--ease-in-out)}
+.product-card:hover{border-color:var(--primary);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.product-card__content{display:flex;flex-direction:column;gap:var(--gap-md)}
+.product-card__title{margin:0;font-size:var(--text-lg);font-weight:var(--font-weight-semibold);color:var(--foreground)}
+.product-card__description{margin:0;font-size:var(--text-sm);color:var(--muted-foreground);line-height:var(--leading-normal)}
+.product-card__meta{display:flex;gap:var(--gap-sm)}
+.product-card__author{font-size:var(--text-sm);color:var(--muted-foreground)}
+.products-empty{text-align:center;padding:var(--spacing-5xl) var(--spacing-4xl)}
+.products-empty__text{margin:0 0 var(--spacing-2xl);font-size:var(--text-base);color:var(--muted-foreground)}
+.products-empty__link{color:var(--primary);text-decoration:none;font-weight:var(--font-weight-medium)}
+.products-pagination{display:flex;justify-content:center;align-items:center;gap:var(--gap-xl);padding:var(--spacing-3xl) 0}
+.products-pagination__link{color:var(--primary);text-decoration:none;font-weight:var(--font-weight-medium);padding:var(--spacing-sm) var(--spacing-2xl);border-radius:var(--radius-md);transition:background-color var(--duration-normal) var(--ease-in-out)}
+.products-pagination__link:hover{background-color:var(--muted)}
+.products-pagination__current{font-size:var(--text-sm);color:var(--muted-foreground)}
+</style>
