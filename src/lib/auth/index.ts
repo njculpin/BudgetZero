@@ -1,6 +1,9 @@
 import { authClient } from "./client";
 import type { Provider } from "@supabase/supabase-js";
 
+// Re-export types to maintain SDK isolation
+export type { Provider } from "@supabase/supabase-js";
+
 export interface SignInWithPasswordParams {
   email: string;
   password: string;

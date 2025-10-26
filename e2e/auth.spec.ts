@@ -21,14 +21,14 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
 
-    await page.click('button:has-text("Create account")');
+    await page.click('form button[type="submit"]:has-text("Create account")');
     await page.waitForURL('/sign-in', { timeout: 10000 });
 
     // Now sign in with the new account
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
 
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Should be on dashboard
@@ -42,11 +42,11 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
 
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Then sign out
-    await page.click('button:has-text("Sign out")');
+    await page.click('form button[type="submit"]:has-text("Sign out")');
     await page.waitForURL('/', { timeout: 10000 });
 
     // Should be on home page
@@ -63,7 +63,7 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
 
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Should be on dashboard
@@ -77,7 +77,7 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', 'WrongPassword123!');
 
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
 
     // Should stay on sign-in page or show error
     // Note: This may need adjustment based on actual error handling
@@ -97,7 +97,7 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
 
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Try to access sign-in page again

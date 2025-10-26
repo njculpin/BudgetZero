@@ -41,13 +41,13 @@ test.describe('Asset Browse and Search', () => {
     await page.goto('/sign-up');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Create account")');
+    await page.click('form button[type="submit"]:has-text("Create account")');
     await page.waitForURL('/sign-in', { timeout: 10000 });
 
     // Sign in
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Create test assets
@@ -64,7 +64,7 @@ test.describe('Asset Browse and Search', () => {
       }
 
       await page.selectOption('select[name="status"]', asset.status);
-      await page.click('button:has-text("Create Asset")');
+      await page.click('form button[type="submit"]:has-text("Create Asset")');
       await page.waitForURL(/\/assets\/.*/, { timeout: 10000 });
     }
 
@@ -284,7 +284,7 @@ test.describe('Asset Browse and Search', () => {
     await page.goto('/sign-in');
     await page.fill('input[name="email"]', TEST_EMAIL);
     await page.fill('input[name="password"]', TEST_PASSWORD);
-    await page.click('button:has-text("Sign in")');
+    await page.click('form button[type="submit"]:has-text("Sign in")');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to assets page
