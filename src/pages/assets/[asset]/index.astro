@@ -123,7 +123,7 @@ if (Astro.request.method === "POST" && isOwner) {
               {tags.length > 0 && (
                 <TagList className="asset-tags">
                   {tags.map((tag) => (
-                    <Tag key={tag.id}>{tag.value}</Tag>
+                    <Tag>{tag.value}</Tag>
                   ))}
                 </TagList>
               )}
@@ -134,16 +134,16 @@ if (Astro.request.method === "POST" && isOwner) {
         <CardContent>
           <div class="asset-stats">
             <div class="asset-stats__item">
-              <span class="asset-stats__value">{assetData.download_count}</span>
-              <span class="asset-stats__label">Downloads</span>
+              <p class="asset-stats__value">{assetData.download_count}</p>
+              <p class="asset-stats__label">Downloads</p>
             </div>
             <div class="asset-stats__item">
-              <span class="asset-stats__value">{files.length}</span>
-              <span class="asset-stats__label">Files</span>
+              <p class="asset-stats__value">{files.length}</p>
+              <p class="asset-stats__label">Files</p>
             </div>
             <div class="asset-stats__item">
-              <span class="asset-stats__value">{images.length}</span>
-              <span class="asset-stats__label">Images</span>
+              <p class="asset-stats__value">{images.length}</p>
+              <p class="asset-stats__label">Images</p>
             </div>
           </div>
         </CardContent>
@@ -158,7 +158,7 @@ if (Astro.request.method === "POST" && isOwner) {
           <CardContent>
             <div class="asset-images">
               {images.map((image) => (
-                <div class="asset-image" key={image.id}>
+                <div class="asset-image">
                   <img
                     src={image.file_url}
                     alt={image.title}
@@ -181,7 +181,7 @@ if (Astro.request.method === "POST" && isOwner) {
           <CardContent>
             <div class="asset-files">
               {files.map((file) => (
-                <div class="asset-file" key={file.id}>
+                <div class="asset-file">
                   <div class="asset-file__info">
                     <p class="asset-file__title">{file.title}</p>
                     {file.description && (

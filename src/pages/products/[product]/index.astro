@@ -7,9 +7,10 @@ import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import { getProductByHandle, getProductTags, getProductVariants, deleteProduct } from "@/lib/data-access/products";
+import { getProductByHandle, getProductTags, getProductVariants, deleteProduct, getVariantPrices } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
+import { getOrCreateCart, addToCart } from "@/lib/data-access/cart";
 
 const { product } = Astro.params;
 
@@ -26,6 +27,13 @@ if (!productData) {
 const owner = await getUserById(productData.user_id);
 const tags = await getProductTags(productData.id);
 const variants = await getProductVariants(productData.id);
+
+const variantsWithPrices = await Promise.all(
+  variants.map(async (variant) => {
+    const prices = await getVariantPrices(variant.id);
+    return { ...variant, prices };
+  })
+);
 
 let currentUser = null;
 const accessToken = Astro.cookies.get("sb-access-token");
@@ -49,11 +57,14 @@ if (productData.status !== 'published' && !isOwner) {
   return Astro.redirect('/404');
 }
 
-if (Astro.request.method === "POST" && isOwner) {
+let cartMessage = '';
+let cartError = '';
+
+if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const action = formData.get("action");
 
-  if (action === "delete" && accessToken && refreshToken) {
+  if (action === "delete" && isOwner && accessToken && refreshToken) {
     const success = await deleteProduct(productData.id, {
       accessToken: accessToken.value,
       refreshToken: refreshToken.value,
@@ -62,6 +73,38 @@ if (Astro.request.method === "POST" && isOwner) {
     if (success) {
       return Astro.redirect(`/users/${owner?.handle}`);
     }
+  } else if (action === "add-to-cart" && currentUser && accessToken && refreshToken) {
+    const variantId = formData.get("variant_id") as string;
+    const quantity = parseInt(formData.get("quantity") as string) || 1;
+
+    // Get or create cart
+    const cart = await getOrCreateCart(currentUser.id, {
+      accessToken: accessToken.value,
+      refreshToken: refreshToken.value,
+    });
+
+    if (cart) {
+      const cartItem = await addToCart(
+        cart.id,
+        productData.id,
+        variantId,
+        quantity,
+        {
+          accessToken: accessToken.value,
+          refreshToken: refreshToken.value,
+        }
+      );
+
+      if (cartItem) {
+        return Astro.redirect(`/cart?added=true`);
+      } else {
+        cartError = "Failed to add item to cart";
+      }
+    } else {
+      cartError = "Failed to create cart";
+    }
+  } else if (action === "add-to-cart" && !currentUser) {
+    return Astro.redirect(`/sign-in?redirect=/products/${product}`);
   }
 }
 ---
@@ -69,6 +112,12 @@ if (Astro.request.method === "POST" && isOwner) {
 <Layout title={`${productData.title} - Game Loopers`}>
   <div class="product-page">
     <div class="product-page__container">
+      {cartError && (
+        <div class="product-alert product-alert--error">
+          {cartError}
+        </div>
+      )}
+
       <Card className="product-card">
         <CardHeader>
           <div class="product-header">
@@ -102,7 +151,7 @@ if (Astro.request.method === "POST" && isOwner) {
               {productData.description && <p class="product-header__description">{productData.description}</p>}
               {tags.length > 0 && (
                 <TagList className="product-tags">
-                  {tags.map((tag) => <Tag key={tag.id}>{tag.value}</Tag>)}
+                  {tags.map((tag) => <Tag>{tag.value}</Tag>)}
                 </TagList>
               )}
             </div>
@@ -110,18 +159,47 @@ if (Astro.request.method === "POST" && isOwner) {
         </CardHeader>
       </Card>
 
-      {variants.length > 0 ? (
+      {variantsWithPrices.length > 0 ? (
         <Card>
           <CardHeader><CardTitle>Variants & Pricing</CardTitle></CardHeader>
           <CardContent>
             <div class="product-variants">
-              {variants.map((variant) => (
-                <div class="variant-card" key={variant.id}>
+              {variantsWithPrices.map((variant) => (
+                <div class="variant-card">
                   <div class="variant-card__header">
-                    <h3 class="variant-card__name">{variant.name}</h3>
+                    <h3 class="variant-card__name">{variant.title}</h3>
                     <span class="variant-card__badge">{variant.is_digital ? 'Digital' : 'Physical'}</span>
                   </div>
                   {variant.description && <p class="variant-card__description">{variant.description}</p>}
+                  {variant.prices && variant.prices.length > 0 ? (
+                    <div class="variant-card__pricing">
+                      {variant.prices.map((price, index) => (
+                        <div class="variant-card__price">
+                          <span class="variant-card__price-amount">
+                            {price.unit_amount === 0 ? 'FREE' : `${price.currency.toUpperCase()} ${(price.unit_amount / 100).toFixed(2)}`}
+                          </span>
+                          {(price.min_quantity > 1 || price.max_quantity) && (
+                            <span class="variant-card__price-quantity">
+                              {price.min_quantity > 1 && `${price.min_quantity}+`}
+                              {price.max_quantity && ` (max ${price.max_quantity})`}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                      {!isOwner && (
+                        <form method="POST" class="variant-card__add-to-cart">
+                          <input type="hidden" name="action" value="add-to-cart" />
+                          <input type="hidden" name="variant_id" value={variant.id} />
+                          <input type="hidden" name="quantity" value="1" />
+                          <Button type="submit" variant="primary" size="md">
+                            <span slot="text">Add to Cart</span>
+                          </Button>
+                        </form>
+                      )}
+                    </div>
+                  ) : (
+                    isOwner && <p class="variant-card__no-price">No pricing set</p>
+                  )}
                   <div class="variant-card__sku">SKU: <code>{variant.sku}</code></div>
                 </div>
               ))}
@@ -161,6 +239,16 @@ if (Astro.request.method === "POST" && isOwner) {
   flex-direction: column;
   gap: var(--gap-xl);
 }
+.product-alert {
+  padding: var(--spacing-2xl);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-2xl);
+}
+.product-alert--error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #dc2626;
+}
 .product-header { display: flex; gap: var(--gap-xl); align-items: flex-start; }
 .product-header__info { flex: 1; }
 .product-header__title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--gap-lg); }
@@ -182,7 +270,13 @@ if (Astro.request.method === "POST" && isOwner) {
 .variant-card__name { margin: 0; font-size: var(--text-lg); font-weight: var(--font-weight-semibold); color: var(--foreground); }
 .variant-card__badge { padding: var(--spacing-xxs) var(--spacing-md); font-size: var(--text-xs); font-weight: var(--font-weight-medium); background-color: var(--color-primary, #0070f3); color: white; border-radius: var(--radius-full); }
 .variant-card__description { margin: 0 0 var(--spacing-md) 0; font-size: var(--text-sm); color: var(--muted-foreground); line-height: var(--leading-normal); }
-.variant-card__sku { font-size: var(--text-sm); color: var(--muted-foreground); }
+.variant-card__pricing { margin: var(--spacing-2xl) 0; display: flex; flex-direction: column; gap: var(--gap-sm); }
+.variant-card__price { display: flex; align-items: baseline; gap: var(--gap-md); }
+.variant-card__price-amount { font-size: var(--text-2xl); font-weight: var(--font-weight-bold); color: var(--primary); }
+.variant-card__price-quantity { font-size: var(--text-sm); color: var(--muted-foreground); }
+.variant-card__no-price { margin: var(--spacing-2xl) 0; font-size: var(--text-sm); color: var(--muted-foreground); font-style: italic; }
+.variant-card__add-to-cart { margin-top: var(--spacing-2xl); }
+.variant-card__sku { font-size: var(--text-sm); color: var(--muted-foreground); margin-top: var(--spacing-md); }
 .variant-card__sku code { padding: var(--spacing-xxs) var(--spacing-sm); background-color: var(--muted); border-radius: var(--radius-sm); font-family: monospace; font-size: var(--text-xs); }
 .product-empty { text-align: center; padding: var(--spacing-5xl) var(--spacing-3xl); }
 .product-empty__text { margin: 0 0 var(--spacing-3xl) 0; font-size: var(--text-base); color: var(--muted-foreground); }

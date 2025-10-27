@@ -8,7 +8,7 @@ import CardContent from "@/components/CardContent.astro";
 import Label from "@/components/Label.astro";
 import Input from "@/components/Input.astro";
 import Button from "@/components/Button.astro";
-import TagInput from "@/components/TagInput.astro";
+import TagInput from "@/components/islands/TagInput";
 import { setSession } from "@/lib/auth";
 import { createProduct, createProductTag } from "@/lib/data-access/products";
 
@@ -79,7 +79,7 @@ if (request.method === "POST") {
       } else {
         // Create tags if provided
         if (tagsString) {
-          const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+          const tags = JSON.parse(tagsString) as string[];
           for (const tag of tags) {
             await createProductTag(
               product.id,
@@ -250,7 +250,6 @@ if (request.method === "POST") {
 }
 
 .product-form__textarea {
-  width: 100%;
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: var(--text-base);
   font-family: inherit;

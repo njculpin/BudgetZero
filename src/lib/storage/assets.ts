@@ -127,3 +127,26 @@ export const listFiles = async (
 
   return data.map(file => file.name);
 };
+
+/**
+ * Create a signed URL for secure file download
+ * @param bucket - The storage bucket
+ * @param filePath - Path to the file
+ * @param expiresIn - Expiration time in seconds (default: 1 hour)
+ */
+export const createSignedDownloadUrl = async (
+  bucket: 'asset-files' | 'asset-images',
+  filePath: string,
+  expiresIn: number = 3600
+): Promise<string | null> => {
+  const { data, error } = await storageClient.storage
+    .from(bucket)
+    .createSignedUrl(filePath, expiresIn);
+
+  if (error) {
+    console.error('Error creating signed URL:', error);
+    return null;
+  }
+
+  return data.signedUrl;
+};

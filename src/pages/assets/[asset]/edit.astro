@@ -9,7 +9,7 @@ import Label from "@/components/Label.astro";
 import Input from "@/components/Input.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
-import TagInput from "@/components/TagInput.astro";
+import TagInput from "@/components/islands/TagInput";
 import { setSession } from "@/lib/auth";
 import {
   getAssetByHandle,
@@ -22,6 +22,14 @@ import {
   getAssetImages,
 } from "@/lib/data-access/assets";
 import { uploadAssetFile, uploadAssetImage } from "@/lib/storage";
+import {
+  getAssetRoyalties,
+  createAssetRoyalty,
+  updateAssetRoyalty,
+  deleteAssetRoyalty,
+  validateRoyaltySplit,
+} from "@/lib/data-access/royalties";
+import { getUserById } from "@/lib/data-access/users";
 
 const { cookies, redirect, request } = Astro;
 const { asset: assetHandle } = Astro.params;
@@ -73,10 +81,19 @@ if (assetData.user_id !== userId) {
   return redirect(`/assets/${assetHandle}`);
 }
 
-// Fetch existing tags, files, and images
+// Fetch existing tags, files, images, and royalties
 const existingTags = await getAssetTags(assetData.id);
 const existingFiles = await getAssetFiles(assetData.id);
 const existingImages = await getAssetImages(assetData.id);
+const existingRoyalties = await getAssetRoyalties(assetData.id);
+
+// Fetch user details for royalties
+const royaltiesWithUsers = await Promise.all(
+  existingRoyalties.map(async (royalty) => {
+    const user = await getUserById(royalty.user_id);
+    return { ...royalty, user };
+  })
+);
 
 // Handle form submission
 let errorMessage = "";
@@ -85,16 +102,87 @@ let successMessage = "";
 if (request.method === "POST") {
   try {
     const formData = await request.formData();
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const status = formData.get("status") as "draft" | "published";
-    const files = formData.getAll("files") as File[];
-    const images = formData.getAll("images") as File[];
-    const tagsString = formData.get("tags") as string;
+    const action = formData.get("action") as string;
 
-    if (!title) {
-      errorMessage = "Title is required";
+    if (action === "create-royalty") {
+      const contributorUserId = formData.get("contributor_user_id") as string;
+      const royaltyType = formData.get("royalty_type") as "fixed" | "percentage";
+      const royaltyValue = parseFloat(formData.get("royalty_value") as string);
+
+      if (!contributorUserId || !royaltyValue) {
+        errorMessage = "User ID and royalty value are required";
+      } else {
+        // Validate percentage doesn't exceed 100%
+        if (royaltyType === "percentage") {
+          const validation = await validateRoyaltySplit(assetData.id, royaltyValue);
+          if (!validation.valid) {
+            errorMessage = `Royalty split would exceed 100%. Current total: ${validation.currentTotal}%, adding ${royaltyValue}% would make ${validation.newTotal}%`;
+          } else {
+            const royalty = await createAssetRoyalty(
+              {
+                assetId: assetData.id,
+                userId: contributorUserId,
+                royaltyType,
+                royaltyValue,
+              },
+              {
+                accessToken: accessToken.value,
+                refreshToken: refreshToken.value,
+              }
+            );
+
+            if (royalty) {
+              successMessage = "Royalty added successfully";
+            } else {
+              errorMessage = "Failed to add royalty";
+            }
+          }
+        } else {
+          const royalty = await createAssetRoyalty(
+            {
+              assetId: assetData.id,
+              userId: contributorUserId,
+              royaltyType,
+              royaltyValue,
+            },
+            {
+              accessToken: accessToken.value,
+              refreshToken: refreshToken.value,
+            }
+          );
+
+          if (royalty) {
+            successMessage = "Royalty added successfully";
+          } else {
+            errorMessage = "Failed to add royalty";
+          }
+        }
+      }
+    } else if (action === "delete-royalty") {
+      const royaltyId = formData.get("royalty_id") as string;
+
+      const success = await deleteAssetRoyalty(royaltyId, {
+        accessToken: accessToken.value,
+        refreshToken: refreshToken.value,
+      });
+
+      if (success) {
+        successMessage = "Royalty deleted successfully";
+      } else {
+        errorMessage = "Failed to delete royalty";
+      }
     } else {
+      // Default action: update asset
+      const title = formData.get("title") as string;
+      const description = formData.get("description") as string;
+      const status = formData.get("status") as "draft" | "published";
+      const files = formData.getAll("files") as File[];
+      const images = formData.getAll("images") as File[];
+      const tagsString = formData.get("tags") as string;
+
+      if (!title) {
+        errorMessage = "Title is required";
+      } else {
       // Update the asset
       const updatedAsset = await updateAsset(
         assetData.id,
@@ -114,7 +202,7 @@ if (request.method === "POST") {
       } else {
         // Handle tags - for now, create new tags (we'll add delete functionality later)
         if (tagsString) {
-          const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+          const tags = JSON.parse(tagsString) as string[];
           for (const tag of tags) {
             await createAssetTag(
               assetData.id,
@@ -183,12 +271,26 @@ if (request.method === "POST") {
         successMessage = "Asset updated successfully!";
         return redirect(`/assets/${assetHandle}`);
       }
+      }
+    }
+
+    // Redirect with message for royalty actions
+    if (action === "create-royalty" || action === "delete-royalty") {
+      const params = new URLSearchParams();
+      if (successMessage) params.set('success', successMessage);
+      if (errorMessage) params.set('error', errorMessage);
+      return redirect(`/assets/${assetHandle}/edit?${params.toString()}`, 303);
     }
   } catch (error) {
     console.error("Error updating asset:", error);
     errorMessage = error instanceof Error ? error.message : "An error occurred";
   }
 }
+
+// Get messages from URL params
+const urlParams = new URL(Astro.url).searchParams;
+successMessage = successMessage || urlParams.get('success') || '';
+errorMessage = errorMessage || urlParams.get('error') || '';
 ---
 
 <Layout title={`Edit ${assetData.title} - Game Loopers`}>
@@ -240,7 +342,7 @@ if (request.method === "POST") {
                 <div class="asset-form__tag-list">
                   {existingTags.length > 0 ? (
                     existingTags.map((tag) => (
-                      <Tag key={tag.id}>{tag.value}</Tag>
+                      <Tag>{tag.value}</Tag>
                     ))
                   ) : (
                     <p class="asset-form__no-tags">No tags yet</p>
@@ -257,7 +359,7 @@ if (request.method === "POST") {
                 {existingFiles.length > 0 && (
                   <ul class="asset-form__file-list">
                     {existingFiles.map((file) => (
-                      <li key={file.id} class="asset-form__file-item">
+                      <li class="asset-form__file-item">
                         <span>{file.title}</span>
                         <span class="asset-form__file-size">
                           {(file.file_size_bytes / 1024 / 1024).toFixed(2)} MB
@@ -286,7 +388,7 @@ if (request.method === "POST") {
                 {existingImages.length > 0 && (
                   <div class="asset-form__image-grid">
                     {existingImages.map((image) => (
-                      <div key={image.id} class="asset-form__image-item">
+                      <div class="asset-form__image-item">
                         <img src={image.file_url} alt={image.title} />
                       </div>
                     ))}
@@ -326,6 +428,119 @@ if (request.method === "POST") {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Royalty Management</CardTitle>
+          <CardDescription>Manage royalty splits for contributors</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {successMessage && (
+            <div class="royalty-success">
+              <p>{successMessage}</p>
+            </div>
+          )}
+
+          {royaltiesWithUsers.length > 0 ? (
+            <div class="royalty-list">
+              {royaltiesWithUsers.map((royalty) => (
+                <div class="royalty-item">
+                  <div class="royalty-item__info">
+                    <div class="royalty-item__user">
+                      {royalty.user ? (
+                        <span>{royalty.user.name || royalty.user.handle || 'Unknown User'}</span>
+                      ) : (
+                        <span>User ID: {royalty.user_id}</span>
+                      )}
+                    </div>
+                    <div class="royalty-item__value">
+                      {royalty.royalty_type === 'percentage' ? (
+                        <span>{royalty.royalty_value}%</span>
+                      ) : (
+                        <span>${(royalty.royalty_value / 100).toFixed(2)}</span>
+                      )}
+                      <span class="royalty-item__type">
+                        ({royalty.royalty_type})
+                      </span>
+                    </div>
+                  </div>
+                  <form method="POST" class="royalty-item__delete-form">
+                    <input type="hidden" name="action" value="delete-royalty" />
+                    <input type="hidden" name="royalty_id" value={royalty.id} />
+                    <Button type="submit" variant="ghost" size="sm">
+                      <span slot="text">Remove</span>
+                    </Button>
+                  </form>
+                </div>
+              ))}
+              <div class="royalty-total">
+                <span class="royalty-total__label">Total Percentage:</span>
+                <span class="royalty-total__value">
+                  {royaltiesWithUsers
+                    .filter(r => r.royalty_type === 'percentage')
+                    .reduce((sum, r) => sum + r.royalty_value, 0)}%
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p class="royalty-empty">No royalties set. Add contributors below to split revenue.</p>
+          )}
+
+          <details class="royalty-add" open>
+            <summary class="royalty-add__summary">Add Royalty</summary>
+            <form method="POST" class="royalty-form">
+              <input type="hidden" name="action" value="create-royalty" />
+
+              <div class="royalty-form__field">
+                <Label for="contributor_user_id">Contributor User ID *</Label>
+                <Input
+                  type="text"
+                  name="contributor_user_id"
+                  id="contributor_user_id"
+                  placeholder="Enter user ID"
+                  required
+                />
+                <p class="royalty-form__help">You'll need the contributor's user ID. They can find it in their profile.</p>
+              </div>
+
+              <div class="royalty-form__field">
+                <Label for="royalty_type">Royalty Type *</Label>
+                <select
+                  name="royalty_type"
+                  id="royalty_type"
+                  class="royalty-form__select"
+                  required
+                >
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">Fixed Amount ($)</option>
+                </select>
+              </div>
+
+              <div class="royalty-form__field">
+                <Label for="royalty_value">Royalty Value *</Label>
+                <Input
+                  type="number"
+                  name="royalty_value"
+                  id="royalty_value"
+                  placeholder="Enter value"
+                  step="0.01"
+                  min="0"
+                  required
+                />
+                <p class="royalty-form__help">
+                  For percentage: enter 10 for 10%. For fixed: enter dollars (e.g., 5.00 for $5)
+                </p>
+              </div>
+
+              <div class="royalty-form__actions">
+                <Button type="submit" variant="primary" size="md">
+                  <span slot="text">Add Royalty</span>
+                </Button>
+              </div>
+            </form>
+          </details>
         </CardContent>
       </Card>
     </div>

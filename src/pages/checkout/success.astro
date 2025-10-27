@@ -1,0 +1,212 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardContent from "@/components/CardContent.astro";
+import Button from "@/components/Button.astro";
+import { setSession } from "@/lib/auth";
+import { getCheckoutSession } from "@/lib/payments";
+import { getOrCreateCart, clearCart } from "@/lib/data-access/cart";
+
+const sessionId = Astro.url.searchParams.get('session_id');
+
+if (!sessionId) {
+  return Astro.redirect('/cart');
+}
+
+// Check authentication
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+let currentUser = null;
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {}
+}
+
+// Retrieve the Stripe session
+let checkoutSession;
+try {
+  checkoutSession = await getCheckoutSession(sessionId);
+} catch (error) {
+  console.error('Error retrieving checkout session:', error);
+  return Astro.redirect('/cart');
+}
+
+// If user is logged in, clear their cart
+if (currentUser && accessToken && refreshToken) {
+  const cart = await getOrCreateCart(currentUser.id, {
+    accessToken: accessToken.value,
+    refreshToken: refreshToken.value,
+  });
+
+  if (cart) {
+    await clearCart(cart.id, {
+      accessToken: accessToken.value,
+      refreshToken: refreshToken.value,
+    });
+  }
+}
+
+const customerEmail = checkoutSession.customer_email;
+const amountTotal = checkoutSession.amount_total || 0;
+const currency = checkoutSession.currency || 'usd';
+---
+
+<Layout title="Order Confirmed - Game Loopers">
+  <div class="success-page">
+    <div class="success-page__container">
+      <Card>
+        <CardContent>
+          <div class="success-content">
+            <div class="success-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            </div>
+
+            <h1 class="success-title">Order Confirmed!</h1>
+            <p class="success-message">
+              Thank you for your purchase. Your order has been confirmed and you'll receive a confirmation email shortly.
+            </p>
+
+            <div class="success-details">
+              <div class="success-detail">
+                <span class="success-detail__label">Order ID:</span>
+                <span class="success-detail__value">{sessionId}</span>
+              </div>
+              {customerEmail && (
+                <div class="success-detail">
+                  <span class="success-detail__label">Email:</span>
+                  <span class="success-detail__value">{customerEmail}</span>
+                </div>
+              )}
+              <div class="success-detail">
+                <span class="success-detail__label">Total:</span>
+                <span class="success-detail__value">{currency.toUpperCase()} {(amountTotal / 100).toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div class="success-actions">
+              {currentUser ? (
+                <a href="/dashboard">
+                  <Button variant="primary" size="lg">
+                    <span slot="text">Go to Dashboard</span>
+                  </Button>
+                </a>
+              ) : (
+                <a href="/products">
+                  <Button variant="primary" size="lg">
+                    <span slot="text">Continue Shopping</span>
+                  </Button>
+                </a>
+              )}
+            </div>
+
+            <p class="success-note">
+              Your digital downloads will be available in your account shortly. Check your email for order details and download links.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</Layout>
+
+<style>
+.success-page {
+  min-height: calc(100vh - 64px);
+  background-color: var(--color-background, #f9fafb);
+  padding: var(--spacing-4xl) var(--spacing-2xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.success-page__container {
+  max-width: 600px;
+  width: 100%;
+}
+
+.success-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-4xl) var(--spacing-2xl);
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  color: #10b981;
+  margin-bottom: var(--spacing-3xl);
+}
+
+.success-title {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.success-message {
+  margin: 0 0 var(--spacing-3xl) 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.success-details {
+  width: 100%;
+  background-color: var(--color-background, #f9fafb);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3xl);
+  margin-bottom: var(--spacing-3xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.success-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.success-detail__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+}
+
+.success-detail__value {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  word-break: break-all;
+}
+
+.success-actions {
+  margin-bottom: var(--spacing-3xl);
+}
+
+.success-actions a {
+  text-decoration: none;
+}
+
+.success-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+</style>

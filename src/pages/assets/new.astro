@@ -8,7 +8,7 @@ import CardContent from "@/components/CardContent.astro";
 import Label from "@/components/Label.astro";
 import Input from "@/components/Input.astro";
 import Button from "@/components/Button.astro";
-import TagInput from "@/components/TagInput.astro";
+import TagInput from "@/components/islands/TagInput";
 import { setSession } from "@/lib/auth";
 import { createAsset, createAssetFile, createAssetImage, createAssetTag } from "@/lib/data-access/assets";
 import { uploadAssetFile, uploadAssetImage } from "@/lib/storage";
@@ -82,7 +82,7 @@ if (request.method === "POST") {
       } else {
         // Create tags if provided
         if (tagsString) {
-          const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+          const tags = JSON.parse(tagsString) as string[];
           for (const tag of tags) {
             await createAssetTag(
               asset.id,

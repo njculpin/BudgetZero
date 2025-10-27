@@ -1,261 +1,113 @@
 ---
-// Game Loopers Landing Page
 import Layout from "@/layouts/Layout.astro";
-import Button from "@/components/Button.astro";
 import Card from "@/components/Card.astro";
-import CardHeader from "@/components/CardHeader.astro";
-import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
+import { getPublishedProducts, getPopularProductTags } from "@/lib/data-access/products";
+import { getUserById } from "@/lib/data-access/users";
+
+const { url } = Astro;
+const searchParams = url.searchParams;
+
+const searchQuery = searchParams.get('search') || '';
+const tagFilter = searchParams.get('tag') || '';
+const page = parseInt(searchParams.get('page') || '1');
+const limit = 20;
+const offset = (page - 1) * limit;
+
+const tagArray = tagFilter ? [tagFilter] : undefined;
+const products = await getPublishedProducts(searchQuery, tagArray, limit, offset);
+const popularTags = await getPopularProductTags(10);
+
+const ownerIds = [...new Set(products.map(p => p.user_id))];
+const owners = await Promise.all(ownerIds.map(id => getUserById(id)));
+const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 ---
 
-<Layout title="Game Loopers - Collaborate, Create, Sell Tabletop Games">
-
-  <main class="landing">
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="hero__container">
-        <div class="hero__content">
-          <h1 class="hero__title">
-            The Social Commerce Platform for Tabletop Game Creators
-          </h1>
-          <p class="hero__description">
-            Collaborate with designers, modelers, and artists. Manage licensing, royalties, and sales—all in one place.
-          </p>
-          <div class="hero__actions">
-            <a href="/sign-up">
-              <Button variant="primary" size="lg">
-                <span slot="text">Get Started</span>
-              </Button>
-            </a>
-            <a href="/products">
-              <Button variant="outline" size="lg">
-                <span slot="text">Browse Products</span>
-              </Button>
-            </a>
-          </div>
+<Layout title="Game Loopers">
+  <div class="products-page">
+    <div class="products-page__container">
+      
+      {products.length > 0 ? (
+        <div class="products-grid">
+          {products.map((product) => {
+            const owner = ownersMap.get(product.user_id);
+            return (
+              <a href={`/products/${product.handle}`} class="product-card">
+                <div class="product-card__content">
+                  <h3 class="product-card__title">{product.title}</h3>
+                  {product.description && (
+                    <p class="product-card__description">
+                      {product.description.substring(0, 100)}{product.description.length > 100 ? '...' : ''}
+                    </p>
+                  )}
+                  <div class="product-card__meta">
+                    <span class="product-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
         </div>
-      </div>
-    </section>
+      ) : (
+        <Card>
+          <CardContent>
+            <div class="products-empty">
+              <p class="products-empty__text">
+                {searchQuery || tagFilter ? "No products found." : "No products available yet."}
+              </p>
+              {(searchQuery || tagFilter) && (
+                <a href="/products" class="products-empty__link">Clear filters</a>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-    <!-- Features Section -->
-    <section class="features">
-      <div class="features__container">
-        <div class="features__header">
-          <h2 class="features__title">Built for Creators</h2>
-          <p class="features__description">
-            Everything you need to collaborate, publish, and earn from your tabletop game projects
-          </p>
+      {products.length === limit && (
+        <div class="products-pagination">
+          {page > 1 && (
+            <a href={`/products?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
+               class="products-pagination__link">← Previous</a>
+          )}
+          <span class="products-pagination__current">Page {page}</span>
+          <a href={`/products?page=${page + 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
+             class="products-pagination__link">Next →</a>
         </div>
-
-        <div class="features__grid">
-          <Card className="feature-card">
-            <CardHeader>
-              <CardTitle>Collaborate Seamlessly</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p class="feature-card__text">
-                Work with designers, 3D modelers, illustrators, and printers. Assign royalties and track contributions effortlessly.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="feature-card">
-            <CardHeader>
-              <CardTitle>License & Royalties</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p class="feature-card__text">
-                Set up flexible licensing agreements and automatic royalty splits. Contributors get paid when your game sells.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="feature-card">
-            <CardHeader>
-              <CardTitle>Digital Downloads</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p class="feature-card__text">
-                Sell STL files, PDFs, illustrations, and complete game packages. Customers download instantly after purchase.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="feature-card">
-            <CardHeader>
-              <CardTitle>Game Jams</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p class="feature-card__text">
-                Host or participate in game jams. Showcase your creativity, compete for prizes, and build your portfolio.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta">
-      <div class="cta__container">
-        <h2 class="cta__title">Ready to Start Creating?</h2>
-        <p class="cta__description">
-          Join thousands of tabletop game creators already using Game Loopers
-        </p>
-        <a href="/sign-up">
-          <Button variant="primary" size="lg">
-            <span slot="text">Create Your Account</span>
-          </Button>
-        </a>
-      </div>
-    </section>
-  </main>
+      )}
+    </div>
+  </div>
 </Layout>
 
 <style>
-/* ===== Landing Page ===== */
-.landing {
-  display: flex;
-  flex-direction: column;
-}
-
-/* ===== Hero Section ===== */
-.hero {
-  padding: 4rem 1.5rem;
-  background: linear-gradient(to bottom, var(--muted), var(--background));
-}
-
-.hero__container {
-  max-width: var(--container-7xl);
-  margin: 0 auto;
-}
-
-.hero__content {
-  max-width: var(--container-3xl);
-  margin: 0 auto;
-  text-align: center;
-}
-
-.hero__title {
-  font-size: var(--text-4xl);
-  font-weight: var(--font-weight-extrabold);
-  line-height: var(--leading-tight);
-  color: var(--foreground);
-  margin-bottom: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .hero__title {
-    font-size: var(--text-5xl);
-  }
-}
-
-.hero__description {
-  font-size: var(--text-xl);
-  line-height: var(--leading-relaxed);
-  color: var(--muted-foreground);
-  margin-bottom: 2rem;
-}
-
-.hero__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (min-width: 640px) {
-  .hero__actions {
-    flex-direction: row;
-  }
-}
-
-.hero__actions a {
-  text-decoration: none;
-}
-
-/* ===== Features Section ===== */
-.features {
-  padding: 4rem 1.5rem;
-  background-color: var(--background);
-}
-
-.features__container {
-  max-width: var(--container-7xl);
-  margin: 0 auto;
-}
-
-.features__header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.features__title {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--foreground);
-  margin-bottom: 1rem;
-}
-
-.features__description {
-  font-size: var(--text-lg);
-  color: var(--muted-foreground);
-  max-width: var(--container-2xl);
-  margin: 0 auto;
-}
-
-.features__grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-}
-
-@media (min-width: 768px) {
-  .features__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .features__grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.feature-card__text {
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  color: var(--muted-foreground);
-}
-
-/* ===== CTA Section ===== */
-.cta {
-  padding: 4rem 1.5rem;
-  background: linear-gradient(to bottom, var(--background), var(--muted));
-}
-
-.cta__container {
-  max-width: var(--container-3xl);
-  margin: 0 auto;
-  text-align: center;
-}
-
-.cta__title {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--foreground);
-  margin-bottom: 1rem;
-}
-
-.cta__description {
-  font-size: var(--text-lg);
-  color: var(--muted-foreground);
-  margin-bottom: 2rem;
-}
-
-.cta a {
-  text-decoration: none;
-}
+.products-page{min-height:100vh;padding:var(--spacing-4xl) var(--spacing-2xl);background-color:var(--color-background,#f9fafb)}
+.products-page__container{max-width:75rem;margin:0 auto;display:flex;flex-direction:column;gap:var(--spacing-4xl)}
+.products-header{text-align:center;margin-bottom:var(--spacing-2xl)}
+.products-header__title{margin:0 0 var(--spacing-sm);font-size:var(--text-4xl);font-weight:var(--font-weight-bold)}
+.products-header__description{margin:0;font-size:var(--text-lg);color:var(--muted-foreground)}
+.products-filters{display:flex;flex-direction:column;gap:var(--gap-xl)}
+.products-filters__search{width:100%}
+.products-filters__label{margin:0 0 var(--spacing-sm);font-size:var(--text-sm);font-weight:var(--font-weight-semibold)}
+.products-filters__tags{display:flex;flex-direction:column;gap:var(--gap-sm)}
+.products-filters__tag-list{display:flex;flex-wrap:wrap;gap:var(--gap-sm)}
+.products-filters__tag-link{text-decoration:none}
+.products-filters__no-tags{margin:0;font-size:var(--text-sm);color:var(--muted-foreground)}
+.products-filters__active{padding-top:var(--spacing-2xl);border-top:1px solid var(--border)}
+.products-filters__active-list{display:flex;flex-wrap:wrap;gap:var(--gap-sm)}
+.products-filters__active-item{display:inline-flex;align-items:center;gap:var(--gap-sm);padding:var(--spacing-xs) var(--spacing-lg);background-color:var(--primary);color:white;border-radius:var(--radius-full);font-size:var(--text-sm)}
+.products-filters__clear{color:white;text-decoration:none;font-size:var(--text-lg);cursor:pointer}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(18rem,1fr));gap:var(--gap-xl)}
+.product-card{display:block;padding:var(--spacing-3xl);background-color:white;border:1px solid var(--border);border-radius:var(--radius-lg);text-decoration:none;transition:all var(--duration-normal) var(--ease-in-out)}
+.product-card:hover{border-color:var(--primary);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.product-card__content{display:flex;flex-direction:column;gap:var(--gap-md)}
+.product-card__title{margin:0;font-size:var(--text-lg);font-weight:var(--font-weight-semibold);color:var(--foreground)}
+.product-card__description{margin:0;font-size:var(--text-sm);color:var(--muted-foreground);line-height:var(--leading-normal)}
+.product-card__meta{display:flex;gap:var(--gap-sm)}
+.product-card__author{font-size:var(--text-sm);color:var(--muted-foreground)}
+.products-empty{text-align:center;padding:var(--spacing-5xl) var(--spacing-4xl)}
+.products-empty__text{margin:0 0 var(--spacing-2xl);font-size:var(--text-base);color:var(--muted-foreground)}
+.products-empty__link{color:var(--primary);text-decoration:none;font-weight:var(--font-weight-medium)}
+.products-pagination{display:flex;justify-content:center;align-items:center;gap:var(--gap-xl);padding:var(--spacing-3xl) 0}
+.products-pagination__link{color:var(--primary);text-decoration:none;font-weight:var(--font-weight-medium);padding:var(--spacing-sm) var(--spacing-2xl);border-radius:var(--radius-md);transition:background-color var(--duration-normal) var(--ease-in-out)}
+.products-pagination__link:hover{background-color:var(--muted)}
+.products-pagination__current{font-size:var(--text-sm);color:var(--muted-foreground)}
 </style>
-

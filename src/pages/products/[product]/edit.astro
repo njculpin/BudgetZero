@@ -18,7 +18,9 @@ import {
   deleteVariant,
   linkAssetToVariant,
   unlinkAssetFromVariant,
-  getVariantAssets
+  getVariantAssets,
+  createVariantPrice,
+  getVariantPrices
 } from "@/lib/data-access/products";
 import { getPublishedAssets } from "@/lib/data-access/assets";
 import { setSession } from "@/lib/auth";
@@ -204,20 +206,52 @@ if (Astro.request.method === "POST") {
       } else {
         formError = "Failed to unlink asset.";
       }
+    } else if (action === "create-price") {
+      const variantId = formData.get("variant_id") as string;
+      const currency = formData.get("currency") as string;
+      const unitAmountDollars = parseFloat(formData.get("unit_amount") as string);
+      const unitAmount = Math.round(unitAmountDollars * 100); // Convert to cents
+      const minQuantity = parseInt(formData.get("min_quantity") as string);
+      const maxQuantityStr = formData.get("max_quantity") as string;
+      const maxQuantity = maxQuantityStr ? parseInt(maxQuantityStr) : undefined;
+
+      const price = await createVariantPrice(
+        variantId,
+        {
+          currency,
+          unitAmount,
+          minQuantity,
+          maxQuantity,
+        },
+        {
+          accessToken: accessToken.value,
+          refreshToken: refreshToken.value,
+        }
+      );
+
+      if (price) {
+        formSuccess = "Price created successfully!";
+      } else {
+        formError = "Failed to create price.";
+      }
     }
   } catch (error) {
     formError = "An unexpected error occurred.";
   }
 
   if (formSuccess || formError) {
-    return Astro.redirect(`/products/${product}/edit?success=${formSuccess}&error=${formError}`);
+    const params = new URLSearchParams();
+    if (formSuccess) params.set('success', formSuccess);
+    if (formError) params.set('error', formError);
+    return Astro.redirect(`/products/${product}/edit?${params.toString()}`, 303);
   }
 }
 
 const variantsWithAssets = await Promise.all(
   variants.map(async (variant) => {
     const assets = await getVariantAssets(variant.id);
-    return { ...variant, linkedAssets: assets };
+    const prices = await getVariantPrices(variant.id);
+    return { ...variant, linkedAssets: assets, prices };
   })
 );
 
@@ -323,12 +357,12 @@ const errorMessage = Astro.url.searchParams.get('error');
           <div class="product-variants">
             {variantsWithAssets.length > 0 ? (
               variantsWithAssets.map((variant) => (
-                <div class="variant-edit-card" key={variant.id}>
+                <div class="variant-edit-card">
                   <div class="variant-edit-card__header">
-                    <h3 class="variant-edit-card__name">{variant.name}</h3>
-                    <span class="variant-edit-card__badge">
-                      {variant.is_digital ? 'Digital' : 'Physical'}
-                    </span>
+                    <h3 class="variant-edit-card__name">{variant.title}</h3>
+                    <p class="variant-edit-card__badge">
+                      Digital
+                    </p>
                   </div>
 
                   {variant.description && (
@@ -342,7 +376,7 @@ const errorMessage = Astro.url.searchParams.get('error');
                     {variant.linkedAssets && variant.linkedAssets.length > 0 ? (
                       <ul class="variant-edit-card__assets-list">
                         {variant.linkedAssets.map((asset) => (
-                          <li class="variant-edit-card__asset-item" key={asset.id}>
+                          <li class="variant-edit-card__asset-item">
                             <span>{asset.title}</span>
                             <form method="POST" style="display: inline;">
                               <input type="hidden" name="action" value="unlink-asset" />
@@ -366,7 +400,7 @@ const errorMessage = Astro.url.searchParams.get('error');
                         <select name="asset_id" class="variant-edit-card__select" required>
                           <option value="">Select an asset to link...</option>
                           {availableAssets.map((asset) => (
-                            <option value={asset.id} key={asset.id}>{asset.title}</option>
+                            <option value={asset.id}>{asset.title}</option>
                           ))}
                         </select>
                         <Button type="submit" variant="outline" size="sm">
@@ -374,6 +408,109 @@ const errorMessage = Astro.url.searchParams.get('error');
                         </Button>
                       </div>
                     </form>
+                  </div>
+
+                  <div class="variant-edit-card__pricing">
+                    <h4 class="variant-edit-card__pricing-title">Pricing ({variant.prices?.length || 0})</h4>
+                    {variant.prices && variant.prices.length > 0 ? (
+                      <div class="variant-edit-card__pricing-list">
+                        {variant.prices.map((price) => (
+                          <div class="variant-edit-card__price-item">
+                            {/* TODO: Update migration to account for price breaks */}
+                            <p>{price.default_currency}</p>
+                            {/* <div class="variant-edit-card__price-amount">
+                              {price.currency.toUpperCase()} {(price.unit_amount / 100).toFixed(2)}
+                            </div>
+                            <div class="variant-edit-card__price-details">
+                              {price.min_quantity > 1 && (
+                                <span>Min qty: {price.min_quantity}</span>
+                              )}
+                              {price.max_quantity && (
+                                <span>Max qty: {price.max_quantity}</span>
+                              )}
+                              {price.min_quantity === 1 && !price.max_quantity && (
+                                <span>Standard price</span>
+                              )}
+                            </div> */}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p class="variant-edit-card__no-pricing">No pricing set yet.</p>
+                    )}
+
+                    <details class="variant-edit-card__pricing-add">
+                      <summary class="variant-edit-card__pricing-add-summary">Add Price</summary>
+                      <form method="POST" class="variant-edit-card__pricing-form">
+                        <input type="hidden" name="action" value="create-price" />
+                        <input type="hidden" name="variant_id" value={variant.id} />
+
+                        <div class="variant-edit-card__pricing-row">
+                          <div class="variant-edit-card__field">
+                            <Label for={`price_amount_${variant.id}`}>Price *</Label>
+                            <Input
+                              type="number"
+                              name="unit_amount"
+                              id={`price_amount_${variant.id}`}
+                              placeholder="0.00"
+                              step="0.01"
+                              min="0"
+                              required
+                            />
+                            <p class="variant-edit-card__help-text">Enter price in dollars (e.g., 9.99 for $9.99). Use 0 for free.</p>
+                          </div>
+
+                          <div class="variant-edit-card__field">
+                            <Label for={`price_currency_${variant.id}`}>Currency *</Label>
+                            <select
+                              name="currency"
+                              id={`price_currency_${variant.id}`}
+                              class="variant-edit-card__select"
+                              required
+                            >
+                              <option value="usd">USD ($)</option>
+                              <option value="eur">EUR (€)</option>
+                              <option value="gbp">GBP (£)</option>
+                              <option value="cad">CAD ($)</option>
+                              <option value="aud">AUD ($)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div class="variant-edit-card__pricing-row">
+                          <div class="variant-edit-card__field">
+                            <Label for={`price_min_qty_${variant.id}`}>Min Quantity</Label>
+                            <Input
+                              type="number"
+                              name="min_quantity"
+                              id={`price_min_qty_${variant.id}`}
+                              placeholder="1"
+                              min="1"
+                              value="1"
+                            />
+                            <p class="variant-edit-card__help-text">Minimum quantity for this price tier</p>
+                          </div>
+
+                          <div class="variant-edit-card__field">
+                            <Label for={`price_max_qty_${variant.id}`}>Max Quantity</Label>
+                            <Input
+                              type="number"
+                              name="max_quantity"
+                              id={`price_max_qty_${variant.id}`}
+                              placeholder="Optional"
+                              min="1"
+                            />
+                            <p class="variant-edit-card__help-text">Leave empty for no max</p>
+                          </div>
+                        </div>
+
+                        <div class="variant-edit-card__form-actions">
+                          <Button type="submit" variant="primary" size="sm">
+                            <span slot="text">Add Price</span>
+                          </Button>
+                        </div>
+                      </form>
+                    </details>
                   </div>
 
                   <div class="variant-edit-card__actions">
@@ -389,7 +526,7 @@ const errorMessage = Astro.url.searchParams.get('error');
                             type="text"
                             name="variant_name"
                             id={`variant_name_${variant.id}`}
-                            value={variant.name}
+                            value={variant.title}
                             required
                           />
                         </div>
@@ -402,18 +539,6 @@ const errorMessage = Astro.url.searchParams.get('error');
                             rows="3"
                             class="variant-edit-card__textarea"
                           >{variant.description || ''}</textarea>
-                        </div>
-
-                        <div class="variant-edit-card__field">
-                          <label class="variant-edit-card__checkbox-label">
-                            <input
-                              type="checkbox"
-                              name="variant_is_digital"
-                              value="true"
-                              checked={variant.is_digital}
-                            />
-                            Digital Product
-                          </label>
                         </div>
 
                         <div class="variant-edit-card__form-actions">
@@ -677,6 +802,74 @@ const errorMessage = Astro.url.searchParams.get('error');
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background-color: white;
+}
+.variant-edit-card__pricing {
+  margin: var(--spacing-2xl) 0;
+  padding: var(--spacing-2xl);
+  background-color: white;
+  border-radius: var(--radius-md);
+}
+.variant-edit-card__pricing-title {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+}
+.variant-edit-card__pricing-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  margin-bottom: var(--spacing-2xl);
+}
+.variant-edit-card__price-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background-color: var(--color-background, #f9fafb);
+  border-radius: var(--radius-sm);
+}
+.variant-edit-card__price-amount {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary);
+}
+.variant-edit-card__price-details {
+  display: flex;
+  gap: var(--gap-md);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+.variant-edit-card__no-pricing {
+  margin: 0 0 var(--spacing-2xl) 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+.variant-edit-card__pricing-add {
+  margin-top: var(--spacing-2xl);
+}
+.variant-edit-card__pricing-add-summary {
+  cursor: pointer;
+  padding: var(--spacing-md);
+  background-color: var(--muted);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-sm);
+}
+.variant-edit-card__pricing-form {
+  margin-top: var(--spacing-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+.variant-edit-card__pricing-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap-lg);
+}
+.variant-edit-card__help-text {
+  margin: var(--spacing-xs) 0 0 0;
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
 }
 .variant-edit-card__actions {
   display: flex;

@@ -42,61 +42,56 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
       </div>
 
       <!-- Search and Filters -->
-      <Card>
-        <CardContent>
-          <form method="GET" action="/assets" class="assets-filters">
-            <div class="assets-filters__search">
-              <Input
-                type="search"
-                name="search"
-                placeholder="Search assets..."
-                value={searchQuery}
-              />
-            </div>
+        <form method="GET" action="/assets" class="assets-filters">
+          <div class="assets-filters__search">
+            <Input
+              type="search"
+              name="search"
+              placeholder="Search assets..."
+              value={searchQuery}
+            />
+          </div>
 
-            <div class="assets-filters__tags">
-              <p class="assets-filters__label">Popular Tags:</p>
-              <div class="assets-filters__tag-list">
-                {popularTags.length > 0 ? (
-                  popularTags.map((tag) => (
-                    <a
-                      href={`/assets?tag=${encodeURIComponent(tag.value)}`}
-                      class={`assets-filters__tag-link ${tagFilter === tag.value ? 'assets-filters__tag-link--active' : ''}`}
-                      key={tag.value}
-                    >
-                      <Tag variant={tagFilter === tag.value ? 'primary' : 'default'}>
-                        {tag.value} ({tag.count})
-                      </Tag>
-                    </a>
-                  ))
-                ) : (
-                  <p class="assets-filters__no-tags">No tags available yet</p>
+          <div class="assets-filters__tags">
+            <p class="assets-filters__label">Popular Tags:</p>
+            <div class="assets-filters__tag-list">
+              {popularTags.length > 0 ? (
+                popularTags.map((tag) => (
+                  <a
+                    href={`/assets?tag=${encodeURIComponent(tag.value)}`}
+                    class={`assets-filters__tag-link ${tagFilter === tag.value ? 'assets-filters__tag-link--active' : ''}`}
+                  >
+                    <Tag variant={tagFilter === tag.value ? 'primary' : 'default'}>
+                      {tag.value} ({tag.count})
+                    </Tag>
+                  </a>
+                ))
+              ) : (
+                <p class="assets-filters__no-tags">No tags available yet</p>
+              )}
+            </div>
+          </div>
+
+          {(searchQuery || tagFilter) && (
+            <div class="assets-filters__active">
+              <p class="assets-filters__label">Active Filters:</p>
+              <div class="assets-filters__active-list">
+                {searchQuery && (
+                  <span class="assets-filters__active-item">
+                    Search: "{searchQuery}"
+                    <a href="/assets" class="assets-filters__clear">×</a>
+                  </span>
+                )}
+                {tagFilter && (
+                  <span class="assets-filters__active-item">
+                    Tag: {tagFilter}
+                    <a href={searchQuery ? `/assets?search=${encodeURIComponent(searchQuery)}` : '/assets'} class="assets-filters__clear">×</a>
+                  </span>
                 )}
               </div>
             </div>
-
-            {(searchQuery || tagFilter) && (
-              <div class="assets-filters__active">
-                <p class="assets-filters__label">Active Filters:</p>
-                <div class="assets-filters__active-list">
-                  {searchQuery && (
-                    <span class="assets-filters__active-item">
-                      Search: "{searchQuery}"
-                      <a href="/assets" class="assets-filters__clear">×</a>
-                    </span>
-                  )}
-                  {tagFilter && (
-                    <span class="assets-filters__active-item">
-                      Tag: {tagFilter}
-                      <a href={searchQuery ? `/assets?search=${encodeURIComponent(searchQuery)}` : '/assets'} class="assets-filters__clear">×</a>
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-          </form>
-        </CardContent>
-      </Card>
+          )}
+        </form>
 
       <!-- Assets Grid -->
       {assets.length > 0 ? (
@@ -104,7 +99,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
           {assets.map((asset) => {
             const owner = ownersMap.get(asset.user_id);
             return (
-              <a href={`/assets/${asset.handle}`} class="asset-card" key={asset.id}>
+              <a href={`/assets/${asset.handle}`} class="asset-card">
                 <div class="asset-card__content">
                   <h3 class="asset-card__title">{asset.title}</h3>
                   {asset.description && (
@@ -208,6 +203,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 
 /* ===== Filters ===== */
 .assets-filters {
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: var(--gap-xl);
