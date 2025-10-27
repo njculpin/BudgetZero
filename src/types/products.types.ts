@@ -1,6 +1,6 @@
 import type { BaseEntity } from "./common.types";
 
-export type ProductStatus = 'draft' | 'published';
+export type ProductStatus = 'draft' | 'published' | 'archived';
 export type ProductCollaboratorRole = 'owner' | 'editor' | 'viewer';
 
 export interface Product extends BaseEntity {

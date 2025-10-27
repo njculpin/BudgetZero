@@ -32,14 +32,26 @@ if (accessToken && refreshToken) {
 
     <div class="navigation__menu">
       <a
+        href="/documents"
+        class={`navigation__link ${currentPath === '/documents' || currentPath.startsWith('/documents/') ? 'navigation__link--active' : ''}`}
+      >
+        <p>Documents</p>
+      </a>
+      <a
         href="/assets"
         class={`navigation__link ${currentPath === '/assets' || currentPath.startsWith('/assets/') ? 'navigation__link--active' : ''}`}
       >
-        <p>Browse Assets</p>
+        <p>Assets</p>
+      </a>
+      <a
+        href="/products"
+        class={`navigation__link ${currentPath === '/products' || currentPath.startsWith('/products/') ? 'navigation__link--active' : ''}`}
+      >
+        <p>Products</p>
       </a>
       <a
         href="/jams"
-        class={`navigation__link ${currentPath === '/jams' ? 'navigation__link--active' : ''}`}
+        class={`navigation__link ${currentPath === '/jams' || currentPath.startsWith('/jams/') ? 'navigation__link--active' : ''}`}
       >
         <p>Jams</p>
       </a>
@@ -95,7 +107,7 @@ if (accessToken && refreshToken) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: var(--spacing-xs)
   gap: 2rem;
 }
 
@@ -112,6 +124,7 @@ if (accessToken && refreshToken) {
   font-size: var(--text-xl);
   font-weight: var(--font-weight-bold);
   color: var(--primary);
+  margin-right: var(--spacing-lg)
 }
 
 /* ===== Menu ===== */

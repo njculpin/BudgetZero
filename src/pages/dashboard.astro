@@ -9,6 +9,8 @@ import Button from "@/components/Button.astro";
 
 import { setSession } from "../lib/auth";
 import { getUserById } from "@/lib/data-access/users";
+import { getUserProducts } from "@/lib/data-access/products";
+import { getUserAssets } from "@/lib/data-access/assets";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -48,6 +50,12 @@ const userId = session.data.user?.id;
 // Get user profile to access handle
 const userProfile = userId ? await getUserById(userId) : null;
 const userHandle = userProfile?.handle;
+
+// Fetch user's content stats
+const userProducts = userId ? await getUserProducts(userId) : [];
+const userAssets = userId ? await getUserAssets(userId) : [];
+const productsCount = userProducts.length;
+const assetsCount = userAssets.length;
 ---
 
 <Layout title="Dashboard - Game Loopers">
@@ -64,6 +72,11 @@ const userHandle = userProfile?.handle;
           <div class="dashboard__header-actions">
             {userHandle && (
               <>
+                <a href="/downloads">
+                  <Button variant="primary" size="sm">
+                    <span slot="text">My Downloads</span>
+                  </Button>
+                </a>
                 <a href={`/users/${userHandle}`}>
                   <Button variant="outline" size="sm">
                     <span slot="text">View Profile</span>
@@ -76,11 +89,6 @@ const userHandle = userProfile?.handle;
                 </a>
               </>
             )}
-            <form action="/api/auth/sign-out" method="post">
-              <Button type="submit" variant="ghost" size="sm">
-                <span slot="text">Sign out</span>
-              </Button>
-            </form>
           </div>
         </div>
       </section>
@@ -91,7 +99,7 @@ const userHandle = userProfile?.handle;
           <CardContent>
             <div class="stat-card__content">
               <p class="stat-card__label">Products</p>
-              <p class="stat-card__value">0</p>
+              <p class="stat-card__value">{productsCount}</p>
             </div>
           </CardContent>
         </Card>
@@ -100,7 +108,7 @@ const userHandle = userProfile?.handle;
           <CardContent>
             <div class="stat-card__content">
               <p class="stat-card__label">Assets</p>
-              <p class="stat-card__value">0</p>
+              <p class="stat-card__value">{assetsCount}</p>
             </div>
           </CardContent>
         </Card>

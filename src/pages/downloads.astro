@@ -1,0 +1,397 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardContent from "@/components/CardContent.astro";
+import Button from "@/components/Button.astro";
+import { setSession } from "@/lib/auth";
+import { getUserSales, getSaleItems, getSaleItemAssets } from "@/lib/data-access/sales";
+import { getProductById, getVariantById } from "@/lib/data-access/products";
+import { getAssetById, getAssetFiles } from "@/lib/data-access/assets";
+
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect("/sign-in?redirect=/downloads");
+}
+
+let session;
+try {
+  session = await setSession({
+    refresh_token: refreshToken.value,
+    access_token: accessToken.value,
+  });
+  if (session.error) {
+    Astro.cookies.delete("sb-access-token", { path: "/" });
+    Astro.cookies.delete("sb-refresh-token", { path: "/" });
+    return Astro.redirect("/sign-in?redirect=/downloads");
+  }
+} catch (error) {
+  Astro.cookies.delete("sb-access-token", { path: "/" });
+  Astro.cookies.delete("sb-refresh-token", { path: "/" });
+  return Astro.redirect("/sign-in?redirect=/downloads");
+}
+
+const userId = session.data.user?.id;
+
+if (!userId) {
+  return Astro.redirect("/sign-in?redirect=/downloads");
+}
+
+// Get user's purchases
+const sales = await getUserSales(userId);
+const completedSales = sales.filter(sale => sale.status === 'paid');
+
+// Fetch details for each purchase
+const purchasesWithDetails = await Promise.all(
+  completedSales.map(async (sale) => {
+    const saleItems = await getSaleItems(sale.id);
+
+    const itemsWithDetails = await Promise.all(
+      saleItems.map(async (item) => {
+        const product = await getProductById(item.product_id);
+        const variant = await getVariantById(item.variant_id);
+        const saleItemAssets = await getSaleItemAssets(item.id);
+
+        const assetsWithFiles = await Promise.all(
+          saleItemAssets.map(async (sia) => {
+            const asset = await getAssetById(sia.asset_id);
+            const files = asset ? await getAssetFiles(asset.id) : [];
+            return { ...asset, files };
+          })
+        );
+
+        return {
+          ...item,
+          product,
+          variant,
+          assets: assetsWithFiles,
+        };
+      })
+    );
+
+    return {
+      ...sale,
+      items: itemsWithDetails,
+    };
+  })
+);
+---
+
+<Layout title="My Downloads - Game Loopers">
+  <div class="downloads-page">
+    <div class="downloads-page__container">
+      <div class="downloads-page__header">
+        <h1 class="downloads-page__title">My Downloads</h1>
+        <p class="downloads-page__subtitle">Access your purchased digital content</p>
+      </div>
+
+      {purchasesWithDetails.length > 0 ? (
+        <div class="purchases-list">
+          {purchasesWithDetails.map((purchase) => (
+            <Card>
+              <CardHeader>
+                <div class="purchase-header">
+                  <div class="purchase-header__info">
+                    <CardTitle>
+                      Order from {new Date(purchase.created_at).toLocaleDateString()}
+                    </CardTitle>
+                    <p class="purchase-header__id">Order ID: {purchase.id}</p>
+                  </div>
+                  <div class="purchase-header__amount">
+                    {purchase.currency.toUpperCase()} {(purchase.price_cents / 100).toFixed(2)}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div class="purchase-items">
+                  {purchase.items.map((item) => (
+                    <div class="purchase-item">
+                      <div class="purchase-item__header">
+                        <h3 class="purchase-item__product">
+                          {item.product?.title}
+                        </h3>
+                        <p class="purchase-item__variant">
+                          {item.variant?.title}
+                        </p>
+                      </div>
+
+                      {item.assets && item.assets.length > 0 ? (
+                        <div class="purchase-item__assets">
+                          <h4 class="purchase-item__assets-title">Available Downloads</h4>
+                          {item.assets.map((asset) => (
+                            <div class="asset-download">
+                              <div class="asset-download__info">
+                                <h5 class="asset-download__name">{asset?.title}</h5>
+                                {asset?.description && (
+                                  <p class="asset-download__description">{asset.description}</p>
+                                )}
+                                <p class="asset-download__files-count">
+                                  {asset?.files?.length || 0} {asset?.files?.length === 1 ? 'file' : 'files'}
+                                </p>
+                              </div>
+
+                              {asset?.files && asset.files.length > 0 && (
+                                <div class="asset-download__files">
+                                  {asset.files.map((file) => (
+                                    <div class="file-download">
+                                      <div class="file-download__info">
+                                        <span class="file-download__name">{file.title}</span>
+                                        <span class="file-download__size">
+                                          {(file.file_size_bytes / 1024 / 1024).toFixed(2)} MB
+                                        </span>
+                                      </div>
+                                      <form method="POST" action="/api/download">
+                                        <input type="hidden" name="file_id" value={file.id} />
+                                        <input type="hidden" name="asset_id" value={asset.id} />
+                                        <Button type="submit" variant="outline" size="sm">
+                                          <span slot="text">Download</span>
+                                        </Button>
+                                      </form>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p class="purchase-item__no-assets">
+                          No digital downloads available for this item
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent>
+            <div class="downloads-empty">
+              <p class="downloads-empty__text">No purchases yet</p>
+              <p class="downloads-empty__description">
+                When you purchase products, your digital downloads will appear here
+              </p>
+              <a href="/products">
+                <Button variant="primary" size="md">
+                  <span slot="text">Browse Products</span>
+                </Button>
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<style>
+.downloads-page {
+  min-height: calc(100vh - 64px);
+  background-color: var(--color-background, #f9fafb);
+  padding: var(--spacing-4xl) var(--spacing-2xl);
+}
+
+.downloads-page__container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.downloads-page__header {
+  margin-bottom: var(--spacing-4xl);
+}
+
+.downloads-page__title {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.downloads-page__subtitle {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+}
+
+.purchases-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
+}
+
+.purchase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--gap-lg);
+}
+
+.purchase-header__info {
+  flex: 1;
+}
+
+.purchase-header__id {
+  margin: var(--spacing-xs) 0 0 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  font-family: monospace;
+}
+
+.purchase-header__amount {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.purchase-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
+}
+
+.purchase-item {
+  padding: var(--spacing-3xl);
+  background-color: var(--color-background, #f9fafb);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.purchase-item__header {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.purchase-item__product {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.purchase-item__variant {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.purchase-item__assets-title {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.purchase-item__assets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.purchase-item__no-assets {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.asset-download {
+  padding: var(--spacing-2xl);
+  background-color: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.asset-download__info {
+  margin-bottom: var(--spacing-lg);
+}
+
+.asset-download__name {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+.asset-download__description {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.asset-download__files-count {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  font-weight: var(--font-weight-medium);
+}
+
+.asset-download__files {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.file-download {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background-color: var(--color-background, #f9fafb);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.file-download__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.file-download__name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+.file-download__size {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+}
+
+.file-download form {
+  margin: 0;
+}
+
+.downloads-empty {
+  text-align: center;
+  padding: var(--spacing-5xl) var(--spacing-3xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-2xl);
+}
+
+.downloads-empty__text {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+.downloads-empty__description {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+}
+
+.downloads-empty a {
+  text-decoration: none;
+}
+</style>

@@ -95,90 +95,75 @@ if (!isOwnProfile) {
             )}
           </div>
         </CardHeader>
+      </Card>
 
+      <!-- Content Tabs -->
+      <Card class="content-card">
         <CardContent>
-          <div class="profile-stats">
-            <div class="profile-stats__item">
-              <span class="profile-stats__value">0</span>
-              <span class="profile-stats__label">Products</span>
+          <div class="profile-tabs">
+            <button class="profile-tabs__tab profile-tabs__tab--active" data-tab="documents">Documents</button>
+            <button class="profile-tabs__tab" data-tab="assets">Assets</button>
+            <button class="profile-tabs__tab" data-tab="products">Products</button>
+          </div>
+
+          <div class="profile-tab-content" id="tab-documents">
+            <div class="profile-empty">
+              <p class="profile-empty__text">
+                {isOwnProfile
+                  ? "You haven't created any documents yet."
+                  : `${profileUser.name || profileUser.handle} hasn't created any documents yet.`
+                }
+              </p>
             </div>
-            <div class="profile-stats__item">
-              <span class="profile-stats__value">{userAssets.length}</span>
-              <span class="profile-stats__label">Assets</span>
-            </div>
-            <div class="profile-stats__item">
-              <span class="profile-stats__value">0</span>
-              <span class="profile-stats__label">Followers</span>
+          </div>
+
+          <div class="profile-tab-content profile-tab-content--hidden" id="tab-assets">
+            {userAssets.length > 0 ? (
+              <div class="profile-asset-grid">
+                {userAssets.map((asset) => (
+                  <a href={`/assets/${asset.handle}`} class="profile-asset-card">
+                    <div class="profile-asset-card__header">
+                      <h3 class="profile-asset-card__title">{asset.title}</h3>
+                      <span class={`profile-asset-card__status profile-asset-card__status--${asset.status}`}>
+                        {asset.status}
+                      </span>
+                    </div>
+                    {asset.description && (
+                      <p class="profile-asset-card__description">
+                        {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
+                      </p>
+                    )}
+                    <div class="profile-asset-card__meta">
+                      <p>{asset.download_count} downloads</p>
+                      <p>{asset.file_count} files</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div class="profile-empty">
+                <p class="profile-empty__text">
+                  {isOwnProfile
+                    ? "You haven't created any assets yet."
+                    : `${profileUser.name || profileUser.handle} hasn't created any assets yet.`
+                  }
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div class="profile-tab-content profile-tab-content--hidden" id="tab-products">
+            <div class="profile-empty">
+              <p class="profile-empty__text">
+                {isOwnProfile
+                  ? "You haven't created any products yet."
+                  : `${profileUser.name || profileUser.handle} hasn't created any products yet.`
+                }
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      <!-- Content Tabs -->
-      <div class="profile-content">
-        <div class="profile-tabs">
-          <button class="profile-tabs__tab profile-tabs__tab--active" data-tab="documents">Documents</button>
-          <button class="profile-tabs__tab" data-tab="assets">Assets</button>
-          <button class="profile-tabs__tab" data-tab="products">Products</button>
-        </div>
-
-        <div class="profile-tab-content" id="tab-documents">
-          <div class="profile-empty">
-            <p class="profile-empty__text">
-              {isOwnProfile
-                ? "You haven't created any documents yet."
-                : `${profileUser.name || profileUser.handle} hasn't created any documents yet.`
-              }
-            </p>
-          </div>
-        </div>
-
-        <div class="profile-tab-content profile-tab-content--hidden" id="tab-assets">
-          {userAssets.length > 0 ? (
-            <div class="profile-asset-grid">
-              {userAssets.map((asset) => (
-                <a href={`/assets/${asset.handle}`} class="profile-asset-card" key={asset.id}>
-                  <div class="profile-asset-card__header">
-                    <h3 class="profile-asset-card__title">{asset.title}</h3>
-                    <span class={`profile-asset-card__status profile-asset-card__status--${asset.status}`}>
-                      {asset.status}
-                    </span>
-                  </div>
-                  {asset.description && (
-                    <p class="profile-asset-card__description">
-                      {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
-                    </p>
-                  )}
-                  <div class="profile-asset-card__meta">
-                    <span>{asset.download_count} downloads</span>
-                    <span>{asset.file_count} files</span>
-                  </div>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div class="profile-empty">
-              <p class="profile-empty__text">
-                {isOwnProfile
-                  ? "You haven't created any assets yet."
-                  : `${profileUser.name || profileUser.handle} hasn't created any assets yet.`
-                }
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div class="profile-tab-content profile-tab-content--hidden" id="tab-products">
-          <div class="profile-empty">
-            <p class="profile-empty__text">
-              {isOwnProfile
-                ? "You haven't created any products yet."
-                : `${profileUser.name || profileUser.handle} hasn't created any products yet.`
-              }
-            </p>
-          </div>
-        </div>
-      </div>
 
       <!-- Activity Feed -->
       <Card className="activity-card">
@@ -211,6 +196,9 @@ if (!isOwnProfile) {
 .profile-page__container {
   max-width: 960px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3xl)
 }
 
 /* ===== Profile Card ===== */
@@ -270,36 +258,9 @@ if (!isOwnProfile) {
   flex-shrink: 0;
 }
 
-/* ===== Profile Stats ===== */
-.profile-stats {
-  display: flex;
-  gap: var(--spacing-4xl);
-  padding: var(--spacing-2xl) 0;
-}
-
-.profile-stats__item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-xxs);
-}
-
-.profile-stats__value {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text, #111);
-}
-
-.profile-stats__label {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
 /* ===== Profile Tabs ===== */
-.profile-content {
-  background-color: var(--color-surface, #fff);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border, #e5e7eb);
-  overflow: hidden;
+.content-card {
+  margin-top: var(--spacing-4xl);
 }
 
 .profile-tabs {

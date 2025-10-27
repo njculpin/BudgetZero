@@ -297,6 +297,24 @@ export const getAssetFiles = async (assetId: string): Promise<AssetFile[]> => {
 };
 
 /**
+ * Get asset file by ID
+ */
+export const getAssetFileById = async (fileId: string): Promise<AssetFile | null> => {
+  const { data, error } = await dataClient
+    .from('asset_files')
+    .select('*')
+    .eq('id', fileId)
+    .eq('deleted', false)
+    .single();
+
+  if (error) {
+    return null;
+  }
+
+  return data as AssetFile;
+};
+
+/**
  * Get asset images for an asset
  */
 export const getAssetImages = async (assetId: string): Promise<AssetImage[]> => {
