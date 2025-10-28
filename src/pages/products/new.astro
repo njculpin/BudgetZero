@@ -104,8 +104,8 @@ if (request.method === "POST") {
 ---
 
 <Layout title="Create Product - Game Loopers">
-  <div class="product-create-page">
-    <div class="product-create-page__container">
+  <div class="page">
+    <div class="page__container">
       <Card className="product-create-card">
         <CardHeader>
           <CardTitle>Create New Product</CardTitle>
@@ -158,7 +158,7 @@ if (request.method === "POST") {
 
             <div class="product-form__field">
               <Label for="tags">Tags</Label>
-              <TagInput name="tags" />
+              <!-- <TagInput name="tags" /> -->
               <p class="product-form__help-text">
                 Add tags to help buyers find your product (e.g., "strategy", "family-friendly", "dungeon-crawler")
               </p>
@@ -206,17 +206,7 @@ if (request.method === "POST") {
 </Layout>
 
 <style>
-/* ===== Product Create Page ===== */
-.product-create-page {
-  min-height: calc(100vh - 64px);
-  background-color: var(--color-background, #f9fafb);
-  padding: var(--spacing-4xl) var(--spacing-2xl);
-}
 
-.product-create-page__container {
-  max-width: 720px;
-  margin: 0 auto;
-}
 
 .product-create-page__error {
   padding: var(--spacing-2xl);

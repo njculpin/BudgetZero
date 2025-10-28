@@ -24,8 +24,8 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 ---
 
 <Layout title="Game Loopers">
-  <div class="products-page">
-    <div class="products-page__container">
+  <div class="page">
+    <div class="page__container">
       
       {products.length > 0 ? (
         <div class="products-grid">
@@ -79,11 +79,6 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 </Layout>
 
 <style>
-.products-page{min-height:100vh;padding:var(--spacing-4xl) var(--spacing-2xl);background-color:var(--color-background,#f9fafb)}
-.products-page__container{max-width:75rem;margin:0 auto;display:flex;flex-direction:column;gap:var(--spacing-4xl)}
-.products-header{text-align:center;margin-bottom:var(--spacing-2xl)}
-.products-header__title{margin:0 0 var(--spacing-sm);font-size:var(--text-4xl);font-weight:var(--font-weight-bold)}
-.products-header__description{margin:0;font-size:var(--text-lg);color:var(--muted-foreground)}
 .products-filters{display:flex;flex-direction:column;gap:var(--gap-xl)}
 .products-filters__search{width:100%}
 .products-filters__label{margin:0 0 var(--spacing-sm);font-size:var(--text-sm);font-weight:var(--font-weight-semibold)}

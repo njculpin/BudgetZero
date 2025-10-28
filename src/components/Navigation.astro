@@ -31,29 +31,25 @@ if (accessToken && refreshToken) {
     </a>
 
     <div class="navigation__menu">
-      <a
-        href="/documents"
-        class={`navigation__link ${currentPath === '/documents' || currentPath.startsWith('/documents/') ? 'navigation__link--active' : ''}`}
-      >
-        <p>Documents</p>
+      <a href="/documents">
+        <Button variant="ghost" size="sm">
+          <span slot="text"><p>Documents</p></span>
+        </Button>
       </a>
-      <a
-        href="/assets"
-        class={`navigation__link ${currentPath === '/assets' || currentPath.startsWith('/assets/') ? 'navigation__link--active' : ''}`}
-      >
-        <p>Assets</p>
+      <a href="/assets">
+        <Button variant="ghost" size="sm">
+          <span slot="text"><p>Assets</p></span>
+        </Button>
       </a>
-      <a
-        href="/products"
-        class={`navigation__link ${currentPath === '/products' || currentPath.startsWith('/products/') ? 'navigation__link--active' : ''}`}
-      >
-        <p>Products</p>
+      <a href="/products">
+        <Button variant="ghost" size="sm">
+          <span slot="text"><p>Products</p></span>
+        </Button>
       </a>
-      <a
-        href="/jams"
-        class={`navigation__link ${currentPath === '/jams' || currentPath.startsWith('/jams/') ? 'navigation__link--active' : ''}`}
-      >
-        <p>Jams</p>
+      <a href="/jams">
+        <Button variant="ghost" size="sm">
+          <span slot="text"><p>Jams</p></span>
+        </Button>
       </a>
     </div>
 
@@ -62,7 +58,7 @@ if (accessToken && refreshToken) {
         <>
           <a href="/dashboard">
             <Button variant="ghost" size="sm">
-              <span slot="text"><h3>Dashboard</h3></span>
+              <span slot="text"><p>Dashboard</p></span>
             </Button>
           </a>
           <form action="/api/auth/sign-out" method="post" class="navigation__signout-form">

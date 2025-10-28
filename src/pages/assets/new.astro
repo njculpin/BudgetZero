@@ -12,6 +12,7 @@ import TagInput from "@/components/islands/TagInput";
 import { setSession } from "@/lib/auth";
 import { createAsset, createAssetFile, createAssetImage, createAssetTag } from "@/lib/data-access/assets";
 import { uploadAssetFile, uploadAssetImage } from "@/lib/storage";
+import PageHeader from "@/components/PageHeader.astro";
 
 const { cookies, redirect, request } = Astro;
 
@@ -159,16 +160,13 @@ if (request.method === "POST") {
 ---
 
 <Layout title="Create Asset - Game Loopers">
-  <div class="asset-create-page">
-    <div class="asset-create-page__container">
-      <Card className="asset-create-card">
-        <CardHeader>
-          <CardTitle>Create New Asset</CardTitle>
-          <CardDescription>
-            Upload digital files, 3D models, PDFs, or artwork to share with the community
-          </CardDescription>
-        </CardHeader>
+  <div class="page">
+    <div class="page__container">
 
+            <!-- Page Header -->
+      <PageHeader title="Create Asset" description="Upload digital files, 3D models, PDFs, or artwork to share with the community"/>
+
+      <Card className="asset-create-card">
         <CardContent>
           {errorMessage && (
             <div class="asset-create-page__error">
@@ -184,7 +182,7 @@ if (request.method === "POST") {
 
           <form method="post" enctype="multipart/form-data" class="asset-form">
             <div class="asset-form__field">
-              <Label for="title">Title *</Label>
+              <Label for="title"><p>Title *</p></Label>
               <Input
                 type="text"
                 name="title"
@@ -195,7 +193,7 @@ if (request.method === "POST") {
             </div>
 
             <div class="asset-form__field">
-              <Label for="description">Description</Label>
+              <Label for="description"><p>Description</p></Label>
               <textarea
                 name="description"
                 id="description"
@@ -206,12 +204,12 @@ if (request.method === "POST") {
             </div>
 
             <div class="asset-form__field">
-              <Label for="tags">Tags</Label>
-              <TagInput name="tags" />
+              <Label for="tags"><p>Tags</p></Label>
+              <!-- <TagInput name="tags" /> -->
             </div>
 
             <div class="asset-form__field">
-              <Label for="file">Asset Files</Label>
+              <Label for="file"><p>Asset Files</p></Label>
               <input
                 type="file"
                 name="files"
@@ -225,7 +223,7 @@ if (request.method === "POST") {
             </div>
 
             <div class="asset-form__field">
-              <Label for="images">Cover Images</Label>
+              <Label for="images"><p>Cover Images</p></Label>
               <input
                 type="file"
                 name="images"
@@ -240,7 +238,7 @@ if (request.method === "POST") {
             </div>
 
             <div class="asset-form__field">
-              <Label for="status">Status</Label>
+              <Label for="status"><p>Status</p></Label>
               <select name="status" id="status" class="asset-form__select">
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -253,11 +251,11 @@ if (request.method === "POST") {
             <div class="asset-form__actions">
               <a href="/dashboard">
                 <Button type="button" variant="ghost" size="md">
-                  <span slot="text">Cancel</span>
+                  <p slot="text">Cancel</p>
                 </Button>
               </a>
               <Button type="submit" variant="primary" size="md">
-                <span slot="text">Create Asset</span>
+                <p slot="text">Create Asset</p>
               </Button>
             </div>
           </form>
@@ -268,18 +266,6 @@ if (request.method === "POST") {
 </Layout>
 
 <style>
-/* ===== Asset Create Page ===== */
-.asset-create-page {
-  min-height: calc(100vh - 64px);
-  background-color: var(--color-background, #f9fafb);
-  padding: var(--spacing-4xl) var(--spacing-2xl);
-}
-
-.asset-create-page__container {
-  max-width: 720px;
-  margin: 0 auto;
-}
-
 .asset-create-page__error {
   padding: var(--spacing-2xl);
   background-color: #fee2e2;
@@ -312,7 +298,6 @@ if (request.method === "POST") {
 }
 
 .asset-form__textarea {
-  width: 100%;
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: var(--text-base);
   font-family: inherit;
@@ -332,7 +317,6 @@ if (request.method === "POST") {
 }
 
 .asset-form__file-input {
-  width: 100%;
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: var(--text-base);
   font-family: inherit;
@@ -349,7 +333,6 @@ if (request.method === "POST") {
 }
 
 .asset-form__select {
-  width: 100%;
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: var(--text-base);
   font-family: inherit;

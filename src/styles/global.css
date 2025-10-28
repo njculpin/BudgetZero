@@ -1,7 +1,9 @@
 :root {
   /* ===== Font Family ===== */
-  --font-family-sans: "Inter", Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-  --font-family-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --font-family-sans: "Inter", Impact, Haettenschweiler, "Arial Narrow Bold",
+    sans-serif;
+  --font-family-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo,
+    Consolas, "DejaVu Sans Mono", monospace;
 
   /* ===== Colors ===== */
   --background: oklch(1 0 0);
@@ -119,16 +121,16 @@
   --gap-2xl: 2rem;
 
   /* ===== Spacing (for padding/margin) ===== */
-  --spacing-xxs: 0.25rem;    /* 4px */
-  --spacing-xs: 0.375rem;    /* 6px */
-  --spacing-sm: 0.5rem;      /* 8px */
-  --spacing-md: 0.625rem;    /* 10px */
-  --spacing-lg: 0.75rem;     /* 12px */
-  --spacing-xl: 0.875rem;    /* 14px */
-  --spacing-2xl: 1rem;       /* 16px */
-  --spacing-3xl: 1.5rem;     /* 24px */
-  --spacing-4xl: 2rem;       /* 32px */
-  --spacing-5xl: 3rem;       /* 48px */
+  --spacing-xxs: 0.25rem; /* 4px */
+  --spacing-xs: 0.375rem; /* 6px */
+  --spacing-sm: 0.5rem; /* 8px */
+  --spacing-md: 0.625rem; /* 10px */
+  --spacing-lg: 0.75rem; /* 12px */
+  --spacing-xl: 0.875rem; /* 14px */
+  --spacing-2xl: 1rem; /* 16px */
+  --spacing-3xl: 1.5rem; /* 24px */
+  --spacing-4xl: 2rem; /* 32px */
+  --spacing-5xl: 3rem; /* 48px */
 
   /* ===== Border Radius ===== */
   --radius-xs: 0.125rem;
@@ -142,17 +144,19 @@
   --radius-full: 9999px;
 
   /* ===== Component Heights ===== */
-  --height-input-sm: 2rem;      /* 32px */
-  --height-input-md: 2.25rem;   /* 36px */
-  --height-input-lg: 2.5rem;    /* 40px */
-  --height-input-xl: 3rem;      /* 48px */
+  --height-input-sm: 2rem; /* 32px */
+  --height-input-md: 2.25rem; /* 36px */
+  --height-input-lg: 2.5rem; /* 40px */
+  --height-input-xl: 3rem; /* 48px */
 
   --shadow-2xs: 0 1px rgb(0 0 0 / 0.05);
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 
   --inset-shadow-2xs: inset 0 1px rgb(0 0 0 / 0.05);
@@ -168,12 +172,12 @@
 
   --text-shadow-2xs: 0px 1px 0px rgb(0 0 0 / 0.15);
   --text-shadow-xs: 0px 1px 1px rgb(0 0 0 / 0.2);
-  --text-shadow-sm:
-    0px 1px 0px rgb(0 0 0 / 0.075), 0px 1px 1px rgb(0 0 0 / 0.075), 0px 2px 2px rgb(0 0 0 / 0.075);
-  --text-shadow-md:
-    0px 1px 1px rgb(0 0 0 / 0.1), 0px 1px 2px rgb(0 0 0 / 0.1), 0px 2px 4px rgb(0 0 0 / 0.1);
-  --text-shadow-lg:
-    0px 1px 2px rgb(0 0 0 / 0.1), 0px 3px 2px rgb(0 0 0 / 0.1), 0px 4px 8px rgb(0 0 0 / 0.1);
+  --text-shadow-sm: 0px 1px 0px rgb(0 0 0 / 0.075),
+    0px 1px 1px rgb(0 0 0 / 0.075), 0px 2px 2px rgb(0 0 0 / 0.075);
+  --text-shadow-md: 0px 1px 1px rgb(0 0 0 / 0.1), 0px 1px 2px rgb(0 0 0 / 0.1),
+    0px 2px 4px rgb(0 0 0 / 0.1);
+  --text-shadow-lg: 0px 1px 2px rgb(0 0 0 / 0.1), 0px 3px 2px rgb(0 0 0 / 0.1),
+    0px 4px 8px rgb(0 0 0 / 0.1);
 
   /* ===== Transitions ===== */
   --duration-fastest: 75ms;
@@ -238,6 +242,28 @@
 }
 
 /* ===== Typography ===== */
-h1, h2, h3, h4, h5, h6, p {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
   font-family: var(--font-family-sans);
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  background-color: var(--muted);
+}
+
+.page__container {
+  max-width: 75rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4xl);
 }
