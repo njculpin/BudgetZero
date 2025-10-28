@@ -260,10 +260,10 @@ const errorMessage = Astro.url.searchParams.get('error');
 ---
 
 <Layout title={`Edit ${productData.title} - Game Loopers`}>
-  <div class="product-edit-page">
-    <div class="product-edit-page__container">
-      <div class="product-edit-header">
-        <h1 class="product-edit-header__title">Edit Product</h1>
+  <div class="page">
+    <div class="page__container">
+      <div class="page-header">
+        <h1 class="page-header__title">Edit Product</h1>
         <a href={`/products/${product}`}>
           <Button variant="ghost" size="sm">
             <span slot="text">← Back to Product</span>

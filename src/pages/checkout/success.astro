@@ -60,8 +60,8 @@ const currency = checkoutSession.currency || 'usd';
 ---
 
 <Layout title="Order Confirmed - Game Loopers">
-  <div class="success-page">
-    <div class="success-page__container">
+  <div class="page">
+    <div class="page__container">
       <Card>
         <CardContent>
           <div class="success-content">
@@ -121,20 +121,6 @@ const currency = checkoutSession.currency || 'usd';
 </Layout>
 
 <style>
-.success-page {
-  min-height: calc(100vh - 64px);
-  background-color: var(--color-background, #f9fafb);
-  padding: var(--spacing-4xl) var(--spacing-2xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.success-page__container {
-  max-width: 600px;
-  width: 100%;
-}
-
 .success-content {
   display: flex;
   flex-direction: column;

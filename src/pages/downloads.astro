@@ -81,11 +81,11 @@ const purchasesWithDetails = await Promise.all(
 ---
 
 <Layout title="My Downloads - Game Loopers">
-  <div class="downloads-page">
-    <div class="downloads-page__container">
-      <div class="downloads-page__header">
-        <h1 class="downloads-page__title">My Downloads</h1>
-        <p class="downloads-page__subtitle">Access your purchased digital content</p>
+  <div class="page">
+    <div class="page__container">
+      <div class="page-header">
+        <h1 class="page-header__title">My Downloads</h1>
+        <p class="page-header__description">Access your purchased digital content</p>
       </div>
 
       {purchasesWithDetails.length > 0 ? (
@@ -191,34 +191,6 @@ const purchasesWithDetails = await Promise.all(
 </Layout>
 
 <style>
-.downloads-page {
-  min-height: calc(100vh - 64px);
-  background-color: var(--color-background, #f9fafb);
-  padding: var(--spacing-4xl) var(--spacing-2xl);
-}
-
-.downloads-page__container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.downloads-page__header {
-  margin-bottom: var(--spacing-4xl);
-}
-
-.downloads-page__title {
-  margin: 0 0 var(--spacing-sm) 0;
-  font-size: var(--text-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--foreground);
-}
-
-.downloads-page__subtitle {
-  margin: 0;
-  font-size: var(--text-base);
-  color: var(--muted-foreground);
-}
-
 .purchases-list {
   display: flex;
   flex-direction: column;

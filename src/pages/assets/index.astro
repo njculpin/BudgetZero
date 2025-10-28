@@ -6,6 +6,7 @@ import Input from "@/components/Input.astro";
 import Tag from "@/components/Tag.astro";
 import { getPublishedAssets, getPopularTags } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
+import PageHeader from "@/components/PageHeader.astro";
 
 const { url } = Astro;
 const searchParams = url.searchParams;
@@ -31,15 +32,10 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 ---
 
 <Layout title="Browse Assets - Game Loopers">
-  <div class="assets-page">
-    <div class="assets-page__container">
+  <div class="page">
+    <div class="page__container">
       <!-- Page Header -->
-      <div class="assets-header">
-        <h1 class="assets-header__title">Browse Assets</h1>
-        <p class="assets-header__description">
-          Discover digital assets created by the Game Loopers community
-        </p>
-      </div>
+      <PageHeader title="Assets" description="Browse assets owned and created by you."/>
 
       <!-- Search and Filters -->
         <form method="GET" action="/assets" class="assets-filters">
@@ -167,40 +163,6 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 </Layout>
 
 <style>
-/* ===== Page Layout ===== */
-.assets-page {
-  min-height: 100vh;
-  padding: var(--spacing-4xl) var(--spacing-2xl);
-  background-color: var(--color-background, #f9fafb);
-}
-
-.assets-page__container {
-  max-width: 75rem;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4xl);
-}
-
-/* ===== Header ===== */
-.assets-header {
-  text-align: center;
-  margin-bottom: var(--spacing-2xl);
-}
-
-.assets-header__title {
-  margin: 0 0 var(--spacing-sm);
-  font-size: var(--text-4xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text, #111);
-}
-
-.assets-header__description {
-  margin: 0;
-  font-size: var(--text-lg);
-  color: var(--color-text-muted, #6b7280);
-}
-
 /* ===== Filters ===== */
 .assets-filters {
   padding: 16px;

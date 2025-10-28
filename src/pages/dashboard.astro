@@ -60,15 +60,9 @@ const assetsCount = userAssets.length;
 
 <Layout title="Dashboard - Game Loopers">
 
-  <main class="dashboard">
-    <div class="dashboard__container">
-      <!-- Welcome Section -->
-      <section class="dashboard__welcome">
-        <div class="dashboard__header">
-          <div class="dashboard__header-content">
-            <h1 class="dashboard__title">Welcome back!</h1>
-            <p class="dashboard__subtitle">{email}</p>
-          </div>
+  <main class="page">
+    <div class="page__container">
+        <div class="page-header">
           <div class="dashboard__header-actions">
             {userHandle && (
               <>
@@ -91,7 +85,6 @@ const assetsCount = userAssets.length;
             )}
           </div>
         </div>
-      </section>
 
       <!-- Quick Stats -->
       <section class="dashboard__stats">
@@ -138,6 +131,36 @@ const assetsCount = userAssets.length;
         <div class="dashboard__actions">
           <Card className="action-card">
             <CardHeader>
+              <CardTitle>Create Document</CardTitle>
+              <CardDescription>
+                Write game docs
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="/documents/new">
+                <Button variant="primary" size="md">
+                  <span slot="text">New Document</span>
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+          <Card className="action-card">
+            <CardHeader>
+              <CardTitle>Upload Asset</CardTitle>
+              <CardDescription>
+                Share Files
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a href="/assets/new">
+                <Button variant="primary" size="md">
+                  <span slot="text">Upload</span>
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+          <Card className="action-card">
+            <CardHeader>
               <CardTitle>Create Product</CardTitle>
               <CardDescription>
                 Start selling your tabletop game
@@ -151,50 +174,17 @@ const assetsCount = userAssets.length;
               </a>
             </CardContent>
           </Card>
-
           <Card className="action-card">
             <CardHeader>
-              <CardTitle>Upload Asset</CardTitle>
+              <CardTitle>Create Jam
               <CardDescription>
-                Share 3D models, PDFs, or artwork
+                Join game competitions
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <a href="/assets/new">
+              <a href="/jams/new">
                 <Button variant="primary" size="md">
-                  <span slot="text">Upload</span>
-                </Button>
-              </a>
-            </CardContent>
-          </Card>
-
-          <Card className="action-card">
-            <CardHeader>
-              <CardTitle>Create Document</CardTitle>
-              <CardDescription>
-                Write and collaborate on game docs
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <a href="/documents/new">
-                <Button variant="primary" size="md">
-                  <span slot="text">New Document</span>
-                </Button>
-              </a>
-            </CardContent>
-          </Card>
-
-          <Card className="action-card">
-            <CardHeader>
-              <CardTitle>Browse Jams</CardTitle>
-              <CardDescription>
-                Join game jams and competitions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <a href="/jams">
-                <Button variant="outline" size="md">
-                  <span slot="text">Browse</span>
+                  <span slot="text">Create</span>
                 </Button>
               </a>
             </CardContent>
@@ -221,21 +211,6 @@ const assetsCount = userAssets.length;
 </Layout>
 
 <style>
-/* ===== Dashboard Layout ===== */
-.dashboard {
-  min-height: calc(100vh - 64px);
-  background-color: var(--muted);
-}
-
-.dashboard__container {
-  max-width: var(--container-7xl);
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
 /* ===== Welcome Section ===== */
 .dashboard__welcome {
   margin-bottom: 1rem;
