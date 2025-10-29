@@ -72,7 +72,7 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
   color: var(--foreground);
 }
 .button--outline:hover {
-  background-color: var(--accent);
+  background-color: var(--muted);
 }
 
 .button--ghost {
@@ -80,7 +80,24 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
   color: var(--foreground);
 }
 .button--ghost:hover {
+  background-color: var(--muted);
+}
+
+.button--ghost-secondary {
+  background-color: transparent;
+  color: var(--muted);
+}
+.button--ghost-secondary:hover {
+  background-color: var(--primary);
+}
+
+.button--accent {
   background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.button--accent:hover {
+  background-color: hsl(from var(--accent) h s l / 0.5);
 }
 
 .button--link {

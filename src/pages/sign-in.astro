@@ -34,7 +34,7 @@ if (accessToken && refreshToken) {
 
 <Layout title="Sign in">
   <div class="page">
-    <div class="page__container">
+    <div class="auth-page__container">
       <Card className="auth-page__card">
         <CardHeader>
           <CardTitle>Sign in to Game Loopers</CardTitle>
@@ -71,13 +71,6 @@ if (accessToken && refreshToken) {
               <span slot="text">Sign in</span>
             </Button>
 
-            <div class="auth-form__divider">
-              <span class="auth-form__divider-text">Or continue with</span>
-            </div>
-
-            <Button type="submit" name="provider" value="github" variant="secondary" size="md">
-              <span slot="text">GitHub</span>
-            </Button>
           </form>
         </CardContent>
 
@@ -92,77 +85,15 @@ if (accessToken && refreshToken) {
 </Layout>
 
 <style>
-/* ===== Auth Page Layout ===== */
-.auth-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background-color: var(--muted);
-}
-
-.auth-page__container {
-  width: 100%;
-  max-width: var(--container-sm);
-}
-
-.auth-page__card {
-  width: 100%;
-}
-
-/* ===== Auth Form ===== */
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.auth-form__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-xs);
-}
-
-.auth-form__divider {
-  position: relative;
-  text-align: center;
-  margin: var(--spacing-xs) 0;
-}
-
-.auth-form__divider::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background-color: var(--border);
-}
-
-.auth-form__divider-text {
-  position: relative;
-  display: inline-block;
-  padding: 0 0.75rem;
-  background-color: var(--card);
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-/* ===== Footer ===== */
-.auth-page__footer-text {
-  text-align: center;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-.auth-page__link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-}
-
-.auth-page__link:hover {
-  text-decoration: underline;
-}
+.auth-page {min-height: 100vh;display: flex;align-items: center; justify-content: center;padding: 1rem;background-color: var(--muted);}
+.auth-page__container {width: 100%;max-width: var(--container-sm);}
+.auth-page__card {width: 100%;}
+.auth-form {display: flex;flex-direction: column;gap: 1.5rem;}
+.auth-form__field {display: flex;flex-direction: column;gap: var(--gap-xs);}
+.auth-form__divider {position: relative;text-align: center;margin: var(--spacing-xs) 0;}
+.auth-form__divider::before {content: '';position: absolute;top: 50%;left: 0;right: 0;height: 1px;background-color: var(--border);}
+.auth-form__divider-text {position: relative;display: inline-block;padding: 0 0.75rem;background-color: var(--card);font-size: var(--text-sm);color: var(--muted-foreground);}
+.auth-page__footer-text {text-align: center;font-size: var(--text-sm);color: var(--muted-foreground);}
+.auth-page__link {color: var(--primary);text-decoration: none;font-weight: var(--font-weight-medium);}
+.auth-page__link:hover {text-decoration: underline;}
 </style>

@@ -24,6 +24,7 @@
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.76.1",
     "astro": "^5.15.1",
+    "resend": "^6.3.0",
     "solid-js": "^1.9.9",
     "stripe": "^19.1.0",
     "zod": "^3.25.76"
