@@ -2,8 +2,6 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
-import Input from "@/components/Input.astro";
-import Tag from "@/components/Tag.astro";
 import { getPublishedAssets, getPopularTags } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import PageHeader from "@/components/PageHeader.astro";
@@ -36,58 +34,6 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
     <div class="page__container">
       <!-- Page Header -->
       <PageHeader title="Assets" description="Browse assets owned and created by you."/>
-
-      <!-- Search and Filters -->
-        <form method="GET" action="/assets" class="assets-filters">
-          <div class="assets-filters__search">
-            <Input
-              type="search"
-              name="search"
-              placeholder="Search assets..."
-              value={searchQuery}
-            />
-          </div>
-
-          <div class="assets-filters__tags">
-            <p class="assets-filters__label">Popular Tags:</p>
-            <div class="assets-filters__tag-list">
-              {popularTags.length > 0 ? (
-                popularTags.map((tag) => (
-                  <a
-                    href={`/assets?tag=${encodeURIComponent(tag.value)}`}
-                    class={`assets-filters__tag-link ${tagFilter === tag.value ? 'assets-filters__tag-link--active' : ''}`}
-                  >
-                    <Tag variant={tagFilter === tag.value ? 'primary' : 'default'}>
-                      {tag.value} ({tag.count})
-                    </Tag>
-                  </a>
-                ))
-              ) : (
-                <p class="assets-filters__no-tags">No tags available yet</p>
-              )}
-            </div>
-          </div>
-
-          {(searchQuery || tagFilter) && (
-            <div class="assets-filters__active">
-              <p class="assets-filters__label">Active Filters:</p>
-              <div class="assets-filters__active-list">
-                {searchQuery && (
-                  <span class="assets-filters__active-item">
-                    Search: "{searchQuery}"
-                    <a href="/assets" class="assets-filters__clear">×</a>
-                  </span>
-                )}
-                {tagFilter && (
-                  <span class="assets-filters__active-item">
-                    Tag: {tagFilter}
-                    <a href={searchQuery ? `/assets?search=${encodeURIComponent(searchQuery)}` : '/assets'} class="assets-filters__clear">×</a>
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-        </form>
 
       <!-- Assets Grid -->
       {assets.length > 0 ? (
@@ -245,6 +191,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 
 /* ===== Assets Grid ===== */
 .assets-grid {
+  width: "100%";
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
   gap: var(--gap-xl);

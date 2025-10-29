@@ -9,6 +9,6 @@
     },
     "types": ["astro/client"]
   },
-  "include": [".astro/types.d.ts", "**/*"],
+  "include": [".astro/types.d.ts", "**/*", "src/pages/assets/[asset]/.json.ts"],
   "exclude": ["dist"]
 }

@@ -261,6 +261,7 @@ p {
 }
 
 .page__container {
+  flex: 1;
   max-width: 75rem;
   margin: 0 auto;
   display: flex;
