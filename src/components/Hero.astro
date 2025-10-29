@@ -1,0 +1,87 @@
+<div class="hero__container">
+  <div class="hero__section hero__content">
+    <h1>Tabletop Game Development and Licensing Tools</h1>
+    <p>Discover and create assets, license your work, and partner with creators to design and produce tabletop games.</p>
+    <a href="/sign-up"><button class="hero__button">Get Started</button></a>
+  </div>
+  <div class="hero__section hero__image">
+    <img src="https://placehold.co/600x600" alt="Showcase" />
+  </div>
+</div>
+
+<style>
+  .hero__container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    gap: var(--spacing-3xl);
+    border-radius: var(--radius-lg);
+  }
+
+  .hero__section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--muted);
+    border-radius: var(--radius-lg);
+  }
+
+  .hero__image {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .hero__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero__content {
+    padding: var(--spacing-3xl);
+  }
+
+  .hero__content h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .hero__content p {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+  }
+
+  .hero__button {
+    background: #111827;
+    color: white;
+    padding: 0.875rem 1.75rem;
+    border: none;
+    border-radius: 9999px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    align-self: start;
+  }
+
+  .hero__button:hover {
+    background: #1f2937;
+  }
+
+  @media (max-width: 900px) {
+    .hero__container {
+      grid-template-columns: 1fr;
+      height: auto;
+    }
+
+    .hero__content h1 {
+      font-size: 2.25rem;
+    }
+
+    .hero__image img {
+      height: 400px;
+    }
+  }
+</style>

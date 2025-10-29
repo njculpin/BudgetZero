@@ -141,10 +141,10 @@ errorMessage = errorMessage || Astro.url.searchParams.get('error') || '';
 ---
 
 <Layout title="Shopping Cart - Game Loopers">
-  <div class="cart-page">
-    <div class="cart-page__container">
-      <div class="cart-page__header">
-        <h1 class="cart-page__title">Shopping Cart</h1>
+  <div class="page">
+    <div class="page__container">
+      <div class="page__header">
+        <h1 class="page__title">Shopping Cart</h1>
       </div>
 
       {showAddedMessage && (
@@ -295,28 +295,6 @@ errorMessage = errorMessage || Astro.url.searchParams.get('error') || '';
 </Layout>
 
 <style>
-.cart-page {
-  min-height: calc(100vh - 64px);
-  background-color: var(--color-background, #f9fafb);
-  padding: var(--spacing-4xl) var(--spacing-2xl);
-}
-
-.cart-page__container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.cart-page__header {
-  margin-bottom: var(--spacing-3xl);
-}
-
-.cart-page__title {
-  margin: 0;
-  font-size: var(--text-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--foreground);
-}
-
 .cart-alert {
   padding: var(--spacing-2xl);
   border-radius: var(--radius-md);

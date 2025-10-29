@@ -2,8 +2,6 @@
 import Button from "./Button.astro";
 import { setSession } from '@/lib/auth';
 
-const currentPath = Astro.url.pathname;
-
 // Check authentication via cookies
 let isAuthenticated = false;
 const accessToken = Astro.cookies.get("sb-access-token");
@@ -30,6 +28,8 @@ if (accessToken && refreshToken) {
       <span class="navigation__logo"><h3>Game Loopers</h3></span>
     </a>
 
+    {
+    isAuthenticated && 
     <div class="navigation__menu">
       <a href="/documents">
         <Button variant="ghost" size="sm">
@@ -87,6 +87,7 @@ if (accessToken && refreshToken) {
         </Button>
       </a>
     </div>
+    }
 
     <div class="navigation__actions">
       {isAuthenticated ? (
@@ -110,7 +111,7 @@ if (accessToken && refreshToken) {
             </Button>
           </a>
           <a href="/sign-up">
-            <Button variant="primary" size="sm">
+            <Button variant="accent" size="sm">
               <span slot="text">Sign up</span>
             </Button>
           </a>
@@ -127,8 +128,7 @@ if (accessToken && refreshToken) {
   top: 0;
   z-index: 50;
   width: 100%;
-  border-bottom: 1px solid var(--border);
-  background-color: oklch(from var(--background) l c h / 0.8);
+  background-color: var(--background);
   backdrop-filter: blur(8px);
 }
 
@@ -138,7 +138,7 @@ if (accessToken && refreshToken) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-xs)
+  padding: 0;
   gap: 2rem;
 }
 
@@ -153,7 +153,6 @@ if (accessToken && refreshToken) {
 
 .navigation__logo {
   font-size: var(--text-xl);
-  font-weight: var(--font-weight-bold);
   color: var(--primary);
   margin-right: var(--spacing-lg)
 }

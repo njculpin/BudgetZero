@@ -1,26 +1,10 @@
 import type { APIRoute } from "astro";
-import { signInWithPassword, signInWithOAuth, type Provider } from "../../../lib/auth";
+import { signInWithPassword } from "../../../lib/auth";
 
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const formData = await request.formData();
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
-  const provider = formData.get("provider")?.toString();
-
-  const validProviders = ["google", "github", "discord"];
-
-  if (provider && validProviders.includes(provider)) {
-    const { data, error } = await signInWithOAuth({
-      provider: provider as Provider,
-      redirectTo: "http://localhost:4321/api/auth/callback",
-    });
-
-    if (error) {
-      return new Response(error.message, { status: 500 });
-    }
-
-    return redirect(data.url);
-  }
 
   if (!email || !password) {
     return new Response("Email and password are required", { status: 400 });
@@ -35,7 +19,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     console.error("Sign-in error:", error.message, error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -43,7 +27,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     console.error("No session returned from sign-in");
     return new Response(JSON.stringify({ error: "No session returned" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
   }
 
