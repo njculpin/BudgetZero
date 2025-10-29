@@ -33,48 +33,6 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
         <p class="page-header__description">Discover tabletop games from the community</p>
       </div>
 
-      <Card>
-        <CardContent>
-          <form method="GET" action="/products" class="products-filters">
-            <div class="products-filters__search">
-              <Input type="search" name="search" placeholder="Search products..." value={searchQuery} />
-            </div>
-
-            <div class="products-filters__tags">
-              <p class="products-filters__label">Popular Tags:</p>
-              <div class="products-filters__tag-list">
-                {popularTags.length > 0 ? (
-                  popularTags.map((tag) => (
-                    <a href={`/products?tag=${encodeURIComponent(tag.value)}`}
-                       class={`products-filters__tag-link ${tagFilter === tag.value ? 'products-filters__tag-link--active' : ''}`}>
-                      <Tag variant={tagFilter === tag.value ? 'primary' : 'default'}>{tag.value} ({tag.count})</Tag>
-                    </a>
-                  ))
-                ) : (<p class="products-filters__no-tags">No tags available</p>)}
-              </div>
-            </div>
-
-            {(searchQuery || tagFilter) && (
-              <div class="products-filters__active">
-                <p class="products-filters__label">Active Filters:</p>
-                <div class="products-filters__active-list">
-                  {searchQuery && (
-                    <span class="products-filters__active-item">Search: "{searchQuery}"
-                      <a href="/products" class="products-filters__clear">×</a>
-                    </span>
-                  )}
-                  {tagFilter && (
-                    <span class="products-filters__active-item">Tag: {tagFilter}
-                      <a href={searchQuery ? `/products?search=${encodeURIComponent(searchQuery)}` : '/products'} class="products-filters__clear">×</a>
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-          </form>
-        </CardContent>
-      </Card>
-
       {products.length > 0 ? (
         <div class="products-grid">
           {products.map((product) => {
