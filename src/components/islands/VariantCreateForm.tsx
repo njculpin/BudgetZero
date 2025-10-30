@@ -6,6 +6,7 @@ import {
   ErrorMessage,
   SuccessMessage,
 } from "./base";
+import "./base/base.css";
 
 export interface VariantCreateFormProps {
   productId: string;

@@ -153,15 +153,41 @@ export const createAsset = async (
     return null;
   }
 
-  return data as Asset;
+  const asset = data as Asset;
+
+  // Automatically create a 100% royalty for the owner
+  const { error: royaltyError } = await client
+    .from("asset_royalties")
+    .insert({
+      asset_id: asset.id,
+      user_id: userId,
+      royalty_type: "percentage",
+      royalty_value: 100,
+    });
+
+  if (royaltyError) {
+    console.error("Error creating default royalty:", royaltyError);
+    // Don't fail asset creation if royalty creation fails
+  }
+
+  return asset;
 };
 
 /**
  * Fetch asset by ID
  * Returns null if asset doesn't exist or is deleted
+ * @param authTokens - Optional auth tokens to see own draft assets via RLS
  */
-export const getAssetById = async (assetId: string): Promise<Asset | null> => {
-  const { data, error } = await dataClient
+export const getAssetById = async (
+  assetId: string,
+  authTokens?: AuthTokens
+): Promise<Asset | null> => {
+  // Use authenticated client if tokens provided (to see own drafts via RLS)
+  const client = authTokens
+    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
+    : dataClient;
+
+  const { data, error } = await client
     .from("assets")
     .select("*")
     .eq("id", assetId)
@@ -178,15 +204,21 @@ export const getAssetById = async (assetId: string): Promise<Asset | null> => {
 /**
  * Fetch asset by handle (case-insensitive)
  * Returns null if asset doesn't exist or is deleted
+ * @param authTokens - Optional auth tokens to see own draft assets via RLS
  */
 export const getAssetByHandle = async (
-  handle: string
+  handle: string,
+  authTokens?: AuthTokens
 ): Promise<Asset | null> => {
-  const { data, error } = await dataClient
+  // Use authenticated client if tokens provided (to see own drafts via RLS)
+  const client = authTokens
+    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
+    : dataClient;
+
+  const { data, error } = await client
     .from("assets")
     .select("*")
-    .ilike("handle", handle)
-    .eq("deleted", false)
+    .eq("handle", handle)
     .single();
 
   if (error) {
@@ -199,12 +231,19 @@ export const getAssetByHandle = async (
 /**
  * Fetch all assets for a user
  * Optionally filter by status
+ * @param authTokens - Optional auth tokens to see draft assets via RLS
  */
 export const getUserAssets = async (
   userId: string,
-  status?: AssetStatus
+  status?: AssetStatus,
+  authTokens?: AuthTokens
 ): Promise<Asset[]> => {
-  let query = dataClient
+  // Use authenticated client if tokens provided (to see drafts via RLS)
+  const client = authTokens
+    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
+    : dataClient;
+
+  let query = client
     .from("assets")
     .select("*")
     .eq("user_id", userId)
@@ -231,29 +270,34 @@ export const getUserAssets = async (
  * @param tags - Filter by tag values
  * @param limit - Maximum number of results (default: 50)
  * @param offset - Pagination offset (default: 0)
+ * @param authTokens - Optional auth tokens to see own draft assets
  */
-export const getPublishedAssets = async (
+export const getAssets = async (
   searchQuery?: string,
   tags?: string[],
   limit: number = 50,
-  offset: number = 0
+  offset: number = 0,
+  authTokens?: AuthTokens
 ): Promise<Asset[]> => {
-  let query = dataClient
+  // Use authenticated client if tokens provided (to see own drafts via RLS)
+  const client = authTokens
+    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
+    : dataClient;
+
+  let query = client
     .from("assets")
     .select("*")
-    .eq("status", "published")
-    .eq("deleted", false)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   // Apply search filter if provided
   if (searchQuery && searchQuery.trim()) {
-    query = query.or(
-      `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
-    );
+    query = query.or(`title.ilike.%${searchQuery}%`);
   }
 
   const { data, error } = await query;
+
+  console.log(data);
 
   if (error) {
     console.error("Error fetching published assets:", error);
@@ -267,7 +311,7 @@ export const getPublishedAssets = async (
     const assetIds = new Set<string>();
 
     for (const tag of tags) {
-      const { data: tagData } = await dataClient
+      const { data: tagData } = await client
         .from("asset_tags")
         .select("asset_id")
         .eq("value", tag.toLowerCase())
@@ -289,17 +333,41 @@ export const getPublishedAssets = async (
  * Update asset
  * Throws error if handle is taken by another asset
  * Requires authenticated client for RLS
+ * Automatically generates handle from title if title is updated
  */
 export const updateAsset = async (
   assetId: string,
   updates: UpdateAssetParams,
   authTokens: AuthTokens
 ): Promise<Asset | null> => {
-  // If updating handle, check availability first
-  if (updates.handle) {
-    const isAvailable = await checkHandleAvailability(updates.handle, assetId);
-    if (!isAvailable) {
-      throw new Error("Handle is already taken");
+  const updatesToApply = { ...updates };
+
+  // If updating title, generate new handle from it
+  if (updates.title) {
+    // Generate handle from title: lowercase, remove special chars, spaces to dashes
+    const titleSlug = updates.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with dashes
+      .replace(/^-|-$/g, ""); // Remove leading/trailing dashes
+
+    // Check if new handle is available (excluding current asset)
+    const isAvailable = await checkHandleAvailability(titleSlug, assetId);
+
+    if (isAvailable) {
+      updatesToApply.handle = titleSlug;
+    } else {
+      // If handle is taken, try with a unique suffix
+      let counter = 1;
+      let uniqueHandle = `${titleSlug}-${counter}`;
+      let available = await checkHandleAvailability(uniqueHandle, assetId);
+
+      while (!available) {
+        counter++;
+        uniqueHandle = `${titleSlug}-${counter}`;
+        available = await checkHandleAvailability(uniqueHandle, assetId);
+      }
+
+      updatesToApply.handle = uniqueHandle;
     }
   }
 
@@ -311,7 +379,7 @@ export const updateAsset = async (
   const { error } = await client
     .from("assets")
     .update({
-      ...updates,
+      ...updatesToApply,
       updated_at: new Date().toISOString(),
     })
     .eq("id", assetId);
@@ -321,7 +389,7 @@ export const updateAsset = async (
   }
 
   // Fetch and return the updated asset
-  return getAssetById(assetId);
+  return getAssetById(assetId, authTokens);
 };
 
 /**
@@ -685,6 +753,45 @@ export const deleteAssetTag = async (
   }
 
   return true;
+};
+
+/**
+ * Get published assets
+ * Returns only assets with status 'published'
+ */
+export const getPublishedAssets = async (
+  searchTerm?: string,
+  authTokens?: AuthTokens,
+  limit: number = 20,
+  offset: number = 0
+): Promise<Asset[]> => {
+  const client = authTokens
+    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
+    : dataClient;
+
+  let query = client
+    .from("assets")
+    .select("*")
+    .eq("status", "published")
+    .eq("deleted", false)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  // Add search filter if provided
+  if (searchTerm && searchTerm.trim().length > 0) {
+    query = query.or(
+      `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`
+    );
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching published assets:", error);
+    return [];
+  }
+
+  return data as Asset[];
 };
 
 /**

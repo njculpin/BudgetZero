@@ -8,6 +8,7 @@ import {
   SuccessMessage,
   ConfirmDialog,
 } from "./base";
+import "./base/base.css";
 import type { Asset, ProductVariantPrice } from "@/types";
 
 export interface VariantCardProps {

@@ -8,6 +8,7 @@ import {
   SuccessMessage,
 } from "./base";
 import TagInput from "./TagInput";
+import "./base/base.css";
 
 export interface ProductEditFormProps {
   productId: string;

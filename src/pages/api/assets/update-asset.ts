@@ -64,8 +64,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const files = formData.getAll("files") as File[];
     const images = formData.getAll("images") as File[];
 
-    // Verify ownership
-    const asset = await getAssetById(assetId);
+    // Prepare auth tokens
+    const authTokens = {
+      accessToken: accessToken.value,
+      refreshToken: refreshToken.value,
+    };
+
+    // Verify ownership (pass auth tokens to see own drafts)
+    const asset = await getAssetById(assetId, authTokens);
     if (!asset || asset.user_id !== userId) {
       return new Response(JSON.stringify({ error: "Not authorized" }), {
         status: 403,
@@ -81,10 +87,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         description: description || undefined,
         status: status as "draft" | "published" | "archived" | undefined,
       },
-      {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      }
+      authTokens
     );
 
     if (!updatedAsset) {
@@ -105,10 +108,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       // For now, just add new tags (we can add delete functionality later)
       for (const tag of tags) {
         if (!existingTags.find(t => t.value === tag)) {
-          await createAssetTag(assetId, tag, {
-            accessToken: accessToken.value,
-            refreshToken: refreshToken.value,
-          });
+          await createAssetTag(assetId, tag, authTokens);
         }
       }
     }
@@ -135,10 +135,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 file_size_bytes: uploadResult.size,
                 mime_type: file.type,
               },
-              {
-                accessToken: accessToken.value,
-                refreshToken: refreshToken.value,
-              }
+              authTokens
             );
           }
         }
@@ -167,10 +164,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 file_size_bytes: uploadResult.size,
                 mime_type: image.type,
               },
-              {
-                accessToken: accessToken.value,
-                refreshToken: refreshToken.value,
-              }
+              authTokens
             );
           }
         }

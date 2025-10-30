@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
-import { getPublishedAssets, getPopularTags } from "@/lib/data-access/assets";
+import { getAssets, getUserAssets } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import PageHeader from "@/components/PageHeader.astro";
 import { setSession } from "@/lib/auth";
@@ -35,15 +35,28 @@ const page = parseInt(searchParams.get('page') || '1');
 const limit = 20;
 const offset = (page - 1) * limit;
 
-// Fetch assets with filters
-const tagArray = tagFilter ? [tagFilter] : undefined;
-const assets = await getPublishedAssets(searchQuery, tagArray, limit, offset);
+// Prepare auth tokens
+const authTokens = currentUser && accessToken && refreshToken
+  ? { accessToken: accessToken.value, refreshToken: refreshToken.value }
+  : undefined;
 
-// Fetch popular tags for filter suggestions
-const popularTags = await getPopularTags(10);
+// Fetch user's assets if logged in
+const userAssets = currentUser
+  ? await getUserAssets(currentUser.id, undefined, authTokens)
+  : [];
+
+// Fetch all assets with filters
+const tagArray = tagFilter ? [tagFilter] : undefined;
+const allAssetsFetched = await getAssets(searchQuery, tagArray, limit, offset, authTokens);
+
+// Filter out current user's assets from "All Assets" (they're shown in "Your Assets")
+const allAssets = currentUser
+  ? allAssetsFetched.filter(asset => asset.user_id !== currentUser.id)
+  : allAssetsFetched;
 
 // Fetch asset owners (batch fetch to avoid N+1 queries)
-const ownerIds = [...new Set(assets.map(a => a.user_id))];
+const allAssetsList = [...userAssets, ...allAssets];
+const ownerIds = [...new Set(allAssetsList.map(a => a.user_id))];
 const owners = await Promise.all(ownerIds.map(id => getUserById(id)));
 const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 ---
@@ -53,63 +66,102 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
     <div class="page__container">
       <!-- Page Header -->
       <div class="page-header-with-action">
-        <PageHeader title="Assets" description="Browse assets owned and created by you."/>
+        <PageHeader title="Assets" description="Browse digital assets for tabletop games."/>
         {currentUser && (
           <AssetCreateButton />
         )}
       </div>
 
-      <!-- Assets Grid -->
-      {assets.length > 0 ? (
-        <div class="assets-grid">
-          {assets.map((asset) => {
-            const owner = ownersMap.get(asset.user_id);
-            return (
-              <a href={`/assets/${asset.handle}`} class="asset-card">
-                <div class="asset-card__content">
-                  <h3 class="asset-card__title">{asset.title}</h3>
-                  {asset.description && (
-                    <p class="asset-card__description">
-                      {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
-                    </p>
-                  )}
-                  <div class="asset-card__meta">
-                    <span class="asset-card__author">
-                      by {owner?.name || owner?.handle || 'Unknown'}
-                    </span>
+      <!-- Your Assets Section -->
+      {currentUser && userAssets.length > 0 && (
+        <div class="assets-section">
+          <h2 class="assets-section__title">Your Assets</h2>
+          <div class="assets-grid">
+            {userAssets.map((asset) => {
+              return (
+                <a href={`/assets/${asset.handle}`} class="asset-card">
+                  <div class="asset-card__content">
+                    <h3 class="asset-card__title">{asset.title}</h3>
+                    {asset.description && (
+                      <p class="asset-card__description">
+                        {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
+                      </p>
+                    )}
+                    <div class="asset-card__meta">
+                      <span class="asset-card__status asset-card__status--{asset.status}">
+                        {asset.status}
+                      </span>
+                    </div>
+                    <div class="asset-card__stats">
+                      <span class="asset-card__stat">
+                        {asset.file_count} file{asset.file_count !== 1 ? 's' : ''}
+                      </span>
+                      <span class="asset-card__stat">
+                        {asset.download_count} download{asset.download_count !== 1 ? 's' : ''}
+                      </span>
+                    </div>
                   </div>
-                  <div class="asset-card__stats">
-                    <span class="asset-card__stat">
-                      {asset.file_count} file{asset.file_count !== 1 ? 's' : ''}
-                    </span>
-                    <span class="asset-card__stat">
-                      {asset.download_count} download{asset.download_count !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                </div>
-              </a>
-            );
-          })}
+                </a>
+              );
+            })}
+          </div>
         </div>
-      ) : (
-        <Card>
-          <CardContent>
-            <div class="assets-empty">
-              <p class="assets-empty__text">
-                {searchQuery || tagFilter
-                  ? "No assets found matching your search criteria."
-                  : "No assets available yet."}
-              </p>
-              {(searchQuery || tagFilter) && (
-                <a href="/assets" class="assets-empty__link">Clear filters</a>
-              )}
-            </div>
-          </CardContent>
-        </Card>
       )}
 
+      <!-- All Assets Section -->
+      <div class="assets-section">
+        <h2 class="assets-section__title">All Assets</h2>
+        {allAssets.length > 0 ? (
+          <div class="assets-grid">
+            {allAssets.map((asset) => {
+              const owner = ownersMap.get(asset.user_id);
+              return (
+                <a href={`/assets/${asset.handle}`} class="asset-card">
+                  <div class="asset-card__content">
+                    <h3 class="asset-card__title">{asset.title}</h3>
+                    {asset.description && (
+                      <p class="asset-card__description">
+                        {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
+                      </p>
+                    )}
+                    <div class="asset-card__meta">
+                      <span class="asset-card__author">
+                        by {owner?.name || owner?.handle || 'Unknown'}
+                      </span>
+                    </div>
+                    <div class="asset-card__stats">
+                      <span class="asset-card__stat">
+                        {asset.file_count} file{asset.file_count !== 1 ? 's' : ''}
+                      </span>
+                      <span class="asset-card__stat">
+                        {asset.download_count} download{asset.download_count !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        ) : (
+          <Card>
+            <CardContent>
+              <div class="assets-empty">
+                <p class="assets-empty__text">
+                  {searchQuery || tagFilter
+                    ? "No assets found matching your search criteria."
+                    : "No assets available yet."}
+                </p>
+                {(searchQuery || tagFilter) && (
+                  <a href="/assets" class="assets-empty__link">Clear filters</a>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
       <!-- Pagination -->
-      {assets.length === limit && (
+      {allAssets.length === limit && (
         <div class="assets-pagination">
           {page > 1 && (
             <a
@@ -145,6 +197,18 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 .page-header-action {
   text-decoration: none;
   flex-shrink: 0;
+}
+
+/* ===== Assets Section ===== */
+.assets-section {
+  margin-bottom: var(--spacing-4xl);
+}
+
+.assets-section__title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text, #111827);
+  margin: 0 0 var(--spacing-2xl);
 }
 
 /* ===== Filters ===== */
@@ -292,6 +356,30 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 .asset-card__stat {
   font-size: var(--text-sm);
   color: var(--color-text-muted, #6b7280);
+}
+
+.asset-card__status {
+  display: inline-block;
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+
+.asset-card__status--draft {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.asset-card__status--published {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.asset-card__status--archived {
+  background-color: #e5e7eb;
+  color: #374151;
 }
 
 /* ===== Empty State ===== */

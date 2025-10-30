@@ -119,3 +119,29 @@ export const checkHandleAvailability = async (
   // Handle is available if no records found
   return !data || data.length === 0;
 };
+
+/**
+ * Search users by handle or name
+ * Returns up to 10 matching users
+ */
+export const searchUsers = async (query: string): Promise<User[]> => {
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+
+  const searchTerm = `%${query.trim()}%`;
+
+  const { data, error } = await dataClient
+    .from('users')
+    .select('*')
+    .eq('deleted', false)
+    .or(`handle.ilike.${searchTerm},name.ilike.${searchTerm}`)
+    .limit(10);
+
+  if (error) {
+    console.error('Error searching users:', error);
+    return [];
+  }
+
+  return data as User[];
+};
