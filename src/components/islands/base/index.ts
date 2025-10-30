@@ -2,6 +2,7 @@
 export { default as FormField } from "./FormField";
 export { default as TextAreaField } from "./TextAreaField";
 export { default as SelectField } from "./SelectField";
+export { default as FileUploadField } from "./FileUploadField";
 
 // Feedback Components
 export { default as ErrorMessage } from "./ErrorMessage";

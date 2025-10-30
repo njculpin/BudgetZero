@@ -1,9 +1,11 @@
+import type { JSX } from "solid-js";
+
 interface TextAreaFieldProps {
   label: string;
   name: string;
   id?: string;
   value: string;
-  onInput: (e: InputEvent) => void;
+  onInput: JSX.EventHandler<HTMLTextAreaElement, InputEvent>;
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;

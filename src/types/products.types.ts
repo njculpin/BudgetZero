@@ -1,10 +1,11 @@
 import type { BaseEntity } from "./common.types";
 
-export type ProductStatus = 'draft' | 'published' | 'archived';
-export type ProductCollaboratorRole = 'owner' | 'editor' | 'viewer';
+export type ProductStatus = "draft" | "published" | "archived";
+export type ProductCollaboratorRole = "owner" | "editor" | "viewer";
 
 export interface Product extends BaseEntity {
   handle: string;
+  cover_image_url: string | null;
   title: string;
   user_id: string;
   description: string;
@@ -38,14 +39,17 @@ export interface ProductVariant extends BaseEntity {
   title: string;
   description: string;
   sku: string;
+  is_digital: boolean;
   options: Record<string, unknown>;
   position: number;
 }
 
 export interface ProductVariantPrice extends BaseEntity {
   variant_id: string;
-  default_amount_cents: number;
-  default_currency: string;
+  currency: string;
+  unit_amount: number;
+  min_quantity: number;
+  max_quantity: number | null;
 }
 
 export interface ProductPriceBreak extends BaseEntity {

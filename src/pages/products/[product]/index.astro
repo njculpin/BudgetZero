@@ -8,7 +8,8 @@ import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
 import AddToCartButton from "@/components/islands/AddToCartButton";
-import { getProductByHandle, getProductTags, getProductVariants, deleteProduct, getVariantPrices } from "@/lib/data-access/products";
+import ProductDeleteButton from "@/components/islands/ProductDeleteButton";
+import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 
@@ -56,23 +57,6 @@ const isOwner = currentUser?.id === productData.user_id;
 if (productData.status !== 'published' && !isOwner) {
   return Astro.redirect('/404');
 }
-
-// Handle delete action only (add-to-cart now handled client-side)
-if (Astro.request.method === "POST") {
-  const formData = await Astro.request.formData();
-  const action = formData.get("action");
-
-  if (action === "delete" && isOwner && accessToken && refreshToken) {
-    const success = await deleteProduct(productData.id, {
-      accessToken: accessToken.value,
-      refreshToken: refreshToken.value,
-    });
-
-    if (success) {
-      return Astro.redirect(`/users/${owner?.handle}`);
-    }
-  }
-}
 ---
 
 <Layout title={`${productData.title} - Game Loopers`}>
@@ -91,12 +75,12 @@ if (Astro.request.method === "POST") {
                         <span slot="text">Edit</span>
                       </Button>
                     </a>
-                    <form method="POST" id="delete-form">
-                      <input type="hidden" name="action" value="delete" />
-                      <Button type="button" variant="destructive" size="sm" id="delete-button">
-                        <span slot="text">Delete</span>
-                      </Button>
-                    </form>
+                    <ProductDeleteButton
+                      client:load
+                      productId={productData.id}
+                      productTitle={productData.title}
+                      redirectUrl={`/users/${owner?.handle}`}
+                    />
                   </div>
                 )}
               </div>
@@ -242,15 +226,3 @@ if (Astro.request.method === "POST") {
 .product-empty { text-align: center; padding: var(--spacing-5xl) var(--spacing-3xl); }
 .product-empty__text { margin: 0 0 var(--spacing-3xl) 0; font-size: var(--text-base); color: var(--muted-foreground); }
 </style>
-
-<script>
-  const deleteButton = document.getElementById('delete-button');
-  const deleteForm = document.getElementById('delete-form');
-  if (deleteButton && deleteForm) {
-    deleteButton.addEventListener('click', () => {
-      if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-        deleteForm.submit();
-      }
-    });
-  }
-</script>

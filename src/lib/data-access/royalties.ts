@@ -33,6 +33,24 @@ export const getAssetRoyalties = async (assetId: string): Promise<AssetRoyalty[]
 };
 
 /**
+ * Get a specific royalty by ID
+ */
+export const getRoyaltyById = async (royaltyId: string): Promise<AssetRoyalty | null> => {
+  const { data, error } = await dataClient
+    .from('asset_royalties')
+    .select('*')
+    .eq('id', royaltyId)
+    .eq('deleted', false)
+    .single();
+
+  if (error) {
+    return null;
+  }
+
+  return data as AssetRoyalty;
+};
+
+/**
  * Create a new royalty for an asset
  */
 export const createAssetRoyalty = async (
