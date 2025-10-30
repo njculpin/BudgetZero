@@ -4,6 +4,7 @@ import {
   ErrorMessage,
   ConfirmDialog,
 } from "./base";
+import "./base/base.css";
 
 export interface ProductDeleteButtonProps {
   productId: string;

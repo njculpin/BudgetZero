@@ -23,7 +23,13 @@
       "Bash(npm run test:run:*)",
       "Bash(find:*)",
       "Bash(test:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(for file in \"C:\\Users\\Nick\\Documents\\GitHub\\BudgetZero\\src\\components\\islands\"/*.tsx)",
+      "Bash(do if grep -q \"from \"\"./base\"\"\" \"$file\")",
+      "Bash(! grep -q \"base.css\" \"$file\")",
+      "Bash(then echo \"$file\")",
+      "Bash(fi)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

@@ -8,19 +8,29 @@ import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import AssetDeleteButton from "@/components/islands/AssetDeleteButton";
 import { getAssetByHandle, getAssetFiles, getAssetImages, getAssetTags } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 
 const { asset } = Astro.params;
 
+console.log("Asset handle:", asset);
+
 if (!asset) {
   return Astro.redirect('/404');
 }
 
-// Fetch the asset
-const assetData = await getAssetByHandle(asset);
+// Check authentication first
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+const authTokens = accessToken && refreshToken
+  ? { accessToken: accessToken.value, refreshToken: refreshToken.value }
+  : undefined;
+
+// Fetch the asset (with auth to see own drafts)
+const assetData = await getAssetByHandle(asset, authTokens);
+
+console.log("Fetched asset data:", assetData);
 
 if (!assetData) {
   return Astro.redirect('/404');
@@ -34,11 +44,8 @@ const files = await getAssetFiles(assetData.id);
 const images = await getAssetImages(assetData.id);
 const tags = await getAssetTags(assetData.id);
 
-// Check if viewing own asset
+// Get current user for ownership check
 let currentUser = null;
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
-
 if (accessToken && refreshToken) {
   try {
     const session = await setSession({
@@ -55,15 +62,15 @@ if (accessToken && refreshToken) {
 
 const isOwner = currentUser?.id === assetData.user_id;
 
-// Only show if published or if user is the owner
-if (assetData.status !== 'published' && !isOwner) {
-  return Astro.redirect('/404');
-}
+// // Only show if published or if user is the owner
+// if (assetData.status !== 'published' && !isOwner) {
+//   return Astro.redirect('/404');
+// }
 ---
 
 <Layout title={`${assetData.title} - Game Loopers`}>
-  <div class="asset-page">
-    <div class="asset-page__container">
+  <div class="page">
+    <div class="page__container">
       <!-- Asset Header -->
       <Card className="asset-card">
         <CardHeader>
@@ -78,12 +85,6 @@ if (assetData.status !== 'published' && !isOwner) {
                         <span slot="text">Edit</span>
                       </Button>
                     </a>
-                    <AssetDeleteButton
-                      client:load
-                      assetId={assetData.id}
-                      assetTitle={assetData.title}
-                      redirectUrl={`/users/${owner?.handle}`}
-                    />
                   </div>
                 )}
               </div>

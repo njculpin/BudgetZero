@@ -1,5 +1,6 @@
 import { createSignal, Show } from "solid-js";
 import { LoadingButton, ErrorMessage, ConfirmDialog } from "./base";
+import "./base/base.css";
 
 export interface AssetDeleteButtonProps {
   assetId: string;

@@ -1,4 +1,4 @@
-import { createSignal, Show, For } from "solid-js";
+import { createSignal, Show, For, createEffect } from "solid-js";
 import {
   FormField,
   SelectField,
@@ -6,6 +6,7 @@ import {
   ErrorMessage,
   SuccessMessage,
 } from "./base";
+import "./base/base.css";
 
 export interface RoyaltyWithUser {
   id: string;
@@ -20,12 +21,25 @@ export interface RoyaltyWithUser {
 
 export interface RoyaltyManagementFormProps {
   assetId: string;
+  ownerId: string;
   initialRoyalties: RoyaltyWithUser[];
   onUpdate: () => void;
 }
 
+interface SearchUser {
+  id: string;
+  handle: string;
+  name: string | null;
+  avatar_url: string | null;
+}
+
 export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps) {
   const [contributorUserId, setContributorUserId] = createSignal("");
+  const [contributorHandle, setContributorHandle] = createSignal("");
+  const [searchQuery, setSearchQuery] = createSignal("");
+  const [searchResults, setSearchResults] = createSignal<SearchUser[]>([]);
+  const [isSearching, setIsSearching] = createSignal(false);
+  const [showSearchResults, setShowSearchResults] = createSignal(false);
   const [royaltyType, setRoyaltyType] = createSignal<"fixed" | "percentage">("percentage");
   const [royaltyValue, setRoyaltyValue] = createSignal("");
   const [isAdding, setIsAdding] = createSignal(false);
@@ -34,10 +48,57 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
   const [success, setSuccess] = createSignal("");
   const [showAddForm, setShowAddForm] = createSignal(false);
 
+  // Debounced search effect
+  let searchTimeout: number;
+  createEffect(() => {
+    const query = searchQuery();
+
+    if (query.trim().length < 2) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    clearTimeout(searchTimeout);
+    setIsSearching(true);
+
+    searchTimeout = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/users/search-users?q=${encodeURIComponent(query)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data.users || []);
+          setShowSearchResults(true);
+        }
+      } catch (err) {
+        console.error("Error searching users:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+  });
+
   const calculateTotalPercentage = () => {
     return props.initialRoyalties
       .filter(r => r.royalty_type === "percentage")
       .reduce((sum, r) => sum + r.royalty_value, 0);
+  };
+
+  const totalPercentage = () => calculateTotalPercentage();
+  const isOverAllocated = () => totalPercentage() > 100;
+
+  const handleSelectUser = (user: SearchUser) => {
+    setContributorUserId(user.id);
+    setContributorHandle(user.handle || user.name || "Unknown");
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
+
+  const handleClearSelection = () => {
+    setContributorUserId("");
+    setContributorHandle("");
+    setSearchQuery("");
   };
 
   const handleAddRoyalty = async (e: SubmitEvent) => {
@@ -46,7 +107,7 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
     setSuccess("");
 
     if (!contributorUserId() || !royaltyValue()) {
-      setError("User ID and royalty value are required");
+      setError("Please select a user and enter a royalty value");
       return;
     }
 
@@ -76,6 +137,8 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
 
       // Reset form
       setContributorUserId("");
+      setContributorHandle("");
+      setSearchQuery("");
       setRoyaltyValue("");
       setRoyaltyType("percentage");
       setShowAddForm(false);
@@ -138,6 +201,16 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
         <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
       </Show>
 
+      <Show when={isOverAllocated()}>
+        <div class="royalty-management__warning">
+          <span class="royalty-management__warning-icon">⚠️</span>
+          <div class="royalty-management__warning-content">
+            <strong>Total exceeds 100%</strong>
+            <p>You have allocated {totalPercentage()}% in royalties. Please adjust the percentages so the total equals 100% or less.</p>
+          </div>
+        </div>
+      </Show>
+
       <Show
         when={props.initialRoyalties.length > 0}
         fallback={
@@ -148,44 +221,50 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
       >
         <div class="royalty-management__list">
           <For each={props.initialRoyalties}>
-            {(royalty) => (
-              <div class="royalty-item">
-                <div class="royalty-item__info">
-                  <div class="royalty-item__user">
-                    {royalty.user ? (
-                      <span>{royalty.user.name || royalty.user.handle || 'Unknown User'}</span>
-                    ) : (
-                      <span>User ID: {royalty.user_id}</span>
-                    )}
+            {(royalty) => {
+              const isOwner = royalty.user_id === props.ownerId;
+              return (
+                <div class={`royalty-item ${isOwner ? 'royalty-item--owner' : ''}`}>
+                  <div class="royalty-item__info">
+                    <div class="royalty-item__user">
+                      {royalty.user ? (
+                        <span>
+                          {royalty.user.name || royalty.user.handle || 'Unknown User'}
+                          {isOwner && <span class="royalty-item__badge">You (Creator)</span>}
+                        </span>
+                      ) : (
+                        <span>User ID: {royalty.user_id}</span>
+                      )}
+                    </div>
+                    <div class="royalty-item__value">
+                      {royalty.royalty_type === 'percentage' ? (
+                        <span>{royalty.royalty_value}%</span>
+                      ) : (
+                        <span>${(royalty.royalty_value / 100).toFixed(2)}</span>
+                      )}
+                      <span class="royalty-item__type">
+                        ({royalty.royalty_type})
+                      </span>
+                    </div>
                   </div>
-                  <div class="royalty-item__value">
-                    {royalty.royalty_type === 'percentage' ? (
-                      <span>{royalty.royalty_value}%</span>
-                    ) : (
-                      <span>${(royalty.royalty_value / 100).toFixed(2)}</span>
-                    )}
-                    <span class="royalty-item__type">
-                      ({royalty.royalty_type})
-                    </span>
-                  </div>
+                  <LoadingButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteRoyalty(royalty.id)}
+                    isLoading={deletingId() === royalty.id}
+                    loadingText="Removing..."
+                  >
+                    Remove
+                  </LoadingButton>
                 </div>
-                <LoadingButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteRoyalty(royalty.id)}
-                  isLoading={deletingId() === royalty.id}
-                  loadingText="Removing..."
-                >
-                  Remove
-                </LoadingButton>
-              </div>
-            )}
+              );
+            }}
           </For>
 
-          <div class="royalty-management__total">
+          <div class={`royalty-management__total ${isOverAllocated() ? 'royalty-management__total--warning' : ''}`}>
             <span class="royalty-management__total-label">Total Percentage:</span>
-            <span class="royalty-management__total-value">
-              {calculateTotalPercentage()}%
+            <span class={`royalty-management__total-value ${isOverAllocated() ? 'royalty-management__total-value--warning' : ''}`}>
+              {totalPercentage()}%
             </span>
           </div>
         </div>
@@ -204,17 +283,67 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
 
         <Show when={showAddForm()}>
           <form onSubmit={handleAddRoyalty} class="royalty-management__form">
-            <FormField
-              label="Contributor User ID"
-              name="contributorUserId"
-              type="text"
-              value={contributorUserId()}
-              onInput={(e) => setContributorUserId(e.currentTarget.value)}
-              placeholder="Enter user ID"
-              required
-              disabled={isAdding()}
-              helpText="You'll need the contributor's user ID. They can find it in their profile."
-            />
+            <div class="form-field">
+              <label class="form-field__label">Search Contributor</label>
+              <Show
+                when={!contributorUserId()}
+                fallback={
+                  <div class="user-search__selected">
+                    <div class="user-search__selected-info">
+                      <span class="user-search__selected-name">{contributorHandle()}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClearSelection}
+                      class="user-search__clear-button"
+                      disabled={isAdding()}
+                    >
+                      Change
+                    </button>
+                  </div>
+                }
+              >
+                <div class="user-search">
+                  <input
+                    type="text"
+                    value={searchQuery()}
+                    onInput={(e) => setSearchQuery(e.currentTarget.value)}
+                    placeholder="Search by handle or name..."
+                    class="user-search__input"
+                    disabled={isAdding()}
+                  />
+                  <Show when={isSearching()}>
+                    <div class="user-search__loading">Searching...</div>
+                  </Show>
+                  <Show when={showSearchResults() && searchResults().length > 0}>
+                    <div class="user-search__results">
+                      <For each={searchResults()}>
+                        {(user) => (
+                          <button
+                            type="button"
+                            class="user-search__result-item"
+                            onClick={() => handleSelectUser(user)}
+                          >
+                            <div class="user-search__result-info">
+                              <span class="user-search__result-name">
+                                {user.name || user.handle}
+                              </span>
+                              <span class="user-search__result-handle">@{user.handle}</span>
+                            </div>
+                          </button>
+                        )}
+                      </For>
+                    </div>
+                  </Show>
+                  <Show when={showSearchResults() && searchResults().length === 0 && !isSearching()}>
+                    <div class="user-search__no-results">No users found</div>
+                  </Show>
+                </div>
+              </Show>
+              <p class="form-field__help-text">
+                Search for a user by their handle or name to add them as a contributor
+              </p>
+            </div>
 
             <SelectField
               label="Royalty Type"

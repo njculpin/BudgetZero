@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { createAsset } from "@/lib/data-access/assets";
 import { getUser } from "@/lib/auth";
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ cookies }) => {
   // Check authentication
   const { data: userData } = await getUser();
   const currentUser = userData?.user;
@@ -38,16 +38,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    return new Response(
-      JSON.stringify({
-        assetHandle: asset.handle,
-        redirect: `/assets/${asset.handle}`,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(null, {
+      status: 303,
+      headers: { Location: `/assets/${asset.handle}/edit` },
+    });
   } catch (error) {
     console.error("Error creating asset:", error);
     return new Response(

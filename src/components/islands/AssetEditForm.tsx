@@ -8,6 +8,7 @@ import {
   SuccessMessage,
 } from "./base";
 import TagInput from "./TagInput";
+import "./base/base.css";
 
 export interface AssetEditFormProps {
   assetId: string;
@@ -97,12 +98,14 @@ export default function AssetEditForm(props: AssetEditFormProps) {
         return;
       }
 
+      const data = await response.json();
       setSuccess("Asset updated successfully!");
       setIsLoading(false);
 
-      // Redirect to asset detail page after short delay
+      // Redirect to asset detail page using the updated handle (in case title changed)
+      const newHandle = data.asset?.handle || props.assetHandle;
       setTimeout(() => {
-        window.location.href = `/assets/${props.assetHandle}`;
+        window.location.href = `/assets/${newHandle}`;
       }, 1500);
     } catch (err) {
       setError("An unexpected error occurred");

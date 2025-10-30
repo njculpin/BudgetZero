@@ -7,6 +7,7 @@ import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
 import AssetEditForm from "@/components/islands/AssetEditForm";
 import RoyaltyManagementForm from "@/components/islands/RoyaltyManagementForm";
+import AssetDeleteButton from "@/components/islands/AssetDeleteButton";
 import { setSession } from "@/lib/auth";
 import {
   getAssetByHandle,
@@ -14,7 +15,7 @@ import {
   getAssetFiles,
   getAssetImages,
 } from "@/lib/data-access/assets";
-import { getAssetRoyalties } from "@/lib/data-access/royalties";
+import { getAssetRoyalties, createAssetRoyalty } from "@/lib/data-access/royalties";
 import { getUserById } from "@/lib/data-access/users";
 
 const { cookies, redirect } = Astro;
@@ -55,8 +56,14 @@ if (!userId) {
   return redirect("/sign-in");
 }
 
-// Fetch the asset
-const assetData = await getAssetByHandle(assetHandle);
+// Prepare auth tokens for fetching draft assets
+const authTokens = {
+  accessToken: accessToken.value,
+  refreshToken: refreshToken.value,
+};
+
+// Fetch the asset (with auth to see own drafts)
+const assetData = await getAssetByHandle(assetHandle, authTokens);
 
 if (!assetData) {
   return redirect('/404');
@@ -67,11 +74,33 @@ if (assetData.user_id !== userId) {
   return redirect(`/assets/${assetHandle}`);
 }
 
+// Check if title is still the default generated handle (e.g., "hunt-guild")
+const isDefaultTitle = assetData.title === assetData.handle;
+
 // Fetch existing tags, files, images, and royalties
 const existingTags = await getAssetTags(assetData.id);
 const existingFiles = await getAssetFiles(assetData.id);
 const existingImages = await getAssetImages(assetData.id);
-const existingRoyalties = await getAssetRoyalties(assetData.id);
+let existingRoyalties = await getAssetRoyalties(assetData.id);
+
+// Ensure owner has a default royalty (100% percentage)
+const ownerHasRoyalty = existingRoyalties.some(r => r.user_id === assetData.user_id);
+
+if (!ownerHasRoyalty) {
+  // Create default 100% royalty for owner
+  await createAssetRoyalty(
+    {
+      assetId: assetData.id,
+      userId: assetData.user_id,
+      royaltyType: "percentage",
+      royaltyValue: 100,
+    },
+    authTokens
+  );
+
+  // Re-fetch royalties to include the newly created one
+  existingRoyalties = await getAssetRoyalties(assetData.id);
+}
 
 // Fetch user details for royalties
 const royaltiesWithUsers = await Promise.all(
@@ -83,8 +112,19 @@ const royaltiesWithUsers = await Promise.all(
 ---
 
 <Layout title={`Edit ${assetData.title} - Game Loopers`}>
-  <div class="asset-edit-page">
-    <div class="asset-edit-container">
+  <div class="page">
+    <div class="page__container">
+      {isDefaultTitle && (
+        <div class="welcome-banner">
+          <div class="welcome-banner__content">
+            <h2 class="welcome-banner__title">👋 Welcome! Let's set up your asset</h2>
+            <p class="welcome-banner__text">
+              Start by giving your asset a descriptive title and description. Then upload files, add cover images, and publish when ready!
+            </p>
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <div class="asset-edit-header">
@@ -121,14 +161,30 @@ const royaltiesWithUsers = await Promise.all(
       <Card>
         <CardHeader>
           <CardTitle>Royalty Management</CardTitle>
-          <CardDescription>Manage royalty splits for contributors</CardDescription>
+          <CardDescription>Manage royalty splits for contributors. As the creator, you start with 100% - adjust your percentage when adding collaborators.</CardDescription>
         </CardHeader>
         <CardContent>
           <RoyaltyManagementForm
             client:load
             assetId={assetData.id}
+            ownerId={assetData.user_id}
             initialRoyalties={royaltiesWithUsers}
             onUpdate={() => window.location.reload()}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="danger-zone">
+        <CardHeader>
+          <CardTitle>Danger Zone</CardTitle>
+          <CardDescription>Permanently delete this asset. This action cannot be undone.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AssetDeleteButton
+            client:load
+            assetId={assetData.id}
+            assetTitle={assetData.title}
+            redirectUrl="/assets"
           />
         </CardContent>
       </Card>
@@ -150,6 +206,43 @@ const royaltiesWithUsers = await Promise.all(
   display: flex;
   flex-direction: column;
   gap: var(--gap-2xl);
+}
+
+/* ===== Welcome Banner ===== */
+.welcome-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4xl);
+  color: white;
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.welcome-banner__content {
+  max-width: 100%;
+}
+
+.welcome-banner__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--spacing-lg) 0;
+  color: white;
+}
+
+.welcome-banner__text {
+  font-size: var(--text-base);
+  line-height: 1.6;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+@media (max-width: 640px) {
+  .welcome-banner {
+    padding: var(--spacing-3xl);
+  }
+
+  .welcome-banner__title {
+    font-size: var(--text-xl);
+  }
 }
 
 .asset-edit-header {
@@ -256,13 +349,13 @@ const royaltiesWithUsers = await Promise.all(
 }
 
 /* ===== Royalty Management ===== */
-.royalty-management {
+:global(.royalty-management) {
   display: flex;
   flex-direction: column;
   gap: var(--gap-2xl);
 }
 
-.royalty-management__empty {
+:global(.royalty-management__empty) {
   margin: 0;
   font-size: var(--text-sm);
   color: var(--muted-foreground);
@@ -270,13 +363,46 @@ const royaltiesWithUsers = await Promise.all(
   padding: var(--spacing-4xl);
 }
 
-.royalty-management__list {
+:global(.royalty-management__warning) {
+  display: flex;
+  gap: var(--gap-md);
+  padding: var(--spacing-2xl);
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-2xl);
+}
+
+:global(.royalty-management__warning-icon) {
+  font-size: var(--text-xl);
+  flex-shrink: 0;
+}
+
+:global(.royalty-management__warning-content) {
+  flex: 1;
+}
+
+:global(.royalty-management__warning-content strong) {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: #92400e;
+  margin-bottom: var(--spacing-xs);
+}
+
+:global(.royalty-management__warning-content p) {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: #92400e;
+}
+
+:global(.royalty-management__list) {
   display: flex;
   flex-direction: column;
   gap: var(--gap-md);
 }
 
-.royalty-item {
+:global(.royalty-item) {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -286,31 +412,51 @@ const royaltiesWithUsers = await Promise.all(
   border-radius: var(--radius-md);
 }
 
-.royalty-item__info {
+:global(.royalty-item--owner) {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+  border-width: 2px;
+}
+
+:global(.royalty-item__info) {
   display: flex;
   flex-direction: column;
   gap: var(--gap-sm);
 }
 
-.royalty-item__user {
+:global(.royalty-item__user) {
   font-size: var(--text-base);
   font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
 }
 
-.royalty-item__value {
+:global(.royalty-item__badge) {
+  display: inline-block;
+  padding: var(--spacing-xxs) var(--spacing-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  background-color: #3b82f6;
+  color: white;
+  border-radius: var(--radius-full);
+  margin-left: var(--spacing-xs);
+}
+
+:global(.royalty-item__value) {
   font-size: var(--text-lg);
   font-weight: var(--font-weight-bold);
   color: var(--primary);
 }
 
-.royalty-item__type {
+:global(.royalty-item__type) {
   margin-left: var(--spacing-xs);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-normal);
   color: var(--muted-foreground);
 }
 
-.royalty-management__total {
+:global(.royalty-management__total) {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -319,20 +465,29 @@ const royaltiesWithUsers = await Promise.all(
   font-weight: var(--font-weight-semibold);
 }
 
-.royalty-management__total-label {
+:global(.royalty-management__total--warning) {
+  border-top-color: #f59e0b;
+  background-color: #fef3c7;
+}
+
+:global(.royalty-management__total-label) {
   font-size: var(--text-base);
 }
 
-.royalty-management__total-value {
+:global(.royalty-management__total-value) {
   font-size: var(--text-xl);
   color: var(--primary);
 }
 
-.royalty-management__add {
+:global(.royalty-management__total-value--warning) {
+  color: #dc2626;
+}
+
+:global(.royalty-management__add) {
   margin-top: var(--spacing-2xl);
 }
 
-.royalty-management__toggle-button {
+:global(.royalty-management__toggle-button) {
   padding: var(--spacing-md);
   background-color: var(--muted);
   border: none;
@@ -344,8 +499,21 @@ const royaltiesWithUsers = await Promise.all(
   text-align: left;
 }
 
-.royalty-management__toggle-button:hover {
+:global(.royalty-management__toggle-button:hover) {
   background-color: var(--muted-hover, #e5e7eb);
+}
+
+:global(.royalty-management__form) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xl);
+}
+
+:global(.royalty-management__form-actions) {
+  display: flex;
+  gap: var(--gap-md);
+  justify-content: flex-end;
+  padding-top: var(--spacing-2xl);
 }
 
 /* ===== Form Field Styles ===== */
@@ -371,5 +539,149 @@ const royaltiesWithUsers = await Promise.all(
   margin: var(--spacing-xs) 0 0 0;
   font-size: var(--text-xs);
   color: var(--muted-foreground);
+}
+
+/* ===== Danger Zone ===== */
+.danger-zone {
+  border: 2px solid #ef4444;
+  background-color: #fef2f2;
+}
+
+.danger-zone :global(.card__header) {
+  border-bottom-color: #fee2e2;
+}
+
+.danger-zone :global(.card__title) {
+  color: #991b1b;
+}
+
+.danger-zone :global(.card__description) {
+  color: #991b1b;
+}
+
+/* ===== User Search ===== */
+:global(.user-search) {
+  position: relative;
+}
+
+:global(.user-search__input) {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+:global(.user-search__input:focus) {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 0, 112, 243), 0.1);
+}
+
+:global(.user-search__loading) {
+  padding: var(--spacing-md);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+:global(.user-search__results) {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: 16rem;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+:global(.user-search__result-item) {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.15s;
+}
+
+:global(.user-search__result-item:last-child) {
+  border-bottom: none;
+}
+
+:global(.user-search__result-item:hover) {
+  background-color: var(--muted);
+}
+
+:global(.user-search__result-info) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xxs);
+}
+
+:global(.user-search__result-name) {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+:global(.user-search__result-handle) {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+}
+
+:global(.user-search__no-results) {
+  padding: var(--spacing-md);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+:global(.user-search__selected) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--muted);
+}
+
+:global(.user-search__selected-info) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xxs);
+}
+
+:global(.user-search__selected-name) {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+:global(.user-search__clear-button) {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+:global(.user-search__clear-button:hover) {
+  background-color: var(--muted);
+}
+
+:global(.user-search__clear-button:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
