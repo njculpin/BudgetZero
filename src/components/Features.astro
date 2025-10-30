@@ -75,17 +75,15 @@ const { features }: Props = Astro.props;
 
 /* Responsive tweaks */
 @media (max-width: 768px) {
-  .features__inner {
-    grid-template-columns: repeat(6, 1fr);
+  .features {
+    grid-template-columns: 1fr;
   }
   .features__item--1,
-  .features__item--2 {
-    grid-column: 1 / span 6;
-  }
+  .features__item--2,
   .features__item--3,
   .features__item--4,
   .features__item--5 {
-    grid-column: 1 / span 6;
+    grid-column: 1;
   }
 }
 

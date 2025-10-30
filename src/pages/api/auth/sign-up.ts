@@ -7,7 +7,13 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   const password = formData.get("password")?.toString();
 
   if (!email || !password) {
-    return new Response("Email and password are required", { status: 400 });
+    return new Response(
+      JSON.stringify({ error: "Email and password are required" }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
   const { error } = await signUp({
@@ -16,7 +22,11 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   });
 
   if (error) {
-    return new Response(error.message, { status: 500 });
+    console.error("Sign-up error:", error.message, error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   return redirect("/sign-in");

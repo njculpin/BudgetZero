@@ -8,7 +8,10 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
   const currentUser = userData?.user;
 
   if (!currentUser) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // Get auth tokens from cookies
@@ -16,7 +19,10 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
   const refreshToken = cookies.get("sb-refresh-token")?.value;
 
   if (!accessToken || !refreshToken) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const formData = await request.formData();
@@ -26,7 +32,10 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
   const avatar_url = formData.get("avatar_url")?.toString();
 
   if (!handle) {
-    return new Response("Handle is required", { status: 400 });
+    return new Response(JSON.stringify({ error: "Handle is required" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -45,13 +54,25 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
     );
 
     if (!updatedUser) {
-      return new Response("Failed to update profile", { status: 500 });
+      return new Response(JSON.stringify({ error: "Failed to update profile" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // Redirect to the profile page (with new handle if it changed)
-    return redirect(`/users/${updatedUser.handle}`);
+    // Return success with redirect URL
+    return new Response(
+      JSON.stringify({ redirect: `/users/${updatedUser.handle}` }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(errorMessage, { status: 500 });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };

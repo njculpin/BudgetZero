@@ -1,16 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/Card.astro";
-import CardHeader from "@/components/CardHeader.astro";
-import CardTitle from "@/components/CardTitle.astro";
-import CardDescription from "@/components/CardDescription.astro";
-import CardContent from "@/components/CardContent.astro";
-import CardFooter from "@/components/CardFooter.astro";
-import Label from "@/components/Label.astro";
-import Input from "@/components/Input.astro";
-import Button from "@/components/Button.astro";
 import { setSession } from "@/lib/auth";
-
+import RegisterForm from "@/components/islands/RegisterForm";
 const { cookies, redirect } = Astro;
 
 // Check if already authenticated
@@ -35,65 +26,7 @@ if (accessToken && refreshToken) {
 <Layout title="Sign up">
   <div class="page">
     <div class="auth-page__container">
-      <Card className="auth-page__card">
-        <CardHeader>
-          <CardTitle>Create your account</CardTitle>
-          <CardDescription>
-            Join Game Loopers and start collaborating with creators
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <form action="/api/auth/sign-up" method="post" class="auth-form">
-            <div class="auth-form__field">
-              <Label for="email">Email</Label>
-              <Input
-                type="email"
-                name="email"
-                id="email"
-                placeholder="your@email.com"
-                required
-              />
-            </div>
-
-            <div class="auth-form__field">
-              <Label for="password">Password</Label>
-              <Input
-                type="password"
-                name="password"
-                id="password"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <Button type="submit" variant="primary" size="md">
-              <span slot="text">Create account</span>
-            </Button>
-            
-          </form>
-        </CardContent>
-
-        <CardFooter>
-          <p class="auth-page__footer-text">
-            Already have an account? <a href="/sign-in" class="auth-page__link">Sign in</a>
-          </p>
-        </CardFooter>
-      </Card>
+     <RegisterForm />
     </div>
   </div>
 </Layout>
-
-<style>
-.auth-page {min-height: 100vh;display: flex;align-items: center; justify-content: center;padding: 1rem;background-color: var(--muted);}
-.auth-page__container {width: 100%;max-width: var(--container-sm);}
-.auth-page__card {width: 100%;}
-.auth-form {display: flex;flex-direction: column;gap: 1.5rem;}
-.auth-form__field {display: flex;flex-direction: column;gap: var(--gap-xs);}
-.auth-form__divider {position: relative;text-align: center;margin: var(--spacing-xs) 0;}
-.auth-form__divider::before {content: '';position: absolute;top: 50%;left: 0;right: 0;height: 1px;background-color: var(--border);}
-.auth-form__divider-text {position: relative;display: inline-block;padding: 0 0.75rem;background-color: var(--card);font-size: var(--text-sm);color: var(--muted-foreground);}
-.auth-page__footer-text {text-align: center;font-size: var(--text-sm);color: var(--muted-foreground);}
-.auth-page__link {color: var(--primary);text-decoration: none;font-weight: var(--font-weight-medium);}
-.auth-page__link:hover {text-decoration: underline;}
-</style>

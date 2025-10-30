@@ -9,7 +9,10 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
   const currentUser = userData?.user;
 
   if (!currentUser) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // Get auth tokens from cookies
@@ -17,7 +20,10 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
   const refreshToken = cookies.get("sb-refresh-token")?.value;
 
   if (!accessToken || !refreshToken) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 try {
     const formData = await request.formData();
@@ -29,7 +35,10 @@ try {
     const tagsString = formData.get("tags") as string;
 
     if (!title) {
-      return new Response("Title Required", { status: 401 });
+      return new Response(JSON.stringify({ error: "Title is required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     } else {
       // Create the asset
       const asset = await createAsset(
@@ -46,7 +55,10 @@ try {
       );
 
       if (!asset) {
-        return new Response("Failed to create Asset", { status: 401 });
+        return new Response(JSON.stringify({ error: "Failed to create asset" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
       } else {
         // Create tags if provided
         if (tagsString) {
@@ -115,12 +127,24 @@ try {
           }
         }
 
-        // Redirect to the asset detail page
-        return redirect(`/assets/${asset.handle}`);
+        // Return success with redirect URL
+        return new Response(
+          JSON.stringify({ redirect: `/assets/${asset.handle}` }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     }
   } catch (error) {
     console.error("Error creating asset:", error);
-    return new Response("Failed to create Asset", { status: 401 }); 
+    return new Response(
+      JSON.stringify({ error: "An unexpected error occurred" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 }

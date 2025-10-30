@@ -5,8 +5,10 @@ import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
+import CartItemRow from "@/components/islands/CartItemRow";
+import CheckoutButton from "@/components/islands/CheckoutButton";
 import { setSession } from "@/lib/auth";
-import { getOrCreateCart, getCartItems, updateCartItemQuantity, removeFromCart, clearCart } from "@/lib/data-access/cart";
+import { getOrCreateCart, getCartItems } from "@/lib/data-access/cart";
 import { getProductById, getVariantById, getVariantPrices } from "@/lib/data-access/products";
 
 const accessToken = Astro.cookies.get("sb-access-token");
@@ -39,69 +41,7 @@ if (!userId) {
   return Astro.redirect("/sign-in?redirect=/cart");
 }
 
-// Handle form submissions
-let successMessage = '';
-let errorMessage = '';
-
-if (Astro.request.method === "POST") {
-  const formData = await Astro.request.formData();
-  const action = formData.get("action") as string;
-
-  try {
-    if (action === "update-quantity") {
-      const cartItemId = formData.get("cart_item_id") as string;
-      const quantity = parseInt(formData.get("quantity") as string);
-
-      const success = await updateCartItemQuantity(cartItemId, quantity, {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      });
-
-      if (success) {
-        successMessage = "Cart updated";
-      } else {
-        errorMessage = "Failed to update cart";
-      }
-    } else if (action === "remove-item") {
-      const cartItemId = formData.get("cart_item_id") as string;
-
-      const success = await removeFromCart(cartItemId, {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      });
-
-      if (success) {
-        successMessage = "Item removed from cart";
-      } else {
-        errorMessage = "Failed to remove item";
-      }
-    } else if (action === "clear-cart") {
-      const cartId = formData.get("cart_id") as string;
-
-      const success = await clearCart(cartId, {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      });
-
-      if (success) {
-        successMessage = "Cart cleared";
-      } else {
-        errorMessage = "Failed to clear cart";
-      }
-    }
-
-    // Redirect to refresh the page
-    const params = new URLSearchParams();
-    if (successMessage) params.set('success', successMessage);
-    if (errorMessage) params.set('error', errorMessage);
-    const queryString = params.toString();
-    return Astro.redirect(`/cart${queryString ? '?' + queryString : ''}`, 303);
-  } catch (error) {
-    errorMessage = "An unexpected error occurred";
-  }
-}
-
-// Get cart and items
+// Get cart and items (cart operations now handled client-side)
 const cart = await getOrCreateCart(userId, {
   accessToken: accessToken.value,
   refreshToken: refreshToken.value,
@@ -136,8 +76,6 @@ const subtotal = cartItemsWithDetails.reduce((total, item) => {
 
 const showAddedMessage = Astro.url.searchParams.get('added') === 'true';
 const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
-successMessage = successMessage || Astro.url.searchParams.get('success') || '';
-errorMessage = errorMessage || Astro.url.searchParams.get('error') || '';
 ---
 
 <Layout title="Shopping Cart - Game Loopers">
@@ -159,18 +97,6 @@ errorMessage = errorMessage || Astro.url.searchParams.get('error') || '';
         </div>
       )}
 
-      {successMessage && (
-        <div class="cart-alert cart-alert--success">
-          {successMessage}
-        </div>
-      )}
-
-      {errorMessage && (
-        <div class="cart-alert cart-alert--error">
-          {errorMessage}
-        </div>
-      )}
-
       {cartItemsWithDetails.length > 0 ? (
         <div class="cart-layout">
           <div class="cart-items">
@@ -178,66 +104,14 @@ errorMessage = errorMessage || Astro.url.searchParams.get('error') || '';
               <CardContent>
                 <div class="cart-items__list">
                   {cartItemsWithDetails.map((item) => (
-                    <div class="cart-item">
-                      <div class="cart-item__info">
-                        <h3 class="cart-item__product-name">
-                          <a href={`/products/${item.product?.handle}`}>{item.product?.title}</a>
-                        </h3>
-                        <p class="cart-item__variant-name">{item.variant?.title}</p>
-                        {item.price && (
-                          <p class="cart-item__price">
-                            {item.price.unit_amount === 0 ? 'FREE' : `${item.price.currency.toUpperCase()} ${(item.price.unit_amount / 100).toFixed(2)}`}
-                          </p>
-                        )}
-                      </div>
-
-                      <div class="cart-item__actions">
-                        <form method="POST" class="cart-item__quantity-form">
-                          <input type="hidden" name="action" value="update-quantity" />
-                          <input type="hidden" name="cart_item_id" value={item.id} />
-                          <label for={`quantity-${item.id}`} class="cart-item__quantity-label">Qty:</label>
-                          <input
-                            type="number"
-                            id={`quantity-${item.id}`}
-                            name="quantity"
-                            value={item.quantity}
-                            min="1"
-                            class="cart-item__quantity-input"
-                            onchange="this.form.submit()"
-                          />
-                        </form>
-
-                        <form method="POST" class="cart-item__remove-form">
-                          <input type="hidden" name="action" value="remove-item" />
-                          <input type="hidden" name="cart_item_id" value={item.id} />
-                          <Button type="submit" variant="ghost" size="sm">
-                            <span slot="text">Remove</span>
-                          </Button>
-                        </form>
-                      </div>
-
-                      <div class="cart-item__total">
-                        {item.price && (
-                          <p class="cart-item__total-price">
-                            {item.price.unit_amount === 0 ? 'FREE' : `${item.price.currency.toUpperCase()} ${((item.price.unit_amount * item.quantity) / 100).toFixed(2)}`}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    <CartItemRow
+                      client:load
+                      item={item}
+                      onUpdate={() => window.location.reload()}
+                      onRemove={() => window.location.reload()}
+                    />
                   ))}
                 </div>
-
-                {cart && cartItemsWithDetails.length > 0 && (
-                  <div class="cart-items__footer">
-                    <form method="POST">
-                      <input type="hidden" name="action" value="clear-cart" />
-                      <input type="hidden" name="cart_id" value={cart.id} />
-                      <Button type="submit" variant="ghost" size="sm">
-                        <span slot="text">Clear Cart</span>
-                      </Button>
-                    </form>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
@@ -258,11 +132,9 @@ errorMessage = errorMessage || Astro.url.searchParams.get('error') || '';
                     <span class="cart-summary__value">USD {(subtotal / 100).toFixed(2)}</span>
                   </div>
 
-                  <form method="POST" action="/api/checkout" id="checkout-form">
-                    <Button type="submit" variant="primary" size="lg" class="cart-summary__checkout-button">
-                      <span slot="text">Proceed to Checkout</span>
-                    </Button>
-                  </form>
+                  <div class="cart-summary__checkout">
+                    <CheckoutButton client:load variant="primary" size="lg" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -328,109 +200,6 @@ errorMessage = errorMessage || Astro.url.searchParams.get('error') || '';
 .cart-items__list {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-lg);
-}
-
-.cart-item {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: var(--gap-lg);
-  padding: var(--spacing-3xl);
-  border-bottom: 1px solid var(--border);
-  align-items: center;
-}
-
-.cart-item:last-child {
-  border-bottom: none;
-}
-
-@media (max-width: 768px) {
-  .cart-item {
-    grid-template-columns: 1fr;
-    gap: var(--gap-md);
-  }
-}
-
-.cart-item__info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-xs);
-}
-
-.cart-item__product-name {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
-}
-
-.cart-item__product-name a {
-  color: var(--foreground);
-  text-decoration: none;
-}
-
-.cart-item__product-name a:hover {
-  color: var(--primary);
-}
-
-.cart-item__variant-name {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-.cart-item__price {
-  margin: 0;
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--foreground);
-}
-
-.cart-item__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-md);
-}
-
-.cart-item__quantity-form {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-sm);
-}
-
-.cart-item__quantity-label {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-.cart-item__quantity-input {
-  width: 4rem;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  text-align: center;
-}
-
-.cart-item__remove-form {
-  margin: 0;
-}
-
-.cart-item__total {
-  text-align: right;
-}
-
-.cart-item__total-price {
-  margin: 0;
-  font-size: var(--text-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--foreground);
-}
-
-.cart-items__footer {
-  padding-top: var(--spacing-2xl);
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
 }
 
 .cart-summary__content {
@@ -475,7 +244,7 @@ errorMessage = errorMessage || Astro.url.searchParams.get('error') || '';
   color: var(--primary);
 }
 
-.cart-summary__checkout-button {
+.cart-summary__checkout {
   width: 100%;
 }
 
@@ -511,59 +280,3 @@ errorMessage = errorMessage || Astro.url.searchParams.get('error') || '';
   text-decoration: none;
 }
 </style>
-
-<script>
-  const checkoutForm = document.getElementById('checkout-form');
-
-  if (checkoutForm) {
-    checkoutForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const submitButton = checkoutForm.querySelector('button[type="submit"]');
-      const originalText = submitButton?.textContent;
-
-      if (submitButton) {
-        submitButton.disabled = true;
-        const textSpan = submitButton.querySelector('span');
-        if (textSpan) {
-          textSpan.textContent = 'Processing...';
-        }
-      }
-
-      try {
-        const response = await fetch('/api/checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Checkout failed');
-        }
-
-        const data = await response.json();
-
-        if (data.url) {
-          // Redirect to Stripe checkout
-          window.location.href = data.url;
-        } else {
-          throw new Error('No checkout URL returned');
-        }
-      } catch (error) {
-        console.error('Checkout error:', error);
-        alert(error instanceof Error ? error.message : 'Failed to start checkout');
-
-        // Re-enable button
-        if (submitButton) {
-          submitButton.disabled = false;
-          const textSpan = submitButton.querySelector('span');
-          if (textSpan && originalText) {
-            textSpan.textContent = originalText;
-          }
-        }
-      }
-    });
-  }
-</script>
