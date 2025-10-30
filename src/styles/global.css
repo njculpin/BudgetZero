@@ -1,3 +1,10 @@
+/* ===== Universal Box Sizing ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
   /* ===== Font Family ===== */
   --font-family-sans: "Inter", Impact, Haettenschweiler, "Arial Narrow Bold",
@@ -255,7 +262,7 @@ p {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  padding: 1rem;
+  padding: var(--spacing-2xl);
 }
 
 .page__container {
@@ -265,4 +272,15 @@ p {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-6xl);
+}
+
+/* Responsive: Reduce gaps on mobile */
+@media (max-width: 768px) {
+  .page {
+    padding: var(--spacing-xl);
+  }
+
+  .page__container {
+    gap: var(--spacing-4xl);
+  }
 }

@@ -1,0 +1,194 @@
+/* ===== Card Styles ===== */
+.card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+}
+
+.edit-profile-card {
+  width: 100%;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+  padding: var(--spacing-lg);
+}
+
+.card-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  margin: 0;
+}
+
+.card-description {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.card-content {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+}
+
+/* ===== Edit Profile Form ===== */
+.edit-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xl);
+}
+
+.edit-profile-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+/* ===== Form Components ===== */
+.label {
+  display: inline-block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  color: var(--foreground);
+  margin-bottom: var(--spacing-xs);
+  cursor: pointer;
+}
+
+.input {
+  min-width: 0;
+  height: var(--height-input-md);
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--input);
+  background-color: transparent;
+  color: var(--foreground);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  box-shadow: var(--shadow-xs);
+  transition: color var(--duration-normal) var(--ease-in-out),
+    box-shadow var(--duration-normal) var(--ease-in-out),
+    border-color var(--duration-normal) var(--ease-in-out);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.input:focus-visible {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+}
+
+.input:disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.edit-profile-form__textarea {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  line-height: var(--leading-normal);
+  resize: vertical;
+  transition: border-color var(--duration-normal) var(--ease-in-out);
+  background-color: transparent;
+  color: var(--foreground);
+}
+
+.edit-profile-form__textarea:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+}
+
+.edit-profile-form__textarea:disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.edit-profile-form__help {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.edit-profile-form__actions {
+  display: flex;
+  gap: var(--gap-lg);
+  justify-content: flex-end;
+  padding-top: var(--spacing-2xl);
+}
+
+.edit-profile-form__actions a {
+  text-decoration: none;
+}
+
+/* ===== Button Styles ===== */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-xs);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-in-out);
+  white-space: nowrap;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.button__text {
+  display: inline-block;
+}
+
+.button--primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.button--primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.button--ghost {
+  background-color: transparent;
+  color: var(--foreground);
+}
+
+.button--ghost:hover:not(:disabled) {
+  background-color: var(--muted);
+}
+
+.button--md {
+  height: 2.25rem;
+  padding: 0 1rem;
+}
+
+/* ===== Error Message ===== */
+.edit-profile-form__error {
+  padding: var(--spacing-sm);
+  background-color: var(--destructive);
+  color: var(--color-white);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}

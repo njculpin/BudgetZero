@@ -7,10 +7,10 @@ import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
+import AddToCartButton from "@/components/islands/AddToCartButton";
 import { getProductByHandle, getProductTags, getProductVariants, deleteProduct, getVariantPrices } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
-import { getOrCreateCart, addToCart } from "@/lib/data-access/cart";
 
 const { product } = Astro.params;
 
@@ -57,9 +57,7 @@ if (productData.status !== 'published' && !isOwner) {
   return Astro.redirect('/404');
 }
 
-let cartMessage = '';
-let cartError = '';
-
+// Handle delete action only (add-to-cart now handled client-side)
 if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const action = formData.get("action");
@@ -73,38 +71,6 @@ if (Astro.request.method === "POST") {
     if (success) {
       return Astro.redirect(`/users/${owner?.handle}`);
     }
-  } else if (action === "add-to-cart" && currentUser && accessToken && refreshToken) {
-    const variantId = formData.get("variant_id") as string;
-    const quantity = parseInt(formData.get("quantity") as string) || 1;
-
-    // Get or create cart
-    const cart = await getOrCreateCart(currentUser.id, {
-      accessToken: accessToken.value,
-      refreshToken: refreshToken.value,
-    });
-
-    if (cart) {
-      const cartItem = await addToCart(
-        cart.id,
-        productData.id,
-        variantId,
-        quantity,
-        {
-          accessToken: accessToken.value,
-          refreshToken: refreshToken.value,
-        }
-      );
-
-      if (cartItem) {
-        return Astro.redirect(`/cart?added=true`);
-      } else {
-        cartError = "Failed to add item to cart";
-      }
-    } else {
-      cartError = "Failed to create cart";
-    }
-  } else if (action === "add-to-cart" && !currentUser) {
-    return Astro.redirect(`/sign-in?redirect=/products/${product}`);
   }
 }
 ---
@@ -112,12 +78,6 @@ if (Astro.request.method === "POST") {
 <Layout title={`${productData.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
-      {cartError && (
-        <div class="product-alert product-alert--error">
-          {cartError}
-        </div>
-      )}
-
       <Card className="product-card">
         <CardHeader>
           <div class="product-header">
@@ -186,15 +146,26 @@ if (Astro.request.method === "POST") {
                           )}
                         </div>
                       ))}
-                      {!isOwner && (
-                        <form method="POST" class="variant-card__add-to-cart">
-                          <input type="hidden" name="action" value="add-to-cart" />
-                          <input type="hidden" name="variant_id" value={variant.id} />
-                          <input type="hidden" name="quantity" value="1" />
-                          <Button type="submit" variant="primary" size="md">
-                            <span slot="text">Add to Cart</span>
-                          </Button>
-                        </form>
+                      {!isOwner && currentUser && (
+                        <div class="variant-card__add-to-cart">
+                          <AddToCartButton
+                            client:load
+                            productId={productData.id}
+                            variantId={variant.id}
+                            quantity={1}
+                            variant="primary"
+                            size="md"
+                          />
+                        </div>
+                      )}
+                      {!isOwner && !currentUser && (
+                        <div class="variant-card__add-to-cart">
+                          <a href={`/sign-in?redirect=/products/${product}`}>
+                            <Button variant="primary" size="md">
+                              <span slot="text">Sign In to Add to Cart</span>
+                            </Button>
+                          </a>
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -238,16 +209,6 @@ if (Astro.request.method === "POST") {
   display: flex;
   flex-direction: column;
   gap: var(--gap-xl);
-}
-.product-alert {
-  padding: var(--spacing-2xl);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-2xl);
-}
-.product-alert--error {
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #dc2626;
 }
 .product-header { display: flex; gap: var(--gap-xl); align-items: flex-start; }
 .product-header__info { flex: 1; }

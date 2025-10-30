@@ -1,0 +1,11 @@
+/* Checkout Button Component */
+.checkout-button {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  width: 100%;
+}
+
+.checkout-button button {
+  width: 100%;
+}

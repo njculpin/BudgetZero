@@ -10,24 +10,23 @@ export interface CreateProductParams {
   title: string;
   description?: string;
   status?: ProductStatus;
-  coverImageUrl?: string;
 }
 
 export interface UpdateProductParams {
   title?: string;
   description?: string;
   status?: ProductStatus;
-  coverImageUrl?: string;
   handle?: string;
   tags?: string[];
+  publishedAt?: string;
 }
 
 export interface CreateVariantParams {
-  name: string;
+  title: string;
   description?: string;
   sku?: string;
-  isDigital?: boolean;
-  sortOrder?: number;
+  options?: Record<string, unknown>;
+  position?: number;
 }
 
 export interface CreatePriceParams {
@@ -105,7 +104,7 @@ export const createProduct = async (
   const baseHandle = generateHandle(params.title);
   const handle = await generateUniqueHandle(baseHandle);
 
-  const { data, error } = await client
+  const { data, error} = await client
     .from('products')
     .insert({
       user_id: userId,
@@ -113,7 +112,7 @@ export const createProduct = async (
       title: params.title,
       description: params.description || '',
       status: params.status || 'draft',
-      cover_image_url: params.coverImageUrl,
+      view_count: 0,
     })
     .select()
     .single();
@@ -186,8 +185,8 @@ export const updateProduct = async (
   if (updates.title !== undefined) updateData.title = updates.title;
   if (updates.description !== undefined) updateData.description = updates.description;
   if (updates.status !== undefined) updateData.status = updates.status;
-  if (updates.coverImageUrl !== undefined) updateData.cover_image_url = updates.coverImageUrl;
   if (updates.handle !== undefined) updateData.handle = updates.handle;
+  if (updates.publishedAt !== undefined) updateData.published_at = updates.publishedAt;
 
   const { error } = await client
     .from('products')
@@ -319,7 +318,7 @@ export const createVariant = async (
   if (!sku) {
     const product = await getProductById(productId);
     if (!product) return null;
-    sku = `${product.handle}-${params.name.toLowerCase().replace(/\s+/g, '-')}`;
+    sku = `${product.handle}-${params.title.toLowerCase().replace(/\s+/g, '-')}`;
   }
 
   const { data, error } = await client
@@ -327,10 +326,10 @@ export const createVariant = async (
     .insert({
       product_id: productId,
       sku,
-      name: params.name,
+      title: params.title,
       description: params.description,
-      is_digital: params.isDigital ?? true,
-      sort_order: params.sortOrder ?? 0,
+      options: params.options || {},
+      position: params.position ?? 0,
     })
     .select()
     .single();
@@ -352,7 +351,7 @@ export const getProductVariants = async (productId: string): Promise<ProductVari
     .select('*')
     .eq('product_id', productId)
     .eq('deleted', false)
-    .order('sort_order', { ascending: true });
+    .order('position', { ascending: true });
 
   if (error) {
     return [];
@@ -393,10 +392,10 @@ export const updateVariant = async (
     updated_at: new Date().toISOString(),
   };
 
-  if (updates.name !== undefined) updateData.name = updates.name;
+  if (updates.title !== undefined) updateData.title = updates.title;
   if (updates.description !== undefined) updateData.description = updates.description;
-  if (updates.isDigital !== undefined) updateData.is_digital = updates.isDigital;
-  if (updates.sortOrder !== undefined) updateData.sort_order = updates.sortOrder;
+  if (updates.options !== undefined) updateData.options = updates.options;
+  if (updates.position !== undefined) updateData.position = updates.position;
 
   const { error } = await client
     .from('product_variants')

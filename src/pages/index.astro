@@ -3,8 +3,8 @@ import Layout from "@/layouts/Layout.astro";
 import SubscribeCTA from "@/components/SubscribeCTA.astro";
 import Hero from "@/components/Hero.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
-import ProfileGrid from "@/components/ProfileGrid.astro";
 import Features from "@/components/Features.astro"
+import Jams from "@/components/Jams.astro";
 
 
 const features: {
@@ -42,11 +42,12 @@ const profiles:{url: string; alt?: string, href: string}[] = Array.from({ length
 <Layout title="Game Loopers">
   <div class="page">
     <div class="page__container">
+      <Jams title="Jam" description="SOMETHING GREAT"/>
       <Hero/>
       <GalleryGrid title="Products" images={products} cols={5} rows={2}/>
       <Features features={features}/>
       <GalleryGrid title="Assets" images={assets} cols={5} rows={2}/>
-      <ProfileGrid title="Creators" images={profiles} cols={9} rows={3}/>
+      <GalleryGrid title="Creators" images={profiles} cols={9} rows={3} borderRadius="circle"/>
       <SubscribeCTA/>
     </div>
   </div>

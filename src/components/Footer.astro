@@ -25,10 +25,8 @@ const year = currentDate.getFullYear()
 
 <style>
     .footer__container {
-        width: 100%;
         background: var(--primary);
-        padding: var(--padding-xxl);
-        margin: 0 auto;
+        padding: var(--spacing-5xl);
         display: flex;
         align-items: center;
         gap: 2rem;
@@ -38,7 +36,9 @@ const year = currentDate.getFullYear()
         margin: 0 auto;
         display: flex;
         justify-content: start;
-        align-items: center;    
+        align-items: center;
+        gap: var(--spacing-3xl);
+        flex-wrap: wrap;
     }
     .copyright__label {
         display: inline-block;
@@ -46,5 +46,18 @@ const year = currentDate.getFullYear()
         font-weight: var(--font-weight-medium);
         color: var(--color-white);
         cursor: pointer;
+    }
+
+    /* Responsive: Stack on mobile, reduce padding */
+    @media (max-width: 768px) {
+        .footer__container {
+            padding: var(--spacing-3xl) var(--spacing-2xl);
+        }
+
+        .footer__content {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-2xl);
+        }
     }
 </style>
