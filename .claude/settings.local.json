@@ -21,7 +21,9 @@
       "Bash(cat:*)",
       "Bash(npx playwright test:*)",
       "Bash(npm run test:run:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(test:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []

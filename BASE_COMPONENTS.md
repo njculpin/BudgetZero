@@ -143,6 +143,105 @@ const statusOptions = [
 />
 ```
 
+### FileUploadField
+
+File upload field with drag-and-drop support, preview, and validation.
+
+**Props:**
+```typescript
+interface FileUploadFieldProps {
+  label: string;
+  name: string;
+  id?: string;
+  accept?: string;              // File types (e.g., "image/*", ".pdf")
+  multiple?: boolean;           // Allow multiple files
+  maxSizeMB?: number;           // Max file size (default: 10MB)
+  required?: boolean;
+  disabled?: boolean;
+  error?: string;
+  helpText?: string;
+  onFilesSelected: (files: File[]) => void;  // Called when files are selected
+  onError?: (error: string) => void;         // Called on validation error
+  showPreview?: boolean;        // Show image previews (default: false)
+}
+```
+
+**Usage:**
+```tsx
+const [files, setFiles] = createSignal<File[]>([]);
+const [uploadError, setUploadError] = createSignal("");
+
+<FileUploadField
+  label="Upload Images"
+  name="images"
+  accept="image/*"
+  multiple
+  maxSizeMB={5}
+  showPreview
+  onFilesSelected={(selectedFiles) => setFiles(selectedFiles)}
+  onError={(error) => setUploadError(error)}
+  helpText="Upload product images (max 5MB each)"
+/>
+```
+
+### FileUpload (Higher-Level Component)
+
+Complete file upload component with API integration and progress tracking.
+
+**Props:**
+```typescript
+interface FileUploadProps {
+  label: string;
+  name: string;
+  bucket: StorageBucket;        // Storage bucket: "asset-files", "asset-images", etc.
+  prefix?: string;              // Optional path prefix (e.g., productId)
+  accept?: string;
+  multiple?: boolean;
+  maxSizeMB?: number;
+  required?: boolean;
+  helpText?: string;
+  showPreview?: boolean;
+  onUploadComplete?: (files: UploadedFile[]) => void;  // Called after successful upload
+  onUploadError?: (error: string) => void;             // Called on upload error
+}
+
+interface UploadedFile {
+  path: string;     // Storage path
+  url: string;      // Public URL
+  size: number;     // File size in bytes
+  type: string;     // MIME type
+}
+```
+
+**Usage:**
+```tsx
+const [coverImageUrl, setCoverImageUrl] = createSignal("");
+
+<FileUpload
+  label="Product Cover Image"
+  name="cover_image"
+  bucket="product-images"
+  prefix={productId}
+  accept="image/*"
+  maxSizeMB={10}
+  showPreview
+  onUploadComplete={(files) => {
+    setCoverImageUrl(files[0].url);
+  }}
+  onUploadError={(error) => {
+    console.error("Upload failed:", error);
+  }}
+  helpText="Upload a cover image for your product"
+/>
+```
+
+**Storage Buckets:**
+- `asset-files` - Digital assets (PDFs, ZIPs, 3D models) - Max 100MB
+- `asset-images` - Asset preview images - Max 10MB
+- `product-images` - Product cover/variant images - Max 10MB
+- `user-avatars` - User profile avatars - Max 5MB
+- `documents` - PDF documents - Max 50MB
+
 ---
 
 ## 💬 Feedback Components
@@ -556,10 +655,12 @@ With these base components, you can now:
 2. ✅ Have standardized error handling
 3. ✅ Use loading states everywhere
 4. ✅ Add confirmations for destructive actions
-5. ✅ Maintain accessibility standards
+5. ✅ Handle file uploads with drag-and-drop
+6. ✅ Maintain accessibility standards
 
 **Ready to use in:**
-- Cart island components
+- Cart island components (AddToCartButton, CartItemRow, CheckoutButton)
 - Checkout forms
-- Product/Asset edit forms
+- Product/Asset edit forms (with file upload support)
+- User profile forms (avatar upload)
 - Any new forms you create

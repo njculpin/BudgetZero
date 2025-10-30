@@ -5,6 +5,7 @@ interface TagInputProps {
   name: string;
   placeholder: string;
   initialTags?: string[];
+  onChange?: (tags: string[]) => void;
 }
 
 export default function TagInput(props: TagInputProps) {
@@ -15,13 +16,17 @@ export default function TagInput(props: TagInputProps) {
   const addTag = () => {
     const value = inputValue().trim();
     if (value && !tags().includes(value)) {
-      setTags([...tags(), value]);
+      const newTags = [...tags(), value];
+      setTags(newTags);
       setInputValue('');
+      if (props.onChange) props.onChange(newTags);
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    setTags(tags().filter(tag => tag !== tagToRemove));
+    const newTags = tags().filter(tag => tag !== tagToRemove);
+    setTags(newTags);
+    if (props.onChange) props.onChange(newTags);
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {

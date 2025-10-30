@@ -5,33 +5,19 @@ import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
-import Label from "@/components/Label.astro";
-import Input from "@/components/Input.astro";
-import Button from "@/components/Button.astro";
-import Tag from "@/components/Tag.astro";
-import TagInput from "@/components/islands/TagInput";
+import AssetEditForm from "@/components/islands/AssetEditForm";
+import RoyaltyManagementForm from "@/components/islands/RoyaltyManagementForm";
 import { setSession } from "@/lib/auth";
 import {
   getAssetByHandle,
-  updateAsset,
-  createAssetFile,
-  createAssetImage,
-  createAssetTag,
   getAssetTags,
   getAssetFiles,
   getAssetImages,
 } from "@/lib/data-access/assets";
-import { uploadAssetFile, uploadAssetImage } from "@/lib/storage";
-import {
-  getAssetRoyalties,
-  createAssetRoyalty,
-  updateAssetRoyalty,
-  deleteAssetRoyalty,
-  validateRoyaltySplit,
-} from "@/lib/data-access/royalties";
+import { getAssetRoyalties } from "@/lib/data-access/royalties";
 import { getUserById } from "@/lib/data-access/users";
 
-const { cookies, redirect, request } = Astro;
+const { cookies, redirect } = Astro;
 const { asset: assetHandle } = Astro.params;
 
 if (!assetHandle) {
@@ -94,203 +80,6 @@ const royaltiesWithUsers = await Promise.all(
     return { ...royalty, user };
   })
 );
-
-// Handle form submission
-let errorMessage = "";
-let successMessage = "";
-
-if (request.method === "POST") {
-  try {
-    const formData = await request.formData();
-    const action = formData.get("action") as string;
-
-    if (action === "create-royalty") {
-      const contributorUserId = formData.get("contributor_user_id") as string;
-      const royaltyType = formData.get("royalty_type") as "fixed" | "percentage";
-      const royaltyValue = parseFloat(formData.get("royalty_value") as string);
-
-      if (!contributorUserId || !royaltyValue) {
-        errorMessage = "User ID and royalty value are required";
-      } else {
-        // Validate percentage doesn't exceed 100%
-        if (royaltyType === "percentage") {
-          const validation = await validateRoyaltySplit(assetData.id, royaltyValue);
-          if (!validation.valid) {
-            errorMessage = `Royalty split would exceed 100%. Current total: ${validation.currentTotal}%, adding ${royaltyValue}% would make ${validation.newTotal}%`;
-          } else {
-            const royalty = await createAssetRoyalty(
-              {
-                assetId: assetData.id,
-                userId: contributorUserId,
-                royaltyType,
-                royaltyValue,
-              },
-              {
-                accessToken: accessToken.value,
-                refreshToken: refreshToken.value,
-              }
-            );
-
-            if (royalty) {
-              successMessage = "Royalty added successfully";
-            } else {
-              errorMessage = "Failed to add royalty";
-            }
-          }
-        } else {
-          const royalty = await createAssetRoyalty(
-            {
-              assetId: assetData.id,
-              userId: contributorUserId,
-              royaltyType,
-              royaltyValue,
-            },
-            {
-              accessToken: accessToken.value,
-              refreshToken: refreshToken.value,
-            }
-          );
-
-          if (royalty) {
-            successMessage = "Royalty added successfully";
-          } else {
-            errorMessage = "Failed to add royalty";
-          }
-        }
-      }
-    } else if (action === "delete-royalty") {
-      const royaltyId = formData.get("royalty_id") as string;
-
-      const success = await deleteAssetRoyalty(royaltyId, {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      });
-
-      if (success) {
-        successMessage = "Royalty deleted successfully";
-      } else {
-        errorMessage = "Failed to delete royalty";
-      }
-    } else {
-      // Default action: update asset
-      const title = formData.get("title") as string;
-      const description = formData.get("description") as string;
-      const status = formData.get("status") as "draft" | "published";
-      const files = formData.getAll("files") as File[];
-      const images = formData.getAll("images") as File[];
-      const tagsString = formData.get("tags") as string;
-
-      if (!title) {
-        errorMessage = "Title is required";
-      } else {
-      // Update the asset
-      const updatedAsset = await updateAsset(
-        assetData.id,
-        {
-          title,
-          description,
-          status: status || "draft",
-        },
-        {
-          accessToken: accessToken.value,
-          refreshToken: refreshToken.value,
-        }
-      );
-
-      if (!updatedAsset) {
-        errorMessage = "Failed to update asset";
-      } else {
-        // Handle tags - for now, create new tags (we'll add delete functionality later)
-        if (tagsString) {
-          const tags = JSON.parse(tagsString) as string[];
-          for (const tag of tags) {
-            await createAssetTag(
-              assetData.id,
-              tag,
-              {
-                accessToken: accessToken.value,
-                refreshToken: refreshToken.value,
-              }
-            );
-          }
-        }
-
-        // Upload new files if provided
-        if (files && files.length > 0) {
-          for (const file of files) {
-            if (file.size > 0) {
-              const fileUpload = await uploadAssetFile(file, userId, assetData.id);
-              if (fileUpload) {
-                await createAssetFile(
-                  assetData.id,
-                  {
-                    title: file.name,
-                    description: `Uploaded file: ${file.name}`,
-                    file_url: fileUpload.url,
-                    storage_path: fileUpload.path,
-                    file_size_bytes: fileUpload.size,
-                    mime_type: file.type,
-                  },
-                  {
-                    accessToken: accessToken.value,
-                    refreshToken: refreshToken.value,
-                  }
-                );
-              }
-            }
-          }
-        }
-
-        // Upload new images if provided
-        if (images && images.length > 0) {
-          for (const image of images) {
-            if (image.size > 0) {
-              const imageUpload = await uploadAssetImage(image, userId, assetData.id);
-              if (imageUpload) {
-                await createAssetImage(
-                  assetData.id,
-                  {
-                    title: image.name,
-                    description: `Cover image: ${image.name}`,
-                    file_url: imageUpload.url,
-                    storage_path: imageUpload.path,
-                    file_size_bytes: imageUpload.size,
-                    mime_type: image.type,
-                  },
-                  {
-                    accessToken: accessToken.value,
-                    refreshToken: refreshToken.value,
-                  }
-                );
-              }
-            }
-          }
-        }
-
-        // Redirect to the asset detail page
-        successMessage = "Asset updated successfully!";
-        return redirect(`/assets/${assetHandle}`);
-      }
-      }
-    }
-
-    // Redirect with message for royalty actions
-    if (action === "create-royalty" || action === "delete-royalty") {
-      const params = new URLSearchParams();
-      if (successMessage) params.set('success', successMessage);
-      if (errorMessage) params.set('error', errorMessage);
-      return redirect(`/assets/${assetHandle}/edit?${params.toString()}`, 303);
-    }
-  } catch (error) {
-    console.error("Error updating asset:", error);
-    errorMessage = error instanceof Error ? error.message : "An error occurred";
-  }
-}
-
-// Get messages from URL params
-const urlParams = new URL(Astro.url).searchParams;
-successMessage = successMessage || urlParams.get('success') || '';
-errorMessage = errorMessage || urlParams.get('error') || '';
 ---
 
 <Layout title={`Edit ${assetData.title} - Game Loopers`}>
@@ -305,129 +94,27 @@ errorMessage = errorMessage || urlParams.get('error') || '';
         </CardHeader>
 
         <CardContent>
-          {errorMessage && (
-            <div class="asset-edit-error">
-              <p>{errorMessage}</p>
-            </div>
-          )}
-
-          <form method="POST" class="asset-form" enctype="multipart/form-data">
-            <div class="asset-form__field">
-              <Label for="title">Title</Label>
-              <Input
-                type="text"
-                name="title"
-                id="title"
-                value={assetData.title}
-                placeholder="Enter asset title"
-                required
-              />
-            </div>
-
-            <div class="asset-form__field">
-              <Label for="description">Description</Label>
-              <textarea
-                name="description"
-                id="description"
-                placeholder="Describe your asset..."
-                rows="4"
-                class="asset-form__textarea"
-              >{assetData.description}</textarea>
-            </div>
-
-            <div class="asset-form__field">
-              <Label for="tags">Tags</Label>
-              <div class="asset-form__existing-tags">
-                <p class="asset-form__label">Existing tags:</p>
-                <div class="asset-form__tag-list">
-                  {existingTags.length > 0 ? (
-                    existingTags.map((tag) => (
-                      <Tag>{tag.value}</Tag>
-                    ))
-                  ) : (
-                    <p class="asset-form__no-tags">No tags yet</p>
-                  )}
-                </div>
-              </div>
-              <TagInput name="tags" placeholder="Add new tags (press Enter)" />
-            </div>
-
-            <div class="asset-form__field">
-              <Label for="files">Asset Files</Label>
-              <div class="asset-form__existing-files">
-                <p class="asset-form__label">Existing files ({existingFiles.length}):</p>
-                {existingFiles.length > 0 && (
-                  <ul class="asset-form__file-list">
-                    {existingFiles.map((file) => (
-                      <li class="asset-form__file-item">
-                        <span>{file.title}</span>
-                        <span class="asset-form__file-size">
-                          {(file.file_size_bytes / 1024 / 1024).toFixed(2)} MB
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <input
-                type="file"
-                name="files"
-                id="files"
-                multiple
-                class="asset-form__file-input"
-              />
-              <p class="asset-form__help-text">
-                Add more asset files (PDF, STL, OBJ, ZIP, etc.)
-              </p>
-            </div>
-
-            <div class="asset-form__field">
-              <Label for="images">Cover Images</Label>
-              <div class="asset-form__existing-images">
-                <p class="asset-form__label">Existing images ({existingImages.length}):</p>
-                {existingImages.length > 0 && (
-                  <div class="asset-form__image-grid">
-                    {existingImages.map((image) => (
-                      <div class="asset-form__image-item">
-                        <img src={image.file_url} alt={image.title} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                name="images"
-                id="images"
-                accept="image/*"
-                multiple
-                class="asset-form__file-input"
-              />
-              <p class="asset-form__help-text">
-                Add more cover images
-              </p>
-            </div>
-
-            <div class="asset-form__field">
-              <Label for="status">Status</Label>
-              <select name="status" id="status" class="asset-form__select">
-                <option value="draft" selected={assetData.status === 'draft'}>Draft</option>
-                <option value="published" selected={assetData.status === 'published'}>Published</option>
-                <option value="archived" selected={assetData.status === 'archived'}>Archived</option>
-              </select>
-            </div>
-
-            <div class="asset-form__actions">
-              <a href={`/assets/${assetHandle}`}>
-                <Button variant="outline" size="md">
-                  <span slot="text">Cancel</span>
-                </Button>
-              </a>
-              <Button type="submit" variant="primary" size="md">
-                <span slot="text">Update Asset</span>
-              </Button>
-            </div>
-          </form>
+          <AssetEditForm
+            client:load
+            assetId={assetData.id}
+            assetHandle={assetHandle}
+            initialData={{
+              title: assetData.title,
+              description: assetData.description,
+              status: assetData.status,
+              tags: existingTags.map(t => t.value),
+              existingFiles: existingFiles.map(f => ({
+                id: f.id,
+                title: f.title,
+                file_size_bytes: f.file_size_bytes,
+              })),
+              existingImages: existingImages.map(i => ({
+                id: i.id,
+                title: i.title,
+                file_url: i.file_url,
+              })),
+            }}
+          />
         </CardContent>
       </Card>
 
@@ -437,110 +124,12 @@ errorMessage = errorMessage || urlParams.get('error') || '';
           <CardDescription>Manage royalty splits for contributors</CardDescription>
         </CardHeader>
         <CardContent>
-          {successMessage && (
-            <div class="royalty-success">
-              <p>{successMessage}</p>
-            </div>
-          )}
-
-          {royaltiesWithUsers.length > 0 ? (
-            <div class="royalty-list">
-              {royaltiesWithUsers.map((royalty) => (
-                <div class="royalty-item">
-                  <div class="royalty-item__info">
-                    <div class="royalty-item__user">
-                      {royalty.user ? (
-                        <span>{royalty.user.name || royalty.user.handle || 'Unknown User'}</span>
-                      ) : (
-                        <span>User ID: {royalty.user_id}</span>
-                      )}
-                    </div>
-                    <div class="royalty-item__value">
-                      {royalty.royalty_type === 'percentage' ? (
-                        <span>{royalty.royalty_value}%</span>
-                      ) : (
-                        <span>${(royalty.royalty_value / 100).toFixed(2)}</span>
-                      )}
-                      <span class="royalty-item__type">
-                        ({royalty.royalty_type})
-                      </span>
-                    </div>
-                  </div>
-                  <form method="POST" class="royalty-item__delete-form">
-                    <input type="hidden" name="action" value="delete-royalty" />
-                    <input type="hidden" name="royalty_id" value={royalty.id} />
-                    <Button type="submit" variant="ghost" size="sm">
-                      <span slot="text">Remove</span>
-                    </Button>
-                  </form>
-                </div>
-              ))}
-              <div class="royalty-total">
-                <span class="royalty-total__label">Total Percentage:</span>
-                <span class="royalty-total__value">
-                  {royaltiesWithUsers
-                    .filter(r => r.royalty_type === 'percentage')
-                    .reduce((sum, r) => sum + r.royalty_value, 0)}%
-                </span>
-              </div>
-            </div>
-          ) : (
-            <p class="royalty-empty">No royalties set. Add contributors below to split revenue.</p>
-          )}
-
-          <details class="royalty-add" open>
-            <summary class="royalty-add__summary">Add Royalty</summary>
-            <form method="POST" class="royalty-form">
-              <input type="hidden" name="action" value="create-royalty" />
-
-              <div class="royalty-form__field">
-                <Label for="contributor_user_id">Contributor User ID *</Label>
-                <Input
-                  type="text"
-                  name="contributor_user_id"
-                  id="contributor_user_id"
-                  placeholder="Enter user ID"
-                  required
-                />
-                <p class="royalty-form__help">You'll need the contributor's user ID. They can find it in their profile.</p>
-              </div>
-
-              <div class="royalty-form__field">
-                <Label for="royalty_type">Royalty Type *</Label>
-                <select
-                  name="royalty_type"
-                  id="royalty_type"
-                  class="royalty-form__select"
-                  required
-                >
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount ($)</option>
-                </select>
-              </div>
-
-              <div class="royalty-form__field">
-                <Label for="royalty_value">Royalty Value *</Label>
-                <Input
-                  type="number"
-                  name="royalty_value"
-                  id="royalty_value"
-                  placeholder="Enter value"
-                  step="0.01"
-                  min="0"
-                  required
-                />
-                <p class="royalty-form__help">
-                  For percentage: enter 10 for 10%. For fixed: enter dollars (e.g., 5.00 for $5)
-                </p>
-              </div>
-
-              <div class="royalty-form__actions">
-                <Button type="submit" variant="primary" size="md">
-                  <span slot="text">Add Royalty</span>
-                </Button>
-              </div>
-            </form>
-          </details>
+          <RoyaltyManagementForm
+            client:load
+            assetId={assetData.id}
+            initialRoyalties={royaltiesWithUsers}
+            onUpdate={() => window.location.reload()}
+          />
         </CardContent>
       </Card>
     </div>
@@ -558,6 +147,9 @@ errorMessage = errorMessage || urlParams.get('error') || '';
 .asset-edit-container {
   max-width: 48rem;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
 }
 
 .asset-edit-header {
@@ -566,103 +158,30 @@ errorMessage = errorMessage || urlParams.get('error') || '';
   gap: var(--gap-sm);
 }
 
-/* ===== Error Message ===== */
-.asset-edit-error {
-  margin-bottom: var(--spacing-3xl);
-  padding: var(--spacing-2xl);
-  background-color: #fee2e2;
-  border: 1px solid #ef4444;
-  border-radius: var(--radius-md);
-  color: #991b1b;
-}
-
-.asset-edit-error p {
-  margin: 0;
-  font-size: var(--text-sm);
-}
-
 /* ===== Form Styles ===== */
-.asset-form {
+.asset-edit-form,
+.royalty-management__form {
   display: flex;
   flex-direction: column;
   gap: var(--gap-xl);
 }
 
-.asset-form__field {
+.asset-edit-form__actions,
+.royalty-management__form-actions {
   display: flex;
-  flex-direction: column;
-  gap: var(--gap-sm);
-}
-
-.asset-form__label {
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text, #111);
-  margin-bottom: var(--spacing-sm);
-}
-
-.asset-form__textarea {
-  width: 100%;
-  min-height: 6rem;
-  padding: var(--spacing-lg);
-  border: 1px solid var(--color-border, #d1d5db);
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  font-family: inherit;
-  resize: vertical;
-}
-
-.asset-form__textarea:focus {
-  outline: none;
-  border-color: var(--color-primary, #0070f3);
-  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
-}
-
-.asset-form__select {
-  width: 100%;
-  height: var(--height-input-lg);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: 1px solid var(--color-border, #d1d5db);
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  background-color: white;
-}
-
-.asset-form__select:focus {
-  outline: none;
-  border-color: var(--color-primary, #0070f3);
-  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
-}
-
-.asset-form__file-input {
-  width: 100%;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border, #d1d5db);
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-}
-
-.asset-form__help-text {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--color-text-muted, #6b7280);
-}
-
-.asset-form__actions {
-  display: flex;
-  gap: var(--gap-lg);
+  gap: var(--gap-md);
   justify-content: flex-end;
   padding-top: var(--spacing-2xl);
 }
 
-.asset-form__actions a {
+.asset-edit-form__actions a {
   text-decoration: none;
 }
 
 /* ===== Existing Content Display ===== */
-.asset-form__existing-tags,
-.asset-form__existing-files,
-.asset-form__existing-images {
+.asset-edit-form__existing-tags,
+.asset-edit-form__existing-files,
+.asset-edit-form__existing-images {
   padding: var(--spacing-2xl);
   background-color: var(--color-background, #f9fafb);
   border: 1px solid var(--color-border, #e5e7eb);
@@ -670,26 +189,35 @@ errorMessage = errorMessage || urlParams.get('error') || '';
   margin-bottom: var(--spacing-sm);
 }
 
-.asset-form__tag-list {
+.asset-edit-form__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text, #111);
+  margin-bottom: var(--spacing-sm);
+}
+
+.asset-edit-form__tag-list {
   display: flex;
   flex-wrap: wrap;
   gap: var(--gap-sm);
   margin-top: var(--spacing-sm);
 }
 
-.asset-form__no-tags {
-  margin: 0;
+.asset-edit-form__tag {
+  padding: var(--spacing-xs) var(--spacing-md);
   font-size: var(--text-sm);
-  color: var(--color-text-muted, #6b7280);
+  background-color: var(--primary);
+  color: white;
+  border-radius: var(--radius-full);
 }
 
-.asset-form__file-list {
+.asset-edit-form__file-list {
   list-style: none;
   padding: 0;
   margin: var(--spacing-sm) 0 0 0;
 }
 
-.asset-form__file-item {
+.asset-edit-form__file-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -698,32 +226,150 @@ errorMessage = errorMessage || urlParams.get('error') || '';
   font-size: var(--text-sm);
 }
 
-.asset-form__file-item:last-child {
+.asset-edit-form__file-item:last-child {
   border-bottom: none;
 }
 
-.asset-form__file-size {
+.asset-edit-form__file-size {
   color: var(--color-text-muted, #6b7280);
   font-size: var(--text-sm);
 }
 
-.asset-form__image-grid {
+.asset-edit-form__image-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
   gap: var(--gap-md);
   margin-top: var(--spacing-sm);
 }
 
-.asset-form__image-item {
+.asset-edit-form__image-item {
   aspect-ratio: 1;
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--color-border, #e5e7eb);
 }
 
-.asset-form__image-item img {
+.asset-edit-form__image-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* ===== Royalty Management ===== */
+.royalty-management {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
+}
+
+.royalty-management__empty {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  text-align: center;
+  padding: var(--spacing-4xl);
+}
+
+.royalty-management__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.royalty-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-2xl);
+  background-color: var(--color-background, #f9fafb);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.royalty-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.royalty-item__user {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.royalty-item__value {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+}
+
+.royalty-item__type {
+  margin-left: var(--spacing-xs);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--muted-foreground);
+}
+
+.royalty-management__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-2xl);
+  border-top: 2px solid var(--border);
+  font-weight: var(--font-weight-semibold);
+}
+
+.royalty-management__total-label {
+  font-size: var(--text-base);
+}
+
+.royalty-management__total-value {
+  font-size: var(--text-xl);
+  color: var(--primary);
+}
+
+.royalty-management__add {
+  margin-top: var(--spacing-2xl);
+}
+
+.royalty-management__toggle-button {
+  padding: var(--spacing-md);
+  background-color: var(--muted);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.royalty-management__toggle-button:hover {
+  background-color: var(--muted-hover, #e5e7eb);
+}
+
+/* ===== Form Field Styles ===== */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.form-field__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+.form-field__file-input {
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.form-field__help-text {
+  margin: var(--spacing-xs) 0 0 0;
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
 }
 </style>

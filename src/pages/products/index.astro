@@ -2,13 +2,32 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
+import Button from "@/components/Button.astro";
 import Input from "@/components/Input.astro";
 import Tag from "@/components/Tag.astro";
 import { getPublishedProducts, getPopularProductTags } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
+import { setSession } from "@/lib/auth";
 
-const { url } = Astro;
+const { url, cookies } = Astro;
 const searchParams = url.searchParams;
+
+// Check authentication
+let currentUser = null;
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {}
+}
 
 const searchQuery = searchParams.get('search') || '';
 const tagFilter = searchParams.get('tag') || '';
@@ -28,9 +47,18 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 <Layout title="Browse Products - Game Loopers">
   <div class="page">
     <div class="page__container">
-      <div class="page-header">
-        <h1 class="page-header__title">Browse Products</h1>
-        <p class="page-header__description">Discover tabletop games from the community</p>
+      <div class="page-header-with-action">
+        <div class="page-header">
+          <h1 class="page-header__title">Browse Products</h1>
+          <p class="page-header__description">Discover tabletop games from the community</p>
+        </div>
+        {currentUser && (
+          <a href="/products/new" class="page-header-action">
+            <Button variant="primary" size="md">
+              <span slot="text">Create Product</span>
+            </Button>
+          </a>
+        )}
       </div>
 
       {products.length > 0 ? (
@@ -85,6 +113,8 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 </Layout>
 
 <style>
+.page-header-with-action{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--gap-xl);margin-bottom:var(--spacing-2xl)}
+.page-header-action{text-decoration:none;flex-shrink:0}
 .products-filters{display:flex;flex-direction:column;gap:var(--gap-xl)}
 .products-filters__search{width:100%}
 .products-filters__label{margin:0 0 var(--spacing-sm);font-size:var(--text-sm);font-weight:var(--font-weight-semibold)}

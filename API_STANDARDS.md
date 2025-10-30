@@ -3,6 +3,49 @@
 ## Overview
 This document defines the API contract standards for all endpoints in the Game Loopers application.
 
+## Architecture Note: Action-Based Routing
+
+**Current Structure**: This API uses action-based routing (e.g., `/api/products/create-product`, `/api/products/update-product`) rather than RESTful conventions (e.g., `POST /api/products`, `PUT /api/products/:id`).
+
+**Decision Rationale**:
+- ✅ SDK isolation is the critical architectural pattern (fully enforced)
+- ✅ Consistent structure across all endpoints
+- ✅ Clear, explicit action names
+- ⚠️ Non-standard REST structure (documented as technical debt)
+
+**Future Consideration**: REST migration deferred to maintain velocity. All endpoints work correctly through proper SDK isolation layers.
+
+## SDK Isolation Layer
+
+**CRITICAL ARCHITECTURE RULE**: All API endpoints MUST use the SDK isolation layers. Direct imports of third-party SDKs are prohibited.
+
+### Isolation Layers
+
+| Layer | Location | Purpose | Exports |
+|-------|----------|---------|---------|
+| **Auth** | `src/lib/auth/` | Supabase Auth | `signInWithPassword()`, `signUp()`, `setSession()`, `getUser()`, `signOut()` |
+| **Data Access** | `src/lib/data-access/` | Database operations | `getProductById()`, `createProduct()`, `updateUser()`, etc. |
+| **Storage** | `src/lib/storage/` | File storage | `uploadFile()`, `deleteFile()`, `getPublicUrl()`, `createSignedUrl()` |
+| **Payments** | `src/lib/payments/` | Stripe integration | `createCheckoutSession()`, `processRefund()` |
+
+### Enforcement
+
+**✅ Correct** - Use isolation layers:
+```typescript
+import { setSession } from "@/lib/auth";
+import { getProductById } from "@/lib/data-access/products";
+import { uploadFile } from "@/lib/storage";
+```
+
+**❌ Incorrect** - Direct SDK imports:
+```typescript
+import { createClient } from "@supabase/supabase-js"; // NEVER DO THIS
+```
+
+**Audit Status**: All API routes audited (2025-01-30) - Zero direct Supabase imports found ✅
+
+---
+
 ## General Principles
 
 ### 1. All Responses Must Be JSON
@@ -54,6 +97,59 @@ try {
 ```
 
 ## API Endpoints
+
+### Complete Route Reference
+
+| Category | Method | Endpoint | Content Type | Auth Required |
+|----------|--------|----------|--------------|---------------|
+| **Authentication** |
+| | POST | `/api/auth/sign-in` | JSON | No |
+| | POST | `/api/auth/sign-up` | JSON | No |
+| | POST | `/api/auth/sign-out` | - | Yes |
+| **Cart** |
+| | POST | `/api/cart/add` | JSON | Yes |
+| | POST | `/api/cart/update` | JSON | Yes |
+| | POST | `/api/cart/remove` | JSON | Yes |
+| | POST | `/api/cart/clear` | JSON | Yes |
+| **Products** |
+| | POST | `/api/products/create-product` | JSON | Yes |
+| | PUT | `/api/products/update-product` | JSON | Yes |
+| | POST | `/api/products/update-product` | FormData | Yes |
+| | DELETE | `/api/products/delete-product` | JSON | Yes |
+| **Product Variants** |
+| | POST | `/api/products/variants/create` | JSON | Yes |
+| | POST | `/api/products/variants/update` | JSON | Yes |
+| | POST | `/api/products/variants/delete` | JSON | Yes |
+| | POST | `/api/products/variants/link-asset` | JSON | Yes |
+| | POST | `/api/products/variants/unlink-asset` | JSON | Yes |
+| | POST | `/api/products/variants/create-price` | JSON | Yes |
+| **Assets** |
+| | POST | `/api/assets/create-asset` | FormData | Yes |
+| | POST | `/api/assets/update-asset` | FormData | Yes |
+| | POST | `/api/assets/delete-asset` | JSON | Yes |
+| **Documents** |
+| | POST | `/api/documents/create-document` | JSON | Yes |
+| | POST | `/api/documents/update-document` | JSON | Yes |
+| | POST | `/api/documents/delete-document` | JSON | Yes |
+| **Jams** |
+| | POST | `/api/jams/create-jam` | JSON | Yes |
+| | POST | `/api/jams/update-jam` | JSON | Yes |
+| | POST | `/api/jams/delete-jam` | JSON | Yes |
+| **Tags** |
+| | POST | `/api/tags/create-tag` | JSON | Yes |
+| | POST | `/api/tags/update-tag` | JSON | Yes |
+| | POST | `/api/tags/delete-tag` | JSON | Yes |
+| **Users** |
+| | POST | `/api/users/create-user` | JSON | Yes |
+| | POST | `/api/users/update-user` | FormData | Yes |
+| | POST | `/api/users/delete-user` | JSON | Yes |
+| **File Upload** |
+| | POST | `/api/upload` | FormData | Yes |
+| **Checkout** |
+| | POST | `/api/checkout` | JSON | Yes |
+| | POST | `/api/download` | JSON | Yes |
+
+---
 
 ### Authentication
 
@@ -212,6 +308,204 @@ try {
 }
 ```
 
+#### PUT /api/products/update-product
+**Request**: JSON
+```json
+{
+  "productId": "uuid",
+  "title": "Updated Title",
+  "description": "Updated description",
+  "status": "published",
+  "tags": ["strategy"],
+  "handle": "custom-handle"
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "product": {
+    "id": "uuid",
+    "title": "Updated Title",
+    ...
+  }
+}
+```
+
+#### POST /api/products/update-product
+**Request**: FormData (for file uploads)
+```
+productId: "uuid"
+title: "My Product"
+description: "Description"
+status: "published"
+tags: JSON string ["tag1", "tag2"]
+coverImage: File (optional)
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "product": {
+    "id": "uuid"
+  }
+}
+```
+
+**Note**: POST handler accepts FormData for cover image uploads. PUT handler accepts JSON for data-only updates.
+
+#### DELETE /api/products/delete-product
+**Request**: JSON
+```json
+{
+  "productId": "uuid"
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true
+}
+```
+
+**Note**: Soft delete - sets `deleted: true` and `deleted_at` timestamp
+
+---
+
+### Product Variant Operations
+
+#### POST /api/products/variants/create
+**Request**: JSON
+```json
+{
+  "productId": "uuid",
+  "title": "PDF Only",
+  "description": "Includes PDF rulebook",
+  "sku": "GAME-001-PDF",
+  "isDigital": true
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "variant": {
+    "id": "uuid",
+    "product_id": "uuid",
+    "title": "PDF Only",
+    "sku": "GAME-001-PDF",
+    "description": "Includes PDF rulebook",
+    "created_at": "2025-01-01T00:00:00Z"
+  }
+}
+```
+
+**Note**: If `sku` is not provided, it will be auto-generated from product handle and variant title.
+
+#### POST /api/products/variants/update
+**Request**: JSON
+```json
+{
+  "variantId": "uuid",
+  "title": "Updated Name",
+  "description": "Updated description"
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "variant": {
+    "id": "uuid",
+    "title": "Updated Name",
+    ...
+  }
+}
+```
+
+#### POST /api/products/variants/delete
+**Request**: JSON
+```json
+{
+  "variantId": "uuid"
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true
+}
+```
+
+**Note**: Soft delete
+
+#### POST /api/products/variants/link-asset
+**Request**: JSON
+```json
+{
+  "variantId": "uuid",
+  "assetId": "uuid"
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true
+}
+```
+
+#### POST /api/products/variants/unlink-asset
+**Request**: JSON
+```json
+{
+  "variantId": "uuid",
+  "assetId": "uuid"
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true
+}
+```
+
+#### POST /api/products/variants/create-price
+**Request**: JSON
+```json
+{
+  "variantId": "uuid",
+  "currency": "usd",
+  "unitAmount": 999,
+  "minQuantity": 1,
+  "maxQuantity": 10
+}
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "price": {
+    "id": "uuid",
+    "variant_id": "uuid",
+    "currency": "usd",
+    "unit_amount": 999,
+    "min_quantity": 1,
+    "max_quantity": 10,
+    "created_at": "2025-01-01T00:00:00Z"
+  }
+}
+```
+
+**Note**: `unitAmount` is in cents (e.g., 999 = $9.99). `maxQuantity` is optional (null = unlimited).
+
 ---
 
 ### User Operations
@@ -363,6 +657,76 @@ if (!response.ok) {
 }
 
 const result = await response.json();
+```
+
+### File Uploads
+
+#### POST /api/upload
+**Request**: FormData
+- `file`: File (required)
+- `bucket`: String - one of: `asset-files`, `asset-images`, `product-images`, `user-avatars`, `documents`
+- `prefix`: String (optional) - subdirectory prefix (e.g., productId, assetId)
+
+**Validation Rules by Bucket:**
+
+| Bucket | Allowed Types | Max Size |
+|--------|--------------|----------|
+| `asset-files` | Images, PDFs, ZIPs, 3D models (STL, OBJ, GLTF) | 100MB |
+| `asset-images` | Images (JPEG, PNG, GIF, WebP) | 10MB |
+| `product-images` | Images (JPEG, PNG, GIF, WebP) | 10MB |
+| `user-avatars` | Images (JPEG, PNG, GIF, WebP) | 5MB |
+| `documents` | PDFs | 50MB |
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "file": {
+    "path": "userId/prefix/filename-timestamp.ext",
+    "url": "https://storage.url/bucket/path",
+    "size": 1024,
+    "type": "image/png"
+  }
+}
+```
+
+**Error Responses**:
+- `400`: Invalid file type/size or missing file
+- `401`: Not authenticated
+- `500`: Upload failed
+
+**Example Usage (FileUpload component)**:
+```tsx
+<FileUpload
+  label="Product Cover Image"
+  name="cover_image"
+  bucket="product-images"
+  prefix={productId}
+  accept="image/*"
+  maxSizeMB={10}
+  showPreview
+  onUploadComplete={(files) => {
+    // files[0].url contains the uploaded file URL
+    setCoverImageUrl(files[0].url);
+  }}
+/>
+```
+
+**Example Usage (Manual)**:
+```tsx
+const formData = new FormData();
+formData.append("file", file);
+formData.append("bucket", "user-avatars");
+
+const response = await fetch("/api/upload", {
+  method: "POST",
+  body: formData,
+});
+
+if (response.ok) {
+  const data = await response.json();
+  const fileUrl = data.file.url;
+}
 ```
 
 ## Migration Checklist

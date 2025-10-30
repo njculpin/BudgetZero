@@ -19,6 +19,7 @@ export interface UpdateProductParams {
   handle?: string;
   tags?: string[];
   publishedAt?: string;
+  coverImageUrl?: string | null;
 }
 
 export interface CreateVariantParams {
@@ -187,6 +188,7 @@ export const updateProduct = async (
   if (updates.status !== undefined) updateData.status = updates.status;
   if (updates.handle !== undefined) updateData.handle = updates.handle;
   if (updates.publishedAt !== undefined) updateData.published_at = updates.publishedAt;
+  if (updates.coverImageUrl !== undefined) updateData.cover_image_url = updates.coverImageUrl;
 
   const { error } = await client
     .from('products')

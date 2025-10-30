@@ -22,7 +22,7 @@ if (accessToken && refreshToken) {
   }
 }
 
-const navLinks = [
+const authedLinks = [
   { href: "/documents", label: "Documents" },
   { href: "/assets", label: "Assets" },
   { href: "/products", label: "Products" },
@@ -32,6 +32,12 @@ const navLinks = [
   { href: "/tags", label: "Tags" },
   { href: "/about", label: "About" },
   { href: "/cart", label: "Cart" },
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+];
+
+const unAuthedLinks = [
+  { href: "/about", label: "About" },
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },
 ];
@@ -45,7 +51,7 @@ const navLinks = [
 
     {/* Mobile Navigation */}
     <div class="navigation__mobile">
-      <NavigationMobile client:load isAuthenticated={isAuthenticated} links={isAuthenticated ? navLinks : []} />
+      <NavigationMobile client:load isAuthenticated={isAuthenticated} links={isAuthenticated ? authedLinks : unAuthedLinks} />
     </div>
 
     {
@@ -86,26 +92,6 @@ const navLinks = [
           <span slot="text"><p>Tags</p></span>
         </Button>
       </a>
-      <a href="/about">
-        <Button variant="ghost" size="sm">
-          <span slot="text"><p>About</p></span>
-        </Button>
-      </a>
-      <a href="/cart">
-        <Button variant="ghost" size="sm">
-          <span slot="text"><p>Cart</p></span>
-        </Button>
-      </a>
-      <a href="/terms">
-        <Button variant="ghost" size="sm">
-          <span slot="text"><p>Terms</p></span>
-        </Button>
-      </a>
-      <a href="/privacy">
-        <Button variant="ghost" size="sm">
-          <span slot="text"><p>Privacy</p></span>
-        </Button>
-      </a>
     </div>
     }
 
@@ -115,6 +101,11 @@ const navLinks = [
           <a href="/dashboard">
             <Button variant="ghost" size="sm">
               <span slot="text"><p>Dashboard</p></span>
+            </Button>
+          </a>
+          <a href="/cart">
+            <Button variant="ghost" size="sm">
+              <span slot="text"><p>Cart</p></span>
             </Button>
           </a>
           <form action="/api/auth/sign-out" method="post" class="navigation__signout-form">

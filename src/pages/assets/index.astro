@@ -5,9 +5,28 @@ import CardContent from "@/components/CardContent.astro";
 import { getPublishedAssets, getPopularTags } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import PageHeader from "@/components/PageHeader.astro";
+import { setSession } from "@/lib/auth";
+import AssetCreateButton from "@/components/AssetCreateButton.astro";
 
-const { url } = Astro;
+const { url, cookies } = Astro;
 const searchParams = url.searchParams;
+
+// Check authentication
+let currentUser = null;
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {}
+}
 
 // Get search and filter parameters
 const searchQuery = searchParams.get('search') || '';
@@ -33,7 +52,12 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
   <div class="page">
     <div class="page__container">
       <!-- Page Header -->
-      <PageHeader title="Assets" description="Browse assets owned and created by you."/>
+      <div class="page-header-with-action">
+        <PageHeader title="Assets" description="Browse assets owned and created by you."/>
+        {currentUser && (
+          <AssetCreateButton />
+        )}
+      </div>
 
       <!-- Assets Grid -->
       {assets.length > 0 ? (
@@ -109,6 +133,20 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 </Layout>
 
 <style>
+/* ===== Page Header with Action ===== */
+.page-header-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--gap-xl);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.page-header-action {
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
 /* ===== Filters ===== */
 .assets-filters {
   padding: 16px;

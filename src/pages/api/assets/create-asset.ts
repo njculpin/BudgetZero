@@ -1,10 +1,9 @@
 import type { APIRoute } from "astro";
-import { createAsset, createAssetFile, createAssetImage, createAssetTag } from "@/lib/data-access/assets";
-import { uploadAssetFile, uploadAssetImage } from "@/lib/storage";
+import { createAsset } from "@/lib/data-access/assets";
 import { getUser } from "@/lib/auth";
 
-export const POST: APIRoute = async ({ request, redirect, cookies }) => {
-      // Check authentication
+export const POST: APIRoute = async ({ request, cookies }) => {
+  // Check authentication
   const { data: userData } = await getUser();
   const currentUser = userData?.user;
 
@@ -25,118 +24,30 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
       headers: { "Content-Type": "application/json" },
     });
   }
-try {
-    const formData = await request.formData();
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const status = formData.get("status") as "draft" | "published";
-    const files = formData.getAll("files") as File[];
-    const images = formData.getAll("images") as File[];
-    const tagsString = formData.get("tags") as string;
 
-    if (!title) {
-      return new Response(JSON.stringify({ error: "Title is required" }), {
-        status: 400,
+  try {
+    const asset = await createAsset(currentUser.id, {
+      accessToken,
+      refreshToken,
+    });
+
+    if (!asset) {
+      return new Response(JSON.stringify({ error: "Failed to create asset" }), {
+        status: 500,
         headers: { "Content-Type": "application/json" },
       });
-    } else {
-      // Create the asset
-      const asset = await createAsset(
-        currentUser.id,
-        {
-          title,
-          description,
-          status: status || "draft",
-        },
-        {
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-        }
-      );
-
-      if (!asset) {
-        return new Response(JSON.stringify({ error: "Failed to create asset" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
-      } else {
-        // Create tags if provided
-        if (tagsString) {
-          const tags = JSON.parse(tagsString) as string[];
-          for (const tag of tags) {
-            await createAssetTag(
-              asset.id,
-              tag,
-              {
-                accessToken: accessToken,
-                refreshToken: refreshToken,
-              }
-            );
-          }
-        }
-
-        // Upload files if provided
-        if (files && files.length > 0) {
-          for (const file of files) {
-            if (file.size > 0) {
-              const fileUpload = await uploadAssetFile(file, currentUser.id, asset.id);
-              if (fileUpload) {
-                await createAssetFile(
-                  asset.id,
-                  {
-                    title: file.name,
-                    description: `Uploaded file: ${file.name}`,
-                    file_url: fileUpload.url,
-                    storage_path: fileUpload.path,
-                    file_size_bytes: fileUpload.size,
-                    mime_type: file.type,
-                  },
-                  {
-                    accessToken: accessToken,
-                    refreshToken: refreshToken,
-                  }
-                );
-              }
-            }
-          }
-        }
-
-        // Upload images if provided
-        if (images && images.length > 0) {
-          for (const image of images) {
-            if (image.size > 0) {
-              const imageUpload = await uploadAssetImage(image, currentUser.id, asset.id);
-              if (imageUpload) {
-                await createAssetImage(
-                  asset.id,
-                  {
-                    title: image.name,
-                    description: `Cover image: ${image.name}`,
-                    file_url: imageUpload.url,
-                    storage_path: imageUpload.path,
-                    file_size_bytes: imageUpload.size,
-                    mime_type: image.type,
-                  },
-                  {
-                    accessToken: accessToken,
-                    refreshToken: refreshToken,
-                  }
-                );
-              }
-            }
-          }
-        }
-
-        // Return success with redirect URL
-        return new Response(
-          JSON.stringify({ redirect: `/assets/${asset.handle}` }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-      }
     }
+
+    return new Response(
+      JSON.stringify({
+        assetHandle: asset.handle,
+        redirect: `/assets/${asset.handle}`,
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     console.error("Error creating asset:", error);
     return new Response(
@@ -147,4 +58,4 @@ try {
       }
     );
   }
-}
+};

@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
 import { updateProduct, getProductById } from "@/lib/data-access/products";
+import { uploadFile, generateFilePath } from "@/lib/storage";
 import { z } from "zod";
 
 const updateProductSchema = z.object({
@@ -111,6 +112,126 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         error: error instanceof Error ? error.message : "Failed to update product",
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+};
+
+// POST handler for FormData with file uploads
+export const POST: APIRoute = async ({ request, cookies }) => {
+  const accessToken = cookies.get("sb-access-token");
+  const refreshToken = cookies.get("sb-refresh-token");
+
+  if (!accessToken || !refreshToken) {
+    return new Response(JSON.stringify({ error: "Not authenticated" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  let session;
+  try {
+    session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+
+    if (session.error || !session.data.user) {
+      return new Response(JSON.stringify({ error: "Invalid session" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Authentication failed" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const userId = session.data.user.id;
+
+  try {
+    const formData = await request.formData();
+    const productId = formData.get("productId") as string;
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const status = formData.get("status") as string;
+    const tagsJson = formData.get("tags") as string;
+    const coverImageFile = formData.get("coverImage") as File | null;
+
+    // Verify ownership
+    const product = await getProductById(productId);
+    if (!product || product.user_id !== userId) {
+      return new Response(JSON.stringify({ error: "Not authorized" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    let coverImageUrl = product.cover_image_url;
+
+    // Handle cover image upload if provided
+    if (coverImageFile && coverImageFile.size > 0) {
+      const filePath = generateFilePath(userId, coverImageFile.name, productId);
+      const uploadResult = await uploadFile({
+        bucket: "product-images",
+        path: filePath,
+        file: coverImageFile,
+      });
+
+      if (uploadResult) {
+        coverImageUrl = uploadResult.url;
+      }
+    }
+
+    const parsedTags = tagsJson ? JSON.parse(tagsJson) : undefined;
+
+    const success = await updateProduct(
+      productId,
+      {
+        title,
+        description: description || undefined,
+        status: status as "draft" | "published" | "archived" | undefined,
+        coverImageUrl,
+        tags: parsedTags,
+      },
+      {
+        accessToken: accessToken.value,
+        refreshToken: refreshToken.value,
+      }
+    );
+
+    if (!success) {
+      return new Response(
+        JSON.stringify({ error: "Failed to update product" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        product: { id: productId },
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  } catch (error) {
+    console.error("Update product error:", error);
+
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Update failed",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
     );
   }
 };

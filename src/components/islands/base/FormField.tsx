@@ -1,4 +1,4 @@
-import { JSX } from "solid-js";
+import type { JSX } from "solid-js";
 
 interface FormFieldProps {
   label: string;
@@ -6,7 +6,7 @@ interface FormFieldProps {
   id?: string;
   type?: "text" | "email" | "password" | "number" | "url" | "tel";
   value: string | number;
-  onInput: (e: InputEvent) => void;
+  onInput: JSX.EventHandler<HTMLInputElement, InputEvent>;
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
