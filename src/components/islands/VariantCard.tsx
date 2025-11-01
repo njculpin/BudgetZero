@@ -29,7 +29,9 @@ export default function VariantCard(props: VariantCardProps) {
   // Edit variant state
   const [showEditForm, setShowEditForm] = createSignal(false);
   const [editTitle, setEditTitle] = createSignal(props.variant.title);
-  const [editDescription, setEditDescription] = createSignal(props.variant.description || "");
+  const [editDescription, setEditDescription] = createSignal(
+    props.variant.description || ""
+  );
   const [isEditLoading, setIsEditLoading] = createSignal(false);
 
   // Delete variant state
@@ -291,7 +293,7 @@ export default function VariantCard(props: VariantCardProps) {
                   <span>{asset.title}</span>
                   <LoadingButton
                     variant="ghost"
-                    size="xs"
+                    size="sm"
                     onClick={() => handleUnlinkAsset(asset.id)}
                   >
                     Remove
@@ -307,7 +309,7 @@ export default function VariantCard(props: VariantCardProps) {
             label=""
             name="assetId"
             value={selectedAssetId()}
-            onChange={(e) => setSelectedAssetId(e.currentTarget.value)}
+            onChange={(e: any) => setSelectedAssetId(e.currentTarget.value)}
             options={[
               { value: "", label: "Select an asset to link..." },
               ...props.availableAssets.map((asset) => ({
@@ -343,12 +345,52 @@ export default function VariantCard(props: VariantCardProps) {
             <For each={props.variant.prices}>
               {(price) => (
                 <div class="variant-card__price-item">
-                  <div class="variant-card__price-amount">
-                    {price.default_currency?.toUpperCase() || "USD"}
+                  <div class="variant-card__price-info">
+                    <div class="variant-card__price-amount">
+                      ${((price.unit_amount || 0) / 100).toFixed(2)}{" "}
+                      {price.currency?.toUpperCase() || "USD"}
+                    </div>
+                    <div class="variant-card__price-details">
+                      Qty: {price.min_quantity || 1}
+                      {price.max_quantity ? ` - ${price.max_quantity}` : "+"}
+                    </div>
                   </div>
-                  <div class="variant-card__price-details">
-                    {/* Price details display - waiting for migration update */}
-                  </div>
+                  <LoadingButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      if (
+                        !confirm("Are you sure you want to delete this price?")
+                      )
+                        return;
+
+                      try {
+                        const response = await fetch(
+                          "/api/products/variants/delete-price",
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ priceId: price.id }),
+                          }
+                        );
+
+                        if (!response.ok) {
+                          const data = await response.json();
+                          setError(data.error || "Failed to delete price");
+                          return;
+                        }
+
+                        setSuccess("Price deleted successfully!");
+                        setTimeout(() => {
+                          props.onUpdate();
+                        }, 1000);
+                      } catch (err) {
+                        setError("An unexpected error occurred");
+                      }
+                    }}
+                  >
+                    Delete
+                  </LoadingButton>
                 </div>
               )}
             </For>
@@ -375,8 +417,8 @@ export default function VariantCard(props: VariantCardProps) {
                 value={priceAmount()}
                 onInput={(e) => setPriceAmount(e.currentTarget.value)}
                 placeholder="0.00"
-                step="0.01"
-                min="0"
+                step={0.01}
+                min={0}
                 required
                 disabled={isPriceLoading()}
                 helpText="Enter price in dollars (e.g., 9.99 for $9.99). Use 0 for free."
@@ -386,7 +428,7 @@ export default function VariantCard(props: VariantCardProps) {
                 label="Currency"
                 name="currency"
                 value={priceCurrency()}
-                onChange={(e) => setPriceCurrency(e.currentTarget.value)}
+                onChange={(e: any) => setPriceCurrency(e.currentTarget.value)}
                 options={[
                   { value: "usd", label: "USD ($)" },
                   { value: "eur", label: "EUR (€)" },
@@ -406,9 +448,9 @@ export default function VariantCard(props: VariantCardProps) {
                 value={priceMinQty()}
                 onInput={(e) => setPriceMinQty(e.currentTarget.value)}
                 placeholder="1"
-                min="1"
+                min={1}
                 disabled={isPriceLoading()}
-                helpText="Minimum quantity for this price tier"
+                helpText="Minimum quantity for this price tier (must be unique)"
               />
 
               <FormField
@@ -418,7 +460,7 @@ export default function VariantCard(props: VariantCardProps) {
                 value={priceMaxQty()}
                 onInput={(e) => setPriceMaxQty(e.currentTarget.value)}
                 placeholder="Optional"
-                min="1"
+                min={1}
                 disabled={isPriceLoading()}
                 helpText="Leave empty for no max"
               />
@@ -519,7 +561,6 @@ export default function VariantCard(props: VariantCardProps) {
         cancelText="Cancel"
         onConfirm={handleDeleteVariant}
         onCancel={() => setShowDeleteDialog(false)}
-        isLoading={isDeleteLoading()}
       />
     </div>
   );

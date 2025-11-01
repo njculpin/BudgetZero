@@ -64,14 +64,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const files = formData.getAll("files") as File[];
     const images = formData.getAll("images") as File[];
 
-    // Prepare auth tokens
-    const authTokens = {
-      accessToken: accessToken.value,
-      refreshToken: refreshToken.value,
-    };
-
-    // Verify ownership (pass auth tokens to see own drafts)
-    const asset = await getAssetById(assetId, authTokens);
+    // Verify ownership
+    const asset = await getAssetById(assetId);
     if (!asset || asset.user_id !== userId) {
       return new Response(JSON.stringify({ error: "Not authorized" }), {
         status: 403,
@@ -79,25 +73,25 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Update basic asset info
-    const updatedAsset = await updateAsset(
-      assetId,
-      {
-        title,
-        description: description || undefined,
-        status: status as "draft" | "published" | "archived" | undefined,
-      },
-      authTokens
-    );
+    // Update basic asset info - only include fields that are provided
+    const updateData = {};
+    if (title) {
+      updateData.title = title;
+    }
+    if (description !== null && description !== undefined) {
+      updateData.description = description;
+    }
+    if (status) {
+      updateData.status = status;
+    }
+
+    const updatedAsset = await updateAsset(assetId, updateData);
 
     if (!updatedAsset) {
-      return new Response(
-        JSON.stringify({ error: "Failed to update asset" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Failed to update asset" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Handle tags - delete existing and create new ones
@@ -107,8 +101,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       // For now, just add new tags (we can add delete functionality later)
       for (const tag of tags) {
-        if (!existingTags.find(t => t.value === tag)) {
-          await createAssetTag(assetId, tag, authTokens);
+        if (!existingTags.find((t) => t.value === tag)) {
+          await createAssetTag(assetId, tag);
         }
       }
     }
@@ -134,8 +128,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 storage_path: uploadResult.path,
                 file_size_bytes: uploadResult.size,
                 mime_type: file.type,
-              },
-              authTokens
+              }
             );
           }
         }
@@ -163,8 +156,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 storage_path: uploadResult.path,
                 file_size_bytes: uploadResult.size,
                 mime_type: image.type,
-              },
-              authTokens
+              }
             );
           }
         }
@@ -199,7 +191,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to update asset",
+        error:
+          error instanceof Error ? error.message : "Failed to update asset",
       }),
       {
         status: 500,

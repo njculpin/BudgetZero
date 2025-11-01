@@ -35,19 +35,14 @@ const page = parseInt(searchParams.get('page') || '1');
 const limit = 20;
 const offset = (page - 1) * limit;
 
-// Prepare auth tokens
-const authTokens = currentUser && accessToken && refreshToken
-  ? { accessToken: accessToken.value, refreshToken: refreshToken.value }
-  : undefined;
-
 // Fetch user's assets if logged in
 const userAssets = currentUser
-  ? await getUserAssets(currentUser.id, undefined, authTokens)
+  ? await getUserAssets(currentUser.id, undefined)
   : [];
 
 // Fetch all assets with filters
 const tagArray = tagFilter ? [tagFilter] : undefined;
-const allAssetsFetched = await getAssets(searchQuery, tagArray, limit, offset, authTokens);
+const allAssetsFetched = await getAssets(searchQuery, tagArray, limit, offset);
 
 // Filter out current user's assets from "All Assets" (they're shown in "Your Assets")
 const allAssets = currentUser

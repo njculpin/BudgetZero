@@ -42,10 +42,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const body = await request.json();
     const validatedData = deleteVariantSchema.parse(body);
 
-    const success = await deleteVariant(validatedData.variantId, {
-      accessToken: accessToken.value,
-      refreshToken: refreshToken.value,
-    });
+    const success = await deleteVariant(validatedData.variantId);
 
     if (!success) {
       return new Response(
@@ -57,13 +54,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Delete variant error:", error);
 
@@ -82,7 +76,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to delete variant",
+        error:
+          error instanceof Error ? error.message : "Failed to delete variant",
       }),
       {
         status: 500,

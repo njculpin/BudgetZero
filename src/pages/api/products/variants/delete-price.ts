@@ -1,13 +1,11 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { setSession } from "@/lib/auth";
-import { getAssetById } from "@/lib/data-access/assets";
-import { createAssetRoyalty } from "@/lib/data-access/royalties";
+import { serverClient } from "@/lib/data-access/client";
+import { getVariantById } from "@/lib/data-access/products";
 
-const createRoyaltySchema = z.object({
-  assetId: z.string().uuid(),
-  contributorUserId: z.string().uuid(),
-  royaltyValue: z.number().int().min(0), // Flat rate in cents
+const deletePriceSchema = z.object({
+  priceId: z.string().uuid(),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -45,38 +43,61 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const body = await request.json();
-    const validatedData = createRoyaltySchema.parse(body);
+    const validatedData = deletePriceSchema.parse(body);
 
-    // Verify asset ownership
-    const asset = await getAssetById(validatedData.assetId);
-    if (!asset || asset.user_id !== userId) {
+    // Get the price to verify ownership through variant
+    const { data: price, error: priceError } = await serverClient
+      .from("product_variant_prices")
+      .select("variant_id")
+      .eq("id", validatedData.priceId)
+      .single();
+
+    if (priceError || !price) {
+      return new Response(JSON.stringify({ error: "Price not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Verify ownership through variant > product
+    const variant = await getVariantById(price.variant_id);
+    if (!variant) {
+      return new Response(JSON.stringify({ error: "Variant not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: product, error: productError } = await serverClient
+      .from("products")
+      .select("user_id")
+      .eq("id", variant.product_id)
+      .single();
+
+    if (productError || !product || product.user_id !== userId) {
       return new Response(JSON.stringify({ error: "Not authorized" }), {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Create the royalty
-    const royalty = await createAssetRoyalty({
-      assetId: validatedData.assetId,
-      userId: validatedData.contributorUserId,
-      royaltyValue: validatedData.royaltyValue,
-    });
+    // Delete the price
+    const { error: deleteError } = await serverClient
+      .from("product_variant_prices")
+      .delete()
+      .eq("id", validatedData.priceId);
 
-    if (!royalty) {
-      return new Response(
-        JSON.stringify({ error: "Failed to create royalty" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+    if (deleteError) {
+      console.error("Error deleting price:", deleteError);
+      return new Response(JSON.stringify({ error: "Failed to delete price" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        royalty,
       }),
       {
         status: 200,
@@ -84,7 +105,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
     );
   } catch (error) {
-    console.error("Create royalty error:", error);
+    console.error("Delete price error:", error);
 
     if (error instanceof z.ZodError) {
       return new Response(
@@ -101,8 +122,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     return new Response(
       JSON.stringify({
-        error:
-          error instanceof Error ? error.message : "Failed to create royalty",
+        error: error instanceof Error ? error.message : "Failed to delete price",
       }),
       {
         status: 500,

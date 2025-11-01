@@ -2,10 +2,8 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
-import Button from "@/components/Button.astro";
-import Input from "@/components/Input.astro";
-import Tag from "@/components/Tag.astro";
-import { getPublishedProducts, getPopularProductTags } from "@/lib/data-access/products";
+import CreateProductButton from "@/components/ProductCreateButton.astro";
+import { getPublishedProducts, getPopularProductTags, getUserProducts } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 
@@ -14,20 +12,39 @@ const searchParams = url.searchParams;
 
 // Check authentication
 let currentUser = null;
-const accessToken = cookies.get("sb-access-token");
-const refreshToken = cookies.get("sb-refresh-token");
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
 
-if (accessToken && refreshToken) {
-  try {
-    const session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-    if (!session.error && session.data.user) {
-      currentUser = session.data.user;
-    }
-  } catch (error) {}
+if (!accessToken || !refreshToken) {
+  return Astro.redirect("/sign-in");
 }
+
+let session;
+try {
+  session = await setSession({
+    refresh_token: refreshToken.value,
+    access_token: accessToken.value,
+  });
+  if (session.error) {
+    Astro.cookies.delete("sb-access-token", {
+      path: "/",
+    });
+    Astro.cookies.delete("sb-refresh-token", {
+      path: "/",
+    });
+    return Astro.redirect("/sign-in");
+  }
+} catch (error) {
+  Astro.cookies.delete("sb-access-token", {
+    path: "/",
+  });
+  Astro.cookies.delete("sb-refresh-token", {
+    path: "/",
+  });
+  return Astro.redirect("/sign-in");
+}
+
+const userId = session.data.user?.id;
 
 const searchQuery = searchParams.get('search') || '';
 const tagFilter = searchParams.get('tag') || '';
@@ -36,12 +53,19 @@ const limit = 20;
 const offset = (page - 1) * limit;
 
 const tagArray = tagFilter ? [tagFilter] : undefined;
-const products = await getPublishedProducts(searchQuery, tagArray, limit, offset);
+const userProducts = userId ? await getUserProducts(userId) : [];
+const allProducts = await getPublishedProducts(searchQuery, tagArray, limit, offset, userId);
 const popularTags = await getPopularProductTags(10);
 
-const ownerIds = [...new Set(products.map(p => p.user_id))];
-const owners = await Promise.all(ownerIds.map(id => getUserById(id)));
-const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
+// Get owners for user's products
+const userProductOwnerIds = [...new Set(userProducts.map(p => p.user_id))];
+const userProductOwners = await Promise.all(userProductOwnerIds.map(id => getUserById(id)));
+const userOwnersMap = new Map(userProductOwners.filter(o => o).map(o => [o!.id, o]));
+
+// Get owners for all products
+const allProductOwnerIds = [...new Set(allProducts.map(p => p.user_id))];
+const allProductOwners = await Promise.all(allProductOwnerIds.map(id => getUserById(id)));
+const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]));
 ---
 
 <Layout title="Browse Products - Game Loopers">
@@ -53,36 +77,63 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
           <p class="page-header__description">Discover tabletop games from the community</p>
         </div>
         {currentUser && (
-          <a href="/products/new" class="page-header-action">
-            <Button variant="primary" size="md">
-              <span slot="text">Create Product</span>
-            </Button>
-          </a>
+          <CreateProductButton/>
         )}
       </div>
 
-      {products.length > 0 ? (
-        <div class="products-grid">
-          {products.map((product) => {
-            const owner = ownersMap.get(product.user_id);
-            return (
-              <a href={`/products/${product.handle}`} class="product-card">
-                <div class="product-card__content">
-                  <h3 class="product-card__title">{product.title}</h3>
-                  {product.description && (
-                    <p class="product-card__description">
-                      {product.description.substring(0, 100)}{product.description.length > 100 ? '...' : ''}
-                    </p>
-                  )}
-                  <div class="product-card__meta">
-                    <span class="product-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
+      <!-- My Products Section -->
+      {userProducts.length > 0 && (
+        <section class="products-section">
+          <h2 class="products-section__title">My Products</h2>
+          <div class="products-grid">
+            {userProducts.map((product) => {
+              const owner = userOwnersMap.get(product.user_id);
+              return (
+                <a href={`/products/${product.handle}`} class="product-card">
+                  <div class="product-card__content">
+                    <h3 class="product-card__title">{product.title}</h3>
+                    {product.description && (
+                      <p class="product-card__description">
+                        {product.description.substring(0, 100)}{product.description.length > 100 ? '...' : ''}
+                      </p>
+                    )}
+                    <div class="product-card__meta">
+                      <span class="product-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
+                    </div>
                   </div>
-                </div>
-              </a>
-            );
-          })}
-        </div>
-      ) : (
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      <!-- All Products Section -->
+      {allProducts.length > 0 ? (
+        <section class="products-section">
+          <h2 class="products-section__title">{userProducts.length > 0 ? 'All Products' : 'Products'}</h2>
+          <div class="products-grid">
+            {allProducts.map((product) => {
+              const owner = allOwnersMap.get(product.user_id);
+              return (
+                <a href={`/products/${product.handle}`} class="product-card">
+                  <div class="product-card__content">
+                    <h3 class="product-card__title">{product.title}</h3>
+                    {product.description && (
+                      <p class="product-card__description">
+                        {product.description.substring(0, 100)}{product.description.length > 100 ? '...' : ''}
+                      </p>
+                    )}
+                    <div class="product-card__meta">
+                      <span class="product-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      ) : userProducts.length === 0 && (
         <Card>
           <CardContent>
             <div class="products-empty">
@@ -97,7 +148,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
         </Card>
       )}
 
-      {products.length === limit && (
+      {allProducts.length === limit && (
         <div class="products-pagination">
           {page > 1 && (
             <a href={`/products?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
@@ -115,6 +166,8 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 <style>
 .page-header-with-action{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--gap-xl);margin-bottom:var(--spacing-2xl)}
 .page-header-action{text-decoration:none;flex-shrink:0}
+.products-section{margin-bottom:var(--spacing-6xl)}
+.products-section__title{margin:0 0 var(--spacing-3xl) 0;font-size:var(--text-2xl);font-weight:var(--font-weight-bold);color:var(--foreground);line-height:var(--leading-tight)}
 .products-filters{display:flex;flex-direction:column;gap:var(--gap-xl)}
 .products-filters__search{width:100%}
 .products-filters__label{margin:0 0 var(--spacing-sm);font-size:var(--text-sm);font-weight:var(--font-weight-semibold)}

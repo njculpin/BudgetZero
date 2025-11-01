@@ -45,11 +45,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const success = await linkAssetToVariant(
       validatedData.variantId,
-      validatedData.assetId,
-      {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      }
+      validatedData.assetId
     );
 
     if (!success) {
@@ -59,13 +55,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Link asset error:", error);
 

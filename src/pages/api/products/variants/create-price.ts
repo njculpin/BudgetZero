@@ -46,19 +46,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const body = await request.json();
     const validatedData = createPriceSchema.parse(body);
 
-    const price = await createVariantPrice(
-      validatedData.variantId,
-      {
-        currency: validatedData.currency,
-        unitAmount: validatedData.unitAmount,
-        minQuantity: validatedData.minQuantity,
-        maxQuantity: validatedData.maxQuantity,
-      },
-      {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      }
-    );
+    const price = await createVariantPrice(validatedData.variantId, {
+      currency: validatedData.currency,
+      unitAmount: validatedData.unitAmount,
+      minQuantity: validatedData.minQuantity,
+      maxQuantity: validatedData.maxQuantity,
+    });
 
     if (!price) {
       return new Response(JSON.stringify({ error: "Failed to create price" }), {
@@ -93,9 +86,22 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    if (error instanceof Error && error.message.includes("duplicate key")) {
+      return new Response(
+        JSON.stringify({
+          error: "A price already exists for this quantity. Please edit or delete the existing price, or use a different minimum quantity.",
+        }),
+        {
+          status: 409,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to create price",
+        error:
+          error instanceof Error ? error.message : "Failed to create price",
       }),
       {
         status: 500,

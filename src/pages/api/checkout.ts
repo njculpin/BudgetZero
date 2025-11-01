@@ -1,7 +1,11 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
 import { getOrCreateCart, getCartItems } from "@/lib/data-access/cart";
-import { getProductById, getVariantById, getVariantPrices } from "@/lib/data-access/products";
+import {
+  getProductById,
+  getVariantById,
+  getVariantPrices,
+} from "@/lib/data-access/products";
 import { createCheckoutSession } from "@/lib/payments";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -10,10 +14,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const refreshToken = cookies.get("sb-refresh-token");
 
   if (!accessToken || !refreshToken) {
-    return new Response(
-      JSON.stringify({ error: "Not authenticated" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Not authenticated" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   let session;
@@ -24,49 +28,46 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
 
     if (session.error || !session.data.user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid session" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Invalid session" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: "Authentication failed" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Authentication failed" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const userId = session.data.user.id;
   const userEmail = session.data.user.email;
 
   if (!userEmail) {
-    return new Response(
-      JSON.stringify({ error: "User email not found" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "User email not found" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   try {
     // Get user's cart
-    const cart = await getOrCreateCart(userId, {
-      accessToken: accessToken.value,
-      refreshToken: refreshToken.value,
-    });
+    const cart = await getOrCreateCart(userId);
 
     if (!cart) {
-      return new Response(
-        JSON.stringify({ error: "Failed to get cart" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Failed to get cart" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const cartItems = await getCartItems(cart.id);
 
     if (cartItems.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Cart is empty" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Cart is empty" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Fetch product/variant details and create line items
@@ -87,8 +88,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             unit_amount: price.unit_amount,
             product_data: {
               name: `${product.title} - ${variant.title}`,
-              description: variant.description || product.description || undefined,
-              images: product.cover_image_url ? [product.cover_image_url] : undefined,
+              description:
+                variant.description || product.description || undefined,
+              images: product.cover_image_url
+                ? [product.cover_image_url]
+                : undefined,
             },
           },
           quantity: item.quantity,

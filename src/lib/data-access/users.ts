@@ -1,5 +1,5 @@
-import { dataClient, createAuthenticatedClient } from './client';
-import type { User } from '@/types';
+import { serverClient } from "./client";
+import type { User } from "@/types";
 
 export interface UpdateUserProfileParams {
   name?: string;
@@ -8,21 +8,33 @@ export interface UpdateUserProfileParams {
   avatar_url?: string;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
+/**
+ * Fetch user by ID
+ * Returns null if user doesn't exist or is deleted
+ */
+export const getUsersByDateJoined = async (): Promise<User[] | []> => {
+  const { data, error } = await serverClient
+    .from("users")
+    .select("id, handle, avatar_url")
+    .limit(30);
+
+  if (error) {
+    return [];
+  }
+
+  return data as User[];
+};
 
 /**
  * Fetch user by ID
  * Returns null if user doesn't exist or is deleted
  */
 export const getUserById = async (userId: string): Promise<User | null> => {
-  const { data, error } = await dataClient
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .eq('deleted', false)
+  const { data, error } = await serverClient
+    .from("users")
+    .select("*")
+    .eq("id", userId)
+    .eq("deleted", false)
     .single();
 
   if (error) {
@@ -37,11 +49,11 @@ export const getUserById = async (userId: string): Promise<User | null> => {
  * Returns null if user doesn't exist or is deleted
  */
 export const getUserByHandle = async (handle: string): Promise<User | null> => {
-  const { data, error } = await dataClient
-    .from('users')
-    .select('*')
-    .ilike('handle', handle)
-    .eq('deleted', false)
+  const { data, error } = await serverClient
+    .from("users")
+    .select("*")
+    .ilike("handle", handle)
+    .eq("deleted", false)
     .single();
 
   if (error) {
@@ -54,33 +66,26 @@ export const getUserByHandle = async (handle: string): Promise<User | null> => {
 /**
  * Update user profile
  * Throws error if handle is taken by another user
- * Requires authenticated client for RLS
  */
 export const updateUserProfile = async (
   userId: string,
-  updates: UpdateUserProfileParams,
-  authTokens?: AuthTokens
+  updates: UpdateUserProfileParams
 ): Promise<User | null> => {
   // If updating handle, check availability first
   if (updates.handle) {
     const isAvailable = await checkHandleAvailability(updates.handle, userId);
     if (!isAvailable) {
-      throw new Error('Handle is already taken');
+      throw new Error("Handle is already taken");
     }
   }
 
-  // Use authenticated client if tokens provided (for RLS)
-  const client = authTokens
-    ? createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
-    : dataClient;
-
-  const { error } = await client
-    .from('users')
+  const { error } = await serverClient
+    .from("users")
     .update({
       ...updates,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', userId);
+    .eq("id", userId);
 
   if (error) {
     throw error;
@@ -99,15 +104,15 @@ export const checkHandleAvailability = async (
   handle: string,
   currentUserId?: string
 ): Promise<boolean> => {
-  let query = dataClient
-    .from('users')
-    .select('id')
-    .ilike('handle', handle)
-    .eq('deleted', false);
+  let query = serverClient
+    .from("users")
+    .select("id")
+    .ilike("handle", handle)
+    .eq("deleted", false);
 
   // If checking for current user, exclude their own record
   if (currentUserId) {
-    query = query.neq('id', currentUserId);
+    query = query.neq("id", currentUserId);
   }
 
   const { data, error } = await query;
@@ -131,15 +136,15 @@ export const searchUsers = async (query: string): Promise<User[]> => {
 
   const searchTerm = `%${query.trim()}%`;
 
-  const { data, error } = await dataClient
-    .from('users')
-    .select('*')
-    .eq('deleted', false)
+  const { data, error } = await serverClient
+    .from("users")
+    .select("*")
+    .eq("deleted", false)
     .or(`handle.ilike.${searchTerm},name.ilike.${searchTerm}`)
     .limit(10);
 
   if (error) {
-    console.error('Error searching users:', error);
+    console.error("Error searching users:", error);
     return [];
   }
 

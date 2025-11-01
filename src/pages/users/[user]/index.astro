@@ -101,20 +101,8 @@ if (!isOwnProfile) {
       <Card class="content-card">
         <CardContent>
           <div class="profile-tabs">
-            <button class="profile-tabs__tab profile-tabs__tab--active" data-tab="documents">Documents</button>
             <button class="profile-tabs__tab" data-tab="assets">Assets</button>
             <button class="profile-tabs__tab" data-tab="products">Products</button>
-          </div>
-
-          <div class="profile-tab-content" id="tab-documents">
-            <div class="profile-empty">
-              <p class="profile-empty__text">
-                {isOwnProfile
-                  ? "You haven't created any documents yet."
-                  : `${profileUser.name || profileUser.handle} hasn't created any documents yet.`
-                }
-              </p>
-            </div>
           </div>
 
           <div class="profile-tab-content profile-tab-content--hidden" id="tab-assets">

@@ -1,10 +1,5 @@
-import { dataClient, createAuthenticatedClient } from './client';
+import { serverClient } from './client';
 import type { Product, ProductVariant, ProductVariantPrice, ProductTag, ProductStatus, Asset } from '@/types';
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
 
 export interface CreateProductParams {
   title: string;
@@ -72,7 +67,7 @@ export const checkHandleAvailability = async (
   handle: string,
   currentProductId?: string
 ): Promise<boolean> => {
-  let query = dataClient
+  let query = serverClient
     .from('products')
     .select('id')
     .eq('handle', handle)
@@ -97,15 +92,12 @@ export const checkHandleAvailability = async (
  */
 export const createProduct = async (
   userId: string,
-  params: CreateProductParams,
-  authTokens: AuthTokens
+  params: CreateProductParams
 ): Promise<Product | null> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
   const baseHandle = generateHandle(params.title);
   const handle = await generateUniqueHandle(baseHandle);
 
-  const { data, error} = await client
+  const { data, error} = await serverClient
     .from('products')
     .insert({
       user_id: userId,
@@ -130,7 +122,7 @@ export const createProduct = async (
  * Get product by ID
  */
 export const getProductById = async (productId: string): Promise<Product | null> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('products')
     .select('*')
     .eq('id', productId)
@@ -148,7 +140,7 @@ export const getProductById = async (productId: string): Promise<Product | null>
  * Get product by handle
  */
 export const getProductByHandle = async (handle: string): Promise<Product | null> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('products')
     .select('*')
     .eq('handle', handle)
@@ -167,8 +159,7 @@ export const getProductByHandle = async (handle: string): Promise<Product | null
  */
 export const updateProduct = async (
   productId: string,
-  updates: UpdateProductParams,
-  authTokens: AuthTokens
+  updates: UpdateProductParams
 ): Promise<boolean> => {
   if (updates.handle) {
     const isAvailable = await checkHandleAvailability(updates.handle, productId);
@@ -176,8 +167,6 @@ export const updateProduct = async (
       throw new Error('Handle is already taken');
     }
   }
-
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
 
   const updateData: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
@@ -190,7 +179,7 @@ export const updateProduct = async (
   if (updates.publishedAt !== undefined) updateData.published_at = updates.publishedAt;
   if (updates.coverImageUrl !== undefined) updateData.cover_image_url = updates.coverImageUrl;
 
-  const { error } = await client
+  const { error } = await serverClient
     .from('products')
     .update(updateData)
     .eq('id', productId);
@@ -201,14 +190,14 @@ export const updateProduct = async (
   }
 
   if (updates.tags !== undefined) {
-    await client
+    await serverClient
       .from('product_tags')
       .delete()
       .eq('product_id', productId);
 
     if (updates.tags.length > 0) {
       for (const tag of updates.tags) {
-        await createProductTag(productId, tag, authTokens);
+        await createProductTag(productId, tag);
       }
     }
   }
@@ -220,12 +209,9 @@ export const updateProduct = async (
  * Soft delete a product
  */
 export const deleteProduct = async (
-  productId: string,
-  authTokens: AuthTokens
+  productId: string
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { error } = await client
+  const { error } = await serverClient
     .from('products')
     .update({
       deleted: true,
@@ -248,15 +234,20 @@ export const getPublishedProducts = async (
   searchQuery?: string,
   tags?: string[],
   limit: number = 50,
-  offset: number = 0
+  offset: number = 0,
+  excludeUserId?: string
 ): Promise<Product[]> => {
-  let query = dataClient
+  let query = serverClient
     .from('products')
     .select('*')
     .eq('status', 'published')
     .eq('deleted', false)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (excludeUserId) {
+    query = query.neq('user_id', excludeUserId);
+  }
 
   if (searchQuery && searchQuery.trim()) {
     query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
@@ -270,7 +261,7 @@ export const getPublishedProducts = async (
   if (tags && tags.length > 0) {
     const productIds = new Set<string>();
     for (const tag of tags) {
-      const { data: tagData } = await dataClient
+      const { data: tagData } = await serverClient
         .from('product_tags')
         .select('product_id')
         .eq('value', tag.toLowerCase())
@@ -289,7 +280,7 @@ export const getPublishedProducts = async (
  * Get user's products
  */
 export const getUserProducts = async (userId: string): Promise<Product[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('products')
     .select('*')
     .eq('user_id', userId)
@@ -310,11 +301,8 @@ export const getUserProducts = async (userId: string): Promise<Product[]> => {
  */
 export const createVariant = async (
   productId: string,
-  params: CreateVariantParams,
-  authTokens: AuthTokens
+  params: CreateVariantParams
 ): Promise<ProductVariant | null> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
   let sku = params.sku;
 
   if (!sku) {
@@ -323,7 +311,7 @@ export const createVariant = async (
     sku = `${product.handle}-${params.title.toLowerCase().replace(/\s+/g, '-')}`;
   }
 
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from('product_variants')
     .insert({
       product_id: productId,
@@ -348,7 +336,7 @@ export const createVariant = async (
  * Get variants for a product
  */
 export const getProductVariants = async (productId: string): Promise<ProductVariant[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('product_variants')
     .select('*')
     .eq('product_id', productId)
@@ -366,7 +354,7 @@ export const getProductVariants = async (productId: string): Promise<ProductVari
  * Get variant by ID
  */
 export const getVariantById = async (variantId: string): Promise<ProductVariant | null> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('product_variants')
     .select('*')
     .eq('id', variantId)
@@ -385,11 +373,8 @@ export const getVariantById = async (variantId: string): Promise<ProductVariant 
  */
 export const updateVariant = async (
   variantId: string,
-  updates: Partial<CreateVariantParams>,
-  authTokens: AuthTokens
+  updates: Partial<CreateVariantParams>
 ): Promise<ProductVariant | null> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
   const updateData: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
   };
@@ -399,7 +384,7 @@ export const updateVariant = async (
   if (updates.options !== undefined) updateData.options = updates.options;
   if (updates.position !== undefined) updateData.position = updates.position;
 
-  const { error } = await client
+  const { error } = await serverClient
     .from('product_variants')
     .update(updateData)
     .eq('id', variantId);
@@ -416,12 +401,9 @@ export const updateVariant = async (
  * Delete a variant
  */
 export const deleteVariant = async (
-  variantId: string,
-  authTokens: AuthTokens
+  variantId: string
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { error } = await client
+  const { error } = await serverClient
     .from('product_variants')
     .update({
       deleted: true,
@@ -444,12 +426,9 @@ export const deleteVariant = async (
  */
 export const createVariantPrice = async (
   variantId: string,
-  params: CreatePriceParams,
-  authTokens: AuthTokens
+  params: CreatePriceParams
 ): Promise<ProductVariantPrice | null> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from('product_variant_prices')
     .insert({
       variant_id: variantId,
@@ -463,6 +442,12 @@ export const createVariantPrice = async (
 
   if (error) {
     console.error('Error creating variant price:', error);
+
+    // If it's a duplicate key constraint violation, throw a specific error
+    if (error.code === '23505') {
+      throw new Error(`duplicate key: A price already exists for quantity ${params.minQuantity || 1}`);
+    }
+
     return null;
   }
 
@@ -473,7 +458,7 @@ export const createVariantPrice = async (
  * Get prices for a variant
  */
 export const getVariantPrices = async (variantId: string): Promise<ProductVariantPrice[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('product_variant_prices')
     .select('*')
     .eq('variant_id', variantId)
@@ -493,12 +478,9 @@ export const getVariantPrices = async (variantId: string): Promise<ProductVarian
  */
 export const linkAssetToVariant = async (
   variantId: string,
-  assetId: string,
-  authTokens: AuthTokens
+  assetId: string
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { error } = await client
+  const { error } = await serverClient
     .from('product_assets')
     .insert({
       variant_id: variantId,
@@ -517,7 +499,7 @@ export const linkAssetToVariant = async (
  * Get assets linked to a variant
  */
 export const getVariantAssets = async (variantId: string): Promise<Asset[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('product_assets')
     .select('asset_id')
     .eq('variant_id', variantId);
@@ -532,7 +514,7 @@ export const getVariantAssets = async (variantId: string): Promise<Asset[]> => {
     return [];
   }
 
-  const { data: assets, error: assetsError } = await dataClient
+  const { data: assets, error: assetsError } = await serverClient
     .from('assets')
     .select('*')
     .in('id', assetIds)
@@ -550,12 +532,9 @@ export const getVariantAssets = async (variantId: string): Promise<Asset[]> => {
  */
 export const unlinkAssetFromVariant = async (
   variantId: string,
-  assetId: string,
-  authTokens: AuthTokens
+  assetId: string
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { error } = await client
+  const { error } = await serverClient
     .from('product_assets')
     .delete()
     .eq('variant_id', variantId)
@@ -576,12 +555,9 @@ export const unlinkAssetFromVariant = async (
  */
 export const createProductTag = async (
   productId: string,
-  tag: string,
-  authTokens: AuthTokens
+  tag: string
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { error } = await client
+  const { error } = await serverClient
     .from('product_tags')
     .insert({
       product_id: productId,
@@ -602,7 +578,7 @@ export const createProductTag = async (
  * Get tags for a product
  */
 export const getProductTags = async (productId: string): Promise<ProductTag[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('product_tags')
     .select('*')
     .eq('product_id', productId)
@@ -619,7 +595,7 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
  * Get popular product tags
  */
 export const getPopularProductTags = async (limit: number = 20): Promise<Array<{ value: string; count: number }>> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('product_tags')
     .select('value')
     .eq('deleted', false);
@@ -637,4 +613,79 @@ export const getPopularProductTags = async (limit: number = 20): Promise<Array<{
     .map(([value, count]) => ({ value, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit);
+};
+
+/**
+ * Search products by title or handle
+ * Returns up to 10 matching products owned by the specified user
+ */
+export const searchProducts = async (userId: string, query: string): Promise<Product[]> => {
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+
+  const searchTerm = `%${query.trim()}%`;
+
+  const { data, error} = await serverClient
+    .from('products')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('deleted', false)
+    .or(`handle.ilike.${searchTerm},title.ilike.${searchTerm}`)
+    .limit(10);
+
+  if (error) {
+    console.error('Error searching products:', error);
+    return [];
+  }
+
+  return data as Product[];
+};
+
+/**
+ * Get products that use a specific asset
+ * Returns up to 5 most recent products (by updated_at)
+ */
+export const getProductsUsingAsset = async (assetId: string, limit = 5): Promise<Product[]> => {
+  // First, get all variant IDs that link to this asset
+  const { data: productAssets, error: paError } = await serverClient
+    .from('product_assets')
+    .select('variant_id')
+    .eq('asset_id', assetId);
+
+  if (paError || !productAssets || productAssets.length === 0) {
+    return [];
+  }
+
+  const variantIds = productAssets.map(pa => pa.variant_id);
+
+  // Get all products from those variants
+  const { data: variants, error: variantsError } = await serverClient
+    .from('product_variants')
+    .select('product_id')
+    .in('id', variantIds)
+    .eq('deleted', false);
+
+  if (variantsError || !variants || variants.length === 0) {
+    return [];
+  }
+
+  // Get unique product IDs
+  const productIds = [...new Set(variants.map(v => v.product_id))];
+
+  // Fetch the products
+  const { data, error } = await serverClient
+    .from('products')
+    .select('*')
+    .in('id', productIds)
+    .eq('deleted', false)
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching products using asset:', error);
+    return [];
+  }
+
+  return data as Product[];
 };

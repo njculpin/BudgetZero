@@ -11,8 +11,8 @@ import "./base/base.css";
 export interface RoyaltyWithUser {
   id: string;
   user_id: string;
-  royalty_type: "fixed" | "percentage";
-  royalty_value: number;
+  royalty_type: "fixed";
+  royalty_value: number; // Flat rate in cents
   user: {
     name: string | null;
     handle: string | null;
@@ -40,7 +40,6 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
   const [searchResults, setSearchResults] = createSignal<SearchUser[]>([]);
   const [isSearching, setIsSearching] = createSignal(false);
   const [showSearchResults, setShowSearchResults] = createSignal(false);
-  const [royaltyType, setRoyaltyType] = createSignal<"fixed" | "percentage">("percentage");
   const [royaltyValue, setRoyaltyValue] = createSignal("");
   const [isAdding, setIsAdding] = createSignal(false);
   const [deletingId, setDeletingId] = createSignal<string | null>(null);
@@ -78,14 +77,11 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
     }, 300);
   });
 
-  const calculateTotalPercentage = () => {
-    return props.initialRoyalties
-      .filter(r => r.royalty_type === "percentage")
-      .reduce((sum, r) => sum + r.royalty_value, 0);
+  const calculateTotalFlatRate = () => {
+    return props.initialRoyalties.reduce((sum, r) => sum + r.royalty_value, 0);
   };
 
-  const totalPercentage = () => calculateTotalPercentage();
-  const isOverAllocated = () => totalPercentage() > 100;
+  const totalFlatRate = () => calculateTotalFlatRate();
 
   const handleSelectUser = (user: SearchUser) => {
     setContributorUserId(user.id);
@@ -114,14 +110,16 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
     setIsAdding(true);
 
     try {
+      // Convert dollars to cents for flat rate
+      const valueInCents = Math.round(parseFloat(royaltyValue()) * 100);
+
       const response = await fetch("/api/assets/royalties/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           assetId: props.assetId,
           contributorUserId: contributorUserId(),
-          royaltyType: royaltyType(),
-          royaltyValue: parseFloat(royaltyValue()),
+          royaltyValue: valueInCents,
         }),
       });
 
@@ -140,7 +138,6 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
       setContributorHandle("");
       setSearchQuery("");
       setRoyaltyValue("");
-      setRoyaltyType("percentage");
       setShowAddForm(false);
 
       // Trigger callback after short delay
@@ -201,16 +198,6 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
         <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
       </Show>
 
-      <Show when={isOverAllocated()}>
-        <div class="royalty-management__warning">
-          <span class="royalty-management__warning-icon">⚠️</span>
-          <div class="royalty-management__warning-content">
-            <strong>Total exceeds 100%</strong>
-            <p>You have allocated {totalPercentage()}% in royalties. Please adjust the percentages so the total equals 100% or less.</p>
-          </div>
-        </div>
-      </Show>
-
       <Show
         when={props.initialRoyalties.length > 0}
         fallback={
@@ -237,13 +224,9 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
                       )}
                     </div>
                     <div class="royalty-item__value">
-                      {royalty.royalty_type === 'percentage' ? (
-                        <span>{royalty.royalty_value}%</span>
-                      ) : (
-                        <span>${(royalty.royalty_value / 100).toFixed(2)}</span>
-                      )}
+                      <span>${(royalty.royalty_value / 100).toFixed(2)}</span>
                       <span class="royalty-item__type">
-                        ({royalty.royalty_type})
+                        (flat rate)
                       </span>
                     </div>
                   </div>
@@ -261,10 +244,10 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
             }}
           </For>
 
-          <div class={`royalty-management__total ${isOverAllocated() ? 'royalty-management__total--warning' : ''}`}>
-            <span class="royalty-management__total-label">Total Percentage:</span>
-            <span class={`royalty-management__total-value ${isOverAllocated() ? 'royalty-management__total-value--warning' : ''}`}>
-              {totalPercentage()}%
+          <div class="royalty-management__total">
+            <span class="royalty-management__total-label">Total Flat Rate:</span>
+            <span class="royalty-management__total-value">
+              ${(totalFlatRate() / 100).toFixed(2)}
             </span>
           </div>
         </div>
@@ -345,30 +328,18 @@ export default function RoyaltyManagementForm(props: RoyaltyManagementFormProps)
               </p>
             </div>
 
-            <SelectField
-              label="Royalty Type"
-              name="royaltyType"
-              value={royaltyType()}
-              onChange={(e) => setRoyaltyType(e.currentTarget.value as "fixed" | "percentage")}
-              options={[
-                { value: "percentage", label: "Percentage (%)" },
-                { value: "fixed", label: "Fixed Amount ($)" },
-              ]}
-              disabled={isAdding()}
-            />
-
             <FormField
-              label="Royalty Value"
+              label="Flat Rate (USD)"
               name="royaltyValue"
               type="number"
               value={royaltyValue()}
               onInput={(e) => setRoyaltyValue(e.currentTarget.value)}
-              placeholder="Enter value"
+              placeholder="0.00"
               step="0.01"
               min="0"
               required
               disabled={isAdding()}
-              helpText="For percentage: enter 10 for 10%. For fixed: enter dollars (e.g., 5.00 for $5)"
+              helpText="Enter the flat rate in dollars (e.g., 5.00 for $5). This contributor will receive this amount from each sale when this asset is included in a product."
             />
 
             <div class="royalty-management__form-actions">

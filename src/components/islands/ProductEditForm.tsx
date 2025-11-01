@@ -24,7 +24,9 @@ export interface ProductEditFormProps {
 
 export default function ProductEditForm(props: ProductEditFormProps) {
   const [title, setTitle] = createSignal(props.initialData.title);
-  const [description, setDescription] = createSignal(props.initialData.description || "");
+  const [description, setDescription] = createSignal(
+    props.initialData.description || ""
+  );
   const [status, setStatus] = createSignal(props.initialData.status);
   const [tags, setTags] = createSignal<string[]>(props.initialData.tags);
   const [coverImageFile, setCoverImageFile] = createSignal<File | null>(null);
@@ -138,7 +140,9 @@ export default function ProductEditForm(props: ProductEditFormProps) {
           class="form-field__file-input"
         />
         <Show when={coverImageFile()}>
-          <p class="form-field__help-text">New file selected: {coverImageFile()!.name}</p>
+          <p class="form-field__help-text">
+            New file selected: {coverImageFile()!.name}
+          </p>
         </Show>
       </div>
 
@@ -156,7 +160,9 @@ export default function ProductEditForm(props: ProductEditFormProps) {
         label="Status"
         name="status"
         value={status()}
-        onChange={(e) => setStatus(e.currentTarget.value as "draft" | "published" | "archived")}
+        onChange={(e: any) =>
+          setStatus(e.currentTarget.value as "draft" | "published" | "archived")
+        }
         options={[
           { value: "draft", label: "Draft" },
           { value: "published", label: "Published" },

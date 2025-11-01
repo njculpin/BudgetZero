@@ -41,16 +41,10 @@ try {
 
 // If user is logged in, clear their cart
 if (currentUser && accessToken && refreshToken) {
-  const cart = await getOrCreateCart(currentUser.id, {
-    accessToken: accessToken.value,
-    refreshToken: refreshToken.value,
-  });
+  const cart = await getOrCreateCart(currentUser.id);
 
   if (cart) {
-    await clearCart(cart.id, {
-      accessToken: accessToken.value,
-      refreshToken: refreshToken.value,
-    });
+    await clearCart(cart.id);
   }
 }
 

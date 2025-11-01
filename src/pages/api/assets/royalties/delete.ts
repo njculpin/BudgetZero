@@ -67,10 +67,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Delete the royalty
-    const success = await deleteAssetRoyalty(validatedData.royaltyId, {
-      accessToken: accessToken.value,
-      refreshToken: refreshToken.value,
-    });
+    const success = await deleteAssetRoyalty(validatedData.royaltyId);
 
     if (!success) {
       return new Response(
@@ -82,13 +79,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Delete royalty error:", error);
 
@@ -107,7 +101,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to delete royalty",
+        error:
+          error instanceof Error ? error.message : "Failed to delete royalty",
       }),
       {
         status: 500,

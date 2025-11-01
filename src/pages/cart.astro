@@ -42,10 +42,7 @@ if (!userId) {
 }
 
 // Get cart and items (cart operations now handled client-side)
-const cart = await getOrCreateCart(userId, {
-  accessToken: accessToken.value,
-  refreshToken: refreshToken.value,
-});
+const cart = await getOrCreateCart(userId);
 
 const cartItems = cart ? await getCartItems(cart.id) : [];
 

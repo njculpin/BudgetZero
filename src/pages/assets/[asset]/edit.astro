@@ -5,7 +5,12 @@ import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
-import AssetEditForm from "@/components/islands/AssetEditForm";
+import AssetBasicInfoForm from "@/components/islands/AssetBasicInfoForm";
+import AssetStatusForm from "@/components/islands/AssetStatusForm";
+import AssetTagsForm from "@/components/islands/AssetTagsForm";
+import AssetFileForm from "@/components/islands/AssetFileForm";
+import AssetImagesForm from "@/components/islands/AssetImagesForm";
+import AssetLicensingForm from "@/components/islands/AssetLicensingForm";
 import RoyaltyManagementForm from "@/components/islands/RoyaltyManagementForm";
 import AssetDeleteButton from "@/components/islands/AssetDeleteButton";
 import { setSession } from "@/lib/auth";
@@ -56,14 +61,8 @@ if (!userId) {
   return redirect("/sign-in");
 }
 
-// Prepare auth tokens for fetching draft assets
-const authTokens = {
-  accessToken: accessToken.value,
-  refreshToken: refreshToken.value,
-};
-
-// Fetch the asset (with auth to see own drafts)
-const assetData = await getAssetByHandle(assetHandle, authTokens);
+// Fetch the asset
+const assetData = await getAssetByHandle(assetHandle);
 
 if (!assetData) {
   return redirect('/404');
@@ -73,10 +72,6 @@ if (!assetData) {
 if (assetData.user_id !== userId) {
   return redirect(`/assets/${assetHandle}`);
 }
-
-// Check if title is still the default generated handle (e.g., "hunt-guild")
-const isDefaultTitle = assetData.title === assetData.handle;
-
 // Fetch existing tags, files, images, and royalties
 const existingTags = await getAssetTags(assetData.id);
 const existingFiles = await getAssetFiles(assetData.id);
@@ -92,10 +87,8 @@ if (!ownerHasRoyalty) {
     {
       assetId: assetData.id,
       userId: assetData.user_id,
-      royaltyType: "percentage",
       royaltyValue: 100,
-    },
-    authTokens
+    }
   );
 
   // Re-fetch royalties to include the newly created one
@@ -114,45 +107,103 @@ const royaltiesWithUsers = await Promise.all(
 <Layout title={`Edit ${assetData.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
-      {isDefaultTitle && (
-        <div class="welcome-banner">
-          <div class="welcome-banner__content">
-            <h2 class="welcome-banner__title">👋 Welcome! Let's set up your asset</h2>
-            <p class="welcome-banner__text">
-              Start by giving your asset a descriptive title and description. Then upload files, add cover images, and publish when ready!
-            </p>
-          </div>
-        </div>
-      )}
 
       <Card>
         <CardHeader>
-          <div class="asset-edit-header">
-            <CardTitle>Edit Asset</CardTitle>
-            <CardDescription>Update your asset details, files, and images</CardDescription>
-          </div>
+          <CardTitle>Basic Information</CardTitle>
+          <CardDescription>Set the title and description for your asset</CardDescription>
         </CardHeader>
-
         <CardContent>
-          <AssetEditForm
+          <AssetBasicInfoForm
             client:load
             assetId={assetData.id}
-            assetHandle={assetHandle}
             initialData={{
               title: assetData.title,
               description: assetData.description,
-              status: assetData.status,
-              tags: existingTags.map(t => t.value),
-              existingFiles: existingFiles.map(f => ({
-                id: f.id,
-                title: f.title,
-                file_size_bytes: f.file_size_bytes,
-              })),
-              existingImages: existingImages.map(i => ({
-                id: i.id,
-                title: i.title,
-                file_url: i.file_url,
-              })),
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Publication Status</CardTitle>
+          <CardDescription>Control the visibility of your asset</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AssetStatusForm
+            client:load
+            assetId={assetData.id}
+            initialStatus={assetData.status}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Tags</CardTitle>
+          <CardDescription>Add tags to help users discover your asset</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AssetTagsForm
+            client:load
+            assetId={assetData.id}
+            initialTags={existingTags.map(t => t.value)}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Asset File</CardTitle>
+          <CardDescription>Upload the main downloadable file for this asset</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AssetFileForm
+            client:load
+            assetId={assetData.id}
+            existingFile={existingFiles.length > 0 ? {
+              id: existingFiles[0].id,
+              title: existingFiles[0].title,
+              file_size_bytes: existingFiles[0].file_size_bytes,
+              file_url: existingFiles[0].file_url,
+            } : null}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Cover Images</CardTitle>
+          <CardDescription>Upload and reorder preview images for your asset</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AssetImagesForm
+            client:load
+            assetId={assetData.id}
+            existingImages={existingImages.map(i => ({
+              id: i.id,
+              title: i.title,
+              file_url: i.file_url,
+            }))}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Licensing</CardTitle>
+          <CardDescription>Define how buyers can use this asset</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AssetLicensingForm
+            client:load
+            assetId={assetData.id}
+            initialData={{
+              licenseType: "standard",
+              commercialUse: true,
+              attribution: false,
+              customTerms: "",
             }}
           />
         </CardContent>
@@ -161,7 +212,7 @@ const royaltiesWithUsers = await Promise.all(
       <Card>
         <CardHeader>
           <CardTitle>Royalty Management</CardTitle>
-          <CardDescription>Manage royalty splits for contributors. As the creator, you start with 100% - adjust your percentage when adding collaborators.</CardDescription>
+          <CardDescription>Manage royalty splits for contributors. The total sum is the cost of the asset per purchase inside a product.</CardDescription>
         </CardHeader>
         <CardContent>
           <RoyaltyManagementForm
@@ -197,7 +248,7 @@ const royaltiesWithUsers = await Promise.all(
 .asset-edit-page {
   min-height: 100vh;
   padding: var(--spacing-4xl) var(--spacing-2xl);
-  background-color: var(--color-background, #f9fafb);
+  background-color: var(--background);
 }
 
 .asset-edit-container {
@@ -210,11 +261,11 @@ const royaltiesWithUsers = await Promise.all(
 
 /* ===== Welcome Banner ===== */
 .welcome-banner {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, oklch(0.55 0.15 290) 100%);
   border-radius: var(--radius-lg);
   padding: var(--spacing-4xl);
-  color: white;
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  color: var(--color-white);
+  box-shadow: var(--shadow-lg);
 }
 
 .welcome-banner__content {
@@ -224,15 +275,17 @@ const royaltiesWithUsers = await Promise.all(
 .welcome-banner__title {
   font-size: var(--text-2xl);
   font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
   margin: 0 0 var(--spacing-lg) 0;
-  color: white;
+  color: var(--color-white);
 }
 
 .welcome-banner__text {
   font-size: var(--text-base);
-  line-height: 1.6;
+  font-weight: var(--font-weight-normal);
+  line-height: var(--leading-relaxed);
   margin: 0;
-  color: rgba(255, 255, 255, 0.95);
+  color: oklch(from var(--color-white) l c h / 0.95);
 }
 
 @media (max-width: 640px) {
@@ -276,17 +329,18 @@ const royaltiesWithUsers = await Promise.all(
 .asset-edit-form__existing-files,
 .asset-edit-form__existing-images {
   padding: var(--spacing-2xl);
-  background-color: var(--color-background, #f9fafb);
-  border: 1px solid var(--color-border, #e5e7eb);
+  background-color: var(--muted);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-sm);
 }
 
 .asset-edit-form__label {
+  margin: 0 0 var(--spacing-sm) 0;
   font-size: var(--text-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text, #111);
-  margin-bottom: var(--spacing-sm);
+  color: var(--foreground);
+  line-height: var(--leading-normal);
 }
 
 .asset-edit-form__tag-list {
@@ -299,8 +353,10 @@ const royaltiesWithUsers = await Promise.all(
 .asset-edit-form__tag {
   padding: var(--spacing-xs) var(--spacing-md);
   font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight);
   background-color: var(--primary);
-  color: white;
+  color: var(--primary-foreground);
   border-radius: var(--radius-full);
 }
 
@@ -315,8 +371,10 @@ const royaltiesWithUsers = await Promise.all(
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  border-bottom: 1px solid var(--border);
   font-size: var(--text-sm);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--leading-normal);
 }
 
 .asset-edit-form__file-item:last-child {
@@ -324,8 +382,10 @@ const royaltiesWithUsers = await Promise.all(
 }
 
 .asset-edit-form__file-size {
-  color: var(--color-text-muted, #6b7280);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--leading-normal);
 }
 
 .asset-edit-form__image-grid {
@@ -339,7 +399,7 @@ const royaltiesWithUsers = await Promise.all(
   aspect-ratio: 1;
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--border);
 }
 
 .asset-edit-form__image-item img {
@@ -367,8 +427,8 @@ const royaltiesWithUsers = await Promise.all(
   display: flex;
   gap: var(--gap-md);
   padding: var(--spacing-2xl);
-  background-color: #fef3c7;
-  border: 1px solid #f59e0b;
+  background-color: oklch(0.97 0.03 85);
+  border: 1px solid oklch(0.65 0.15 70);
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-2xl);
 }
@@ -386,14 +446,17 @@ const royaltiesWithUsers = await Promise.all(
   display: block;
   font-size: var(--text-sm);
   font-weight: var(--font-weight-semibold);
-  color: #92400e;
+  color: oklch(0.35 0.08 75);
+  line-height: var(--leading-normal);
   margin-bottom: var(--spacing-xs);
 }
 
 :global(.royalty-management__warning-content p) {
   margin: 0;
   font-size: var(--text-sm);
-  color: #92400e;
+  font-weight: var(--font-weight-normal);
+  color: oklch(0.35 0.08 75);
+  line-height: var(--leading-relaxed);
 }
 
 :global(.royalty-management__list) {
@@ -407,14 +470,14 @@ const royaltiesWithUsers = await Promise.all(
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-2xl);
-  background-color: var(--color-background, #f9fafb);
+  background-color: var(--muted);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
 
 :global(.royalty-item--owner) {
-  background-color: #eff6ff;
-  border-color: #3b82f6;
+  background-color: oklch(0.95 0.02 250);
+  border-color: var(--primary);
   border-width: 2px;
 }
 
@@ -425,8 +488,11 @@ const royaltiesWithUsers = await Promise.all(
 }
 
 :global(.royalty-item__user) {
+  margin: 0;
   font-size: var(--text-base);
   font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  line-height: var(--leading-normal);
   display: flex;
   align-items: center;
   gap: var(--gap-sm);
@@ -437,8 +503,9 @@ const royaltiesWithUsers = await Promise.all(
   padding: var(--spacing-xxs) var(--spacing-sm);
   font-size: var(--text-xs);
   font-weight: var(--font-weight-medium);
-  background-color: #3b82f6;
-  color: white;
+  line-height: var(--leading-tight);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
   border-radius: var(--radius-full);
   margin-left: var(--spacing-xs);
 }
@@ -466,21 +533,28 @@ const royaltiesWithUsers = await Promise.all(
 }
 
 :global(.royalty-management__total--warning) {
-  border-top-color: #f59e0b;
-  background-color: #fef3c7;
+  border-top-color: oklch(0.65 0.15 70);
+  background-color: oklch(0.97 0.03 85);
 }
 
 :global(.royalty-management__total-label) {
+  margin: 0;
   font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  line-height: var(--leading-normal);
 }
 
 :global(.royalty-management__total-value) {
+  margin: 0;
   font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--primary);
+  line-height: var(--leading-tight);
 }
 
 :global(.royalty-management__total-value--warning) {
-  color: #dc2626;
+  color: var(--destructive);
 }
 
 :global(.royalty-management__add) {
@@ -500,7 +574,7 @@ const royaltiesWithUsers = await Promise.all(
 }
 
 :global(.royalty-management__toggle-button:hover) {
-  background-color: var(--muted-hover, #e5e7eb);
+  background-color: oklch(from var(--muted) calc(l * 0.96) c h);
 }
 
 :global(.royalty-management__form) {
@@ -543,20 +617,20 @@ const royaltiesWithUsers = await Promise.all(
 
 /* ===== Danger Zone ===== */
 .danger-zone {
-  border: 2px solid #ef4444;
-  background-color: #fef2f2;
+  border: 2px solid var(--destructive);
+  background-color: oklch(0.98 0.02 25);
 }
 
 .danger-zone :global(.card__header) {
-  border-bottom-color: #fee2e2;
+  border-bottom-color: oklch(0.95 0.03 25);
 }
 
 .danger-zone :global(.card__title) {
-  color: #991b1b;
+  color: oklch(0.35 0.15 25);
 }
 
 .danger-zone :global(.card__description) {
-  color: #991b1b;
+  color: oklch(0.35 0.15 25);
 }
 
 /* ===== User Search ===== */
@@ -683,5 +757,335 @@ const royaltiesWithUsers = await Promise.all(
 :global(.user-search__clear-button:disabled) {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ===== Asset Form Styles ===== */
+:global(.asset-form) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
+}
+
+:global(.asset-form__actions) {
+  display: flex;
+  gap: var(--gap-md);
+  justify-content: flex-end;
+}
+
+/* ===== Asset Tags Form ===== */
+:global(.asset-tags-form__existing-tags) {
+  margin-bottom: var(--spacing-2xl);
+}
+
+:global(.asset-tags-form__label) {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+}
+
+:global(.asset-tags-form__tag-list) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+:global(.asset-tags-form__tag) {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--muted);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+}
+
+/* ===== Asset File Form ===== */
+:global(.asset-file-form__existing) {
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-2xl);
+  background-color: var(--muted);
+  border-radius: var(--radius-md);
+}
+
+:global(.asset-file-form__existing-header) {
+  margin-bottom: var(--spacing-md);
+}
+
+:global(.asset-file-form__existing-title) {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+:global(.asset-file-form__file-card) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-2xl);
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+:global(.asset-file-form__file-info) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+:global(.asset-file-form__file-name) {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+:global(.asset-file-form__file-size) {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+:global(.asset-file-form__replace-note) {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+:global(.asset-file-form__selected) {
+  margin: var(--spacing-md) 0 0 0;
+  padding: var(--spacing-md);
+  background-color: var(--muted);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+}
+
+/* ===== Asset Images Form ===== */
+:global(.asset-images-form__existing) {
+  margin-bottom: var(--spacing-2xl);
+}
+
+:global(.asset-images-form__existing-title) {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+:global(.asset-images-form__existing-description) {
+  margin: 0 0 var(--spacing-2xl) 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+:global(.asset-images-form__grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--gap-2xl);
+}
+
+:global(.asset-images-form__item) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+:global(.asset-images-form__image-wrapper) {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+:global(.asset-images-form__image) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+:global(.asset-images-form__cover-badge) {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--primary);
+  color: white;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-full);
+}
+
+:global(.asset-images-form__controls) {
+  display: flex;
+  gap: var(--gap-sm);
+  justify-content: center;
+}
+
+:global(.asset-images-form__button) {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: var(--text-base);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+:global(.asset-images-form__button:hover:not(:disabled)) {
+  background-color: var(--muted);
+}
+
+:global(.asset-images-form__button:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+:global(.asset-images-form__selected) {
+  margin: var(--spacing-md) 0 0 0;
+  padding: var(--spacing-md);
+  background-color: var(--muted);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+}
+
+/* ===== Asset Licensing Form ===== */
+:global(.asset-licensing-form__checkbox-label) {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+:global(.asset-licensing-form__checkbox) {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* ===== Add to Product Form ===== */
+:global(.asset-form__field) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+:global(.asset-form__label) {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+  margin-bottom: var(--spacing-xs);
+}
+
+:global(.asset-form__radio-group) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+:global(.asset-form__radio) {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+:global(.asset-form__radio:hover) {
+  background-color: var(--muted);
+}
+
+:global(.asset-form__radio input[type="radio"]) {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+:global(.asset-form__radio span) {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--foreground);
+  line-height: var(--leading-normal);
+}
+
+:global(.asset-form__search-status) {
+  padding: var(--spacing-md);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+:global(.asset-form__search-results) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+:global(.asset-form__search-result) {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+:global(.asset-form__search-result:hover) {
+  background-color: var(--muted);
+  border-color: var(--primary);
+}
+
+:global(.asset-form__search-result input[type="radio"]) {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+:global(.asset-form__search-result-info) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+:global(.asset-form__search-result-title) {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+:global(.asset-form__search-result-meta) {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+:global(.asset-form__no-results) {
+  padding: var(--spacing-2xl);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-md);
 }
 </style>

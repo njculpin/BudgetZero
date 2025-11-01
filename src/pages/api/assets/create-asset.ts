@@ -26,10 +26,7 @@ export const POST: APIRoute = async ({ cookies }) => {
   }
 
   try {
-    const asset = await createAsset(currentUser.id, {
-      accessToken,
-      refreshToken,
-    });
+    const asset = await createAsset(currentUser.id);
 
     if (!asset) {
       return new Response(JSON.stringify({ error: "Failed to create asset" }), {

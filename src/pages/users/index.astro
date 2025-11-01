@@ -1,7 +1,26 @@
 ---
+import GalleryGrid from "@/components/GalleryGrid.astro";
+import PageHeader from "@/components/PageHeader.astro";
 import Layout from "@/layouts/Layout.astro";
+import { getUsersByDateJoined } from "@/lib/data-access/users";
+import type { User } from "@/types";
+
+const userData: User[] = await getUsersByDateJoined()
+const profiles:{url: string; alt?: string, href: string}[] = userData.map(user => ({
+  url: user.avatar_url || 'https://placehold.co/600x600',
+  alt: user.handle,
+  href: `/users/${user.handle}`
+}))
 ---
 
 <Layout title="Users - Game Loopers">
-
+    <div class="page">
+        <div class="page__container">
+            <!-- Page Header -->
+            <div class="page-header-with-action">
+                <PageHeader title="Users" description="Users in the Game Loopers community"/>
+            </div>
+            <GalleryGrid title="Users" images={profiles} cols={9} rows={3} borderRadius="circle"/>
+        </div>
+    </div>
 </Layout>
