@@ -2,13 +2,9 @@
 // This page is for the public user profile which will not show a header.
 import '@fontsource/inter';
 import '@/styles/global.css'
+import Footer from '@/components/Footer.astro';
 
-interface Props {
-  title?: string;
-  showCTA?: boolean;
-}
-
-const { title = "Game Loopers", showCTA = false } = Astro.props;
+const { title = "Game Loopers" } = Astro.props;
 ---
 
 <!doctype html>
@@ -22,14 +18,10 @@ const { title = "Game Loopers", showCTA = false } = Astro.props;
 	</head>
 	<body>
 		<slot />
-		{showCTA && (
-			<footer class="profile-footer">
-				<p class="profile-footer__text">
-					Powered by <a href="/" class="profile-footer__link">Game Loopers</a> - <a href="/sign-up" class="profile-footer__link">Make yours now</a>
-				</p>
-			</footer>
-		)}
 	</body>
+	<footer>
+		<Footer/>
+	</footer>
 </html>
 
 <style>

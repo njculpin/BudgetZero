@@ -19,15 +19,12 @@ const { images, cols = 3, rows = 2, title, borderRadius = 'square' } = Astro.pro
 const gridClass = `gallery--cols-${cols}`;
 const radiusClass = borderRadius === 'circle' ? 'gallery__item--circle' : '';
 ---
-<div>
-<h1>{title}</h1>
 <div class={`gallery ${gridClass}`}>
   {images.map((img) => (
     <div class={`gallery__item ${radiusClass}`}>
       <a href={img.href}><img src={img.url} alt={img.alt || ''} class="gallery__image" loading="lazy" /></a>
     </div>
   ))}
-</div>
 </div>
 
 <style>

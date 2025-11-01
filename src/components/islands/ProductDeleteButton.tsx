@@ -1,9 +1,5 @@
 import { createSignal, Show } from "solid-js";
-import {
-  LoadingButton,
-  ErrorMessage,
-  ConfirmDialog,
-} from "./base";
+import { LoadingButton, ErrorMessage, ConfirmDialog } from "./base";
 import "./base/base.css";
 
 export interface ProductDeleteButtonProps {
@@ -69,7 +65,6 @@ export default function ProductDeleteButton(props: ProductDeleteButtonProps) {
         cancelText="Cancel"
         onConfirm={handleDelete}
         onCancel={() => setShowConfirm(false)}
-        isLoading={isDeleting()}
       />
     </div>
   );

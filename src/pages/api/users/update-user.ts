@@ -39,25 +39,21 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
   }
 
   try {
-    const updatedUser = await updateUserProfile(
-      currentUser.id,
-      {
-        handle: handle || undefined,
-        name: name || undefined,
-        bio: bio || undefined,
-        avatar_url: avatar_url || undefined,
-      },
-      {
-        accessToken,
-        refreshToken,
-      }
-    );
+    const updatedUser = await updateUserProfile(currentUser.id, {
+      handle: handle || undefined,
+      name: name || undefined,
+      bio: bio || undefined,
+      avatar_url: avatar_url || undefined,
+    });
 
     if (!updatedUser) {
-      return new Response(JSON.stringify({ error: "Failed to update profile" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Failed to update profile" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Return success with redirect URL
@@ -69,7 +65,8 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
       }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

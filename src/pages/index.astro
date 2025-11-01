@@ -5,6 +5,10 @@ import Hero from "@/components/Hero.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
 import Features from "@/components/Features.astro"
 import Jams from "@/components/Jams.astro";
+import { getUsersByDateJoined } from "@/lib/data-access/users";
+import type { User } from "@/types";
+import { getPublishedProducts } from "@/lib/data-access/products";
+import { getPublishedAssets } from "@/lib/data-access/assets";
 
 
 const features: {
@@ -33,10 +37,27 @@ const features: {
   },
 ];
 
-const placeholder = {url: 'https://placehold.co/600x600', alt:'alt', href: '/'}
-const products:{url: string; alt?: string, href: string}[] = Array.from({ length: 10 }, () => placeholder)
-const assets:{url: string; alt?: string, href: string}[] = Array.from({ length: 10 }, () => placeholder)
-const profiles:{url: string; alt?: string, href: string}[] = Array.from({ length: 27 }, () => placeholder)
+const productData = await getPublishedProducts()
+const products:{url: string; alt?: string, href: string}[] = productData.slice(0,10).map(product => ({
+  url: 'https://placehold.co/600x600',
+  alt: product.title,
+  href: `/products/${product.handle}`
+}))
+
+const assetData = await getPublishedAssets()
+const assets:{url: string; alt?: string, href: string}[] = assetData.slice(0,10).map(asset => ({
+  url: 'https://placehold.co/600x600',
+  alt: asset.title,
+  href: `/assets/${asset.handle}`
+}))
+
+const userData: User[] = await getUsersByDateJoined()
+const profiles:{url: string; alt?: string, href: string}[] = userData.map(user => ({
+  url: user.avatar_url || 'https://placehold.co/600x600',
+  alt: user.handle,
+  href: `/users/${user.handle}`
+}))
+
 ---
 
 <Layout title="Game Loopers">

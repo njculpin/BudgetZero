@@ -8,6 +8,7 @@ import Button from "@/components/Button.astro";
 import ProductEditForm from "@/components/islands/ProductEditForm";
 import VariantCard from "@/components/islands/VariantCard";
 import VariantCreateForm from "@/components/islands/VariantCreateForm";
+import PricingBreakdown from "@/components/islands/PricingBreakdown";
 import {
   getProductByHandle,
   getProductTags,
@@ -56,7 +57,9 @@ if (!currentUser || currentUser.id !== productData.user_id) {
 
 const tags = await getProductTags(productData.id);
 const variants = await getProductVariants(productData.id);
-const availableAssets = await getPublishedAssets('', undefined, 100, 0);
+const availableAssets = await getPublishedAssets('', undefined, 100);
+
+console.log(`Available Assets:`, availableAssets);
 
 const variantsWithAssets = await Promise.all(
   variants.map(async (variant) => {
@@ -99,34 +102,50 @@ const variantsWithAssets = await Promise.all(
         </CardContent>
       </Card>
 
+      {variantsWithAssets.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Variants & Pricing</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="product-variants">
+              {variantsWithAssets.map((variant) => (
+                <div class="product-variant-wrapper">
+                  <VariantCard
+                    client:load
+                    variant={variant}
+                    availableAssets={availableAssets}
+                    onUpdate={() => window.location.reload()}
+                  />
+                  {variant.prices && variant.prices.length > 0 && (
+                    <div class="product-variant__breakdown">
+                      <PricingBreakdown
+                        client:load
+                        variantId={variant.id}
+                        variantTitle={variant.title}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>Variants & Pricing</CardTitle>
+          <CardTitle>{variantsWithAssets.length > 0 ? 'Add Another Variant' : 'Create Your First Variant'}</CardTitle>
+          <p class="card-header__description">
+            Variants allow you to offer different versions of your product (e.g., Standard Edition, Deluxe Edition).
+          </p>
         </CardHeader>
         <CardContent>
-          <div class="product-variants">
-            {variantsWithAssets.length > 0 ? (
-              variantsWithAssets.map((variant) => (
-                <VariantCard
-                  client:load
-                  variant={variant}
-                  availableAssets={availableAssets}
-                  onUpdate={() => window.location.reload()}
-                />
-              ))
-            ) : (
-              <p class="product-variants__empty">No variants yet. Create one below.</p>
-            )}
-          </div>
-
-          <div class="product-variants__add">
-            <h3 class="product-variants__add-title">Add New Variant</h3>
-            <VariantCreateForm
-              client:load
-              productId={productData.id}
-              onSuccess={() => window.location.reload()}
-            />
-          </div>
+          <VariantCreateForm
+            client:load
+            productId={productData.id}
+            onSuccess={() => window.location.reload()}
+          />
         </CardContent>
       </Card>
     </div>
@@ -166,26 +185,267 @@ const variantsWithAssets = await Promise.all(
 .product-variants {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-xl);
-  margin-bottom: var(--spacing-4xl);
+  gap: var(--gap-lg);
 }
 
-.product-variants__empty {
-  text-align: center;
+.card-header__description {
+  margin: var(--spacing-xs) 0 0 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-normal);
   color: var(--muted-foreground);
-  padding: var(--spacing-4xl);
+  line-height: var(--leading-relaxed);
 }
 
-.product-variants__add {
+/* ===== Variant Card Styles ===== */
+:global(.variant-card) {
   padding: var(--spacing-3xl);
-  background-color: white;
+  background-color: var(--muted);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
 
-.product-variants__add-title {
-  margin: 0 0 var(--spacing-2xl) 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
+:global(.variant-card__header) {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--gap-md);
+  margin-bottom: var(--spacing-md);
 }
+
+:global(.variant-card__title) {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  line-height: var(--leading-tight);
+}
+
+:global(.variant-card__badge) {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--primary);
+  color: white;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+:global(.variant-card__description) {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+:global(.variant-card__sku) {
+  margin-bottom: var(--spacing-2xl);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+:global(.variant-card__sku code) {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--foreground);
+}
+
+/* ===== Variant Sections (Assets, Pricing) ===== */
+:global(.variant-card__section) {
+  margin-top: var(--spacing-2xl);
+  padding-top: var(--spacing-2xl);
+  border-top: 1px solid var(--border);
+}
+
+:global(.variant-card__section-title) {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  line-height: var(--leading-tight);
+}
+
+:global(.variant-card__empty) {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+/* ===== Asset List ===== */
+:global(.variant-card__asset-list) {
+  margin: 0 0 var(--spacing-lg) 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+:global(.variant-card__asset-item) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--color-background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+:global(.variant-card__asset-form) {
+  display: flex;
+  gap: var(--gap-md);
+  align-items: flex-end;
+}
+
+/* ===== Price List ===== */
+:global(.variant-card__price-list) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+:global(.variant-card__price-item) {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--color-background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--gap-md);
+}
+
+:global(.variant-card__price-info) {
+  flex: 1;
+}
+
+:global(.variant-card__price-amount) {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+:global(.variant-card__price-details) {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-xs);
+}
+
+:global(.variant-card__toggle-button) {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+:global(.variant-card__toggle-button:hover) {
+  background-color: var(--color-background);
+  border-color: var(--foreground);
+}
+
+/* ===== Price Form ===== */
+:global(.variant-card__price-form) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+  padding: var(--spacing-lg);
+  background-color: var(--color-background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+:global(.variant-card__price-row) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap-md);
+}
+
+/* ===== Edit Form ===== */
+:global(.variant-card__edit-form) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+  padding: var(--spacing-lg);
+  background-color: var(--color-background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+:global(.variant-card__form-actions) {
+  display: flex;
+  gap: var(--gap-md);
+  align-items: center;
+}
+
+/* ===== Actions Section ===== */
+:global(.variant-card__actions) {
+  margin-top: var(--spacing-2xl);
+  padding-top: var(--spacing-2xl);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: var(--gap-md);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ===== Variant Wrapper ===== */
+.product-variant-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.product-variant__breakdown {
+  padding: var(--spacing-2xl);
+  background-color: var(--color-background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+/* ===== Pricing Breakdown Styles ===== */
+:global(.pricing-breakdown) { display: flex; flex-direction: column; gap: var(--gap-lg); }
+:global(.pricing-breakdown__title) { margin: 0 0 var(--spacing-lg) 0; font-size: var(--text-base); font-weight: var(--font-weight-semibold); color: var(--foreground); }
+:global(.pricing-breakdown__message) { padding: var(--spacing-lg); background-color: var(--muted); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--muted-foreground); }
+:global(.pricing-breakdown__loading) { padding: var(--spacing-lg); font-size: var(--text-sm); color: var(--muted-foreground); font-style: italic; }
+:global(.pricing-breakdown__content) { display: flex; flex-direction: column; gap: var(--gap-md); }
+:global(.pricing-breakdown__row) { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) 0; }
+:global(.pricing-breakdown__row--total) { padding-top: 0; }
+:global(.pricing-breakdown__row--final) { padding-top: var(--spacing-lg); border-top: 2px solid var(--border); margin-top: var(--spacing-md); }
+:global(.pricing-breakdown__label) { font-size: var(--text-sm); color: var(--foreground); }
+:global(.pricing-breakdown__label--bold) { font-weight: var(--font-weight-semibold); font-size: var(--text-base); }
+:global(.pricing-breakdown__value) { font-size: var(--text-sm); font-weight: var(--font-weight-medium); }
+:global(.pricing-breakdown__value--large) { font-size: var(--text-lg); font-weight: var(--font-weight-semibold); }
+:global(.pricing-breakdown__value--positive) { color: #059669; }
+:global(.pricing-breakdown__value--negative) { color: #dc2626; }
+:global(.pricing-breakdown__percentage) { font-size: var(--text-sm); font-weight: var(--font-weight-normal); color: var(--muted-foreground); }
+:global(.pricing-breakdown__section) { margin: var(--spacing-md) 0; padding: var(--spacing-lg); background-color: var(--muted); border-radius: var(--radius-md); }
+:global(.pricing-breakdown__section-header) { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); }
+:global(.pricing-breakdown__section-title) { margin: 0; font-size: var(--text-sm); font-weight: var(--font-weight-semibold); color: var(--foreground); }
+:global(.pricing-breakdown__section-total) { font-size: var(--text-base); font-weight: var(--font-weight-semibold); }
+:global(.pricing-breakdown__asset) { margin-bottom: var(--spacing-lg); padding: var(--spacing-lg); background-color: var(--color-background); border-radius: var(--radius-md); }
+:global(.pricing-breakdown__asset:last-child) { margin-bottom: 0; }
+:global(.pricing-breakdown__asset-header) { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md); }
+:global(.pricing-breakdown__asset-title) { font-size: var(--text-sm); font-weight: var(--font-weight-medium); color: var(--foreground); }
+:global(.pricing-breakdown__asset-info) { display: flex; align-items: center; gap: var(--gap-md); }
+:global(.pricing-breakdown__asset-percentage) { font-size: var(--text-xs); color: var(--muted-foreground); font-weight: var(--font-weight-medium); padding: var(--spacing-xs) var(--spacing-sm); background-color: var(--muted); border-radius: var(--radius-sm); }
+:global(.pricing-breakdown__asset-total) { font-size: var(--text-sm); font-weight: var(--font-weight-semibold); color: var(--foreground); }
+:global(.pricing-breakdown__asset-rate) { font-size: var(--text-xs); color: var(--muted-foreground); margin-top: var(--spacing-xs); }
+:global(.pricing-breakdown__warning) { padding: var(--spacing-lg); background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: var(--radius-md); margin-bottom: var(--spacing-md); }
+:global(.pricing-breakdown__warning p) { margin: 0; font-size: var(--text-sm); color: #92400e; line-height: var(--leading-relaxed); }
+:global(.pricing-breakdown__contributors) { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--gap-xs); }
+:global(.pricing-breakdown__contributor) { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-sm) var(--spacing-md); background-color: var(--muted); border-radius: var(--radius-sm); }
+:global(.pricing-breakdown__contributor-name) { font-size: var(--text-xs); color: var(--muted-foreground); }
+:global(.pricing-breakdown__contributor-amount) { font-size: var(--text-xs); font-weight: var(--font-weight-medium); color: var(--foreground); }
 </style>

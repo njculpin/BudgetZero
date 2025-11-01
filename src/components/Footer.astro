@@ -7,8 +7,10 @@ const year = currentDate.getFullYear()
 
 <div class="footer__container">
     <div class="footer__content">
-        <p class="copyright__label">Game Loopers @ {year}</p>
-        <div>
+        <a href="/" class="copyright">
+            <p class="copyright__label">Game Loopers @ {year}</p>
+        </a>
+        <div class="footer__links">
             <a href="/privacy">
                 <Button variant="ghost-secondary" size="sm">
                     <span slot="text"><p>Privacy Policy</p></span>
@@ -51,6 +53,11 @@ const year = currentDate.getFullYear()
         font-weight: var(--font-weight-medium);
         color: var(--color-white);
         cursor: pointer;
+    }
+    .footer__links {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-2xl);
     }
 
     /* Responsive: Stack on mobile, reduce padding */

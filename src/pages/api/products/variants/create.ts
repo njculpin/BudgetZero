@@ -57,18 +57,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    const variant = await createVariant(
-      validatedData.productId,
-      {
-        title: validatedData.title,
-        description: validatedData.description,
-        sku: validatedData.sku,
-      },
-      {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      }
-    );
+    const variant = await createVariant(validatedData.productId, {
+      title: validatedData.title,
+      description: validatedData.description,
+      sku: validatedData.sku,
+    });
 
     if (!variant) {
       return new Response(
@@ -108,7 +101,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to create variant",
+        error:
+          error instanceof Error ? error.message : "Failed to create variant",
       }),
       {
         status: 500,

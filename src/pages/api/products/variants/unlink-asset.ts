@@ -45,11 +45,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const success = await unlinkAssetFromVariant(
       validatedData.variantId,
-      validatedData.assetId,
-      {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      }
+      validatedData.assetId
     );
 
     if (!success) {
@@ -59,13 +55,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Unlink asset error:", error);
 
@@ -84,7 +77,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to unlink asset",
+        error:
+          error instanceof Error ? error.message : "Failed to unlink asset",
       }),
       {
         status: 500,

@@ -19,10 +19,10 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
   const refreshToken = cookies.get("sb-refresh-token");
 
   if (!accessToken || !refreshToken) {
-    return new Response(
-      JSON.stringify({ error: "Not authenticated" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Not authenticated" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   let session;
@@ -33,16 +33,16 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     });
 
     if (session.error || !session.data.user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid session" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Invalid session" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: "Authentication failed" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Authentication failed" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const userId = session.data.user.id;
@@ -54,33 +54,26 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     // Check product ownership
     const product = await getProductById(validatedData.productId);
     if (!product) {
-      return new Response(
-        JSON.stringify({ error: "Product not found" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Product not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     if (product.user_id !== userId) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 403, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    const success = await updateProduct(
-      validatedData.productId,
-      {
-        title: validatedData.title,
-        description: validatedData.description,
-        status: validatedData.status,
-        handle: validatedData.handle,
-        tags: validatedData.tags,
-      },
-      {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      }
-    );
+    const success = await updateProduct(validatedData.productId, {
+      title: validatedData.title,
+      description: validatedData.description,
+      status: validatedData.status,
+      handle: validatedData.handle,
+      tags: validatedData.tags,
+    });
 
     if (!success) {
       return new Response(
@@ -91,13 +84,10 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
 
     const updatedProduct = await getProductById(validatedData.productId);
 
-    return new Response(
-      JSON.stringify({ product: updatedProduct }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ product: updatedProduct }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return new Response(
@@ -109,7 +99,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     console.error("Update product error:", error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to update product",
+        error:
+          error instanceof Error ? error.message : "Failed to update product",
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
@@ -186,20 +177,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const parsedTags = tagsJson ? JSON.parse(tagsJson) : undefined;
 
-    const success = await updateProduct(
-      productId,
-      {
-        title,
-        description: description || undefined,
-        status: status as "draft" | "published" | "archived" | undefined,
-        coverImageUrl,
-        tags: parsedTags,
-      },
-      {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      }
-    );
+    const success = await updateProduct(productId, {
+      title,
+      description: description || undefined,
+      status: status as "draft" | "published" | "archived" | undefined,
+      coverImageUrl,
+      tags: parsedTags,
+    });
 
     if (!success) {
       return new Response(

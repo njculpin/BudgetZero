@@ -1,10 +1,5 @@
-import { dataClient, createAuthenticatedClient } from './client';
+import { serverClient } from './client';
 import type { Sale, SaleItem, SaleStatus, SaleItemAsset } from '@/types';
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
 
 export interface CreateSaleParams {
   userId: string;
@@ -31,12 +26,9 @@ export interface CreateSaleItemParams {
  * Create a new sale
  */
 export const createSale = async (
-  params: CreateSaleParams,
-  authTokens: AuthTokens
+  params: CreateSaleParams
 ): Promise<Sale | null> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from('sales')
     .insert({
       user_id: params.userId,
@@ -63,12 +55,9 @@ export const createSale = async (
  * Create a sale item
  */
 export const createSaleItem = async (
-  params: CreateSaleItemParams,
-  authTokens: AuthTokens
+  params: CreateSaleItemParams
 ): Promise<SaleItem | null> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from('sale_items')
     .insert({
       sale_id: params.saleId,
@@ -94,7 +83,7 @@ export const createSaleItem = async (
  * Get sale by ID
  */
 export const getSaleById = async (saleId: string): Promise<Sale | null> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('sales')
     .select('*')
     .eq('id', saleId)
@@ -114,7 +103,7 @@ export const getSaleById = async (saleId: string): Promise<Sale | null> => {
 export const getSaleByStripeChargeId = async (
   stripeChargeId: string
 ): Promise<Sale | null> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('sales')
     .select('*')
     .eq('stripe_charge_id', stripeChargeId)
@@ -132,7 +121,7 @@ export const getSaleByStripeChargeId = async (
  * Get user's sales
  */
 export const getUserSales = async (userId: string): Promise<Sale[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('sales')
     .select('*')
     .eq('user_id', userId)
@@ -150,7 +139,7 @@ export const getUserSales = async (userId: string): Promise<Sale[]> => {
  * Get sale items for a sale
  */
 export const getSaleItems = async (saleId: string): Promise<SaleItem[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('sale_items')
     .select('*')
     .eq('sale_id', saleId)
@@ -168,11 +157,8 @@ export const getSaleItems = async (saleId: string): Promise<SaleItem[]> => {
  */
 export const updateSaleStatus = async (
   saleId: string,
-  status: SaleStatus,
-  authTokens: AuthTokens
+  status: SaleStatus
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
   const updateData: Record<string, unknown> = {
     status,
     updated_at: new Date().toISOString(),
@@ -182,7 +168,7 @@ export const updateSaleStatus = async (
     updateData.completed_at = new Date().toISOString();
   }
 
-  const { error } = await client
+  const { error } = await serverClient
     .from('sales')
     .update(updateData)
     .eq('id', saleId);
@@ -200,12 +186,9 @@ export const updateSaleStatus = async (
  */
 export const refundSale = async (
   saleId: string,
-  refundReason: string,
-  authTokens: AuthTokens
+  refundReason: string
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { error } = await client
+  const { error } = await serverClient
     .from('sales')
     .update({
       status: 'refunded',
@@ -226,7 +209,7 @@ export const refundSale = async (
  * Get sale item assets for a sale item
  */
 export const getSaleItemAssets = async (saleItemId: string): Promise<SaleItemAsset[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('sale_item_assets')
     .select('*')
     .eq('sale_item_id', saleItemId)
@@ -247,7 +230,7 @@ export const hasUserPurchasedAsset = async (
   assetId: string
 ): Promise<boolean> => {
   // Get user's paid sales
-  const { data: sales, error: salesError } = await dataClient
+  const { data: sales, error: salesError } = await serverClient
     .from('sales')
     .select('id')
     .eq('user_id', userId)
@@ -261,7 +244,7 @@ export const hasUserPurchasedAsset = async (
   const saleIds = sales.map(s => s.id);
 
   // Get sale items for these sales
-  const { data: saleItems, error: itemsError } = await dataClient
+  const { data: saleItems, error: itemsError } = await serverClient
     .from('sale_items')
     .select('id')
     .in('sale_id', saleIds)
@@ -274,7 +257,7 @@ export const hasUserPurchasedAsset = async (
   const saleItemIds = saleItems.map(si => si.id);
 
   // Check if any sale item has this asset
-  const { data: saleItemAssets, error: assetsError } = await dataClient
+  const { data: saleItemAssets, error: assetsError } = await serverClient
     .from('sale_item_assets')
     .select('id')
     .in('sale_item_id', saleItemIds)

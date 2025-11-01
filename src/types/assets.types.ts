@@ -2,7 +2,6 @@ import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
 
 export type AssetStatus = 'draft' | 'published' | 'archived';
 export type AssetCollaboratorRole = 'owner' | 'editor' | 'viewer';
-export type RoyaltyType = 'fixed' | 'percentage';
 
 export interface Asset extends BaseEntity {
   handle: string;
@@ -52,8 +51,8 @@ export interface AssetTag extends BaseEntity {
 export interface AssetRoyalty extends BaseEntity {
   asset_id: string;
   user_id: string;
-  royalty_type: RoyaltyType;
-  royalty_value: number;
+  royalty_type: 'fixed';
+  royalty_value: number; // Flat rate in cents
 }
 
 export interface AssetLicense extends BaseEntity {

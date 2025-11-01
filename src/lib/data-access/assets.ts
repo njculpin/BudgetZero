@@ -1,4 +1,4 @@
-import { dataClient, createAuthenticatedClient } from "./client";
+import { serverClient } from "./client";
 import type {
   Asset,
   AssetFile,
@@ -6,11 +6,6 @@ import type {
   AssetTag,
   AssetStatus,
 } from "@/types";
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
 
 export interface CreateAssetParams {
   handle: string;
@@ -121,19 +116,11 @@ const generateUniqueHandle = async (baseHandle: string): Promise<string> => {
 
 /**
  * Create a new asset
- * Requires authenticated client for RLS
  */
-export const createAsset = async (
-  userId: string,
-  authTokens: AuthTokens
-): Promise<Asset | null> => {
-  const client = await createAuthenticatedClient(
-    authTokens.accessToken,
-    authTokens.refreshToken
-  );
+export const createAsset = async (userId: string): Promise<Asset | null> => {
   const baseHandle = generateHandle();
   const handle = await generateUniqueHandle(baseHandle);
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from("assets")
     .insert({
       user_id: userId,
@@ -156,7 +143,7 @@ export const createAsset = async (
   const asset = data as Asset;
 
   // Automatically create a 100% royalty for the owner
-  const { error: royaltyError } = await client
+  const { error: royaltyError } = await serverClient
     .from("asset_royalties")
     .insert({
       asset_id: asset.id,
@@ -176,18 +163,9 @@ export const createAsset = async (
 /**
  * Fetch asset by ID
  * Returns null if asset doesn't exist or is deleted
- * @param authTokens - Optional auth tokens to see own draft assets via RLS
  */
-export const getAssetById = async (
-  assetId: string,
-  authTokens?: AuthTokens
-): Promise<Asset | null> => {
-  // Use authenticated client if tokens provided (to see own drafts via RLS)
-  const client = authTokens
-    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
-    : dataClient;
-
-  const { data, error } = await client
+export const getAssetById = async (assetId: string): Promise<Asset | null> => {
+  const { data, error } = await serverClient
     .from("assets")
     .select("*")
     .eq("id", assetId)
@@ -204,18 +182,11 @@ export const getAssetById = async (
 /**
  * Fetch asset by handle (case-insensitive)
  * Returns null if asset doesn't exist or is deleted
- * @param authTokens - Optional auth tokens to see own draft assets via RLS
  */
 export const getAssetByHandle = async (
-  handle: string,
-  authTokens?: AuthTokens
+  handle: string
 ): Promise<Asset | null> => {
-  // Use authenticated client if tokens provided (to see own drafts via RLS)
-  const client = authTokens
-    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
-    : dataClient;
-
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from("assets")
     .select("*")
     .eq("handle", handle)
@@ -231,19 +202,12 @@ export const getAssetByHandle = async (
 /**
  * Fetch all assets for a user
  * Optionally filter by status
- * @param authTokens - Optional auth tokens to see draft assets via RLS
  */
 export const getUserAssets = async (
   userId: string,
-  status?: AssetStatus,
-  authTokens?: AuthTokens
+  status?: AssetStatus
 ): Promise<Asset[]> => {
-  // Use authenticated client if tokens provided (to see drafts via RLS)
-  const client = authTokens
-    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
-    : dataClient;
-
-  let query = client
+  let query = serverClient
     .from("assets")
     .select("*")
     .eq("user_id", userId)
@@ -270,21 +234,14 @@ export const getUserAssets = async (
  * @param tags - Filter by tag values
  * @param limit - Maximum number of results (default: 50)
  * @param offset - Pagination offset (default: 0)
- * @param authTokens - Optional auth tokens to see own draft assets
  */
 export const getAssets = async (
   searchQuery?: string,
   tags?: string[],
   limit: number = 50,
-  offset: number = 0,
-  authTokens?: AuthTokens
+  offset: number = 0
 ): Promise<Asset[]> => {
-  // Use authenticated client if tokens provided (to see own drafts via RLS)
-  const client = authTokens
-    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
-    : dataClient;
-
-  let query = client
+  let query = serverClient
     .from("assets")
     .select("*")
     .order("created_at", { ascending: false })
@@ -311,7 +268,7 @@ export const getAssets = async (
     const assetIds = new Set<string>();
 
     for (const tag of tags) {
-      const { data: tagData } = await client
+      const { data: tagData } = await serverClient
         .from("asset_tags")
         .select("asset_id")
         .eq("value", tag.toLowerCase())
@@ -332,13 +289,11 @@ export const getAssets = async (
 /**
  * Update asset
  * Throws error if handle is taken by another asset
- * Requires authenticated client for RLS
  * Automatically generates handle from title if title is updated
  */
 export const updateAsset = async (
   assetId: string,
-  updates: UpdateAssetParams,
-  authTokens: AuthTokens
+  updates: UpdateAssetParams
 ): Promise<Asset | null> => {
   const updatesToApply = { ...updates };
 
@@ -371,12 +326,7 @@ export const updateAsset = async (
     }
   }
 
-  const client = await createAuthenticatedClient(
-    authTokens.accessToken,
-    authTokens.refreshToken
-  );
-
-  const { error } = await client
+  const { error } = await serverClient
     .from("assets")
     .update({
       ...updatesToApply,
@@ -389,7 +339,7 @@ export const updateAsset = async (
   }
 
   // Fetch and return the updated asset
-  return getAssetById(assetId, authTokens);
+  return getAssetById(assetId);
 };
 
 /**
@@ -401,7 +351,7 @@ export const checkHandleAvailability = async (
   handle: string,
   currentAssetId?: string
 ): Promise<boolean> => {
-  let query = dataClient
+  let query = serverClient
     .from("assets")
     .select("id")
     .eq("handle", handle)
@@ -427,7 +377,7 @@ export const checkHandleAvailability = async (
  * Get asset files for an asset
  */
 export const getAssetFiles = async (assetId: string): Promise<AssetFile[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from("asset_files")
     .select("*")
     .eq("asset_id", assetId)
@@ -448,7 +398,7 @@ export const getAssetFiles = async (assetId: string): Promise<AssetFile[]> => {
 export const getAssetFileById = async (
   fileId: string
 ): Promise<AssetFile | null> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from("asset_files")
     .select("*")
     .eq("id", fileId)
@@ -468,7 +418,7 @@ export const getAssetFileById = async (
 export const getAssetImages = async (
   assetId: string
 ): Promise<AssetImage[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from("asset_images")
     .select("*")
     .eq("asset_id", assetId)
@@ -485,7 +435,6 @@ export const getAssetImages = async (
 
 /**
  * Create asset file record
- * Requires authenticated client for RLS
  */
 export const createAssetFile = async (
   assetId: string,
@@ -496,15 +445,9 @@ export const createAssetFile = async (
     storage_path: string;
     file_size_bytes: number;
     mime_type: string;
-  },
-  authTokens: AuthTokens
+  }
 ): Promise<AssetFile | null> => {
-  const client = await createAuthenticatedClient(
-    authTokens.accessToken,
-    authTokens.refreshToken
-  );
-
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from("asset_files")
     .insert({
       asset_id: assetId,
@@ -539,15 +482,9 @@ export const createAssetImage = async (
     storage_path: string;
     file_size_bytes: number;
     mime_type: string;
-  },
-  authTokens: AuthTokens
+  }
 ): Promise<AssetImage | null> => {
-  const client = await createAuthenticatedClient(
-    authTokens.accessToken,
-    authTokens.refreshToken
-  );
-
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from("asset_images")
     .insert({
       asset_id: assetId,
@@ -573,16 +510,8 @@ export const createAssetImage = async (
  * Delete asset file (soft delete)
  * Requires authenticated client for RLS
  */
-export const deleteAssetFile = async (
-  fileId: string,
-  authTokens: AuthTokens
-): Promise<boolean> => {
-  const client = await createAuthenticatedClient(
-    authTokens.accessToken,
-    authTokens.refreshToken
-  );
-
-  const { error } = await client
+export const deleteAssetFile = async (fileId: string): Promise<boolean> => {
+  const { error } = await serverClient
     .from("asset_files")
     .update({
       deleted: true,
@@ -602,16 +531,8 @@ export const deleteAssetFile = async (
  * Delete asset image (soft delete)
  * Requires authenticated client for RLS
  */
-export const deleteAssetImage = async (
-  imageId: string,
-  authTokens: AuthTokens
-): Promise<boolean> => {
-  const client = await createAuthenticatedClient(
-    authTokens.accessToken,
-    authTokens.refreshToken
-  );
-
-  const { error } = await client
+export const deleteAssetImage = async (imageId: string): Promise<boolean> => {
+  const { error } = await serverClient
     .from("asset_images")
     .update({
       deleted: true,
@@ -631,16 +552,8 @@ export const deleteAssetImage = async (
  * Delete asset (soft delete)
  * Requires authenticated client for RLS
  */
-export const deleteAsset = async (
-  assetId: string,
-  authTokens: AuthTokens
-): Promise<boolean> => {
-  const client = await createAuthenticatedClient(
-    authTokens.accessToken,
-    authTokens.refreshToken
-  );
-
-  const { error } = await client
+export const deleteAsset = async (assetId: string): Promise<boolean> => {
+  const { error } = await serverClient
     .from("assets")
     .update({
       deleted: true,
@@ -663,14 +576,8 @@ export const deleteAsset = async (
  */
 export const createAssetTag = async (
   assetId: string,
-  value: string,
-  authTokens: AuthTokens
+  value: string
 ): Promise<AssetTag | null> => {
-  const client = await createAuthenticatedClient(
-    authTokens.accessToken,
-    authTokens.refreshToken
-  );
-
   // Normalize the tag value
   const normalizedValue = value.trim().toLowerCase();
 
@@ -690,7 +597,7 @@ export const createAssetTag = async (
     return null;
   }
 
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from("asset_tags")
     .insert({
       asset_id: assetId,
@@ -711,7 +618,7 @@ export const createAssetTag = async (
  * Get all tags for an asset
  */
 export const getAssetTags = async (assetId: string): Promise<AssetTag[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from("asset_tags")
     .select("*")
     .eq("asset_id", assetId)
@@ -730,16 +637,8 @@ export const getAssetTags = async (assetId: string): Promise<AssetTag[]> => {
  * Delete asset tag (soft delete)
  * Requires authenticated client for RLS
  */
-export const deleteAssetTag = async (
-  tagId: string,
-  authTokens: AuthTokens
-): Promise<boolean> => {
-  const client = await createAuthenticatedClient(
-    authTokens.accessToken,
-    authTokens.refreshToken
-  );
-
-  const { error } = await client
+export const deleteAssetTag = async (tagId: string): Promise<boolean> => {
+  const { error } = await serverClient
     .from("asset_tags")
     .update({
       deleted: true,
@@ -761,20 +660,12 @@ export const deleteAssetTag = async (
  */
 export const getPublishedAssets = async (
   searchTerm?: string,
-  authTokens?: AuthTokens,
   limit: number = 20,
   offset: number = 0
 ): Promise<Asset[]> => {
-  const client = authTokens
-    ? await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken)
-    : dataClient;
-
-  let query = client
+  let query = serverClient
     .from("assets")
     .select("*")
-    .eq("status", "published")
-    .eq("deleted", false)
-    .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   // Add search filter if provided
@@ -785,6 +676,8 @@ export const getPublishedAssets = async (
   }
 
   const { data, error } = await query;
+
+  console.log(data, error);
 
   if (error) {
     console.error("Error fetching published assets:", error);
@@ -802,7 +695,7 @@ export const getPublishedAssets = async (
 export const getPopularTags = async (
   limit: number = 20
 ): Promise<{ value: string; count: number }[]> => {
-  // const { data, error } = await dataClient
+  // const { data, error } = await serverClient
   //   .from("asset_tags")
   //   .select("value, asset_id")
   //   .eq("deleted", false);

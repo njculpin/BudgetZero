@@ -1,6 +1,7 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
-// Base client for unauthenticated operations
+// Public client for unauthenticated/client-side operations
+// Uses anon key with RLS policies enforced
 export const dataClient = createClient(
   import.meta.env.PUBLIC_SUPABASE_URL,
   import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
@@ -11,26 +12,16 @@ export const dataClient = createClient(
   },
 );
 
-/**
- * Create an authenticated Supabase client with session
- * Use this for operations that require authentication
- */
-export const createAuthenticatedClient = async (accessToken: string, refreshToken: string): Promise<SupabaseClient> => {
-  const client = createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
-    {
-      auth: {
-        flowType: "pkce",
-      },
+// Server-side client with service role key (bypasses RLS)
+// Use this for server-side operations in API routes and .astro pages
+// IMPORTANT: Never expose this to the client - server-side only!
+export const serverClient = createClient(
+  import.meta.env.PUBLIC_SUPABASE_URL,
+  import.meta.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
     },
-  );
-
-  // Set the session (must be awaited to ensure auth context is set)
-  await client.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
-
-  return client;
-};
+  },
+);

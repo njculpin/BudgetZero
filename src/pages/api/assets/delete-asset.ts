@@ -14,17 +14,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   }
 
-  // Get auth tokens from cookies
-  const accessToken = cookies.get("sb-access-token")?.value;
-  const refreshToken = cookies.get("sb-refresh-token")?.value;
-
-  if (!accessToken || !refreshToken) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
   try {
     const { assetId } = await request.json();
 
@@ -35,14 +24,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Prepare auth tokens
-    const authTokens = {
-      accessToken,
-      refreshToken,
-    };
-
-    // Verify ownership (pass auth tokens to see own drafts)
-    const asset = await getAssetById(assetId, authTokens);
+    // Verify ownership
+    const asset = await getAssetById(assetId);
     if (!asset) {
       return new Response(JSON.stringify({ error: "Asset not found" }), {
         status: 404,
@@ -58,7 +41,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Soft delete the asset
-    const success = await deleteAsset(assetId, authTokens);
+    const success = await deleteAsset(assetId);
 
     if (!success) {
       return new Response(JSON.stringify({ error: "Failed to delete asset" }), {

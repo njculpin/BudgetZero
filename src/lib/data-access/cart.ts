@@ -1,22 +1,14 @@
-import { dataClient, createAuthenticatedClient } from './client';
+import { serverClient } from './client';
 import type { Cart, CartItem } from '@/types';
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
 
 /**
  * Get or create a cart for a user
  */
 export const getOrCreateCart = async (
-  userId: string,
-  authTokens: AuthTokens
+  userId: string
 ): Promise<Cart | null> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
   // Try to find existing cart
-  const { data: existingCart } = await client
+  const { data: existingCart } = await serverClient
     .from('carts')
     .select('*')
     .eq('user_id', userId)
@@ -27,7 +19,7 @@ export const getOrCreateCart = async (
   }
 
   // Create new cart if none exists
-  const { data: newCart, error } = await client
+  const { data: newCart, error } = await serverClient
     .from('carts')
     .insert({ user_id: userId })
     .select()
@@ -45,7 +37,7 @@ export const getOrCreateCart = async (
  * Get cart by ID
  */
 export const getCartById = async (cartId: string): Promise<Cart | null> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('carts')
     .select('*')
     .eq('id', cartId)
@@ -62,7 +54,7 @@ export const getCartById = async (cartId: string): Promise<Cart | null> => {
  * Get all items in a cart
  */
 export const getCartItems = async (cartId: string): Promise<CartItem[]> => {
-  const { data, error } = await dataClient
+  const { data, error } = await serverClient
     .from('cart_items')
     .select('*')
     .eq('cart_id', cartId)
@@ -82,13 +74,10 @@ export const addToCart = async (
   cartId: string,
   productId: string,
   variantId: string,
-  quantity: number,
-  authTokens: AuthTokens
+  quantity: number
 ): Promise<CartItem | null> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
   // Check if item already exists in cart
-  const { data: existingItem } = await client
+  const { data: existingItem } = await serverClient
     .from('cart_items')
     .select('*')
     .eq('cart_id', cartId)
@@ -98,7 +87,7 @@ export const addToCart = async (
   if (existingItem) {
     // Update quantity
     const newQuantity = existingItem.quantity + quantity;
-    const { data, error } = await client
+    const { data, error } = await serverClient
       .from('cart_items')
       .update({
         quantity: newQuantity,
@@ -117,7 +106,7 @@ export const addToCart = async (
   }
 
   // Add new item to cart
-  const { data, error } = await client
+  const { data, error } = await serverClient
     .from('cart_items')
     .insert({
       cart_id: cartId,
@@ -141,17 +130,14 @@ export const addToCart = async (
  */
 export const updateCartItemQuantity = async (
   cartItemId: string,
-  quantity: number,
-  authTokens: AuthTokens
+  quantity: number
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
   if (quantity <= 0) {
     // Remove item if quantity is 0 or less
-    return await removeFromCart(cartItemId, authTokens);
+    return await removeFromCart(cartItemId);
   }
 
-  const { error } = await client
+  const { error } = await serverClient
     .from('cart_items')
     .update({
       quantity,
@@ -171,12 +157,9 @@ export const updateCartItemQuantity = async (
  * Remove item from cart
  */
 export const removeFromCart = async (
-  cartItemId: string,
-  authTokens: AuthTokens
+  cartItemId: string
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { error } = await client
+  const { error } = await serverClient
     .from('cart_items')
     .delete()
     .eq('id', cartItemId);
@@ -193,12 +176,9 @@ export const removeFromCart = async (
  * Clear all items from cart
  */
 export const clearCart = async (
-  cartId: string,
-  authTokens: AuthTokens
+  cartId: string
 ): Promise<boolean> => {
-  const client = await createAuthenticatedClient(authTokens.accessToken, authTokens.refreshToken);
-
-  const { error } = await client
+  const { error } = await serverClient
     .from('cart_items')
     .delete()
     .eq('cart_id', cartId);
@@ -216,7 +196,7 @@ export const clearCart = async (
  */
 export const getCartItemCount = async (userId: string): Promise<number> => {
   // First get the cart
-  const { data: cart } = await dataClient
+  const { data: cart } = await serverClient
     .from('carts')
     .select('id')
     .eq('user_id', userId)
@@ -227,7 +207,7 @@ export const getCartItemCount = async (userId: string): Promise<number> => {
   }
 
   // Get count of items
-  const { count, error } = await dataClient
+  const { count, error } = await serverClient
     .from('cart_items')
     .select('*', { count: 'exact', head: true })
     .eq('cart_id', cart.id);
