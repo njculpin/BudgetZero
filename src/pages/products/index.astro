@@ -2,49 +2,35 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
-import CreateProductButton from "@/components/ProductCreateButton.astro";
-import { getPublishedProducts, getPopularProductTags, getUserProducts } from "@/lib/data-access/products";
+import PageHeader from "@/components/PageHeader.astro";
+import { getAllProducts, getPopularProductTags, getUserProducts } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
+import Button from "@/components/Button.astro";
 
 const { url, cookies } = Astro;
 const searchParams = url.searchParams;
 
-// Check authentication
+// Check authentication - allow guests to browse
 let currentUser = null;
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
 
-if (!accessToken || !refreshToken) {
-  return Astro.redirect("/sign-in");
-}
-
-let session;
-try {
-  session = await setSession({
-    refresh_token: refreshToken.value,
-    access_token: accessToken.value,
-  });
-  if (session.error) {
-    Astro.cookies.delete("sb-access-token", {
-      path: "/",
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
     });
-    Astro.cookies.delete("sb-refresh-token", {
-      path: "/",
-    });
-    return Astro.redirect("/sign-in");
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {
+    // Continue as guest
   }
-} catch (error) {
-  Astro.cookies.delete("sb-access-token", {
-    path: "/",
-  });
-  Astro.cookies.delete("sb-refresh-token", {
-    path: "/",
-  });
-  return Astro.redirect("/sign-in");
 }
 
-const userId = session.data.user?.id;
+const userId = currentUser?.id;
 
 const searchQuery = searchParams.get('search') || '';
 const tagFilter = searchParams.get('tag') || '';
@@ -53,14 +39,8 @@ const limit = 20;
 const offset = (page - 1) * limit;
 
 const tagArray = tagFilter ? [tagFilter] : undefined;
-const userProducts = userId ? await getUserProducts(userId) : [];
-const allProducts = await getPublishedProducts(searchQuery, tagArray, limit, offset, userId);
-const popularTags = await getPopularProductTags(10);
-
-// Get owners for user's products
-const userProductOwnerIds = [...new Set(userProducts.map(p => p.user_id))];
-const userProductOwners = await Promise.all(userProductOwnerIds.map(id => getUserById(id)));
-const userOwnersMap = new Map(userProductOwners.filter(o => o).map(o => [o!.id, o]));
+const allProducts = await getAllProducts(searchQuery, tagArray, limit, offset);
+console.log(allProducts)
 
 // Get owners for all products
 const allProductOwnerIds = [...new Set(allProducts.map(p => p.user_id))];
@@ -72,46 +52,44 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
   <div class="page">
     <div class="page__container">
       <div class="page-header-with-action">
-        <div class="page-header">
-          <h1 class="page-header__title">Browse Products</h1>
-          <p class="page-header__description">Discover tabletop games from the community</p>
-        </div>
+        <PageHeader
+          title="Browse Products"
+          description="Discover tabletop games from the community"
+        />
         {currentUser && (
-          <CreateProductButton/>
+          <form method="post" action="/api/products/create-product">
+              <Button variant="primary" size="lg">
+                  <span slot="text">Create Product</span>
+              </Button>
+          </form>
         )}
       </div>
 
-      <!-- My Products Section -->
-      {userProducts.length > 0 && (
-        <section class="products-section">
-          <h2 class="products-section__title">My Products</h2>
-          <div class="products-grid">
-            {userProducts.map((product) => {
-              const owner = userOwnersMap.get(product.user_id);
-              return (
-                <a href={`/products/${product.handle}`} class="product-card">
-                  <div class="product-card__content">
-                    <h3 class="product-card__title">{product.title}</h3>
-                    {product.description && (
-                      <p class="product-card__description">
-                        {product.description.substring(0, 100)}{product.description.length > 100 ? '...' : ''}
-                      </p>
-                    )}
-                    <div class="product-card__meta">
-                      <span class="product-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
-                    </div>
-                  </div>
+      {!currentUser && (
+        <Card>
+          <CardContent>
+            <div class="browse-cta">
+              <p class="browse-cta__text">Sign in to create and sell your tabletop games</p>
+              <div class="browse-cta__actions">
+                <a href="/sign-in" class="browse-cta__link">
+                  <button class="button button--primary button--md">
+                    <span class="button__text">Sign In</span>
+                  </button>
                 </a>
-              );
-            })}
-          </div>
-        </section>
+                <a href="/sign-up" class="browse-cta__link">
+                  <button class="button button--ghost button--md">
+                    <span class="button__text">Sign Up</span>
+                  </button>
+                </a>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <!-- All Products Section -->
       {allProducts.length > 0 ? (
         <section class="products-section">
-          <h2 class="products-section__title">{userProducts.length > 0 ? 'All Products' : 'Products'}</h2>
           <div class="products-grid">
             {allProducts.map((product) => {
               const owner = allOwnersMap.get(product.user_id);
@@ -133,7 +111,7 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
             })}
           </div>
         </section>
-      ) : userProducts.length === 0 && (
+      ) : allProducts.length === 0 && (
         <Card>
           <CardContent>
             <div class="products-empty">
@@ -164,34 +142,155 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
 </Layout>
 
 <style>
-.page-header-with-action{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--gap-xl);margin-bottom:var(--spacing-2xl)}
-.page-header-action{text-decoration:none;flex-shrink:0}
-.products-section{margin-bottom:var(--spacing-6xl)}
-.products-section__title{margin:0 0 var(--spacing-3xl) 0;font-size:var(--text-2xl);font-weight:var(--font-weight-bold);color:var(--foreground);line-height:var(--leading-tight)}
-.products-filters{display:flex;flex-direction:column;gap:var(--gap-xl)}
-.products-filters__search{width:100%}
-.products-filters__label{margin:0 0 var(--spacing-sm);font-size:var(--text-sm);font-weight:var(--font-weight-semibold)}
-.products-filters__tags{display:flex;flex-direction:column;gap:var(--gap-sm)}
-.products-filters__tag-list{display:flex;flex-wrap:wrap;gap:var(--gap-sm)}
-.products-filters__tag-link{text-decoration:none}
-.products-filters__no-tags{margin:0;font-size:var(--text-sm);color:var(--muted-foreground)}
-.products-filters__active{padding-top:var(--spacing-2xl);border-top:1px solid var(--border)}
-.products-filters__active-list{display:flex;flex-wrap:wrap;gap:var(--gap-sm)}
-.products-filters__active-item{display:inline-flex;align-items:center;gap:var(--gap-sm);padding:var(--spacing-xs) var(--spacing-lg);background-color:var(--primary);color:white;border-radius:var(--radius-full);font-size:var(--text-sm)}
-.products-filters__clear{color:white;text-decoration:none;font-size:var(--text-lg);cursor:pointer}
-.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(18rem,1fr));gap:var(--gap-xl)}
-.product-card{display:block;padding:var(--spacing-3xl);background-color:white;border:1px solid var(--border);border-radius:var(--radius-lg);text-decoration:none;transition:all var(--duration-normal) var(--ease-in-out)}
-.product-card:hover{border-color:var(--primary);box-shadow:var(--shadow-md);transform:translateY(-2px)}
-.product-card__content{display:flex;flex-direction:column;gap:var(--gap-md)}
-.product-card__title{margin:0;font-size:var(--text-lg);font-weight:var(--font-weight-semibold);color:var(--foreground)}
-.product-card__description{margin:0;font-size:var(--text-sm);color:var(--muted-foreground);line-height:var(--leading-normal)}
-.product-card__meta{display:flex;gap:var(--gap-sm)}
-.product-card__author{font-size:var(--text-sm);color:var(--muted-foreground)}
-.products-empty{text-align:center;padding:var(--spacing-5xl) var(--spacing-4xl)}
-.products-empty__text{margin:0 0 var(--spacing-2xl);font-size:var(--text-base);color:var(--muted-foreground)}
-.products-empty__link{color:var(--primary);text-decoration:none;font-weight:var(--font-weight-medium)}
-.products-pagination{display:flex;justify-content:center;align-items:center;gap:var(--gap-xl);padding:var(--spacing-3xl) 0}
-.products-pagination__link{color:var(--primary);text-decoration:none;font-weight:var(--font-weight-medium);padding:var(--spacing-sm) var(--spacing-2xl);border-radius:var(--radius-md);transition:background-color var(--duration-normal) var(--ease-in-out)}
-.products-pagination__link:hover{background-color:var(--muted)}
-.products-pagination__current{font-size:var(--text-sm);color:var(--muted-foreground)}
+/* ===== Page Header ===== */
+.page-header-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--gap-xl);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.page-header-action {
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+/* ===== Browse CTA ===== */
+.browse-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-lg);
+  padding: var(--spacing-xl) 0;
+  text-align: center;
+}
+
+.browse-cta__text {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--foreground);
+}
+
+.browse-cta__actions {
+  display: flex;
+  gap: var(--gap-md);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.browse-cta__link {
+  text-decoration: none;
+}
+
+/* ===== Products Section ===== */
+.products-section {
+  margin-bottom: var(--spacing-6xl);
+}
+
+.products-section__title {
+  margin: 0 0 var(--spacing-3xl) 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+  line-height: var(--leading-tight);
+}
+
+/* ===== Products Grid ===== */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--gap-xl);
+}
+
+.product-card {
+  display: block;
+  padding: var(--spacing-3xl);
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.product-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.product-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.product-card__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.product-card__description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-normal);
+}
+
+.product-card__meta {
+  display: flex;
+  gap: var(--gap-sm);
+}
+
+.product-card__author {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+/* ===== Empty State ===== */
+.products-empty {
+  text-align: center;
+  padding: var(--spacing-5xl) var(--spacing-4xl);
+}
+
+.products-empty__text {
+  margin: 0 0 var(--spacing-2xl);
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+}
+
+.products-empty__link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+}
+
+/* ===== Pagination ===== */
+.products-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--gap-xl);
+  padding: var(--spacing-3xl) 0;
+}
+
+.products-pagination__link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-sm) var(--spacing-2xl);
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-normal) var(--ease-in-out);
+}
+
+.products-pagination__link:hover {
+  background-color: var(--muted);
+}
+
+.products-pagination__current {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
 </style>

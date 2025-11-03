@@ -2,11 +2,12 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
+import Badge from "@/components/Badge.astro";
 import { getAssets, getUserAssets } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import PageHeader from "@/components/PageHeader.astro";
 import { setSession } from "@/lib/auth";
-import AssetCreateButton from "@/components/AssetCreateButton.astro";
+import Button from "@/components/Button.astro";
 
 const { url, cookies } = Astro;
 const searchParams = url.searchParams;
@@ -35,23 +36,13 @@ const page = parseInt(searchParams.get('page') || '1');
 const limit = 20;
 const offset = (page - 1) * limit;
 
-// Fetch user's assets if logged in
-const userAssets = currentUser
-  ? await getUserAssets(currentUser.id, undefined)
-  : [];
-
 // Fetch all assets with filters
 const tagArray = tagFilter ? [tagFilter] : undefined;
-const allAssetsFetched = await getAssets(searchQuery, tagArray, limit, offset);
+const allAssets = await getAssets(searchQuery, tagArray, limit, offset);
 
-// Filter out current user's assets from "All Assets" (they're shown in "Your Assets")
-const allAssets = currentUser
-  ? allAssetsFetched.filter(asset => asset.user_id !== currentUser.id)
-  : allAssetsFetched;
 
 // Fetch asset owners (batch fetch to avoid N+1 queries)
-const allAssetsList = [...userAssets, ...allAssets];
-const ownerIds = [...new Set(allAssetsList.map(a => a.user_id))];
+const ownerIds = [...new Set(allAssets.map(a => a.user_id))];
 const owners = await Promise.all(ownerIds.map(id => getUserById(id)));
 const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 ---
@@ -63,49 +54,15 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
       <div class="page-header-with-action">
         <PageHeader title="Assets" description="Browse digital assets for tabletop games."/>
         {currentUser && (
-          <AssetCreateButton />
+          <form method="post" action="/api/assets/create-asset">
+              <Button variant="primary" size="lg">
+                  <span slot="text">Create Asset</span>
+              </Button>
+          </form>
         )}
       </div>
-
-      <!-- Your Assets Section -->
-      {currentUser && userAssets.length > 0 && (
-        <div class="assets-section">
-          <h2 class="assets-section__title">Your Assets</h2>
-          <div class="assets-grid">
-            {userAssets.map((asset) => {
-              return (
-                <a href={`/assets/${asset.handle}`} class="asset-card">
-                  <div class="asset-card__content">
-                    <h3 class="asset-card__title">{asset.title}</h3>
-                    {asset.description && (
-                      <p class="asset-card__description">
-                        {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
-                      </p>
-                    )}
-                    <div class="asset-card__meta">
-                      <span class="asset-card__status asset-card__status--{asset.status}">
-                        {asset.status}
-                      </span>
-                    </div>
-                    <div class="asset-card__stats">
-                      <span class="asset-card__stat">
-                        {asset.file_count} file{asset.file_count !== 1 ? 's' : ''}
-                      </span>
-                      <span class="asset-card__stat">
-                        {asset.download_count} download{asset.download_count !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  </div>
-                </a>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       <!-- All Assets Section -->
       <div class="assets-section">
-        <h2 class="assets-section__title">All Assets</h2>
         {allAssets.length > 0 ? (
           <div class="assets-grid">
             {allAssets.map((asset) => {
@@ -122,14 +79,6 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
                     <div class="asset-card__meta">
                       <span class="asset-card__author">
                         by {owner?.name || owner?.handle || 'Unknown'}
-                      </span>
-                    </div>
-                    <div class="asset-card__stats">
-                      <span class="asset-card__stat">
-                        {asset.file_count} file{asset.file_count !== 1 ? 's' : ''}
-                      </span>
-                      <span class="asset-card__stat">
-                        {asset.download_count} download{asset.download_count !== 1 ? 's' : ''}
                       </span>
                     </div>
                   </div>
@@ -202,7 +151,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 .assets-section__title {
   font-size: var(--text-xl);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text, #111827);
+  color: var(--foreground);
   margin: 0 0 var(--spacing-2xl);
 }
 
@@ -222,7 +171,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
   margin: 0 0 var(--spacing-sm);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text, #111);
+  color: var(--foreground);
 }
 
 .assets-filters__tags {
@@ -248,12 +197,12 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 .assets-filters__no-tags {
   margin: 0;
   font-size: var(--text-sm);
-  color: var(--color-text-muted, #6b7280);
+  color: var(--muted-foreground);
 }
 
 .assets-filters__active {
   padding-top: var(--spacing-2xl);
-  border-top: 1px solid var(--color-border, #e5e7eb);
+  border-top: 1px solid var(--border);
 }
 
 .assets-filters__active-list {
@@ -267,7 +216,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
   align-items: center;
   gap: var(--gap-sm);
   padding: var(--spacing-xs) var(--spacing-lg);
-  background-color: var(--color-primary, #0070f3);
+  background-color: var(--primary);
   color: white;
   border-radius: var(--radius-full);
   font-size: var(--text-sm);
@@ -298,14 +247,14 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
   display: block;
   padding: var(--spacing-3xl);
   background-color: white;
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   text-decoration: none;
   transition: all var(--duration-normal) var(--ease-in-out);
 }
 
 .asset-card:hover {
-  border-color: var(--color-primary, #0070f3);
+  border-color: var(--primary);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
@@ -320,13 +269,13 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
   margin: 0;
   font-size: var(--text-lg);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text, #111);
+  color: var(--foreground);
 }
 
 .asset-card__description {
   margin: 0;
   font-size: var(--text-sm);
-  color: var(--color-text-muted, #6b7280);
+  color: var(--muted-foreground);
   line-height: var(--leading-normal);
 }
 
@@ -338,43 +287,19 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 
 .asset-card__author {
   font-size: var(--text-sm);
-  color: var(--color-text-muted, #6b7280);
+  color: var(--muted-foreground);
 }
 
 .asset-card__stats {
   display: flex;
   gap: var(--gap-lg);
   padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-border, #e5e7eb);
+  border-top: 1px solid var(--border);
 }
 
 .asset-card__stat {
   font-size: var(--text-sm);
-  color: var(--color-text-muted, #6b7280);
-}
-
-.asset-card__status {
-  display: inline-block;
-  padding: var(--spacing-xxs) var(--spacing-lg);
-  font-size: var(--text-xs);
-  font-weight: var(--font-weight-semibold);
-  border-radius: var(--radius-full);
-  text-transform: uppercase;
-}
-
-.asset-card__status--draft {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.asset-card__status--published {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.asset-card__status--archived {
-  background-color: #e5e7eb;
-  color: #374151;
+  color: var(--muted-foreground);
 }
 
 /* ===== Empty State ===== */
@@ -386,12 +311,12 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 .assets-empty__text {
   margin: 0 0 var(--spacing-2xl);
   font-size: var(--text-base);
-  color: var(--color-text-muted, #6b7280);
+  color: var(--muted-foreground);
 }
 
 .assets-empty__link {
   display: inline-block;
-  color: var(--color-primary, #0070f3);
+  color: var(--primary);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
 }
@@ -410,7 +335,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 }
 
 .assets-pagination__link {
-  color: var(--color-primary, #0070f3);
+  color: var(--primary);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-sm) var(--spacing-2xl);
@@ -419,11 +344,11 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 }
 
 .assets-pagination__link:hover {
-  background-color: var(--color-background, #f9fafb);
+  background-color: var(--muted);
 }
 
 .assets-pagination__current {
   font-size: var(--text-sm);
-  color: var(--color-text-muted, #6b7280);
+  color: var(--muted-foreground);
 }
 </style>

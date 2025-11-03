@@ -4,9 +4,9 @@ import { createProduct, createProductTag } from "@/lib/data-access/products";
 import { z } from "zod";
 
 const createProductSchema = z.object({
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(200).default("Untitled Product"),
   description: z.string().optional(),
-  status: z.enum(["draft", "published", "archived"]).optional(),
+  status: z.enum(["draft", "published", "archived"]).default("draft"),
   tags: z.array(z.string()).optional(),
 });
 
@@ -45,13 +45,34 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const userId = session.data.user.id;
 
   try {
-    const body = await request.json();
-    const validatedData = createProductSchema.parse(body);
+    // Handle both FormData and JSON
+    let data: Record<string, unknown>;
+    const contentType = request.headers.get("content-type");
+
+    if (contentType?.includes("application/json")) {
+      data = await request.json();
+    } else {
+      // Handle FormData (from HTML form submission)
+      const formData = await request.formData();
+      data = {
+        title: formData.get("title") || "Untitled Product",
+        description: formData.get("description") || undefined,
+        status: formData.get("status") || "draft",
+      };
+
+      // Handle tags if provided
+      const tagsString = formData.get("tags");
+      if (tagsString && typeof tagsString === "string") {
+        data.tags = tagsString.split(",").map((t) => t.trim()).filter(Boolean);
+      }
+    }
+
+    const validatedData = createProductSchema.parse(data);
 
     const product = await createProduct(userId, {
       title: validatedData.title,
       description: validatedData.description,
-      status: validatedData.status,
+      status: validatedData.status || "draft",
     });
 
     if (!product) {
@@ -68,10 +89,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
     }
 
-    return new Response(JSON.stringify({ product }), {
-      status: 201,
-      headers: { "Content-Type": "application/json" },
-    });
+    // Redirect to edit page for form submissions, return JSON for API calls
+    if (contentType?.includes("application/json")) {
+      return new Response(JSON.stringify({ product }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      });
+    } else {
+      return new Response(null, {
+        status: 303,
+        headers: {
+          Location: `/products/${product.handle}/edit`,
+        },
+      });
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return new Response(

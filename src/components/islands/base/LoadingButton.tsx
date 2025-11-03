@@ -22,16 +22,15 @@ interface LoadingButtonProps {
 }
 
 export default function LoadingButton(props: LoadingButtonProps) {
-  const variantClass = props.variant
+  const variantClass = () => props.variant
     ? `button--${props.variant}`
     : "button--primary";
-  const sizeClass = props.size ? `button--${props.size}` : "button--md";
-  const isDisabled = props.disabled || props.isLoading;
+  const sizeClass = () => props.size ? `button--${props.size}` : "button--md";
 
-  const classes = [
+  const classes = () => [
     "button",
-    variantClass,
-    sizeClass,
+    variantClass(),
+    sizeClass(),
     props.isLoading ? "button--loading" : "",
     props.class,
   ]
@@ -40,9 +39,9 @@ export default function LoadingButton(props: LoadingButtonProps) {
 
   return (
     <button
-      type={"submit"}
-      class={classes}
-      disabled={isDisabled}
+      type={props.type || "submit"}
+      class={classes()}
+      disabled={props.disabled || props.isLoading}
       onClick={props.onClick}
     >
       {props.isLoading && (

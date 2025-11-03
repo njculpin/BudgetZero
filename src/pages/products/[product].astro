@@ -1,0 +1,322 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Badge from "@/components/Badge.astro";
+import Button from "@/components/Button.astro";
+import Tag from "@/components/Tag.astro";
+import TagList from "@/components/TagList.astro";
+import AddToCartButton from "@/components/islands/AddToCartButton";
+import ProductDeleteButton from "@/components/islands/ProductDeleteButton";
+import PricingBreakdown from "@/components/islands/PricingBreakdown";
+import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices } from "@/lib/data-access/products";
+import { getUserById } from "@/lib/data-access/users";
+import { setSession } from "@/lib/auth";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+import CardFooter from "@/components/CardFooter.astro";
+
+const { product } = Astro.params;
+
+if (!product) {
+  return Astro.redirect('/404');
+}
+
+const productData = await getProductByHandle(product);
+
+if (!productData) {
+  return Astro.redirect('/404');
+}
+
+const owner = await getUserById(productData.user_id);
+const tags = await getProductTags(productData.id);
+const variants = await getProductVariants(productData.id);
+
+const variantsWithPrices = await Promise.all(
+  variants.map(async (variant) => {
+    const prices = await getVariantPrices(variant.id);
+    return { ...variant, prices };
+  })
+);
+
+let currentUser = null;
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {}
+}
+
+const isOwner = currentUser?.id === productData.user_id;
+
+if (productData.status !== 'published' && !isOwner) {
+  return Astro.redirect('/404');
+}
+
+// Get first variant with pricing for display
+const defaultVariant = variantsWithPrices.find(v => v.prices && v.prices.length > 0) || variantsWithPrices[0];
+const defaultPrice = defaultVariant?.prices?.[0];
+---
+
+<Layout title={`${productData.title} - Game Loopers`}>
+  <div class="page">
+    <div class="page__container">
+      <!-- Main Content -->
+      <main class="product-main">
+        <!-- Hero Section -->
+        <div class="product-hero">
+          <div class="product-hero__header">
+            <div class="product-hero__title-group">
+              <h1 class="product-hero__title">{productData.title}</h1>
+              <div class="product-hero__meta">
+                <span class="product-hero__author">
+                  by <a href={`/users/${owner?.handle}`} class="product-hero__author-link">
+                    {owner?.name || owner?.handle || 'Unknown'}
+                  </a>
+                </span>
+                <span class="product-hero__divider">•</span>
+                <Badge variant={productData.status as 'draft' | 'published' | 'archived'} size="sm">
+                  {productData.status}
+                </Badge>
+              </div>
+            </div>
+            {isOwner && (
+              <div class="product-hero__actions">
+                <a href={`/products/${product}/edit`}>
+                  <Button variant="outline" size="sm">
+                    <span slot="text">Edit Product</span>
+                  </Button>
+                </a>
+                <ProductDeleteButton
+                  client:load
+                  productId={productData.id}
+                  productTitle={productData.title}
+                  redirectUrl={`/users/${owner?.handle}`}
+                />
+              </div>
+            )}
+          </div>
+
+          {productData.description && (
+            <div class="product-hero__description">
+              <p>{productData.description}</p>
+            </div>
+          )}
+
+          {tags.length > 0 && (
+            <TagList className="product-hero__tags">
+              {tags.map((tag) => <Tag>{tag.value}</Tag>)}
+            </TagList>
+          )}
+        </div>
+
+        <!-- Variants Section -->
+        {variantsWithPrices.length > 0 ? (
+          <div class="product-variants">
+            <h2 class="product-variants__title">Available Variants</h2>
+            <div class="product-variants__list">
+              {variantsWithPrices.map((variant) => (
+                <div class="variant-item">
+                  <div class="variant-item__header">
+                    <div class="variant-item__title-group">
+                      <h3 class="variant-item__name">{variant.title}</h3>
+                      <Badge
+                        variant={variant.is_digital ? 'primary' : 'secondary'}
+                        size="sm"
+                      >
+                        {variant.is_digital ? 'Digital' : 'Physical'}
+                      </Badge>
+                    </div>
+                    {variant.sku && (
+                      <span class="variant-item__sku">SKU: <code>{variant.sku}</code></span>
+                    )}
+                  </div>
+
+                  {variant.description && (
+                    <p class="variant-item__description">{variant.description}</p>
+                  )}
+
+                  {variant.prices && variant.prices.length > 0 ? (
+                    <div class="variant-item__pricing">
+                      <div class="variant-item__price-list">
+                        {variant.prices.map((price) => (
+                          <div class="variant-item__price">
+                            <span class="variant-item__price-amount">
+                              {price.unit_amount === 0
+                                ? 'FREE'
+                                : `${price.currency.toUpperCase()} ${(price.unit_amount / 100).toFixed(2)}`}
+                            </span>
+                            {(price.min_quantity > 1 || price.max_quantity) && (
+                              <span class="variant-item__price-quantity">
+                                {price.min_quantity > 1 && `${price.min_quantity}+ units`}
+                                {price.max_quantity && ` (max ${price.max_quantity})`}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div class="variant-item__actions">
+                        {!isOwner && currentUser && (
+                          <AddToCartButton
+                            client:load
+                            productId={productData.id}
+                            variantId={variant.id}
+                            quantity={1}
+                            variant="primary"
+                            size="md"
+                          />
+                        )}
+                        {!isOwner && !currentUser && (
+                          <a href={`/sign-in?redirect=/products/${product}`}>
+                            <Button variant="primary" size="md">
+                              <span slot="text">Sign In to Purchase</span>
+                            </Button>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    isOwner && (
+                      <p class="variant-item__no-price">No pricing configured for this variant</p>
+                    )
+                  )}
+
+                  {isOwner && variant.prices && variant.prices.length > 0 && (
+                    <div class="variant-item__breakdown">
+                      <PricingBreakdown
+                        client:load
+                        variantId={variant.id}
+                        variantTitle={variant.title}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div class="product-empty">
+            <div class="product-empty__icon">📦</div>
+            <p class="product-empty__text">
+              {isOwner
+                ? "No variants added yet. Add variants to start selling this product."
+                : "This product doesn't have any variants available yet."}
+            </p>
+            {isOwner && (
+              <a href={`/products/${product}/edit`}>
+                <Button variant="primary" size="md">
+                  <span slot="text">Add Variants</span>
+                </Button>
+              </a>
+            )}
+          </div>
+        )}
+      </main>
+
+      <!-- Sidebar -->
+      <aside class="product-sidebar">
+        {variantsWithPrices.length > 0 && (
+          <div class="sidebar-card sidebar-card--sticky">
+            <div class="sidebar-card__stats">
+              <div class="stat">
+                <p class="stat__value">{variantsWithPrices.length}</p>
+                <p class="stat__label">{variantsWithPrices.length === 1 ? 'Variant' : 'Variants'}</p>
+              </div>
+              <div class="stat">
+                <p class="stat__value">
+                  {variantsWithPrices.filter(v => v.is_digital).length}
+                </p>
+                <p class="stat__label">Digital</p>
+              </div>
+              <div class="stat">
+                <p class="stat__value">
+                  {variantsWithPrices.filter(v => !v.is_digital).length}
+                </p>
+                <p class="stat__label">Physical</p>
+              </div>
+            </div>
+
+            {defaultPrice && (
+              <div class="sidebar-card__price">
+                <p class="sidebar-card__price-label">Starting at</p>
+                <p class="sidebar-card__price-value">
+                  {defaultPrice.unit_amount === 0
+                    ? 'FREE'
+                    : `${defaultPrice.currency.toUpperCase()} ${(defaultPrice.unit_amount / 100).toFixed(2)}`}
+                </p>
+              </div>
+            )}
+
+            {!isOwner && defaultVariant && (
+              <div class="sidebar-card__cta">
+                {currentUser ? (
+                  <AddToCartButton
+                    client:load
+                    productId={productData.id}
+                    variantId={defaultVariant.id}
+                    quantity={1}
+                    variant="primary"
+                    size="lg"
+                  />
+                ) : (
+                  <a href={`/sign-in?redirect=/products/${product}`} class="sidebar-card__cta-link">
+                    <Button variant="primary" size="lg">
+                      <span slot="text">Sign In to Purchase</span>
+                    </Button>
+                  </a>
+                )}
+              </div>
+            )}
+
+            {isOwner && (
+              <div class="sidebar-card__owner">
+                <p class="sidebar-card__owner-text">You own this product</p>
+                <a href={`/products/${product}/edit`} class="sidebar-card__owner-link">
+                  <Button variant="outline" size="md">
+                    <span slot="text">Manage Product</span>
+                  </Button>
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+      </aside>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Creator</CardTitle>
+          <CardDescription>
+            <div class="creator-card__avatar">
+              {owner?.name ? owner.name[0].toUpperCase() : owner?.handle[0].toUpperCase()}
+            </div>
+            <div class="creator-card__info">
+              <h3 class="creator-card__name">{owner?.name || owner?.handle}</h3>
+              <p class="creator-card__handle">@{owner?.handle}</p>
+            </div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <p class="creator-card__bio">{owner?.bio}</p>
+        </CardContent>
+        <CardFooter>
+            <a href={`/users/${owner?.handle}`} class="creator-card__link">
+              <Button variant="outline" size="md">
+                <span slot="text">View Profile</span>
+              </Button>
+            </a>
+        </CardFooter>
+      </Card>
+    </div>
+  </div>
+</Layout>

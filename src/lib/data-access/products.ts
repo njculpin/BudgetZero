@@ -230,24 +230,18 @@ export const deleteProduct = async (
 /**
  * Get published products with optional filters
  */
-export const getPublishedProducts = async (
+export const getAllProducts = async (
   searchQuery?: string,
   tags?: string[],
   limit: number = 50,
   offset: number = 0,
-  excludeUserId?: string
 ): Promise<Product[]> => {
   let query = serverClient
     .from('products')
     .select('*')
-    .eq('status', 'published')
     .eq('deleted', false)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
-
-  if (excludeUserId) {
-    query = query.neq('user_id', excludeUserId);
-  }
 
   if (searchQuery && searchQuery.trim()) {
     query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
