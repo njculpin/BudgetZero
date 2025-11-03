@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
-import { updateProduct, getProductById } from "@/lib/data-access/products";
+import { updateProduct, getProductById, getProductVariants, getVariantAssets } from "@/lib/data-access/products";
+import { getAssetById } from "@/lib/data-access/assets";
 import { uploadFile, generateFilePath } from "@/lib/storage";
 import { z } from "zod";
 
@@ -12,6 +13,37 @@ const updateProductSchema = z.object({
   handle: z.string().optional(),
   tags: z.array(z.string()).optional(),
 });
+
+/**
+ * Check if a product can be published by verifying all linked assets are published
+ */
+async function validatePublishStatus(productId: string): Promise<{ valid: boolean; error?: string }> {
+  const variants = await getProductVariants(productId);
+
+  for (const variant of variants) {
+    const assets = await getVariantAssets(variant.id);
+
+    for (const assetLink of assets) {
+      const asset = await getAssetById(assetLink.asset_id);
+
+      if (!asset) {
+        return {
+          valid: false,
+          error: `Asset not found for variant "${variant.title}"`
+        };
+      }
+
+      if (asset.status !== 'published') {
+        return {
+          valid: false,
+          error: `Cannot publish product: Asset "${asset.title}" in variant "${variant.title}" must be published first`
+        };
+      }
+    }
+  }
+
+  return { valid: true };
+}
 
 export const PUT: APIRoute = async ({ request, cookies }) => {
   // Check authentication
@@ -65,6 +97,17 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
+    }
+
+    // Validate publish status if trying to publish
+    if (validatedData.status === 'published') {
+      const validation = await validatePublishStatus(validatedData.productId);
+      if (!validation.valid) {
+        return new Response(JSON.stringify({ error: validation.error }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
     }
 
     const success = await updateProduct(validatedData.productId, {
@@ -176,6 +219,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const parsedTags = tagsJson ? JSON.parse(tagsJson) : undefined;
+
+    // Validate publish status if trying to publish
+    if (status === 'published') {
+      const validation = await validatePublishStatus(productId);
+      if (!validation.valid) {
+        return new Response(JSON.stringify({ error: validation.error }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
 
     const success = await updateProduct(productId, {
       title,

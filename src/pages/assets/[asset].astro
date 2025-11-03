@@ -1,0 +1,308 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Button from "@/components/Button.astro";
+import Tag from "@/components/Tag.astro";
+import { getAssetByHandle, getAssetFiles, getAssetImages, getAssetTags, getAssetContributors } from "@/lib/data-access/assets";
+import { getUserById } from "@/lib/data-access/users";
+import { getAssetRoyalties } from "@/lib/data-access/royalties";
+import { setSession } from "@/lib/auth";
+import CardTitle from "@/components/CardTitle.astro";
+import AssetChat from "@/components/islands/AssetChat";
+import Card from "@/components/Card.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardFooter from "@/components/CardFooter.astro";
+import GalleryGrid from "@/components/GalleryGrid.astro";
+import AssetTagsForm from "@/components/islands/AssetTagsForm";
+import AssetFileForm from "@/components/islands/AssetFileForm";
+import AssetImagesForm from "@/components/islands/AssetImagesForm";
+
+const { asset } = Astro.params;
+
+if (!asset) {
+  return Astro.redirect('/404');
+}
+
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+const assetData = await getAssetByHandle(asset);
+
+if (!assetData) {
+  return Astro.redirect('/404');
+}
+
+const owner = await getUserById(assetData.user_id);
+const files = await getAssetFiles(assetData.id);
+const imagesData = await getAssetImages(assetData.id);
+const contributorData = await getAssetContributors(assetData.id)
+const contributorImages = contributorData.map(function(x) {return {
+  url: x.avatar_url,
+  alt: x.name,
+  href: `/users/${x.handle}`
+}})
+const images = imagesData.map(function(x){return {
+  url: x.file_url,
+  alt: x.title,
+  href: x.file_url
+}})
+const tags = await getAssetTags(assetData.id);
+const royalties = await getAssetRoyalties(assetData.id);
+
+const royaltiesWithUsers = await Promise.all(
+  royalties.map(async (royalty) => {
+    const user = await getUserById(royalty.user_id);
+    return { ...royalty, user };
+  })
+);
+
+let currentUser = null;
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {}
+}
+
+const isOwner = currentUser?.id === assetData.user_id;
+const totalRoyalty = royalties.reduce((sum, r) => sum + r.royalty_value, 0);
+---
+
+<Layout title={`${assetData.title} - Game Loopers`}>
+  <div class="page">
+    <div class="page__container">
+
+    <div class="page-columns">
+      <div class="page-columns__column">
+        <Card>
+          <CardHeader>
+            <CardTitle>{assetData.title}</CardTitle>
+            <CardDescription>
+              <span>
+                  by <a href={`/users/${owner?.handle}`} class="asset-hero__author-link">
+                    {owner?.name || owner?.handle}
+                  </a>
+              </span>
+              <span class="asset-hero__divider">•</span>
+              <h2 class="asset-description__title">About This Asset</h2>
+              <p class="asset-description__text">{assetData.description}</p>
+            </CardDescription>
+          </CardHeader>
+        </Card>
+
+        {images.length > 0 &&
+        <Card>
+          <CardHeader>
+            <CardTitle>Images</CardTitle>
+            <CardContent>
+            <AssetImagesForm
+            client:load
+            assetId={assetData.id}
+            existingImages={imagesData.map(i => ({
+              id: i.id,
+              title: i.title,
+              file_url: i.file_url,
+            }))}
+          />
+              <GalleryGrid images={images} cols={5}/>
+            </CardContent>
+          </CardHeader>
+        </Card>
+        }
+
+        {tags.length > 0 &&
+        <Card>
+          <CardHeader>
+            <CardTitle>Tags</CardTitle>
+            <CardDescription>A list of tags associated with this asset</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <AssetTagsForm
+                client:load
+                assetId={assetData.id}
+                initialTags={tags.map(t => t.value)}
+              />
+              {tags.map((tag) => (
+                <a href={`/assets?tag=${tag.value}`} class="asset-tags__link">
+                  <Tag>{tag.value}</Tag>
+                </a>
+              ))}
+          </CardContent>
+        </Card>
+        }
+
+        {files.length > 0 && 
+        <Card>
+          <CardHeader>Files Included</CardHeader>
+          <CardDescription>A List of files included in this asset</CardDescription>
+          <CardDescription>
+            <div class="asset-files">
+              <AssetFileForm
+                client:load
+                assetId={assetData.id}
+                existingFiles={files.map(f => ({
+                  id: f.id,
+                  title: f.title,
+                  file_size_bytes: f.file_size_bytes,
+                  file_url: f.file_url,
+                }))}
+              />
+              {files.map((file) => (
+                <div class="file-item">
+                  <div class="file-item__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                    </svg>
+                  </div>
+                  <div class="file-item__info">
+                    <p class="file-item__name">{file.title}</p>
+                    {file.description && (
+                      <p class="file-item__description">{file.description}</p>
+                    )}
+                    <p class="file-item__meta">
+                      {(file.file_size_bytes / 1024 / 1024).toFixed(2)} MB
+                      {file.mime_type && ` • ${file.mime_type.split('/').pop()?.toUpperCase()}`}
+                    </p>
+                  </div>
+                  <a
+                    href={file.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="file-item__download"
+                  >
+                    <Button variant="ghost" size="sm">
+                      <span slot="text">Download</span>
+                    </Button>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </CardDescription>
+        </Card>
+        }
+
+      </div>
+      <div class="page-columns__column">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Contributors
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <GalleryGrid images={contributorImages} cols={5} borderRadius="circle"/>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Chat
+            </CardTitle>
+            <CardContent>
+              {currentUser && <AssetChat client:load userId={currentUser.id} assetId={assetData.id} />}
+            </CardContent>
+          </CardHeader>
+        </Card>
+        {isOwner && 
+          <Card>
+            <CardHeader>
+              <CardTitle>Meta</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{assetData.status}</p>
+              <p>{assetData.updated_at}</p>
+              <p>{assetData.created_at}</p>
+              <p>{assetData.file_count}</p>
+              <p>{assetData.download_count}</p>
+            </CardContent>
+            <CardFooter>
+                <a href={`/assets/${assetData?.handle}?preview=true`} class="creator-card__link">
+                  <Button variant="outline" size="md">
+                    <span slot="text">Preview</span>
+                  </Button>
+                </a>
+            </CardFooter>
+          </Card>
+        }
+
+        <!-- Licensing Info -->
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              License Agreement
+            </CardTitle>
+            <CardDescription>
+              This asset can be used for both personal and commercial projects that are distributed through gameloopers.com exclusively.
+            </CardDescription>
+            <CardFooter>
+              <a href="/licenses/standard" class="license-card__link">
+                Read Full License Terms →
+              </a>
+            </CardFooter>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Costs & Royalties
+            </CardTitle>
+            <CardContent>
+                <div class="sidebar-card__price">
+                  <p class="sidebar-card__price-label">Cost per use in product</p>
+                  <p class="sidebar-card__price-value">${(totalRoyalty / 100).toFixed(2)}</p>
+                </div>
+                <div class="sidebar-card__royalties">
+                  <h4 class="sidebar-card__royalties-title">Revenue Split</h4>
+                  <div class="royalty-list">
+                    {royaltiesWithUsers.map((royalty) => (
+                      <div class="royalty-item">
+                        <span class="royalty-item__name">
+                          {royalty.user?.name || royalty.user?.handle || "Unknown"}
+                          {royalty.user_id === assetData.user_id && (
+                            <span class="royalty-item__badge">Creator</span>
+                          )}
+                        </span>
+                        <span class="royalty-item__amount">
+                          ${(royalty.royalty_value / 100).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <a href={`/assets/${assetData?.handle}`} class="creator-card__link">
+                    <Button variant="outline" size="md">
+                      <span slot="text">Add to Product</span>
+                    </Button>
+                  </a>
+                </div>
+            </CardContent>
+          </CardHeader>
+        </Card>
+      </div>
+    </div>
+    
+
+    </div>
+  </div>
+</Layout>
+
+<style>
+.page-columns {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+.page-columns__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md)
+}
+</style>

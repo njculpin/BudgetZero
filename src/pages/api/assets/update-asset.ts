@@ -8,6 +8,8 @@ import {
   createAssetImage,
   createAssetTag,
   getAssetTags,
+  getAssetFiles,
+  getAssetImages,
 } from "@/lib/data-access/assets";
 import { uploadFile, generateFilePath } from "@/lib/storage";
 
@@ -163,10 +165,16 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
     }
 
+    // Fetch updated files and images to return to client
+    const updatedFiles = await getAssetFiles(assetId);
+    const updatedImages = await getAssetImages(assetId);
+
     return new Response(
       JSON.stringify({
         success: true,
         asset: updatedAsset,
+        files: updatedFiles,
+        images: updatedImages,
       }),
       {
         status: 200,

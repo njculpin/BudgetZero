@@ -8,12 +8,10 @@ export interface GalleryImage {
 export interface Props {
   images: GalleryImage[];
   cols?: number;
-  rows?: number;
-  title: string;
   borderRadius?: 'square' | 'circle';
 }
 
-const { images, cols = 3, rows = 2, title, borderRadius = 'square' } = Astro.props;
+const { images, cols = 3, borderRadius = 'square' } = Astro.props;
 
 // Generate CSS class for column/row configuration
 const gridClass = `gallery--cols-${cols}`;

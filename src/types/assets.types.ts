@@ -31,6 +31,7 @@ export interface AssetFile extends BaseEntity {
   storage_path: string;
   file_size_bytes: number;
   mime_type: string;
+  position: number;
 }
 
 export interface AssetImage extends BaseEntity {
@@ -41,6 +42,7 @@ export interface AssetImage extends BaseEntity {
   storage_path: string;
   file_size_bytes: number;
   mime_type: string;
+  position: number;
 }
 
 export interface AssetTag extends BaseEntity {

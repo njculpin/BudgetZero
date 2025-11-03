@@ -10,12 +10,7 @@ CREATE TABLE IF NOT EXISTS asset_collaborators (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   asset_id UUID NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role TEXT NOT NULL CHECK (role IN ('owner', 'editor', 'viewer')),
-  can_edit BOOLEAN NOT NULL DEFAULT FALSE,
-  can_delete BOOLEAN NOT NULL DEFAULT FALSE,
-  can_invite BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted BOOLEAN NOT NULL DEFAULT FALSE,
   deleted_at TIMESTAMPTZ,
   UNIQUE(asset_id, user_id)

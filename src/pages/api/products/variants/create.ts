@@ -5,10 +5,6 @@ import { createVariant, getProductById } from "@/lib/data-access/products";
 
 const createVariantSchema = z.object({
   productId: z.string().uuid(),
-  title: z.string().min(1).max(200),
-  description: z.string().optional(),
-  sku: z.string().optional(),
-  isDigital: z.boolean().default(true),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -45,7 +41,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const userId = session.data.user.id;
 
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
+
     const validatedData = createVariantSchema.parse(body);
 
     // Verify ownership
@@ -57,10 +59,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
+    // Auto-generate title based on existing variant count
+    const { getProductVariants } = await import("@/lib/data-access/products");
+    const existingVariants = await getProductVariants(validatedData.productId);
+    const variantNumber = existingVariants.length + 1;
+    const autoTitle = `Variant ${variantNumber}`;
+
     const variant = await createVariant(validatedData.productId, {
-      title: validatedData.title,
-      description: validatedData.description,
-      sku: validatedData.sku,
+      title: autoTitle,
     });
 
     if (!variant) {

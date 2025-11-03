@@ -1,0 +1,62 @@
+---
+interface Props {
+  variant: 'draft' | 'published' | 'archived' | 'primary' | 'secondary' | 'muted';
+  size?: 'sm' | 'md';
+}
+
+const { variant, size = 'md' } = Astro.props;
+---
+
+<span class={`badge badge--${variant} badge--${size}`}>
+  <slot />
+</span>
+
+<style>
+.badge {
+  display: inline-block;
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  line-height: var(--leading-tight);
+}
+
+.badge--sm {
+  font-size: var(--text-xs);
+  padding: var(--spacing-xxs) var(--spacing-md);
+}
+
+.badge--md {
+  font-size: var(--text-xs);
+}
+
+.badge--draft {
+  background-color: oklch(0.95 0.05 85);
+  color: oklch(0.35 0.08 75);
+}
+
+.badge--published {
+  background-color: oklch(0.95 0.05 150);
+  color: oklch(0.35 0.08 160);
+}
+
+.badge--archived {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.badge--primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.badge--secondary {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.badge--muted {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}
+</style>

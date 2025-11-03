@@ -1,3 +1,5 @@
+// src/lib/data-access/client.ts
+
 import { createClient } from "@supabase/supabase-js";
 
 // Public client for unauthenticated/client-side operations

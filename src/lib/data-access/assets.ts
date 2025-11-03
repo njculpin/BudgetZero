@@ -5,6 +5,8 @@ import type {
   AssetImage,
   AssetTag,
   AssetStatus,
+  User,
+  AssetChatMessage,
 } from "@/types";
 
 export interface CreateAssetParams {
@@ -157,6 +159,18 @@ export const createAsset = async (userId: string): Promise<Asset | null> => {
     // Don't fail asset creation if royalty creation fails
   }
 
+  // Automatically add creator to collaborators list
+  const { error: contributorError } = await serverClient
+  .from("asset_collaborators")
+  .insert({
+    asset_id: asset.id,
+    user_id: userId,
+  })
+
+  if (contributorError){
+    console.error("Error creating contributor:", royaltyError)
+  }
+
   return asset;
 };
 
@@ -244,6 +258,7 @@ export const getAssets = async (
   let query = serverClient
     .from("assets")
     .select("*")
+    .eq("deleted", false)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -423,7 +438,7 @@ export const getAssetImages = async (
     .select("*")
     .eq("asset_id", assetId)
     .eq("deleted", false)
-    .order("created_at", { ascending: true });
+    .order("position", { ascending: true });
 
   if (error) {
     console.error("Error fetching asset images:", error);
@@ -432,6 +447,36 @@ export const getAssetImages = async (
 
   return data as AssetImage[];
 };
+
+/**
+ * Get asset contributors for an asset
+ */
+export const getAssetContributors = async (assetId: string): Promise<User[]> => {
+
+  const { data: users, error: contributorErrors } = await serverClient
+  .from('asset_collaborators')
+  .select("user_id")
+  .eq("asset_id", assetId)
+
+  if (contributorErrors){
+    console.error("Error fetching asset contributors:", contributorErrors);
+    return []
+  }
+
+  const userIds = users.map(x=>x.user_id)
+
+  const { data, error } = await serverClient
+    .from("users")
+    .select("*")
+    .in('id', userIds)
+
+  if (error) {
+    console.error("Error fetching asset images:", error);
+    return [];
+  }
+
+  return data as User[];
+}
 
 /**
  * Create asset file record
@@ -720,4 +765,56 @@ export const getPopularTags = async (
   //   .slice(0, limit);
 
   return [];
+};
+
+/**
+ * Reorder asset images
+ * Updates position for each image in the provided array
+ */
+export const reorderAssetImages = async (
+  imageOrders: Array<{ id: string; position: number }>
+): Promise<boolean> => {
+  try {
+    for (const { id, position } of imageOrders) {
+      const { error } = await serverClient
+        .from("asset_images")
+        .update({ position, updated_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) {
+        console.error("Error reordering image:", error);
+        return false;
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error("Error reordering images:", error);
+    return false;
+  }
+};
+
+/**
+ * Reorder asset files
+ * Updates position for each file in the provided array
+ */
+export const reorderAssetFiles = async (
+  fileOrders: Array<{ id: string; position: number }>
+): Promise<boolean> => {
+  try {
+    for (const { id, position } of fileOrders) {
+      const { error } = await serverClient
+        .from("asset_files")
+        .update({ position, updated_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) {
+        console.error("Error reordering file:", error);
+        return false;
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error("Error reordering files:", error);
+    return false;
+  }
 };

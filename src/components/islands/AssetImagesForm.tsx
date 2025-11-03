@@ -21,6 +21,8 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
   const [images, setImages] = createSignal<AssetImage[]>(props.existingImages);
   const [selectedFiles, setSelectedFiles] = createSignal<File[]>([]);
   const [isLoading, setIsLoading] = createSignal(false);
+  const [isReordering, setIsReordering] = createSignal(false);
+  const [hasReordered, setHasReordered] = createSignal(false);
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal("");
 
@@ -36,6 +38,7 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
     const newImages = [...images()];
     [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
     setImages(newImages);
+    setHasReordered(true);
   };
 
   const handleMoveDown = (index: number) => {
@@ -43,6 +46,72 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
     const newImages = [...images()];
     [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
     setImages(newImages);
+    setHasReordered(true);
+  };
+
+  const handleSaveOrder = async () => {
+    setError("");
+    setSuccess("");
+    setIsReordering(true);
+
+    try {
+      const imageOrders = images().map((image, index) => ({
+        id: image.id,
+        position: index,
+      }));
+
+      const response = await fetch("/api/assets/reorder-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assetId: props.assetId,
+          imageOrders,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || "Failed to save image order");
+        setIsReordering(false);
+        return;
+      }
+
+      setSuccess("Image order saved successfully!");
+      setHasReordered(false);
+      setIsReordering(false);
+    } catch (err) {
+      setError("An unexpected error occurred while saving order");
+      setIsReordering(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    if (!confirm("Are you sure you want to delete this image?")) {
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("/api/assets/delete-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || "Failed to delete image");
+        return;
+      }
+
+      // Remove from local state
+      setImages(images().filter((img) => img.id !== imageId));
+      setSuccess("Image deleted successfully!");
+    } catch (err) {
+      setError("An unexpected error occurred while deleting image");
+    }
   };
 
   const handleSubmit = async (e: SubmitEvent) => {
@@ -78,14 +147,22 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
         return;
       }
 
+      const data = await response.json();
+
+      // Update local state with new images from server
+      if (data.images) {
+        setImages(data.images);
+      }
+
       setSuccess("Images uploaded successfully!");
       setIsLoading(false);
       setSelectedFiles([]);
 
-      // Reload page to show new images
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // Clear the file input
+      const fileInput = document.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
     } catch (err) {
       setError("An unexpected error occurred");
       setIsLoading(false);
@@ -143,11 +220,31 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
                     >
                       ↓
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteImage(image.id)}
+                      class="asset-images-form__button asset-images-form__button--delete"
+                      title="Delete image"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
               )}
             </For>
           </div>
+          <Show when={hasReordered()}>
+            <div class="asset-form__actions" style="margin-top: var(--spacing-2xl);">
+              <LoadingButton
+                type="button"
+                onClick={handleSaveOrder}
+                isLoading={isReordering()}
+                loadingText="Saving Order..."
+              >
+                Save Image Order
+              </LoadingButton>
+            </div>
+          </Show>
         </div>
       </Show>
 

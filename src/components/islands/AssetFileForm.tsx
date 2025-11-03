@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, Show, For } from "solid-js";
 import {
   LoadingButton,
   ErrorMessage,
@@ -6,34 +6,66 @@ import {
 } from "./base";
 import "./base/base.css";
 
+export interface AssetFile {
+  id: string;
+  title: string;
+  file_size_bytes: number;
+  file_url: string;
+}
+
 export interface AssetFileFormProps {
   assetId: string;
-  existingFile: {
-    id: string;
-    title: string;
-    file_size_bytes: number;
-    file_url: string;
-  } | null;
+  existingFiles: AssetFile[];
 }
 
 export default function AssetFileForm(props: AssetFileFormProps) {
-  const [selectedFile, setSelectedFile] = createSignal<File | null>(null);
+  const [files, setFiles] = createSignal<AssetFile[]>(props.existingFiles);
+  const [selectedFiles, setSelectedFiles] = createSignal<File[]>([]);
   const [isLoading, setIsLoading] = createSignal(false);
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal("");
 
-  const handleFileSelected = (e: Event) => {
+  const handleFilesSelected = (e: Event) => {
     const input = e.currentTarget as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      setSelectedFile(input.files[0]);
+    if (input.files) {
+      setSelectedFiles(Array.from(input.files));
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    if (!confirm("Are you sure you want to delete this file?")) {
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("/api/assets/delete-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || "Failed to delete file");
+        return;
+      }
+
+      // Remove from local state
+      setFiles(files().filter((f) => f.id !== fileId));
+      setSuccess("File deleted successfully!");
+    } catch (err) {
+      setError("An unexpected error occurred while deleting file");
     }
   };
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
 
-    if (!selectedFile()) {
-      setError("Please select a file to upload");
+    if (selectedFiles().length === 0) {
+      setError("Please select at least one file to upload");
       return;
     }
 
@@ -44,7 +76,11 @@ export default function AssetFileForm(props: AssetFileFormProps) {
     try {
       const formData = new FormData();
       formData.append("assetId", props.assetId);
-      formData.append("files", selectedFile()!);
+
+      // Append new files
+      selectedFiles().forEach((file) => {
+        formData.append("files", file);
+      });
 
       const response = await fetch("/api/assets/update-asset", {
         method: "POST",
@@ -53,27 +89,39 @@ export default function AssetFileForm(props: AssetFileFormProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to upload file");
+        setError(data.error || "Failed to upload files");
         setIsLoading(false);
         return;
       }
 
-      setSuccess("File uploaded successfully!");
-      setIsLoading(false);
-      setSelectedFile(null);
+      const data = await response.json();
 
-      // Reload page to show new file
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // Update local state with new files from server
+      if (data.files) {
+        setFiles(data.files);
+      }
+
+      setSuccess("Files uploaded successfully!");
+      setIsLoading(false);
+      setSelectedFiles([]);
+
+      // Clear the file input
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
     } catch (err) {
       setError("An unexpected error occurred");
       setIsLoading(false);
     }
   };
 
+  const formatFileSize = (bytes: number): string => {
+    return (bytes / 1024 / 1024).toFixed(2);
+  };
+
   return (
-    <form onSubmit={handleSubmit} class="asset-form">
+    <div class="asset-files-form">
       <Show when={error()}>
         <ErrorMessage message={error()} onDismiss={() => setError("")} />
       </Show>
@@ -82,64 +130,79 @@ export default function AssetFileForm(props: AssetFileFormProps) {
         <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
       </Show>
 
-      <Show when={props.existingFile}>
-        <div class="asset-file-form__existing">
-          <div class="asset-file-form__existing-header">
-            <h4 class="asset-file-form__existing-title">Current File</h4>
+      <Show when={files().length > 0}>
+        <div class="asset-files-form__existing">
+          <h4 class="asset-files-form__existing-title">
+            Current Files ({files().length})
+          </h4>
+          <div class="asset-files-form__list">
+            <For each={files()}>
+              {(file) => (
+                <div class="asset-files-form__item">
+                  <div class="asset-files-form__file-info">
+                    <span class="asset-files-form__file-name">{file.title}</span>
+                    <span class="asset-files-form__file-size">
+                      {formatFileSize(file.file_size_bytes)} MB
+                    </span>
+                  </div>
+                  <div class="asset-files-form__controls">
+                    <a
+                      href={file.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="asset-files-form__button"
+                      title="Download"
+                    >
+                      ↓
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile(file.id)}
+                      class="asset-files-form__button asset-files-form__button--delete"
+                      title="Delete file"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+            </For>
           </div>
-          <div class="asset-file-form__file-card">
-            <div class="asset-file-form__file-info">
-              <span class="asset-file-form__file-name">{props.existingFile?.title}</span>
-              <span class="asset-file-form__file-size">
-                {props.existingFile && (props.existingFile.file_size_bytes / 1024 / 1024).toFixed(2)} MB
-              </span>
-            </div>
-            <a
-              href={props.existingFile?.file_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="button button--ghost button--sm"
-            >
-              Download
-            </a>
-          </div>
-          <p class="asset-file-form__replace-note">
-            Upload a new file below to replace the current one
-          </p>
         </div>
       </Show>
 
-      <div class="form-field">
-        <label class="form-field__label">
-          {props.existingFile ? "Replace Asset File" : "Upload Asset File"}
-        </label>
-        <input
-          type="file"
-          onChange={handleFileSelected}
-          disabled={isLoading()}
-          class="form-field__file-input"
-          accept=".pdf,.stl,.obj,.zip,.png,.jpg,.jpeg"
-        />
-        <p class="form-field__help-text">
-          Upload the main downloadable file for this asset (PDF, STL, OBJ, ZIP, etc.)
-        </p>
-        <Show when={selectedFile()}>
-          <p class="asset-file-form__selected">
-            Selected: {selectedFile()!.name} ({(selectedFile()!.size / 1024 / 1024).toFixed(2)} MB)
+      <form onSubmit={handleSubmit} class="asset-form">
+        <div class="form-field">
+          <label class="form-field__label">Add More Files</label>
+          <input
+            type="file"
+            multiple
+            onChange={handleFilesSelected}
+            disabled={isLoading()}
+            class="form-field__file-input"
+            accept=".pdf,.stl,.obj,.zip,.png,.jpg,.jpeg,.glb,.gltf,.3mf,.ply,.fbx"
+          />
+          <p class="form-field__help-text">
+            Upload downloadable files for this asset (PDF, STL, OBJ, ZIP, etc.)
           </p>
-        </Show>
-      </div>
+          <Show when={selectedFiles().length > 0}>
+            <p class="asset-files-form__selected">
+              Selected {selectedFiles().length} file(s)
+            </p>
+          </Show>
+        </div>
 
-      <div class="asset-form__actions">
-        <LoadingButton
-          type="submit"
-          isLoading={isLoading()}
-          loadingText="Uploading..."
-          disabled={!selectedFile()}
-        >
-          {props.existingFile ? "Replace File" : "Upload File"}
-        </LoadingButton>
-      </div>
-    </form>
+        <div class="asset-form__actions">
+          <LoadingButton
+            type="submit"
+            isLoading={isLoading()}
+            loadingText="Uploading..."
+            disabled={selectedFiles().length === 0}
+          >
+            Upload Files
+          </LoadingButton>
+        </div>
+      </form>
+    </div>
   );
 }
