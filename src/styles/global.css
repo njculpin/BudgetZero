@@ -271,7 +271,6 @@ p {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-6xl);
 }
 
 /* Responsive: Reduce gaps on mobile */
