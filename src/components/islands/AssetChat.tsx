@@ -9,7 +9,7 @@ interface AssetChatMessage {
 }
 
 interface AssetChatProps {
-  userId: string;
+  userId: string | undefined;
   assetId: string;
 }
 
@@ -31,7 +31,7 @@ export default function AssetChat(props: AssetChatProps) {
 
   const sendMessage = async () => {
     const text = message().trim();
-    if (!text) return;
+    if (!text || !props.userId) return;
     try {
       const response = await fetch("/api/assets/chat/add-message", {
         method: "POST",
