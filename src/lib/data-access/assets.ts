@@ -6,8 +6,8 @@ import type {
   AssetTag,
   AssetStatus,
   User,
-  AssetChatMessage,
 } from "@/types";
+import { generateHandle } from "./handles";
 
 export interface CreateAssetParams {
   handle: string;
@@ -18,85 +18,6 @@ export interface UpdateAssetParams {
   description?: string;
   status?: AssetStatus;
   handle?: string;
-}
-
-/**
- * Generate a unique handle from title
- */
-export function generateHandle(): string {
-  const verbs = [
-    "forge",
-    "summon",
-    "build",
-    "craft",
-    "conquer",
-    "explore",
-    "spawn",
-    "charge",
-    "launch",
-    "battle",
-    "cast",
-    "grind",
-    "upgrade",
-    "loot",
-    "sprint",
-    "respawn",
-    "defend",
-    "unlock",
-    "discover",
-    "slay",
-    "train",
-    "boost",
-    "revive",
-    "hunt",
-    "dash",
-    "dodge",
-    "strike",
-    "aim",
-    "channel",
-    "climb",
-  ];
-
-  const nouns = [
-    "dragon",
-    "portal",
-    "realm",
-    "hero",
-    "mage",
-    "rogue",
-    "arena",
-    "quest",
-    "artifact",
-    "citadel",
-    "dungeon",
-    "phoenix",
-    "warrior",
-    "blade",
-    "monster",
-    "spell",
-    "crystal",
-    "guild",
-    "map",
-    "lootbox",
-    "boss",
-    "minion",
-    "tower",
-    "beacon",
-    "spirit",
-    "scroll",
-    "rune",
-    "shadow",
-    "kingdom",
-    "knight",
-  ];
-
-  const verb = verbs[Math.floor(Math.random() * verbs.length)];
-  const noun = nouns[Math.floor(Math.random() * nouns.length)];
-
-  // Capitalize the noun for nicer formatting (optional)
-  const projectName = `${verb}-${noun}`;
-
-  return projectName;
 }
 
 /**
@@ -161,14 +82,14 @@ export const createAsset = async (userId: string): Promise<Asset | null> => {
 
   // Automatically add creator to collaborators list
   const { error: contributorError } = await serverClient
-  .from("asset_collaborators")
-  .insert({
-    asset_id: asset.id,
-    user_id: userId,
-  })
+    .from("asset_collaborators")
+    .insert({
+      asset_id: asset.id,
+      user_id: userId,
+    });
 
-  if (contributorError){
-    console.error("Error creating contributor:", royaltyError)
+  if (contributorError) {
+    console.error("Error creating contributor:", royaltyError);
   }
 
   return asset;
@@ -451,24 +372,25 @@ export const getAssetImages = async (
 /**
  * Get asset contributors for an asset
  */
-export const getAssetContributors = async (assetId: string): Promise<User[]> => {
-
+export const getAssetContributors = async (
+  assetId: string
+): Promise<User[]> => {
   const { data: users, error: contributorErrors } = await serverClient
-  .from('asset_collaborators')
-  .select("user_id")
-  .eq("asset_id", assetId)
+    .from("asset_collaborators")
+    .select("user_id")
+    .eq("asset_id", assetId);
 
-  if (contributorErrors){
+  if (contributorErrors) {
     console.error("Error fetching asset contributors:", contributorErrors);
-    return []
+    return [];
   }
 
-  const userIds = users.map(x=>x.user_id)
+  const userIds = users.map((x) => x.user_id);
 
   const { data, error } = await serverClient
     .from("users")
     .select("*")
-    .in('id', userIds)
+    .in("id", userIds);
 
   if (error) {
     console.error("Error fetching asset images:", error);
@@ -476,7 +398,7 @@ export const getAssetContributors = async (assetId: string): Promise<User[]> => 
   }
 
   return data as User[];
-}
+};
 
 /**
  * Create asset file record

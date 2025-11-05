@@ -17,6 +17,7 @@ import GalleryGrid from "@/components/GalleryGrid.astro";
 import AssetTagsForm from "@/components/islands/AssetTagsForm";
 import AssetFileForm from "@/components/islands/AssetFileForm";
 import AssetImagesForm from "@/components/islands/AssetImagesForm";
+import AssetBasicInfoForm from "@/components/islands/AssetBasicInfoForm";
 
 const { asset } = Astro.params;
 
@@ -96,7 +97,16 @@ const isNotPreviewAndIsContributor = !isPreview && isContributor
                 </span>
                 <span class="asset-hero__divider">•</span>
                 <h2 class="asset-description__title">About This Asset</h2>
+                {isPreview && <>
+                <p class="asset-title__text">{assetData.title}</p>
                 <p class="asset-description__text">{assetData.description}</p>
+                </>}
+                {isNotPreviewAndIsContributor && <AssetBasicInfoForm
+                  client:load
+                  assetId={assetData.id}
+                  initialData={{title: assetData.title, description: assetData.description}}
+                  />
+                }
               </CardDescription>
             </CardHeader>
           </Card>

@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ cookies }) => {
 
     return new Response(null, {
       status: 303,
-      headers: { Location: `/assets/${asset.handle}/edit` },
+      headers: { Location: `/assets/${asset.handle}` },
     });
   } catch (error) {
     console.error("Error creating asset:", error);
