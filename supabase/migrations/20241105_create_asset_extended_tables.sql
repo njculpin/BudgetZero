@@ -102,7 +102,6 @@ CREATE TABLE IF NOT EXISTS asset_downloads (
 -- Indexes for asset_collaborators
 CREATE INDEX IF NOT EXISTS asset_collaborators_asset_id_idx ON asset_collaborators(asset_id);
 CREATE INDEX IF NOT EXISTS asset_collaborators_user_id_idx ON asset_collaborators(user_id);
-CREATE INDEX IF NOT EXISTS asset_collaborators_role_idx ON asset_collaborators(role);
 
 -- Indexes for asset_licenses
 CREATE INDEX IF NOT EXISTS asset_licenses_asset_id_idx ON asset_licenses(asset_id);

@@ -9,39 +9,31 @@ import { setSession } from "@/lib/auth";
 import { getUserSales, getSaleItems, getSaleItemAssets } from "@/lib/data-access/sales";
 import { getProductById, getVariantById } from "@/lib/data-access/products";
 import { getAssetById, getAssetFiles } from "@/lib/data-access/assets";
+import PageHeader from "@/components/PageHeader.astro";
 
+const { url } = Astro;
+const searchParams = url.searchParams;
+
+let currentUser = null;
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
 
-if (!accessToken || !refreshToken) {
-  return Astro.redirect("/sign-in?redirect=/downloads");
-}
-
-let session;
-try {
-  session = await setSession({
-    refresh_token: refreshToken.value,
-    access_token: accessToken.value,
-  });
-  if (session.error) {
-    Astro.cookies.delete("sb-access-token", { path: "/" });
-    Astro.cookies.delete("sb-refresh-token", { path: "/" });
-    return Astro.redirect("/sign-in?redirect=/downloads");
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {
+    // Continue as guest
   }
-} catch (error) {
-  Astro.cookies.delete("sb-access-token", { path: "/" });
-  Astro.cookies.delete("sb-refresh-token", { path: "/" });
-  return Astro.redirect("/sign-in?redirect=/downloads");
-}
-
-const userId = session.data.user?.id;
-
-if (!userId) {
-  return Astro.redirect("/sign-in?redirect=/downloads");
 }
 
 // Get user's purchases
-const sales = await getUserSales(userId);
+const sales = await getUserSales();
 const completedSales = sales.filter(sale => sale.status === 'paid');
 
 // Fetch details for each purchase
@@ -83,9 +75,11 @@ const purchasesWithDetails = await Promise.all(
 <Layout title="My Downloads - Game Loopers">
   <div class="page">
     <div class="page__container">
-      <div class="page-header">
-        <h1 class="page-header__title">My Downloads</h1>
-        <p class="page-header__description">Access your purchased digital content</p>
+      <div class="page-header-with-action">
+        <PageHeader
+          title="Browse Purchases"
+          description="Browse your purchases and download your digital products."
+        />
       </div>
 
       {purchasesWithDetails.length > 0 ? (
