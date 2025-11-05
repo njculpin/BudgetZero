@@ -48,7 +48,5 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7, // 7 days
   });
-
-  console.log("Sign-in successful, redirecting to dashboard");
   return redirect("/dashboard", 303);
 };

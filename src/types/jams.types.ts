@@ -11,6 +11,9 @@ export interface Jam extends BaseEntity {
   status: JamStatus;
   start_date: string;
   end_date: string;
+  preview_image_url: string | null;
+  preview_image_storage_path: string | null;
+  preview_image_mime_type: string | null;
 }
 
 export interface JamAttachment extends BaseEntity {

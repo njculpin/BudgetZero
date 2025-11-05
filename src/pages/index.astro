@@ -9,6 +9,7 @@ import { getUsersByDateJoined } from "@/lib/data-access/users";
 import type { User } from "@/types";
 import { getAllProducts } from "@/lib/data-access/products";
 import { getPublishedAssets } from "@/lib/data-access/assets";
+import { getActiveJam } from "@/lib/data-access/jams";
 
 
 const features: {
@@ -45,7 +46,6 @@ const products:{url: string; alt?: string, href: string}[] = productData.slice(0
 }))
 
 const assetData = await getPublishedAssets()
-console.log(assetData)
 const assets:{url: string; alt?: string, href: string}[] = assetData.slice(0,10).map(asset => ({
   url: 'https://placehold.co/600x600',
   alt: asset.title,
@@ -59,13 +59,15 @@ const profiles:{url: string; alt?: string, href: string}[] = userData.map(user =
   href: `/users/${user.handle}`
 }))
 
+const activeJam = await getActiveJam()
+
 ---
 
 <Layout title="Game Loopers">
   <div class="page">
     <div class="page__container">
       <div class="page-columns__column">
-      <Jams title="Jam" description="SOMETHING GREAT"/>
+      {activeJam && <Jams jam={activeJam} />}
       <Hero/>
       <GalleryGrid images={products} cols={5} />
       <Features features={features}/>

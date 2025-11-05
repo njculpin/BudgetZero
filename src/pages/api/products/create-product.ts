@@ -63,7 +63,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       // Handle tags if provided
       const tagsString = formData.get("tags");
       if (tagsString && typeof tagsString === "string") {
-        data.tags = tagsString.split(",").map((t) => t.trim()).filter(Boolean);
+        data.tags = tagsString
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
       }
     }
 
@@ -99,7 +102,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(null, {
         status: 303,
         headers: {
-          Location: `/products/${product.handle}/edit`,
+          Location: `/products/${product.handle}`,
         },
       });
     }

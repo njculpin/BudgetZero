@@ -40,7 +40,6 @@ const offset = (page - 1) * limit;
 
 const tagArray = tagFilter ? [tagFilter] : undefined;
 const allProducts = await getAllProducts(searchQuery, tagArray, limit, offset);
-console.log(allProducts)
 
 // Get owners for all products
 const allProductOwnerIds = [...new Set(allProducts.map(p => p.user_id))];
