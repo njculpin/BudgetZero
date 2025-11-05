@@ -64,6 +64,7 @@ const profiles:{url: string; alt?: string, href: string}[] = userData.map(user =
 <Layout title="Game Loopers">
   <div class="page">
     <div class="page__container">
+      <div class="page-columns__column">
       <Jams title="Jam" description="SOMETHING GREAT"/>
       <Hero/>
       <GalleryGrid images={products} cols={5} />
@@ -71,6 +72,7 @@ const profiles:{url: string; alt?: string, href: string}[] = userData.map(user =
       <GalleryGrid images={assets} cols={5}/>
       <GalleryGrid images={profiles} cols={9} borderRadius="circle"/>
       <SubscribeCTA/>
+      </div>
     </div>
   </div>
 </Layout>

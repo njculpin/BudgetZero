@@ -61,6 +61,7 @@ const assetsCount = userAssets.length;
 
   <main class="page">
     <div class="page__container">
+      <div class="page-columns__column"> 
         <div class="page-header">
           <div class="dashboard__header-actions">
             {userHandle && (
@@ -126,7 +127,6 @@ const assetsCount = userAssets.length;
 
       <!-- Quick Actions -->
       <section class="dashboard__section">
-        <h2 class="dashboard__section-title">Quick Actions</h2>
         <div class="dashboard__actions">
           <Card className="action-card">
             <CardHeader>
@@ -193,7 +193,6 @@ const assetsCount = userAssets.length;
 
       <!-- Recent Activity -->
       <section class="dashboard__section">
-        <h2 class="dashboard__section-title">Recent Activity</h2>
         <Card>
           <CardContent>
             <div class="dashboard__empty">
@@ -205,6 +204,7 @@ const assetsCount = userAssets.length;
           </CardContent>
         </Card>
       </section>
+      </div>
     </div>
   </main>
 </Layout>
@@ -219,7 +219,7 @@ const assetsCount = userAssets.length;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--spacing-3xl);
 }
 
 .dashboard__header-content {
@@ -229,7 +229,7 @@ const assetsCount = userAssets.length;
 .dashboard__header-actions {
   display: flex;
   align-items: center;
-  gap: var(--gap-xs);
+  gap: var(--spacing-3xl);
 }
 
 .dashboard__header-actions a {
@@ -256,7 +256,7 @@ const assetsCount = userAssets.length;
 .dashboard__stats {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: var(--spacing-3xl);
 }
 
 @media (min-width: 640px) {
@@ -274,7 +274,7 @@ const assetsCount = userAssets.length;
 .stat-card__content {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-xs);
+  gap: var(--spacing-3xl);
 }
 
 .stat-card__label {
@@ -293,7 +293,7 @@ const assetsCount = userAssets.length;
 .dashboard__section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--spacing-3xl);
 }
 
 .dashboard__section-title {
@@ -306,7 +306,7 @@ const assetsCount = userAssets.length;
 .dashboard__actions {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: var(--spacing-3xl);
 }
 
 @media (min-width: 768px) {

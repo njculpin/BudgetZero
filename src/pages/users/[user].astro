@@ -44,7 +44,9 @@ if (accessToken && refreshToken) {
   }
 }
 
+const isPreview = Astro.url.searchParams.get("preview") === 'true' ? true : false
 const isOwnProfile = currentUser?.id === profileUser.id;
+const isNotPreviewAndIsOwn = !isPreview && isOwnProfile
 
 // Filter assets based on ownership
 if (!isOwnProfile) {
@@ -58,6 +60,7 @@ if (!isOwnProfile) {
 >
   <div class="page">
     <div class="page__container">
+      <div class="page-columns__column">
       <!-- Profile Header -->
       <Card className="profile-card">
         <CardHeader>
@@ -84,15 +87,19 @@ if (!isOwnProfile) {
                 <p class="profile-header__bio">{profileUser.bio}</p>
               )}
             </div>
-            {isOwnProfile && (
-              <div class="profile-header__actions">
-                <a href={`/users/${user}/edit`}>
-                  <Button variant="outline" size="md">
-                    <span slot="text">Edit Profile</span>
-                  </Button>
-                </a>
-              </div>
-            )}
+            {isNotPreviewAndIsOwn ? 
+              <a href={`/users/${user}?preview=true`}>
+                <Button variant="outline" size="md">
+                  <span slot="text">Profile</span>
+                </Button>
+              </a>
+              :
+              <a href={`/users/${user}`}>
+                <Button variant="outline" size="md">
+                  <span slot="text">Edit Profile</span>
+                </Button>
+              </a>
+            }
           </div>
         </CardHeader>
       </Card>
@@ -169,6 +176,7 @@ if (!isOwnProfile) {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   </div>
 </ProfileLayout>

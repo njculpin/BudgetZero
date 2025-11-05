@@ -16,11 +16,12 @@ const profiles:{url: string; alt?: string, href: string}[] = userData.map(user =
 <Layout title="Users - Game Loopers">
     <div class="page">
         <div class="page__container">
-            <!-- Page Header -->
-            <div class="page-header-with-action">
-                <PageHeader title="Users" description="Users in the Game Loopers community"/>
+            <div class="page-columns__column">
+                <div class="page-header-with-action">
+                    <PageHeader title="Users" description="Users in the Game Loopers community"/>
+                </div>
+                <GalleryGrid images={profiles} cols={9} borderRadius="circle"/>
             </div>
-            <GalleryGrid images={profiles} cols={9} borderRadius="circle"/>
         </div>
     </div>
 </Layout>

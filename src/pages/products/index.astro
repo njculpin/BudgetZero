@@ -96,6 +96,8 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
               return (
                 <a href={`/products/${product.handle}`} class="product-card">
                   <div class="product-card__content">
+                    {/* TODO: Images & Placeholder images */}
+                    <img src={'https://placehold.co/600x600'} alt={''} class="gallery__image" loading="lazy" />
                     <h3 class="product-card__title">{product.title}</h3>
                     {product.description && (
                       <p class="product-card__description">
