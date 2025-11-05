@@ -190,8 +190,6 @@ export const getAssets = async (
 
   const { data, error } = await query;
 
-  console.log(data);
-
   if (error) {
     console.error("Error fetching published assets:", error);
     return [];
@@ -643,8 +641,6 @@ export const getPublishedAssets = async (
   }
 
   const { data, error } = await query;
-
-  console.log(data, error);
 
   if (error) {
     console.error("Error fetching published assets:", error);

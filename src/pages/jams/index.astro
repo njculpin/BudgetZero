@@ -37,7 +37,6 @@ const offset = (page - 1) * limit;
 
 const tagArray = tagFilter ? [tagFilter] : undefined;
 const allJams = await getAllJams(searchQuery, tagArray, limit, offset);
-console.log(allJams)
 
 // Get owners for all jams
 const allProductOwnerIds = [...new Set(allJams.map(p => p.user_id))];
@@ -55,9 +54,9 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
         />
         {currentUser && (
           <form method="post" action="/api/jams/create-jam">
-              <Button variant="primary" size="lg">
-                  <span slot="text">Create Jam</span>
-              </Button>
+            <Button variant="primary" size="lg">
+              <span slot="text">Create Jam</span>
+            </Button>
           </form>
         )}
       </div>

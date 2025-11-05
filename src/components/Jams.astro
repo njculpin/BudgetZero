@@ -1,16 +1,23 @@
 ---
+import type { Jam } from "@/types";
+
 interface Props {
-  title: string;
-  description: string;
+  jam: Jam;
 }
-const { title, description } = Astro.props;
+const { jam } = Astro.props;
 ---
 
 <div class="jam">
-    <div class={`jam__item`}>
-        <h3 class="jam__title">{title}</h3>
-        <p class="jam__desc">{description}</p>
-    </div>
+    <a
+        href={`/jams/${jam.handle}`}
+        class={`jam__item`}
+        style={jam.preview_image_url ? `background-image: url('${jam.preview_image_url}')` : ''}
+    >
+        {jam.preview_image_url && <div class="jam__overlay"></div>}
+        <h3 class="jam__title">{jam.title}</h3>
+        <p class="jam__desc">{jam.description || 'Join the latest game jam!'}</p>
+        <span class="jam__date">Ends: {new Date(jam.end_date).toLocaleDateString()}</span>
+    </a>
 </div>
 
 <style>
@@ -26,16 +33,48 @@ const { title, description } = Astro.props;
         flex-direction: column;
         align-items: start;
         text-align: left;
+        text-decoration: none;
+        transition: transform 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+        min-height: 200px;
+    }
+    .jam__item:hover {
+        transform: translateY(-2px);
+    }
+    .jam__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6));
+        z-index: 0;
     }
     .jam__title {
-        font-size: var(--text-3xl);;
+        font-size: var(--text-3xl);
         margin-bottom: 0.5rem;
         color: var(--accent);
+        position: relative;
+        z-index: 1;
     }
     .jam__desc {
         font-size: 1rem;
         line-height: 1.5;
         color: var(--accent-foreground);
+        position: relative;
+        z-index: 1;
+        flex: 1;
+    }
+    .jam__date {
+        font-size: 0.875rem;
+        color: var(--accent-foreground);
+        opacity: 0.8;
+        position: relative;
+        z-index: 1;
+        margin-top: 1rem;
     }
 
     /* Responsive: Reduce padding and font size on mobile */

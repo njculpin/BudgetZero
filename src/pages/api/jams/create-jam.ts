@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { createJam } from "@/lib/data-access/jams";
 import { getUser } from "@/lib/auth";
 
-export const POST: APIRoute = async ({ cookies }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   // Check authentication
   const { data: userData } = await getUser();
   const currentUser = userData?.user;
@@ -26,21 +26,24 @@ export const POST: APIRoute = async ({ cookies }) => {
   }
 
   try {
-    const asset = await createJam(currentUser.id);
+    const jam = await createJam(currentUser.id);
 
-    if (!asset) {
-      return new Response(JSON.stringify({ error: "Failed to create asset" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!jam) {
+      return new Response(
+        JSON.stringify({ error: "Failed to create jam" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     return new Response(null, {
       status: 303,
-      headers: { Location: `/jams/${asset.handle}` },
+      headers: { Location: `/jams/${jam.handle}` },
     });
   } catch (error) {
-    console.error("Error creating asset:", error);
+    console.error("Error creating jam:", error);
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred" }),
       {
