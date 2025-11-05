@@ -1,6 +1,6 @@
 import type { BaseEntity } from "./common.types";
 
-export type JamStatus = 'upcoming' | 'active' | 'ended';
+export type JamStatus = "upcoming" | "active" | "ended";
 
 export interface Jam extends BaseEntity {
   handle: string;
