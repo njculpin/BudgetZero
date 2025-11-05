@@ -273,6 +273,17 @@ p {
   flex-direction: column;
 }
 
+.page-columns {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-3xl);
+}
+.page-columns__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3xl);
+}
+
 /* Responsive: Reduce gaps on mobile */
 @media (max-width: 768px) {
   .page {

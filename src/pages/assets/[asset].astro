@@ -78,7 +78,6 @@ const totalRoyalty = royalties.reduce((sum, r) => sum + r.royalty_value, 0);
 const isPreview = Astro.url.searchParams.get("preview") === 'true' ? true : false
 const isContributor = contributorIds.includes(curredUserId)
 const isNotPreviewAndIsContributor = !isPreview && isContributor
-const isPreviewAndIsContributor = isPreview && isContributor
 ---
 
 <Layout title={`${assetData.title} - Game Loopers`}>
@@ -102,53 +101,36 @@ const isPreviewAndIsContributor = isPreview && isContributor
             </CardHeader>
           </Card>
 
-          {images.length > 0 &&
           <Card>
             <CardHeader>
               <CardTitle>Images</CardTitle>
-              <CardContent>
-              <AssetImagesForm
-              client:load
-              assetId={assetData.id}
-              existingImages={imagesData.map(i => ({
-                id: i.id,
-                title: i.title,
-                file_url: i.file_url,
-              }))}
-            />
-                <GalleryGrid images={images} cols={5}/>
-              </CardContent>
-            </CardHeader>
-          </Card>
-          }
-
-          {tags.length > 0 &&
-          <Card>
-            <CardHeader>
-              <CardTitle>Tags</CardTitle>
-              <CardDescription>A list of tags associated with this asset</CardDescription>
+              <CardDescription>Preview Images of the asset</CardDescription>
             </CardHeader>
             <CardContent>
-                <AssetTagsForm
+              {isNotPreviewAndIsContributor && 
+                  <AssetImagesForm
                   client:load
                   assetId={assetData.id}
-                  initialTags={tags.map(t => t.value)}
+                  existingImages={imagesData.map(i => ({
+                    id: i.id,
+                    title: i.title,
+                    file_url: i.file_url,
+                  }))}
                 />
-                {tags.map((tag) => (
-                  <a href={`/assets?tag=${tag.value}`} class="asset-tags__link">
-                    <Tag>{tag.value}</Tag>
-                  </a>
-                ))}
-            </CardContent>
+                }
+                {!isContributor && 
+                <GalleryGrid images={images} cols={5}/>
+                }
+              </CardContent>
           </Card>
-          }
 
-          {files.length > 0 && 
           <Card>
-            <CardHeader>Files Included</CardHeader>
-            <CardDescription>A List of files included in this asset</CardDescription>
-            <CardDescription>
-              <div class="asset-files">
+            <CardHeader>
+              <CardTitle>Files Included</CardTitle>
+              <CardDescription>A List of files included in this asset</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isNotPreviewAndIsContributor && 
                 <AssetFileForm
                   client:load
                   assetId={assetData.id}
@@ -159,7 +141,8 @@ const isPreviewAndIsContributor = isPreview && isContributor
                     file_url: f.file_url,
                   }))}
                 />
-                {files.map((file) => (
+                }
+                {isContributor && files.map((file) => (
                   <div class="file-item">
                     <div class="file-item__icon">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -188,93 +171,7 @@ const isPreviewAndIsContributor = isPreview && isContributor
                     </a>
                   </div>
                 ))}
-              </div>
-            </CardDescription>
-          </Card>
-          }
-        </div>
-
-        <div class="page-columns__column">
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Viewing As</CardTitle>
-              <CardContent>
-                {isNotPreviewAndIsContributor ? 
-                  <a href={`/assets/${assetData?.handle}?preview=true`} class="creator-card__link">
-                    <Button variant="outline" size="md">
-                      <span slot="text">Contributor</span>
-                    </Button>
-                  </a>
-                  :
-                  <a href={`/assets/${assetData?.handle}`} class="creator-card__link">
-                    <Button variant="outline" size="md">
-                      <span slot="text">Customer</span>
-                    </Button>
-                  </a>  
-                }
-              </CardContent>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Contributors
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <GalleryGrid images={contributorImages} cols={5} borderRadius="circle"/>
-                <!-- TODO: Add Contributor By User Handle -->
-              {isOwner && <p>Only Owner Can Invite Contributors</p>}
             </CardContent>
-          </Card>
-          
-          {isNotPreviewAndIsContributor && 
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Chat
-              </CardTitle>
-              <CardContent>
-                <!-- TODO: Chat Styles and Control -->
-                <AssetChat client:load userId={currentUser?.id} assetId={assetData.id} />
-              </CardContent>
-            </CardHeader>
-          </Card>
-          }
-
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Meta</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <!-- TODO: stat styles -->
-              <p>{assetData.status}</p>
-              <p>{assetData.updated_at}</p>
-              <p>{assetData.created_at}</p>
-              <p>{assetData.file_count}</p>
-              <p>{assetData.download_count}</p>
-            </CardContent>
-          </Card>
-
-          <!-- Licensing Info -->
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                License Agreement
-              </CardTitle>
-              <CardDescription>
-                This asset can be used for both personal and commercial projects that are distributed through gameloopers.com exclusively.
-              <!-- TODO: Select, Create, Modify other License Options -->
-              </CardDescription>
-              <CardFooter>
-                <a href="/licenses/standard" class="license-card__link">
-                  Read Full License Terms →
-                </a>
-              </CardFooter>
-            </CardHeader>
           </Card>
 
           <Card>
@@ -282,7 +179,8 @@ const isPreviewAndIsContributor = isPreview && isContributor
               <CardTitle>
                 Costs & Royalties
               </CardTitle>
-              <CardContent>
+            </CardHeader>
+            <CardContent>
                   <div class="sidebar-card__price">
                     <p class="sidebar-card__price-label">Cost per use in product</p>
                     <p class="sidebar-card__price-value">${(totalRoyalty / 100).toFixed(2)}</p>
@@ -314,24 +212,113 @@ const isPreviewAndIsContributor = isPreview && isContributor
                     </a>
                   </div>
               </CardContent>
-            </CardHeader>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                License Agreement
+              </CardTitle>
+              <CardDescription>
+                This asset can be used for both personal and commercial projects that are distributed through gameloopers.com exclusively.
+              <!-- TODO: Select, Create, Modify other License Options -->
+              </CardDescription>
+            </CardHeader>
+            <CardFooter>
+                <a href="/licenses/standard" class="license-card__link">
+                  Read Full License Terms →
+                </a>
+            </CardFooter>
+          </Card>
+        </div>
+
+        <div class="page-columns__column">
+          {isNotPreviewAndIsContributor ? 
+          <div>
+            <a href={`/assets/${assetData?.handle}?preview=true`} class="creator-card__link">
+              <Button variant="outline" size="md">
+                <span slot="text">Contributor</span>
+              </Button>
+            </a>
+          </div>
+            :
+          <div>
+            <a href={`/assets/${assetData?.handle}`} class="creator-card__link">
+              <Button variant="outline" size="md">
+                <span slot="text">Customer</span>
+              </Button>
+            </a>
+          </div>
+          }
+          
+          {isNotPreviewAndIsContributor && 
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Chat
+              </CardTitle>
+              <CardDescription>
+                Discussion between asset contributors
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <AssetChat client:load userId={currentUser?.id} assetId={assetData.id} />
+            </CardContent>
+          </Card>
+          }
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Contributors
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GalleryGrid images={contributorImages} cols={5} borderRadius="circle"/>
+                <!-- TODO: Add Contributor By User Handle -->
+              {isOwner && <p>Only Owner Can Invite Contributors</p>}
+            </CardContent>
+          </Card>
+
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Meta</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{assetData.status}</p>
+              <p>{assetData.updated_at}</p>
+              <p>{assetData.created_at}</p>
+              <p>{assetData.file_count}</p>
+              <p>{assetData.download_count}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tags</CardTitle>
+              <CardDescription>A list of tags associated with this asset</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isNotPreviewAndIsContributor && 
+              <AssetTagsForm
+                  client:load
+                  assetId={assetData.id}
+                  initialTags={tags.map(t => t.value)}
+                />
+              }
+              {!isContributor && 
+                tags.map((tag) => (
+                  <a href={`/assets?tag=${tag.value}`} class="asset-tags__link">
+                    <Tag>{tag.value}</Tag>
+                  </a>
+                ))
+              }
+            </CardContent>
+          </Card>
+
         </div>
       </div>
     </div>
   </div>
 </Layout>
-
-<style>
-.page-columns {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1rem;
-}
-.page-columns__column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md)
-}
-/* TODO: Responsive Screens */
-</style>
