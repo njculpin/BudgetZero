@@ -106,9 +106,12 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
         return;
       }
 
-      // Remove from local state
-      setImages(images().filter((img) => img.id !== imageId));
-      setSuccess("Image deleted successfully!");
+      setSuccess("Image deleted successfully! Refreshing...");
+
+      // Reload page to update server-rendered gallery
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       setError("An unexpected error occurred while deleting image");
     }
@@ -149,20 +152,14 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
 
       const data = await response.json();
 
-      // Update local state with new images from server
-      if (data.images) {
-        setImages(data.images);
-      }
-
-      setSuccess("Images uploaded successfully!");
+      setSuccess("Images uploaded successfully! Refreshing...");
       setIsLoading(false);
-      setSelectedFiles([]);
 
-      // Clear the file input
-      const fileInput = document.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = '';
-      }
+      // Reload the page to show newly uploaded images
+      // This is needed because the image gallery is server-rendered
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       setError("An unexpected error occurred");
       setIsLoading(false);
@@ -207,7 +204,7 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
                       onClick={() => handleMoveUp(index())}
                       disabled={index() === 0}
                       class="asset-images-form__button"
-                      title="Move up"
+                      aria-label={`Move ${image.title} up`}
                     >
                       ↑
                     </button>
@@ -216,7 +213,7 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
                       onClick={() => handleMoveDown(index())}
                       disabled={index() === images().length - 1}
                       class="asset-images-form__button"
-                      title="Move down"
+                      aria-label={`Move ${image.title} down`}
                     >
                       ↓
                     </button>
@@ -224,7 +221,7 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
                       type="button"
                       onClick={() => handleDeleteImage(image.id)}
                       class="asset-images-form__button asset-images-form__button--delete"
-                      title="Delete image"
+                      aria-label={`Delete ${image.title}`}
                     >
                       ✕
                     </button>
@@ -250,17 +247,19 @@ export default function AssetImagesForm(props: AssetImagesFormProps) {
 
       <form onSubmit={handleSubmit} class="asset-form">
         <div class="form-field">
-          <label class="form-field__label">Add More Images</label>
+          <label for="asset-image-upload" class="form-field__label">Add More Images</label>
           <input
+            id="asset-image-upload"
             type="file"
             accept="image/*"
             multiple
             onChange={handleFilesSelected}
             disabled={isLoading()}
             class="form-field__file-input"
+            aria-describedby="asset-image-help"
           />
-          <p class="form-field__help-text">
-            Upload cover images, previews, or screenshots of your asset
+          <p id="asset-image-help" class="form-field__help-text">
+            Upload cover images, previews, or screenshots of your asset (PNG, JPG, WebP)
           </p>
           <Show when={selectedFiles().length > 0}>
             <p class="asset-images-form__selected">

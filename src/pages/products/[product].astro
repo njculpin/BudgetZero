@@ -91,7 +91,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
             </div>
             {isOwner && (
               <div class="product-hero__actions">
-                <a href={`/products/${product}/edit`}>
+                <a href={`/products/${product}`}>
                   <Button variant="outline" size="sm">
                     <span slot="text">Edit Product</span>
                   </Button>
@@ -213,7 +213,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
                 : "This product doesn't have any variants available yet."}
             </p>
             {isOwner && (
-              <a href={`/products/${product}/edit`}>
+              <a href={`/products/${product}`}>
                 <Button variant="primary" size="md">
                   <span slot="text">Add Variants</span>
                 </Button>
@@ -281,7 +281,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
             {isOwner && (
               <div class="sidebar-card__owner">
                 <p class="sidebar-card__owner-text">You own this product</p>
-                <a href={`/products/${product}/edit`} class="sidebar-card__owner-link">
+                <a href={`/products/${product}`} class="sidebar-card__owner-link">
                   <Button variant="outline" size="md">
                     <span slot="text">Manage Product</span>
                   </Button>

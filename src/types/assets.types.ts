@@ -1,7 +1,6 @@
 import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
 
 export type AssetStatus = 'draft' | 'published' | 'archived';
-export type AssetCollaboratorRole = 'owner' | 'editor' | 'viewer';
 
 export interface Asset extends BaseEntity {
   handle: string;
@@ -17,10 +16,6 @@ export interface Asset extends BaseEntity {
 export interface AssetCollaborator extends BaseEntity {
   asset_id: string;
   user_id: string;
-  role: AssetCollaboratorRole;
-  can_edit: boolean;
-  can_delete: boolean;
-  can_invite: boolean;
 }
 
 export interface AssetFile extends BaseEntity {

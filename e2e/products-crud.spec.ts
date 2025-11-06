@@ -118,7 +118,7 @@ test.describe('Product CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/products/${productHandle}/edit`);
+    await page.goto(`/products/${productHandle}`);
     await expect(page.locator('text=Edit Product')).toBeVisible();
 
     // Update the title
@@ -140,7 +140,7 @@ test.describe('Product CRUD Operations', () => {
     await page.click('form button[type="submit"]:has-text("Save Changes")');
 
     // Should redirect back to edit page with success message
-    await page.waitForURL(`/products/${productHandle}/edit?success=*`, { timeout: 10000 });
+    await page.waitForURL(`/products/${productHandle}?success=*`, { timeout: 10000 });
 
     // Verify success message
     await expect(page.locator('.product-edit-alert--success')).toBeVisible();
@@ -161,7 +161,7 @@ test.describe('Product CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/products/${productHandle}/edit`);
+    await page.goto(`/products/${productHandle}`);
 
     // Expand the "Add New Variant" section (it should be open by default)
     await expect(page.locator('text=Add New Variant')).toBeVisible();
@@ -179,7 +179,7 @@ test.describe('Product CRUD Operations', () => {
     await page.click('form button[type="submit"]:has-text("Create Variant")');
 
     // Should redirect back to edit page with success message
-    await page.waitForURL(`/products/${productHandle}/edit?success=*`, { timeout: 10000 });
+    await page.waitForURL(`/products/${productHandle}?success=*`, { timeout: 10000 });
 
     // Verify success message
     await expect(page.locator('.product-edit-alert--success')).toBeVisible();
@@ -200,7 +200,7 @@ test.describe('Product CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/products/${productHandle}/edit`);
+    await page.goto(`/products/${productHandle}`);
 
     // Find the variant card and its asset linking form
     const variantCard = page.locator('.variant-edit-card').first();
@@ -214,7 +214,7 @@ test.describe('Product CRUD Operations', () => {
     await variantCard.locator('button:has-text("Link Asset")').click();
 
     // Should redirect back with success message
-    await page.waitForURL(`/products/${productHandle}/edit?success=*`, { timeout: 10000 });
+    await page.waitForURL(`/products/${productHandle}?success=*`, { timeout: 10000 });
 
     // Verify success message
     await expect(page.locator('text=Asset linked successfully')).toBeVisible();
@@ -233,7 +233,7 @@ test.describe('Product CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/products/${productHandle}/edit`);
+    await page.goto(`/products/${productHandle}`);
 
     // Find the variant card and expand the edit details
     const variantCard = page.locator('.variant-edit-card').first();
@@ -254,7 +254,7 @@ test.describe('Product CRUD Operations', () => {
     await variantCard.locator('button:has-text("Update Variant")').click();
 
     // Should redirect with success message
-    await page.waitForURL(`/products/${productHandle}/edit?success=*`, { timeout: 10000 });
+    await page.waitForURL(`/products/${productHandle}?success=*`, { timeout: 10000 });
 
     // Verify success message
     await expect(page.locator('text=Variant updated successfully')).toBeVisible();
@@ -272,7 +272,7 @@ test.describe('Product CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/products/${productHandle}/edit`);
+    await page.goto(`/products/${productHandle}`);
 
     // Find the linked asset and click Remove
     const variantCard = page.locator('.variant-edit-card').first();
@@ -280,7 +280,7 @@ test.describe('Product CRUD Operations', () => {
     await assetItem.locator('button:has-text("Remove")').click();
 
     // Should redirect with success message
-    await page.waitForURL(`/products/${productHandle}/edit?success=*`, { timeout: 10000 });
+    await page.waitForURL(`/products/${productHandle}?success=*`, { timeout: 10000 });
 
     // Verify success message
     await expect(page.locator('text=Asset unlinked successfully')).toBeVisible();
@@ -299,7 +299,7 @@ test.describe('Product CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/products/${productHandle}/edit`);
+    await page.goto(`/products/${productHandle}`);
 
     // Clear the title
     const titleInput = page.locator('input[name="title"]');
@@ -309,7 +309,7 @@ test.describe('Product CRUD Operations', () => {
     await page.click('form button[type="submit"]:has-text("Save Changes")');
 
     // Should stay on the same page (browser validation prevents submission)
-    await expect(page).toHaveURL(`/products/${productHandle}/edit`);
+    await expect(page).toHaveURL(`/products/${productHandle}`);
   });
 
   test('should delete a variant', async ({ page }) => {
@@ -321,7 +321,7 @@ test.describe('Product CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/products/${productHandle}/edit`);
+    await page.goto(`/products/${productHandle}`);
 
     // Set up dialog handler for confirmation
     page.on('dialog', async dialog => {
@@ -334,7 +334,7 @@ test.describe('Product CRUD Operations', () => {
     await variantCard.locator('button:has-text("Delete Variant")').click();
 
     // Should redirect with success message
-    await page.waitForURL(`/products/${productHandle}/edit?success=*`, { timeout: 10000 });
+    await page.waitForURL(`/products/${productHandle}?success=*`, { timeout: 10000 });
 
     // Verify success message
     await expect(page.locator('text=Variant deleted successfully')).toBeVisible();
@@ -412,7 +412,7 @@ test.describe('Product CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Try to access the edit page
-    await page.goto(`/products/${protectedHandle}/edit`);
+    await page.goto(`/products/${protectedHandle}`);
 
     // Should redirect to 404 (non-owners can't edit)
     await expect(page).toHaveURL('/404');

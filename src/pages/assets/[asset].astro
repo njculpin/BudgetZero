@@ -49,6 +49,8 @@ const images = imagesData.map(function(x){return {
   alt: x.title,
   href: x.file_url
 }})
+// Use first image as hero background
+const heroImage = imagesData[0]?.file_url || null;
 const tags = await getAssetTags(assetData.id);
 const royalties = await getAssetRoyalties(assetData.id);
 
@@ -91,9 +93,9 @@ const isShopMode = !isContributor || mode === "shop";
       <!-- Hero Section -->
       <div
         class="asset-hero"
-        style={assetData.cover_image_url ? `background-image: url('${assetData.cover_image_url}')` : ''}
+        style={heroImage ? `background-image: url('${heroImage}')` : ''}
       >
-        {assetData.cover_image_url && <div class="asset-hero__overlay"></div>}
+        {heroImage && <div class="asset-hero__overlay"></div>}
         <div class="asset-hero__content">
           <h1 class="asset-hero__title">{assetData.title}</h1>
           <div class="asset-hero__meta">
@@ -227,6 +229,11 @@ const isShopMode = !isContributor || mode === "shop";
               <CardTitle>
                 Costs & Royalties
               </CardTitle>
+              {isEditMode && (
+                <CardDescription>
+                  Revenue splits are visible to all users to promote transparency
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent>
                   <div class="sidebar-card__price">
@@ -251,14 +258,16 @@ const isShopMode = !isContributor || mode === "shop";
                       ))}
                     </div>
                   </div>
-                  <div>
-                    <!-- TODO: add to existing or new product, search for existing product -->
-                    <a href={`/assets/${assetData?.handle}`} class="creator-card__link">
-                      <Button variant="outline" size="md">
-                        <span slot="text">Add to Product</span>
-                      </Button>
-                    </a>
-                  </div>
+                  {isContributor && (
+                    <div>
+                      <!-- TODO: add to existing or new product, search for existing product -->
+                      <a href={`/assets/${assetData?.handle}`} class="creator-card__link">
+                        <Button variant="outline" size="md">
+                          <span slot="text">Add to Product</span>
+                        </Button>
+                      </a>
+                    </div>
+                  )}
               </CardContent>
           </Card>
 

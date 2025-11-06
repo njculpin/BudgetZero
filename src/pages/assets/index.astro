@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
-import { getAssets } from "@/lib/data-access/assets";
+import { getAssets, getAssetImages } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import PageHeader from "@/components/PageHeader.astro";
 import { setSession } from "@/lib/auth";
@@ -39,9 +39,19 @@ const offset = (page - 1) * limit;
 const tagArray = tagFilter ? [tagFilter] : undefined;
 const allAssets = await getAssets(searchQuery, tagArray, limit, offset);
 
+// Fetch first image for each asset to use as thumbnail
+const assetsWithImages = await Promise.all(
+  allAssets.map(async (asset) => {
+    const images = await getAssetImages(asset.id);
+    return {
+      ...asset,
+      cover_image_url: images[0]?.file_url || null
+    };
+  })
+);
 
 // Fetch asset owners (batch fetch to avoid N+1 queries)
-const ownerIds = [...new Set(allAssets.map(a => a.user_id))];
+const ownerIds = [...new Set(assetsWithImages.map(a => a.user_id))];
 const owners = await Promise.all(ownerIds.map(id => getUserById(id)));
 const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 ---
@@ -85,17 +95,19 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 
       <!-- All Assets Section -->
       <div class="assets-section">
-        {allAssets.length > 0 ? (
+        {assetsWithImages.length > 0 ? (
           <div class="assets-grid">
-            {allAssets.map((asset) => {
+            {assetsWithImages.map((asset) => {
               const owner = ownersMap.get(asset.user_id);
               return (
                 <a href={`/assets/${asset.handle}`} class="asset-card">
                   <div class="asset-card__content">
-                    {/* TODO: Images & Placeholder images 
-                    'https://placehold.co/600x600'
-                    */}
-                    <img src={'https://placehold.co/600x600'} alt={''} class="gallery__image" loading="lazy" />
+                    <img
+                      src={asset.cover_image_url || 'https://placehold.co/600x600'}
+                      alt={asset.title}
+                      class="asset-card__image"
+                      loading="lazy"
+                    />
                     <h3 class="asset-card__title">{asset.title}</h3>
                     {asset.description && (
                       <p class="asset-card__description">
@@ -131,7 +143,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
       </div>
 
       <!-- Pagination -->
-      {allAssets.length === limit && (
+      {assetsWithImages.length === limit && (
         <div class="assets-pagination">
           {page > 1 && (
             <a
@@ -310,6 +322,14 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
   border-color: var(--primary);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
+}
+
+.asset-card__image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-sm);
 }
 
 .asset-card__content {

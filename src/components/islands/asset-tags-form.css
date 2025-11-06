@@ -1,0 +1,36 @@
+/* ===== Asset Tags Form Styles ===== */
+
+.asset-tags-form__existing-tags {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  padding: var(--spacing-2xl);
+  background-color: var(--muted);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.asset-tags-form__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  margin: 0;
+}
+
+.asset-tags-form__tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+.asset-tags-form__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-lg);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-full);
+  line-height: 1.5;
+}

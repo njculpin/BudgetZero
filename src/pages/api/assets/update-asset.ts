@@ -53,6 +53,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   const userId = session.data.user.id;
+  const currentAccessToken = session.data.session?.access_token;
+
+  if (!currentAccessToken) {
+    return new Response(JSON.stringify({ error: "No valid access token" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const formData = await request.formData();
@@ -73,6 +81,36 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
+    }
+
+    // Validate publish requirements
+    if (status === "published") {
+      const existingImages = await getAssetImages(assetId);
+      const existingFiles = await getAssetFiles(assetId);
+
+      if (existingImages.length === 0 && (!images || images.length === 0)) {
+        return new Response(
+          JSON.stringify({
+            error: "Cannot publish asset without at least one image. Please upload an image first.",
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      if (existingFiles.length === 0 && (!files || files.length === 0)) {
+        return new Response(
+          JSON.stringify({
+            error: "Cannot publish asset without at least one file. Please upload a file first.",
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     // Update basic asset info - only include fields that are provided
@@ -118,6 +156,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             bucket: "asset-files",
             path: filePath,
             file,
+            accessToken: currentAccessToken,
           });
 
           if (uploadResult) {
@@ -146,6 +185,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             bucket: "asset-images",
             path: imagePath,
             file: image,
+            accessToken: currentAccessToken,
           });
 
           if (uploadResult) {

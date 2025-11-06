@@ -1,7 +1,8 @@
-import { Resend } from "resend";
+// TODO: Install resend package: npm install resend
+// import { Resend } from "resend";
 import type { APIRoute } from "astro";
 
-const resend = new Resend(import.meta.env.RESEND_API_KEY);
+// const resend = new Resend(import.meta.env.RESEND_API_KEY);
 
 export const POST: APIRoute = async ({ request }) => {
   const formData = await request.formData();
@@ -15,13 +16,14 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
+    // TODO: Uncomment when resend is installed
     // Example: Send a confirmation email
-    await resend.emails.send({
-      from: "Your Site <no-reply@yoursite.com>",
-      to: email,
-      subject: "Welcome to our mailing list!",
-      html: `<p>Thanks for subscribing! 🎉</p>`,
-    });
+    // await resend.emails.send({
+    //   from: "Your Site <no-reply@yoursite.com>",
+    //   to: email,
+    //   subject: "Welcome to our mailing list!",
+    //   html: `<p>Thanks for subscribing! 🎉</p>`,
+    // });
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
