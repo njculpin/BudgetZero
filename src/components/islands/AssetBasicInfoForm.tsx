@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, createEffect, Show } from "solid-js";
 import {
   FormField,
   TextAreaField,
@@ -24,6 +24,12 @@ export default function AssetBasicInfoForm(props: AssetBasicInfoFormProps) {
   const [isLoading, setIsLoading] = createSignal(false);
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal("");
+
+  // Update signals when props change (e.g., after page reload)
+  createEffect(() => {
+    setTitle(props.initialData.title);
+    setDescription(props.initialData.description || "");
+  });
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -55,9 +61,18 @@ export default function AssetBasicInfoForm(props: AssetBasicInfoFormProps) {
 
       // Redirect if handle changed
       const newHandle = data.asset?.handle;
-      if (newHandle && newHandle !== window.location.pathname.split("/")[2]) {
+      const currentPath = window.location.pathname;
+      const currentHandle = currentPath.split("/assets/")[1]?.split("?")[0];
+
+      if (newHandle && currentHandle && newHandle !== currentHandle) {
+        // Preserve current mode parameter if it exists
+        const currentMode = new URLSearchParams(window.location.search).get("mode");
+        const newUrl = currentMode
+          ? `/assets/${newHandle}?mode=${currentMode}`
+          : `/assets/${newHandle}`;
+
         setTimeout(() => {
-          window.location.href = `/assets/${newHandle}/edit`;
+          window.location.href = newUrl;
         }, 1500);
       }
     } catch (err) {

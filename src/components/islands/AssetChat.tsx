@@ -95,7 +95,7 @@ export default function AssetChat(props: AssetChatProps) {
         }}
       >
         <label for="chat-input" class="asset-chat__label">
-          Message
+          Send a message to asset contributors
         </label>
         <div class="asset-chat__input-wrapper">
           <input

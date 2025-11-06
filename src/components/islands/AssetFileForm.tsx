@@ -53,9 +53,12 @@ export default function AssetFileForm(props: AssetFileFormProps) {
         return;
       }
 
-      // Remove from local state
-      setFiles(files().filter((f) => f.id !== fileId));
-      setSuccess("File deleted successfully!");
+      setSuccess("File deleted successfully! Refreshing...");
+
+      // Reload page to update server-rendered file list
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       setError("An unexpected error occurred while deleting file");
     }
@@ -96,20 +99,14 @@ export default function AssetFileForm(props: AssetFileFormProps) {
 
       const data = await response.json();
 
-      // Update local state with new files from server
-      if (data.files) {
-        setFiles(data.files);
-      }
-
-      setSuccess("Files uploaded successfully!");
+      setSuccess("Files uploaded successfully! Refreshing...");
       setIsLoading(false);
-      setSelectedFiles([]);
 
-      // Clear the file input
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = '';
-      }
+      // Reload the page to show newly uploaded files
+      // This is needed because the file list in Preview/Shop mode is server-rendered
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       setError("An unexpected error occurred");
       setIsLoading(false);
@@ -151,7 +148,7 @@ export default function AssetFileForm(props: AssetFileFormProps) {
                       target="_blank"
                       rel="noopener noreferrer"
                       class="asset-files-form__button"
-                      title="Download"
+                      aria-label={`Download ${file.title}`}
                     >
                       ↓
                     </a>
@@ -159,7 +156,7 @@ export default function AssetFileForm(props: AssetFileFormProps) {
                       type="button"
                       onClick={() => handleDeleteFile(file.id)}
                       class="asset-files-form__button asset-files-form__button--delete"
-                      title="Delete file"
+                      aria-label={`Delete ${file.title}`}
                     >
                       ✕
                     </button>
@@ -173,17 +170,19 @@ export default function AssetFileForm(props: AssetFileFormProps) {
 
       <form onSubmit={handleSubmit} class="asset-form">
         <div class="form-field">
-          <label class="form-field__label">Add More Files</label>
+          <label for="asset-file-upload" class="form-field__label">Add More Files</label>
           <input
+            id="asset-file-upload"
             type="file"
             multiple
             onChange={handleFilesSelected}
             disabled={isLoading()}
             class="form-field__file-input"
             accept=".pdf,.stl,.obj,.zip,.png,.jpg,.jpeg,.glb,.gltf,.3mf,.ply,.fbx"
+            aria-describedby="asset-file-help"
           />
-          <p class="form-field__help-text">
-            Upload downloadable files for this asset (PDF, STL, OBJ, ZIP, etc.)
+          <p id="asset-file-help" class="form-field__help-text">
+            Upload downloadable files for this asset (PDF, STL, OBJ, ZIP, etc.). Maximum 50MB per file.
           </p>
           <Show when={selectedFiles().length > 0}>
             <p class="asset-files-form__selected">

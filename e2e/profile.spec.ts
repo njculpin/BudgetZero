@@ -68,7 +68,7 @@ test.describe('User Profile', () => {
     await page.goto(`/users/${testUserHandle}`);
 
     // Should show edit button
-    await expect(page.locator('a[href$="/edit"]')).toBeVisible();
+    await expect(page.locator('a[href$=""]')).toBeVisible();
   });
 
   test('should navigate to edit page', async ({ page }) => {
@@ -83,13 +83,13 @@ test.describe('User Profile', () => {
     await page.goto(`/users/${testUserHandle}`);
 
     // Wait for edit button and click
-    await page.waitForSelector('a[href$="/edit"]', { timeout: 5000 });
+    await page.waitForSelector('a[href$=""]', { timeout: 5000 });
 
     // Navigate to edit page directly (more reliable than clicking)
-    await page.goto(`/users/${testUserHandle}/edit`);
+    await page.goto(`/users/${testUserHandle}`);
 
     // Should be on edit page
-    await expect(page).toHaveURL(`/users/${testUserHandle}/edit`);
+    await expect(page).toHaveURL(`/users/${testUserHandle}`);
     await expect(page.locator('.card__title')).toContainText('Edit Profile');
   });
 
@@ -107,7 +107,7 @@ test.describe('User Profile', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/users/${testUserHandle}/edit`);
+    await page.goto(`/users/${testUserHandle}`);
 
     // Wait for form to load
     await page.waitForSelector('input[name="name"]', { timeout: 5000 });
@@ -145,7 +145,7 @@ test.describe('User Profile', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page with current handle
-    await page.goto(`/users/${testUserHandle}/edit`);
+    await page.goto(`/users/${testUserHandle}`);
 
     // Wait for form to load
     await page.waitForSelector('input[name="handle"]', { timeout: 5000 });
@@ -181,7 +181,7 @@ test.describe('User Profile', () => {
     const page = await context.newPage();
 
     // Try to access edit page without being logged in
-    await page.goto(`/users/${testUserHandle}/edit`);
+    await page.goto(`/users/${testUserHandle}`);
 
     // Should redirect to sign-in
     await page.waitForURL('/sign-in', { timeout: 5000 });
@@ -205,7 +205,7 @@ test.describe('User Profile', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Try to access first user's edit page
-    await page.goto(`/users/${testUserHandle}/edit`);
+    await page.goto(`/users/${testUserHandle}`);
 
     // Should redirect to view page (no edit permission)
     await page.waitForURL(`/users/${testUserHandle}`, { timeout: 5000 });

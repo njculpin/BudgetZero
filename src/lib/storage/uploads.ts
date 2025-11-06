@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { storageClient } from "./client";
 
 export type StorageBucket =
@@ -20,6 +21,7 @@ export interface UploadOptions {
   file: File;
   upsert?: boolean;
   cacheControl?: string;
+  accessToken?: string;
 }
 
 /**
@@ -31,10 +33,25 @@ export async function uploadFile(
   options: UploadOptions
 ): Promise<UploadResult | null> {
   try {
-    const { bucket, path, file, upsert = false, cacheControl = "3600" } = options;
+    const { bucket, path, file, upsert = false, cacheControl = "3600", accessToken } = options;
+
+    // Create authenticated client if access token provided
+    const client = accessToken
+      ? createClient(
+          import.meta.env.PUBLIC_SUPABASE_URL,
+          import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+          {
+            global: {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            },
+          }
+        )
+      : storageClient;
 
     // Upload file to storage
-    const { data, error } = await storageClient.storage
+    const { data, error } = await client.storage
       .from(bucket)
       .upload(path, file, {
         cacheControl,
@@ -47,7 +64,7 @@ export async function uploadFile(
     }
 
     // Get public URL
-    const { data: urlData } = storageClient.storage
+    const { data: urlData } = client.storage
       .from(bucket)
       .getPublicUrl(data.path);
 

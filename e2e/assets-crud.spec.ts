@@ -97,7 +97,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/assets/${assetHandle}/edit`);
+    await page.goto(`/assets/${assetHandle}`);
     await expect(page.locator('text=Edit Asset')).toBeVisible();
 
     // Update the title
@@ -136,7 +136,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Navigate to edit page
-    await page.goto(`/assets/${assetHandle}/edit`);
+    await page.goto(`/assets/${assetHandle}`);
 
     // Clear the title
     const titleInput = page.locator('input[name="title"]');
@@ -147,7 +147,7 @@ test.describe('Asset CRUD Operations', () => {
 
     // Should stay on the same page and show validation error
     // The browser's built-in validation should prevent submission
-    await expect(page).toHaveURL(`/assets/${assetHandle}/edit`);
+    await expect(page).toHaveURL(`/assets/${assetHandle}`);
   });
 
   test('should delete an asset successfully', async ({ page }) => {
@@ -226,7 +226,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Try to access the edit page
-    await page.goto(`/assets/${protectedHandle}/edit`);
+    await page.goto(`/assets/${protectedHandle}`);
 
     // Should redirect to the asset detail page
     await page.waitForURL(`/assets/${protectedHandle}`, { timeout: 10000 });

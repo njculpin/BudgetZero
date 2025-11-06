@@ -79,7 +79,7 @@ export default function ProductEditForm(props: ProductEditFormProps) {
 
       // Reload page after short delay to show success message
       setTimeout(() => {
-        window.location.href = `/products/${props.productHandle}/edit`;
+        window.location.href = `/products/${props.productHandle}`;
       }, 1500);
     } catch (err) {
       setError("An unexpected error occurred");

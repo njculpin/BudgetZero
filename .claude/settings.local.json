@@ -29,7 +29,8 @@
       "Bash(! grep -q \"base.css\" \"$file\")",
       "Bash(then echo \"$file\")",
       "Bash(fi)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(supabase migration:*)"
     ],
     "deny": [],
     "ask": []
