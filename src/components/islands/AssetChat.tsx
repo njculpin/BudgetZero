@@ -17,6 +17,11 @@ export default function AssetChat(props: AssetChatProps) {
   const [isLoading, setIsLoading] = createSignal(false);
   let unsubscribe: (() => void) | null = null;
 
+  // Computed: whether the send button should be disabled
+  const isDisabled = () => {
+    return isLoading() || !message().trim() || !props.userId;
+  };
+
   const loadMessages = async () => {
     const data = await getAssetChatMessages(props.assetId);
     setMessages(data);
@@ -111,7 +116,8 @@ export default function AssetChat(props: AssetChatProps) {
           <button
             type="submit"
             class="asset-chat__submit"
-            disabled={isLoading() || !message().trim()}
+            disabled={isDisabled()}
+            title={!props.userId ? "Sign in to send messages" : ""}
           >
             {isLoading() ? "Sending..." : "Send"}
           </button>

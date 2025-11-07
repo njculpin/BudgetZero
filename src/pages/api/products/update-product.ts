@@ -249,10 +249,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    const updatedProduct = await getProductById(productId);
+
     return new Response(
       JSON.stringify({
         success: true,
-        product: { id: productId },
+        product: updatedProduct,
       }),
       {
         status: 200,
