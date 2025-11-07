@@ -30,7 +30,8 @@
       "Bash(then echo \"$file\")",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(supabase migration:*)"
+      "Bash(supabase migration:*)",
+      "Bash(supabase stop:*)"
     ],
     "deny": [],
     "ask": []

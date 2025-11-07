@@ -9,7 +9,9 @@ import ProductDeleteButton from "@/components/islands/ProductDeleteButton";
 import PricingBreakdown from "@/components/islands/PricingBreakdown";
 import ProductBasicInfoForm from "@/components/islands/ProductBasicInfoForm";
 import ProductStatusEditor from "@/components/islands/ProductStatusEditor";
-import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices } from "@/lib/data-access/products";
+import ProductTagsForm from "@/components/islands/ProductTagsForm";
+import ProductImagesForm from "@/components/islands/ProductImagesForm";
+import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 import Card from "@/components/Card.astro";
@@ -34,6 +36,8 @@ if (!productData) {
 const owner = await getUserById(productData.user_id);
 const tags = await getProductTags(productData.id);
 const variants = await getProductVariants(productData.id);
+const productImages = await getProductImages(productData.id);
+const coverImage = productImages[0]?.file_url || null;
 
 const variantsWithPrices = await Promise.all(
   variants.map(async (variant) => {
@@ -92,48 +96,40 @@ const defaultPrice = defaultVariant?.prices?.[0];
         </ol>
       </nav>
 
-      <!-- Main Content -->
-      <main class="product-main">
-        <!-- Hero Section -->
-        <div class="product-hero">
-          {isOwner && (
-            <div class="product-hero__mode-toggle">
-              <span class={`mode-badge mode-badge--${isEditMode ? 'edit' : 'preview'}`}>
-                {isEditMode ? '✏️ Edit Mode' : '👁️ Preview Mode'}
-              </span>
-              <a href={`/products/${productData.handle}${isEditMode ? '?mode=preview' : ''}`}>
-                <Button variant="ghost" size="sm">
-                  <span slot="text">Switch to {isEditMode ? 'Preview' : 'Edit'}</span>
-                </Button>
-              </a>
-            </div>
-          )}
+      <!-- Hero Section -->
+      <div
+        class="product-hero"
+        style={coverImage ? `background-image: url('${coverImage}')` : ''}
+      >
+        {coverImage && <div class="product-hero__overlay"></div>}
 
-          <div class="product-hero__header">
-            <div class="product-hero__title-group">
-              <h1 class="product-hero__title">{productData.title}</h1>
-              <div class="product-hero__meta">
-                <span class="product-hero__author">
-                  by <a href={`/users/${owner?.handle}`} class="product-hero__author-link">
-                    {owner?.name || owner?.handle || 'Unknown'}
-                  </a>
-                </span>
-                <span class="product-hero__divider">•</span>
-                <Badge variant={productData.status as 'draft' | 'published' | 'archived'} size="sm">
-                  {productData.status}
-                </Badge>
-              </div>
+        {isOwner && (
+          <div class="product-hero__mode-toggle">
+            <span class={`mode-badge mode-badge--${isEditMode ? 'edit' : 'preview'}`}>
+              {isEditMode ? '✏️ Edit Mode' : '👁️ Preview Mode'}
+            </span>
+            <a href={`/products/${productData.handle}${isEditMode ? '?mode=preview' : ''}`}>
+              <Button variant="ghost" size="sm">
+                <span slot="text">Switch to {isEditMode ? 'Preview' : 'Edit'}</span>
+              </Button>
+            </a>
+          </div>
+        )}
+
+        <div class="product-hero__content">
+          <div class="product-hero__title-group">
+            <h1 class="product-hero__title">{productData.title}</h1>
+            <div class="product-hero__meta">
+              <span class="product-hero__author">
+                by <a href={`/users/${owner?.handle}`} class="product-hero__author-link">
+                  {owner?.name || owner?.handle || 'Unknown'}
+                </a>
+              </span>
+              <span class="product-hero__divider">•</span>
+              <Badge variant={productData.status as 'draft' | 'published' | 'archived'} size="sm">
+                {productData.status}
+              </Badge>
             </div>
-            {isOwner && isEditMode && (
-              <div class="product-hero__actions">
-                <ProductDeleteButton
-                  client:load
-                  productId={productData.id}
-                  productTitle={productData.title}
-                  redirectUrl={`/users/${owner?.handle}`}
-                />
-              </div>
-            )}
           </div>
 
           {productData.description && (
@@ -148,12 +144,54 @@ const defaultPrice = defaultVariant?.prices?.[0];
             </TagList>
           )}
         </div>
+      </div>
 
-        <!-- Variants Section -->
-        {variantsWithPrices.length > 0 ? (
-          <div class="product-variants">
-            <h2 class="product-variants__title">Available Variants</h2>
-            <div class="product-variants__list">
+      <div class="page-columns">
+        <div class="page-columns__column">
+          <!-- Description Section -->
+          {!isEditMode && productData.description && (
+            <Card>
+              <CardHeader>
+                <CardTitle>About This Product</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p class="product-about-text">{productData.description}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {isEditMode && (
+            <Card>
+              <CardHeader>
+                <CardTitle>About This Product</CardTitle>
+                <CardDescription>Edit your product description</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProductBasicInfoForm
+                  client:load
+                  productId={productData.id}
+                  initialData={{
+                    title: productData.title,
+                    description: productData.description,
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          <!-- Variants Section -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Variants</CardTitle>
+            <CardDescription>
+              {variantsWithPrices.length > 0
+                ? `Manage ${variantsWithPrices.length} variant${variantsWithPrices.length === 1 ? '' : 's'}`
+                : 'Add variants to define different options for this product'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {variantsWithPrices.length > 0 ? (
+              <div class="product-variants__list">
               {variantsWithPrices.map((variant) => (
                 <div class="variant-item">
                   <div class="variant-item__header">
@@ -232,29 +270,37 @@ const defaultPrice = defaultVariant?.prices?.[0];
                   )}
                 </div>
               ))}
-            </div>
-          </div>
-        ) : (
-          <div class="product-empty">
-            <div class="product-empty__icon">📦</div>
-            <p class="product-empty__text">
-              {isOwner
-                ? "No variants added yet. Add variants to start selling this product."
-                : "This product doesn't have any variants available yet."}
-            </p>
-            {isOwner && (
-              <a href={`/products/${product}`}>
-                <Button variant="primary" size="md">
-                  <span slot="text">Add Variants</span>
-                </Button>
-              </a>
+              </div>
+            ) : (
+              <div class="product-empty">
+                <div class="product-empty__icon">📦</div>
+                <p class="product-empty__text">
+                  {isOwner
+                    ? "No variants added yet. Variants let you offer different options (digital/physical) and pricing tiers."
+                    : "This product doesn't have any variants available yet."}
+                </p>
+                {isOwner && (
+                  <p class="product-empty__help">
+                    Variants contain the actual downloadable assets or physical items that customers receive.
+                  </p>
+                )}
+              </div>
             )}
-          </div>
-        )}
-      </main>
+          </CardContent>
+          {isOwner && (
+            <CardFooter>
+              <div class="product-variants__actions">
+                <p class="product-variants__note">
+                  <strong>Note:</strong> Variant management coming soon. For now, variants are created through the API.
+                </p>
+              </div>
+            </CardFooter>
+          )}
+        </Card>
+        </div>
 
-      <!-- Sidebar -->
-      <aside class="product-sidebar">
+        <!-- Sidebar Column -->
+        <div class="page-columns__column">
         {!isEditMode && variantsWithPrices.length > 0 && (
           <div class="sidebar-card sidebar-card--sticky">
             <div class="sidebar-card__stats">
@@ -323,24 +369,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
 
         {isEditMode && (
           <>
-            <!-- Product Information Card (Edit Mode) -->
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Information</CardTitle>
-                <CardDescription>Edit your product details</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProductBasicInfoForm
-                  client:load
-                  productId={productData.id}
-                  initialData={{
-                    title: productData.title,
-                    description: productData.description,
-                  }}
-                />
-              </CardContent>
-            </Card>
-
             <!-- Status Card (Edit Mode) -->
             <Card>
               <CardHeader>
@@ -364,49 +392,545 @@ const defaultPrice = defaultVariant?.prices?.[0];
                 <CardDescription>Add tags to help users find your product</CardDescription>
               </CardHeader>
               <CardContent>
-                <p class="card-placeholder">Tags form will go here</p>
+                <ProductTagsForm
+                  client:load
+                  productId={productData.id}
+                  initialTags={tags.map(t => t.value)}
+                />
               </CardContent>
             </Card>
 
             <!-- Images Card (Edit Mode) -->
             <Card>
               <CardHeader>
-                <CardTitle>Product Images</CardTitle>
-                <CardDescription>Manage your product images</CardDescription>
+                <CardTitle>Cover Image</CardTitle>
+                <CardDescription>Upload a cover image for your product</CardDescription>
               </CardHeader>
               <CardContent>
-                <p class="card-placeholder">Images form will go here</p>
+                <ProductImagesForm
+                  client:load
+                  productId={productData.id}
+                  currentCoverImage={coverImage}
+                />
               </CardContent>
             </Card>
           </>
         )}
 
-      </aside>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Creator</CardTitle>
-          <CardDescription>
-            <div class="creator-card__avatar">
-              {owner?.name ? owner.name[0].toUpperCase() : owner?.handle[0].toUpperCase()}
-            </div>
-            <div class="creator-card__info">
-              <h3 class="creator-card__name">{owner?.name || owner?.handle}</h3>
-              <p class="creator-card__handle">@{owner?.handle}</p>
-            </div>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <p class="creator-card__bio">{owner?.bio}</p>
-        </CardContent>
-        <CardFooter>
-            <a href={`/users/${owner?.handle}`} class="creator-card__link">
-              <Button variant="outline" size="md">
-                <span slot="text">View Profile</span>
-              </Button>
-            </a>
-        </CardFooter>
-      </Card>
+        <!-- Creator Card -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Creator</CardTitle>
+            <CardDescription>
+              <div class="creator-card__avatar">
+                {owner?.name ? owner.name[0].toUpperCase() : owner?.handle[0].toUpperCase()}
+              </div>
+              <div class="creator-card__info">
+                <h3 class="creator-card__name">{owner?.name || owner?.handle}</h3>
+                <p class="creator-card__handle">@{owner?.handle}</p>
+              </div>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+              <p class="creator-card__bio">{owner?.bio}</p>
+          </CardContent>
+          <CardFooter>
+              <a href={`/users/${owner?.handle}`} class="creator-card__link">
+                <Button variant="outline" size="md">
+                  <span slot="text">View Profile</span>
+                </Button>
+              </a>
+          </CardFooter>
+        </Card>
+        </div>
+      </div>
     </div>
   </div>
 </Layout>
+
+<style>
+  /* ===== Breadcrumb Navigation ===== */
+  .breadcrumb {
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .breadcrumb__list {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+  }
+
+  .breadcrumb__item {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .breadcrumb__item:not(:last-child)::after {
+    content: '/';
+    color: var(--border);
+    margin-left: var(--gap-sm);
+  }
+
+  .breadcrumb__link {
+    color: var(--muted-foreground);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-in-out);
+  }
+
+  .breadcrumb__link:hover {
+    color: var(--foreground);
+    text-decoration: underline;
+  }
+
+  .breadcrumb__link:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .breadcrumb__current {
+    color: var(--foreground);
+    font-weight: var(--font-weight-medium);
+  }
+
+  /* ===== Product Hero Section ===== */
+  .product-hero {
+    position: relative;
+    min-height: 300px;
+    background-color: var(--primary);
+    background-size: cover;
+    background-position: center;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--spacing-4xl);
+  }
+
+  .product-hero__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7));
+    z-index: 0;
+  }
+
+  .product-hero__content {
+    position: relative;
+    z-index: 1;
+    padding: var(--spacing-5xl) var(--spacing-4xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-lg);
+  }
+
+  .product-hero__mode-toggle {
+    position: absolute;
+    top: var(--spacing-2xl);
+    right: var(--spacing-2xl);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: var(--gap-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: oklch(from var(--background) l c h / 0.95);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-xs);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full);
+  }
+
+  .mode-badge--edit {
+    background-color: oklch(from var(--primary) l c h / 0.1);
+    color: var(--primary);
+  }
+
+  .mode-badge--preview {
+    background-color: oklch(from var(--accent) l c h / 0.1);
+    color: var(--accent);
+  }
+
+  .product-hero__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--gap-xl);
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .product-hero__title-group {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .product-hero__title {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: var(--text-4xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-white);
+    line-height: var(--leading-tight);
+    text-shadow: var(--text-shadow-md);
+  }
+
+  .product-hero__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-lg);
+    flex-wrap: wrap;
+  }
+
+  .product-hero__author {
+    font-size: var(--text-base);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .product-hero__author-link {
+    color: var(--color-white);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .product-hero__author-link:hover {
+    border-bottom-color: var(--color-white);
+  }
+
+  .product-hero__divider {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .product-hero__actions {
+    display: flex;
+    gap: var(--gap-md);
+    flex-shrink: 0;
+  }
+
+  .product-hero__description {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .product-hero__description p {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: rgba(255, 255, 255, 0.95);
+    line-height: var(--leading-relaxed);
+    text-shadow: var(--text-shadow-sm);
+  }
+
+  .product-hero__tags {
+    margin-top: var(--spacing-xl);
+  }
+
+  /* ===== Product About Text ===== */
+  .product-about-text {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  /* ===== Product Variants ===== */
+  .product-variants__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xl);
+  }
+
+  .variant-item {
+    padding: var(--spacing-2xl);
+    background-color: var(--muted);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+  }
+
+  .variant-item__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--gap-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .variant-item__title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-md);
+    flex-wrap: wrap;
+  }
+
+  .variant-item__name {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .variant-item__sku {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .variant-item__sku code {
+    background-color: var(--background);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+  }
+
+  .variant-item__description {
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: var(--text-base);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  .variant-item__pricing {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xl);
+  }
+
+  .variant-item__price-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .variant-item__price {
+    display: flex;
+    align-items: baseline;
+    gap: var(--gap-md);
+  }
+
+  .variant-item__price-amount {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+  }
+
+  .variant-item__price-quantity {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .variant-item__actions {
+    display: flex;
+    gap: var(--gap-md);
+  }
+
+  .variant-item__no-price {
+    margin: 0;
+    padding: var(--spacing-lg);
+    background-color: var(--background);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    text-align: center;
+  }
+
+  .variant-item__breakdown {
+    margin-top: var(--spacing-lg);
+  }
+
+  /* ===== Product Empty State ===== */
+  .product-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap-xl);
+    padding: var(--spacing-5xl) var(--spacing-2xl);
+    text-align: center;
+  }
+
+  .product-empty__icon {
+    font-size: var(--text-5xl);
+  }
+
+  .product-empty__text {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: var(--muted-foreground);
+    max-width: 40ch;
+  }
+
+  /* ===== Sidebar Card ===== */
+  .sidebar-card {
+    position: sticky;
+    top: var(--spacing-2xl);
+    padding: var(--spacing-2xl);
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .sidebar-card__stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--gap-lg);
+    padding-bottom: var(--spacing-2xl);
+    margin-bottom: var(--spacing-2xl);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat__value {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+  }
+
+  .stat__label {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .sidebar-card__price {
+    padding-bottom: var(--spacing-2xl);
+    margin-bottom: var(--spacing-2xl);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .sidebar-card__price-label {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .sidebar-card__price-value {
+    margin: 0;
+    font-size: var(--text-4xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+  }
+
+  .sidebar-card__cta {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-card__cta-link {
+    text-decoration: none;
+  }
+
+  .sidebar-card__owner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    text-align: center;
+  }
+
+  .sidebar-card__owner-text {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .sidebar-card__owner-link {
+    text-decoration: none;
+  }
+
+  /* ===== Creator Card ===== */
+  .creator-card__avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-full);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .creator-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+  }
+
+  .creator-card__name {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .creator-card__handle {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .creator-card__bio {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  .creator-card__link {
+    text-decoration: none;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .product-hero__content {
+      padding: var(--spacing-3xl) var(--spacing-2xl);
+    }
+
+    .product-hero__mode-toggle {
+      top: var(--spacing-lg);
+      right: var(--spacing-lg);
+      flex-direction: column;
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .product-hero__header {
+      flex-direction: column;
+    }
+
+    .product-hero__title {
+      font-size: var(--text-3xl);
+    }
+
+    .sidebar-card__stats {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--gap-md);
+    }
+
+    .variant-item__header {
+      flex-direction: column;
+    }
+  }
+</style>

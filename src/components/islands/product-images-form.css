@@ -1,0 +1,37 @@
+/* ===== Product Images Form ===== */
+
+.product-images-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3xl);
+}
+
+.product-images-form__current {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.product-images-form__label {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.product-images-form__preview {
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border);
+  background-color: var(--muted);
+}
+
+.product-images-form__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

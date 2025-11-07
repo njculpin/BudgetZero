@@ -5,7 +5,6 @@ export type ProductCollaboratorRole = "owner" | "editor" | "viewer";
 
 export interface Product extends BaseEntity {
   handle: string;
-  cover_image_url: string | null;
   title: string;
   user_id: string;
   description: string;
