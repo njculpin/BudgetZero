@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
-import { updateProduct, getProductById, getProductVariants, getVariantAssets } from "@/lib/data-access/products";
+import { updateProduct, getProductById, getProductVariants, getVariantAssets, createProductImage } from "@/lib/data-access/products";
 import { getAssetById } from "@/lib/data-access/assets";
 import { uploadFile, generateFilePath } from "@/lib/storage";
 import { z } from "zod";
@@ -183,6 +183,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   const userId = session.data.user.id;
+  const currentAccessToken = session.data.session?.access_token;
+
+  if (!currentAccessToken) {
+    return new Response(JSON.stringify({ error: "No valid access token" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const formData = await request.formData();
@@ -202,8 +210,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    let coverImageUrl = product.cover_image_url;
-
     // Handle cover image upload if provided
     if (coverImageFile && coverImageFile.size > 0) {
       const filePath = generateFilePath(userId, coverImageFile.name, productId);
@@ -211,14 +217,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         bucket: "product-images",
         path: filePath,
         file: coverImageFile,
+        accessToken: currentAccessToken,
       });
 
       if (uploadResult) {
-        coverImageUrl = uploadResult.url;
+        await createProductImage(productId, {
+          title: coverImageFile.name,
+          description: `Cover image: ${coverImageFile.name}`,
+          file_url: uploadResult.url,
+          storage_path: uploadResult.path,
+          file_size_bytes: uploadResult.size,
+          mime_type: coverImageFile.type,
+        });
       }
     }
-
-    const parsedTags = tagsJson ? JSON.parse(tagsJson) : undefined;
 
     // Validate publish status if trying to publish
     if (status === 'published') {
@@ -231,13 +243,28 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
     }
 
-    const success = await updateProduct(productId, {
-      title,
-      description: description || undefined,
-      status: status as "draft" | "published" | "archived" | undefined,
-      coverImageUrl,
-      tags: parsedTags,
-    });
+    // Build update data object - only include fields that are provided
+    const updateData: {
+      title?: string;
+      description?: string;
+      status?: "draft" | "published" | "archived";
+      tags?: string[];
+    } = {};
+
+    if (title) {
+      updateData.title = title;
+    }
+    if (description !== null && description !== undefined) {
+      updateData.description = description;
+    }
+    if (status) {
+      updateData.status = status as "draft" | "published" | "archived";
+    }
+    if (tagsJson) {
+      updateData.tags = JSON.parse(tagsJson);
+    }
+
+    const success = await updateProduct(productId, updateData);
 
     if (!success) {
       return new Response(

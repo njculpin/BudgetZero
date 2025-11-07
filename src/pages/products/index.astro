@@ -3,7 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
 import PageHeader from "@/components/PageHeader.astro";
-import { getAllProducts } from "@/lib/data-access/products";
+import { getAllProducts, getProductImages, getProductVariants, getVariantPrices } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 import Button from "@/components/Button.astro";
@@ -41,8 +41,35 @@ const offset = (page - 1) * limit;
 const tagArray = tagFilter ? [tagFilter] : undefined;
 const allProducts = await getAllProducts(searchQuery, tagArray, limit, offset);
 
+// Fetch images and prices for each product
+const productsWithDetails = await Promise.all(
+  allProducts.map(async (product) => {
+    const images = await getProductImages(product.id);
+    const variants = await getProductVariants(product.id);
+
+    // Get the lowest price across all variants
+    let lowestPrice = null;
+    for (const variant of variants) {
+      const prices = await getVariantPrices(variant.id);
+      if (prices.length > 0) {
+        const minPrice = Math.min(...prices.map(p => p.unit_amount));
+        if (lowestPrice === null || minPrice < lowestPrice) {
+          lowestPrice = minPrice;
+        }
+      }
+    }
+
+    return {
+      ...product,
+      cover_image_url: images[0]?.file_url || null,
+      lowestPrice,
+      variantCount: variants.length
+    };
+  })
+);
+
 // Get owners for all products
-const allProductOwnerIds = [...new Set(allProducts.map(p => p.user_id))];
+const allProductOwnerIds = [...new Set(productsWithDetails.map(p => p.user_id))];
 const allProductOwners = await Promise.all(allProductOwnerIds.map(id => getUserById(id)));
 const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]));
 ---
@@ -87,16 +114,20 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
       )}
 
       <!-- All Products Section -->
-      {allProducts.length > 0 ? (
+      {productsWithDetails.length > 0 ? (
         <section class="products-section">
           <div class="products-grid">
-            {allProducts.map((product) => {
+            {productsWithDetails.map((product) => {
               const owner = allOwnersMap.get(product.user_id);
               return (
                 <a href={`/products/${product.handle}`} class="product-card">
                   <div class="product-card__content">
-                    {/* TODO: Images & Placeholder images */}
-                    <img src={'https://placehold.co/600x600'} alt={''} class="gallery__image" loading="lazy" />
+                    <img
+                      src={product.cover_image_url || 'https://placehold.co/600x600'}
+                      alt={product.title}
+                      class="product-card__image"
+                      loading="lazy"
+                    />
                     <h3 class="product-card__title">{product.title}</h3>
                     {product.description && (
                       <p class="product-card__description">
@@ -104,15 +135,29 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
                       </p>
                     )}
                     <div class="product-card__meta">
-                      <span class="product-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
+                      <span class="product-card__author">
+                        by {owner?.name || owner?.handle || 'Unknown'}
+                      </span>
                     </div>
+                    {product.lowestPrice !== null && (
+                      <div class="product-card__footer">
+                        <span class="product-card__price">
+                          From ${(product.lowestPrice / 100).toFixed(2)}
+                        </span>
+                        {product.variantCount > 1 && (
+                          <span class="product-card__variants">
+                            {product.variantCount} variants
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </a>
               );
             })}
           </div>
         </section>
-      ) : allProducts.length === 0 && (
+      ) : productsWithDetails.length === 0 && (
         <Card>
           <CardContent>
             <div class="products-empty">
@@ -127,7 +172,7 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
         </Card>
       )}
 
-      {allProducts.length === limit && (
+      {productsWithDetails.length === limit && (
         <div class="products-pagination">
           {page > 1 && (
             <a href={`/products?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
@@ -220,6 +265,14 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
   transform: translateY(-2px);
 }
 
+.product-card__image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-sm);
+}
+
 .product-card__content {
   display: flex;
   flex-direction: column;
@@ -246,6 +299,26 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
 }
 
 .product-card__author {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.product-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.product-card__price {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+}
+
+.product-card__variants {
   font-size: var(--text-sm);
   color: var(--muted-foreground);
 }
@@ -293,5 +366,34 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
 .products-pagination__current {
   font-size: var(--text-sm);
   color: var(--muted-foreground);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .page-header-with-action {
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .browse-cta {
+    padding: var(--spacing-lg) 0;
+  }
+
+  .browse-cta__actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .browse-cta__link {
+    width: 100%;
+  }
+
+  .browse-cta__link button {
+    width: 100%;
+  }
 }
 </style>

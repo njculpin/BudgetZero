@@ -14,7 +14,6 @@ export interface UpdateProductParams {
   handle?: string;
   tags?: string[];
   publishedAt?: string;
-  coverImageUrl?: string | null;
 }
 
 export interface CreateVariantParams {
@@ -177,7 +176,6 @@ export const updateProduct = async (
   if (updates.status !== undefined) updateData.status = updates.status;
   if (updates.handle !== undefined) updateData.handle = updates.handle;
   if (updates.publishedAt !== undefined) updateData.published_at = updates.publishedAt;
-  if (updates.coverImageUrl !== undefined) updateData.cover_image_url = updates.coverImageUrl;
 
   const { error } = await serverClient
     .from('products')
@@ -682,4 +680,73 @@ export const getProductsUsingAsset = async (assetId: string, limit = 5): Promise
   }
 
   return data as Product[];
+};
+
+// ===== Product Images =====
+
+/**
+ * Create a product image
+ */
+export const createProductImage = async (
+  productId: string,
+  imageData: {
+    title: string;
+    description?: string;
+    file_url: string;
+    storage_path: string;
+    file_size_bytes: number;
+    mime_type: string;
+  }
+): Promise<boolean> => {
+  // Get current max position
+  const { data: existingImages } = await serverClient
+    .from('product_images')
+    .select('position')
+    .eq('product_id', productId)
+    .eq('deleted', false)
+    .order('position', { ascending: false })
+    .limit(1);
+
+  const nextPosition = existingImages && existingImages.length > 0
+    ? existingImages[0].position + 1
+    : 0;
+
+  const { error } = await serverClient
+    .from('product_images')
+    .insert({
+      product_id: productId,
+      title: imageData.title,
+      description: imageData.description || '',
+      file_url: imageData.file_url,
+      storage_path: imageData.storage_path,
+      file_size_bytes: imageData.file_size_bytes,
+      mime_type: imageData.mime_type,
+      position: nextPosition,
+    });
+
+  if (error) {
+    console.error('Error creating product image:', error);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Get images for a product
+ */
+export const getProductImages = async (productId: string) => {
+  const { data, error } = await serverClient
+    .from('product_images')
+    .select('*')
+    .eq('product_id', productId)
+    .eq('deleted', false)
+    .order('position', { ascending: true});
+
+  if (error) {
+    console.error('Error fetching product images:', error);
+    return [];
+  }
+
+  return data;
 };
