@@ -7,6 +7,8 @@ import TagList from "@/components/TagList.astro";
 import AddToCartButton from "@/components/islands/AddToCartButton";
 import ProductDeleteButton from "@/components/islands/ProductDeleteButton";
 import PricingBreakdown from "@/components/islands/PricingBreakdown";
+import ProductBasicInfoForm from "@/components/islands/ProductBasicInfoForm";
+import ProductStatusEditor from "@/components/islands/ProductStatusEditor";
 import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
@@ -62,6 +64,11 @@ if (productData.status !== 'published' && !isOwner) {
   return Astro.redirect('/404');
 }
 
+// Check if user is in edit mode
+const urlParams = new URL(Astro.request.url).searchParams;
+const mode = urlParams.get('mode');
+const isEditMode = isOwner && mode !== 'preview';
+
 // Get first variant with pricing for display
 const defaultVariant = variantsWithPrices.find(v => v.prices && v.prices.length > 0) || variantsWithPrices[0];
 const defaultPrice = defaultVariant?.prices?.[0];
@@ -70,10 +77,38 @@ const defaultPrice = defaultVariant?.prices?.[0];
 <Layout title={`${productData.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
+      <!-- Breadcrumb Navigation -->
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <ol class="breadcrumb__list">
+          <li class="breadcrumb__item">
+            <a href="/" class="breadcrumb__link">Home</a>
+          </li>
+          <li class="breadcrumb__item">
+            <a href="/products" class="breadcrumb__link">Products</a>
+          </li>
+          <li class="breadcrumb__item breadcrumb__item--current">
+            <span class="breadcrumb__current">{productData.title}</span>
+          </li>
+        </ol>
+      </nav>
+
       <!-- Main Content -->
       <main class="product-main">
         <!-- Hero Section -->
         <div class="product-hero">
+          {isOwner && (
+            <div class="product-hero__mode-toggle">
+              <span class={`mode-badge mode-badge--${isEditMode ? 'edit' : 'preview'}`}>
+                {isEditMode ? '✏️ Edit Mode' : '👁️ Preview Mode'}
+              </span>
+              <a href={`/products/${productData.handle}${isEditMode ? '?mode=preview' : ''}`}>
+                <Button variant="ghost" size="sm">
+                  <span slot="text">Switch to {isEditMode ? 'Preview' : 'Edit'}</span>
+                </Button>
+              </a>
+            </div>
+          )}
+
           <div class="product-hero__header">
             <div class="product-hero__title-group">
               <h1 class="product-hero__title">{productData.title}</h1>
@@ -89,13 +124,8 @@ const defaultPrice = defaultVariant?.prices?.[0];
                 </Badge>
               </div>
             </div>
-            {isOwner && (
+            {isOwner && isEditMode && (
               <div class="product-hero__actions">
-                <a href={`/products/${product}`}>
-                  <Button variant="outline" size="sm">
-                    <span slot="text">Edit Product</span>
-                  </Button>
-                </a>
                 <ProductDeleteButton
                   client:load
                   productId={productData.id}
@@ -225,7 +255,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
 
       <!-- Sidebar -->
       <aside class="product-sidebar">
-        {variantsWithPrices.length > 0 && (
+        {!isEditMode && variantsWithPrices.length > 0 && (
           <div class="sidebar-card sidebar-card--sticky">
             <div class="sidebar-card__stats">
               <div class="stat">
@@ -281,14 +311,74 @@ const defaultPrice = defaultVariant?.prices?.[0];
             {isOwner && (
               <div class="sidebar-card__owner">
                 <p class="sidebar-card__owner-text">You own this product</p>
-                <a href={`/products/${product}`} class="sidebar-card__owner-link">
+                <a href={`/products/${product}?mode=edit`} class="sidebar-card__owner-link">
                   <Button variant="outline" size="md">
-                    <span slot="text">Manage Product</span>
+                    <span slot="text">Edit Product</span>
                   </Button>
                 </a>
               </div>
             )}
           </div>
+        )}
+
+        {isEditMode && (
+          <>
+            <!-- Product Information Card (Edit Mode) -->
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Information</CardTitle>
+                <CardDescription>Edit your product details</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProductBasicInfoForm
+                  client:load
+                  productId={productData.id}
+                  initialData={{
+                    title: productData.title,
+                    description: productData.description,
+                  }}
+                />
+              </CardContent>
+            </Card>
+
+            <!-- Status Card (Edit Mode) -->
+            <Card>
+              <CardHeader>
+                <CardTitle>Publish Status</CardTitle>
+                <CardDescription>Control who can see this product</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProductStatusEditor
+                  client:load
+                  productId={productData.id}
+                  currentStatus={productData.status}
+                  hasVariants={variantsWithPrices.length > 0}
+                />
+              </CardContent>
+            </Card>
+
+            <!-- Tags Card (Edit Mode) -->
+            <Card>
+              <CardHeader>
+                <CardTitle>Tags</CardTitle>
+                <CardDescription>Add tags to help users find your product</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="card-placeholder">Tags form will go here</p>
+              </CardContent>
+            </Card>
+
+            <!-- Images Card (Edit Mode) -->
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Images</CardTitle>
+                <CardDescription>Manage your product images</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="card-placeholder">Images form will go here</p>
+              </CardContent>
+            </Card>
+          </>
         )}
 
       </aside>

@@ -109,11 +109,17 @@
   font-size: var(--text-sm);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-in-out);
+  transition: all var(--duration-fast) var(--ease-in-out);
 }
 
 .asset-chat__submit:hover:not(:disabled) {
   background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.asset-chat__submit:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .asset-chat__submit:focus-visible {
@@ -122,6 +128,8 @@
 }
 
 .asset-chat__submit:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  background-color: var(--muted);
+  color: var(--muted-foreground);
 }

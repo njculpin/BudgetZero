@@ -96,19 +96,32 @@
 
 .form-field__file-input {
   width: 100%;
-  padding: var(--spacing-md);
+  padding: var(--spacing-3xl) var(--spacing-2xl);
   border: 2px dashed var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background-color: var(--muted);
   cursor: pointer;
   font-size: var(--text-sm);
-  transition: border-color var(--duration-normal) var(--ease-in-out),
-              background-color var(--duration-normal) var(--ease-in-out);
+  text-align: center;
+  transition: all var(--duration-normal) var(--ease-in-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.form-field__file-input::file-selector-button {
+  display: none;
 }
 
 .form-field__file-input:hover:not(:disabled) {
   border-color: var(--primary);
-  background-color: oklch(from var(--primary) l c h / 0.05);
+  background-color: oklch(from var(--primary) l c h / 0.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.form-field__file-input:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .form-field__file-input:disabled {

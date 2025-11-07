@@ -18,6 +18,7 @@ import AssetTagsForm from "@/components/islands/AssetTagsForm";
 import AssetFileForm from "@/components/islands/AssetFileForm";
 import AssetImagesForm from "@/components/islands/AssetImagesForm";
 import AssetBasicInfoForm from "@/components/islands/AssetBasicInfoForm";
+import AssetStatusEditor from "@/components/islands/AssetStatusEditor";
 
 const { asset } = Astro.params;
 
@@ -90,12 +91,47 @@ const isShopMode = !isContributor || mode === "shop";
 <Layout title={`${assetData.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
+      <!-- Breadcrumb Navigation -->
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <ol class="breadcrumb__list">
+          <li class="breadcrumb__item">
+            <a href="/" class="breadcrumb__link">Home</a>
+          </li>
+          <li class="breadcrumb__item">
+            <a href="/assets" class="breadcrumb__link">Assets</a>
+          </li>
+          <li class="breadcrumb__item breadcrumb__item--current">
+            <span class="breadcrumb__current">{assetData.title}</span>
+          </li>
+        </ol>
+      </nav>
+
       <!-- Hero Section -->
       <div
         class="asset-hero"
         style={heroImage ? `background-image: url('${heroImage}')` : ''}
       >
         {heroImage && <div class="asset-hero__overlay"></div>}
+
+        {isContributor && (
+          <div class="asset-hero__mode-toggle">
+            <span class={`mode-badge mode-badge--${isEditMode ? 'edit' : 'preview'}`}>
+              {isEditMode ? '✏️ Edit Mode' : '👁️ Preview Mode'}
+            </span>
+            <a
+              href={`/assets/${assetData.handle}${isEditMode ? '?mode=preview' : ''}`}
+              class="mode-toggle-link"
+              aria-label={`Switch to ${isEditMode ? 'preview' : 'edit'} mode`}
+            >
+              <Button variant="ghost" size="sm">
+                <span slot="text">
+                  Switch to {isEditMode ? 'Preview' : 'Edit'}
+                </span>
+              </Button>
+            </a>
+          </div>
+        )}
+
         <div class="asset-hero__content">
           <h1 class="asset-hero__title">{assetData.title}</h1>
           <div class="asset-hero__meta">
@@ -151,50 +187,61 @@ const isShopMode = !isContributor || mode === "shop";
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Images</CardTitle>
-              <CardDescription>Preview Images of the asset</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isEditMode &&
-                  <AssetImagesForm
-                  client:load
-                  assetId={assetData.id}
-                  existingImages={imagesData.map(i => ({
-                    id: i.id,
-                    title: i.title,
-                    file_url: i.file_url,
-                  }))}
-                />
-                }
-                {(isPreviewMode || isShopMode) &&
-                <GalleryGrid images={images} cols={5}/>
-                }
-              </CardContent>
-          </Card>
+          {(isEditMode || images.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Images</CardTitle>
+                <CardDescription>
+                  {isEditMode
+                    ? 'Upload preview images to showcase your asset'
+                    : 'Preview images of the asset'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isEditMode &&
+                    <AssetImagesForm
+                    client:load
+                    assetId={assetData.id}
+                    existingImages={imagesData.map(i => ({
+                      id: i.id,
+                      title: i.title,
+                      file_url: i.file_url,
+                    }))}
+                  />
+                  }
+                  {(isPreviewMode || isShopMode) && images.length > 0 &&
+                  <GalleryGrid images={images} cols={3}/>
+                  }
+                </CardContent>
+            </Card>
+          )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Files Included</CardTitle>
-              <CardDescription>A List of files included in this asset</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isEditMode &&
-                <AssetFileForm
-                  client:load
-                  assetId={assetData.id}
-                  existingFiles={files.map(f => ({
-                    id: f.id,
-                    title: f.title,
-                    file_size_bytes: f.file_size_bytes,
-                    file_url: f.file_url,
-                  }))}
-                />
-                }
-                {(isPreviewMode || isShopMode) && files.map((file) => (
+          {(isEditMode || files.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Files Included</CardTitle>
+                <CardDescription>
+                  {isEditMode
+                    ? 'Upload files that will be included when this asset is purchased'
+                    : 'A list of files included in this asset'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isEditMode &&
+                  <AssetFileForm
+                    client:load
+                    assetId={assetData.id}
+                    existingFiles={files.map(f => ({
+                      id: f.id,
+                      title: f.title,
+                      file_size_bytes: f.file_size_bytes,
+                      file_url: f.file_url,
+                    }))}
+                  />
+                  }
+                  {(isPreviewMode || isShopMode) && files.map((file) => (
                   <div class="file-item">
-                    <div class="file-item__icon">
+                    <div class="file-item__icon" aria-hidden="true">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
                       </svg>
@@ -214,15 +261,17 @@ const isShopMode = !isContributor || mode === "shop";
                       target="_blank"
                       rel="noopener noreferrer"
                       class="file-item__download"
+                      aria-label={`Download ${file.title}`}
                     >
                       <Button variant="ghost" size="sm">
                         <span slot="text">Download</span>
                       </Button>
                     </a>
                   </div>
-                ))}
-            </CardContent>
-          </Card>
+                  ))}
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -236,39 +285,43 @@ const isShopMode = !isContributor || mode === "shop";
               )}
             </CardHeader>
             <CardContent>
-                  <div class="sidebar-card__price">
-                    <p class="sidebar-card__price-label">Cost per use in product</p>
-                    <p class="sidebar-card__price-value">${(totalRoyalty / 100).toFixed(2)}</p>
-                  </div>
-                  <div class="sidebar-card__royalties">
-                    <h4 class="sidebar-card__royalties-title">Revenue Split</h4>
-                    <div class="royalty-list">
-                      {royaltiesWithUsers.map((royalty) => (
-                        <div class="royalty-item">
+              <div class="royalties-section">
+                <div class="royalties-section__price">
+                  <p class="royalties-section__price-label">Cost per use in product</p>
+                  <p class="royalties-section__price-value">${(totalRoyalty / 100).toFixed(2)}</p>
+                </div>
+
+                <div>
+                  <h4 class="royalties-section__split-title">Revenue Split</h4>
+                  <div class="royalty-list">
+                    {royaltiesWithUsers.map((royalty) => (
+                      <div class="royalty-item">
+                        <div class="royalty-item__info">
                           <span class="royalty-item__name">
                             {royalty.user?.name || royalty.user?.handle || "Unknown"}
-                            {royalty.user_id === assetData.user_id && (
-                              <span class="royalty-item__badge">Creator</span>
-                            )}
                           </span>
-                          <span class="royalty-item__amount">
-                            ${(royalty.royalty_value / 100).toFixed(2)}
-                          </span>
+                          {royalty.user_id === assetData.user_id && (
+                            <span class="royalty-item__badge">Creator</span>
+                          )}
                         </div>
-                      ))}
-                    </div>
+                        <span class="royalty-item__amount">
+                          ${(royalty.royalty_value / 100).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                  {isContributor && (
-                    <div>
-                      <!-- TODO: add to existing or new product, search for existing product -->
-                      <a href={`/assets/${assetData?.handle}`} class="creator-card__link">
-                        <Button variant="outline" size="md">
-                          <span slot="text">Add to Product</span>
-                        </Button>
-                      </a>
-                    </div>
-                  )}
-              </CardContent>
+                </div>
+
+                {isContributor && (
+                  <div class="royalties-section__actions">
+                    <!-- TODO: add to existing or new product, search for existing product -->
+                    <Button variant="primary" size="md">
+                      <span slot="text">Add to Product</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
           </Card>
 
           <Card>
@@ -290,35 +343,6 @@ const isShopMode = !isContributor || mode === "shop";
         </div>
 
         <div class="page-columns__column">
-          {isContributor && (
-            <Card>
-              <CardContent>
-                <div class="view-mode">
-                  <div class="view-mode__current">
-                    <span class={`view-mode__badge view-mode__badge--${isEditMode ? 'edit' : 'preview'}`}>
-                      {isEditMode ? '✏ Edit Mode' : '👁 Preview Mode'}
-                    </span>
-                    <p class="view-mode__description">
-                      {isEditMode
-                        ? 'Editing asset details and settings'
-                        : 'Viewing as customers see this asset'}
-                    </p>
-                  </div>
-                  <a
-                    href={`/assets/${assetData.handle}${isEditMode ? '?mode=preview' : ''}`}
-                    class="view-mode__toggle"
-                  >
-                    <Button variant="outline" size="sm">
-                      <span slot="text">
-                        Switch to {isEditMode ? 'Preview' : 'Edit'}
-                      </span>
-                    </Button>
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {isEditMode && 
           <Card>
             <CardHeader>
@@ -352,25 +376,34 @@ const isShopMode = !isContributor || mode === "shop";
           {isEditMode && (
             <Card>
               <CardHeader>
+                <CardTitle>Publish Status</CardTitle>
+                <CardDescription>
+                  Control who can see this asset
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AssetStatusEditor
+                  client:load
+                  assetId={assetData.id}
+                  currentStatus={assetData.status}
+                  hasImages={imagesData.length > 0}
+                  hasFiles={files.length > 0}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {isEditMode && (
+            <Card>
+              <CardHeader>
                 <CardTitle>Asset Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <dl class="asset-meta">
                   <div class="asset-meta__item">
-                    <dt class="asset-meta__label">Status</dt>
+                    <dt class="asset-meta__label">Created</dt>
                     <dd class="asset-meta__value">
-                      <span class={`asset-status-badge asset-status-badge--${assetData.status}`}>
-                        {assetData.status === 'published' ? 'Published' :
-                         assetData.status === 'draft' ? 'Draft' :
-                         'Archived'}
-                      </span>
-                    </dd>
-                  </div>
-
-                  <div class="asset-meta__item">
-                    <dt class="asset-meta__label">Last Updated</dt>
-                    <dd class="asset-meta__value">
-                      {new Date(assetData.updated_at).toLocaleDateString('en-US', {
+                      {new Date(assetData.created_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric'
@@ -379,9 +412,9 @@ const isShopMode = !isContributor || mode === "shop";
                   </div>
 
                   <div class="asset-meta__item">
-                    <dt class="asset-meta__label">Created</dt>
+                    <dt class="asset-meta__label">Last Updated</dt>
                     <dd class="asset-meta__value">
-                      {new Date(assetData.created_at).toLocaleDateString('en-US', {
+                      {new Date(assetData.updated_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric'
@@ -403,28 +436,34 @@ const isShopMode = !isContributor || mode === "shop";
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Tags</CardTitle>
-              <CardDescription>A list of tags associated with this asset</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isEditMode &&
-              <AssetTagsForm
-                  client:load
-                  assetId={assetData.id}
-                  initialTags={tags.map(t => t.value)}
-                />
-              }
-              {(isPreviewMode || isShopMode) && 
-                tags.map((tag) => (
-                  <a href={`/assets?tag=${tag.value}`} class="asset-tags__link">
-                    <Tag>{tag.value}</Tag>
-                  </a>
-                ))
-              }
-            </CardContent>
-          </Card>
+          {(isEditMode || tags.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tags</CardTitle>
+                <CardDescription>
+                  {isEditMode
+                    ? 'Add tags to help others discover your asset'
+                    : 'Tags associated with this asset'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isEditMode &&
+                <AssetTagsForm
+                    client:load
+                    assetId={assetData.id}
+                    initialTags={tags.map(t => t.value)}
+                  />
+                }
+                {(isPreviewMode || isShopMode) && tags.length > 0 &&
+                  tags.map((tag) => (
+                    <a href={`/assets?tag=${tag.value}`} class="asset-tags__link">
+                      <Tag>{tag.value}</Tag>
+                    </a>
+                  ))
+                }
+              </CardContent>
+            </Card>
+          )}
 
         </div>
       </div>
@@ -433,7 +472,58 @@ const isShopMode = !isContributor || mode === "shop";
 </Layout>
 
 <style>
-  /* Asset Hero Section */
+  /* ===== Breadcrumb Navigation ===== */
+  .breadcrumb {
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .breadcrumb__list {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+  }
+
+  .breadcrumb__item {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .breadcrumb__item:not(:last-child)::after {
+    content: '/';
+    color: var(--border);
+    margin-left: var(--gap-sm);
+  }
+
+  .breadcrumb__link {
+    color: var(--muted-foreground);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-in-out);
+  }
+
+  .breadcrumb__link:hover {
+    color: var(--foreground);
+    text-decoration: underline;
+  }
+
+  .breadcrumb__link:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .breadcrumb__current {
+    color: var(--foreground);
+    font-weight: var(--font-weight-medium);
+  }
+
+  /* ===== Asset Hero Section ===== */
   .asset-hero {
     position: relative;
     min-height: 300px;
@@ -468,8 +558,9 @@ const isShopMode = !isContributor || mode === "shop";
     margin: 0;
     font-size: var(--text-4xl);
     font-weight: var(--font-weight-bold);
-    color: var(--accent);
+    color: var(--color-white);
     line-height: var(--leading-tight);
+    text-shadow: var(--text-shadow-md);
   }
 
   .asset-hero__meta {
@@ -506,20 +597,76 @@ const isShopMode = !isContributor || mode === "shop";
 
   .asset-hero__author {
     font-size: var(--text-base);
-    color: var(--accent-foreground);
+    color: rgba(255, 255, 255, 0.9);
   }
 
   .asset-hero__author-link {
-    color: var(--accent);
+    color: var(--color-white);
     text-decoration: none;
     font-weight: var(--font-weight-semibold);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
   }
 
   .asset-hero__author-link:hover {
-    text-decoration: underline;
+    border-bottom-color: var(--color-white);
   }
 
-  /* View Mode Toggle */
+  .asset-hero__author-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* ===== Mode Toggle in Hero ===== */
+  .asset-hero__mode-toggle {
+    position: absolute;
+    top: var(--spacing-2xl);
+    right: var(--spacing-2xl);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: var(--gap-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: oklch(from var(--background) l c h / 0.95);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-xs);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full);
+  }
+
+  .mode-badge--edit {
+    background-color: oklch(from var(--primary) l c h / 0.1);
+    color: var(--primary);
+  }
+
+  .mode-badge--preview {
+    background-color: oklch(from var(--accent) l c h / 0.1);
+    color: var(--accent);
+  }
+
+  .mode-toggle-link {
+    text-decoration: none;
+  }
+
+  .mode-toggle-link:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* View Mode Toggle (Legacy - Remove if unused) */
   .view-mode {
     display: flex;
     flex-direction: column;
@@ -562,6 +709,12 @@ const isShopMode = !isContributor || mode === "shop";
 
   .view-mode__toggle {
     text-decoration: none;
+  }
+
+  .view-mode__toggle:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
   }
 
   /* File List */
@@ -615,37 +768,46 @@ const isShopMode = !isContributor || mode === "shop";
     text-decoration: none;
   }
 
-  /* Sidebar Card (Royalties Section) */
-  .sidebar-card__price {
-    padding: var(--spacing-2xl);
-    background-color: var(--muted);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-2xl);
+  /* Royalties Section */
+  .royalties-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xl);
   }
 
-  .sidebar-card__price-label {
-    margin: 0 0 var(--spacing-sm) 0;
+  .royalties-section__price {
+    padding: var(--spacing-3xl);
+    background-color: var(--muted);
+    border-radius: var(--radius-lg);
+    text-align: center;
+  }
+
+  .royalties-section__price-label {
+    margin: 0 0 var(--spacing-md) 0;
     font-size: var(--text-sm);
     font-weight: var(--font-weight-medium);
     color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
-  .sidebar-card__price-value {
+  .royalties-section__price-value {
     margin: 0;
-    font-size: var(--text-3xl);
+    font-size: var(--text-4xl);
     font-weight: var(--font-weight-bold);
     color: var(--foreground);
   }
 
-  .sidebar-card__royalties {
-    padding: var(--spacing-2xl) 0;
-  }
-
-  .sidebar-card__royalties-title {
+  .royalties-section__split-title {
     margin: 0 0 var(--spacing-2xl) 0;
     font-size: var(--text-base);
     font-weight: var(--font-weight-semibold);
     color: var(--foreground);
+  }
+
+  .royalties-section__actions {
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid var(--border);
   }
 
   .royalty-list {
@@ -664,31 +826,41 @@ const isShopMode = !isContributor || mode === "shop";
     padding: var(--spacing-lg);
     background-color: var(--muted);
     border-radius: var(--radius-md);
+    gap: var(--gap-md);
   }
 
-  .royalty-item__user {
+  .royalty-item__info {
     display: flex;
     flex-direction: column;
     gap: var(--gap-xs);
+    flex: 1;
+    min-width: 0;
   }
 
   .royalty-item__name {
-    margin: 0;
     font-size: var(--text-sm);
     font-weight: var(--font-weight-medium);
     color: var(--foreground);
   }
 
-  .royalty-item__role {
-    margin: 0;
+  .royalty-item__badge {
+    display: inline-block;
+    margin-left: var(--spacing-sm);
+    padding: var(--spacing-xxs) var(--spacing-sm);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
     font-size: var(--text-xs);
-    color: var(--muted-foreground);
+    font-weight: var(--font-weight-semibold);
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .royalty-item__amount {
     font-size: var(--text-base);
     font-weight: var(--font-weight-semibold);
     color: var(--primary);
+    flex-shrink: 0;
   }
 
   /* License Card */
@@ -702,12 +874,24 @@ const isShopMode = !isContributor || mode === "shop";
     text-decoration: underline;
   }
 
+  .license-card__link:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
   /* Asset Tags */
   .asset-tags__link {
     text-decoration: none;
     display: inline-block;
     margin-right: var(--spacing-sm);
     margin-bottom: var(--spacing-sm);
+  }
+
+  .asset-tags__link:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
   }
 
   /* Asset About Section */
@@ -723,16 +907,6 @@ const isShopMode = !isContributor || mode === "shop";
     font-size: var(--text-sm);
     color: var(--muted-foreground);
     font-style: italic;
-  }
-
-  .asset-author-link {
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: var(--font-weight-medium);
-  }
-
-  .asset-author-link:hover {
-    text-decoration: underline;
   }
 
   /* Asset Meta Information */
@@ -813,16 +987,8 @@ const isShopMode = !isContributor || mode === "shop";
       gap: var(--gap-sm);
     }
 
-    .asset-layout {
+    .page-columns {
       grid-template-columns: 1fr;
-    }
-
-    .asset-main {
-      order: 1;
-    }
-
-    .asset-sidebar {
-      order: 2;
     }
 
     .view-mode {
@@ -837,6 +1003,15 @@ const isShopMode = !isContributor || mode === "shop";
 
     .view-mode__toggle a {
       display: block;
+      width: 100%;
+    }
+
+    .file-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .file-item__download {
       width: 100%;
     }
   }
