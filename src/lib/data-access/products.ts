@@ -159,8 +159,40 @@ export const getProductByHandle = async (handle: string): Promise<Product | null
 export const updateProduct = async (
   productId: string,
   updates: UpdateProductParams
-): Promise<boolean> => {
-  if (updates.handle) {
+): Promise<Product | null> => {
+  const updatesToApply = { ...updates };
+
+  // If updating title, generate new handle from it
+  if (updates.title) {
+    // Generate handle from title: lowercase, remove special chars, spaces to dashes
+    const titleSlug = updates.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with dashes
+      .replace(/^-|-$/g, ""); // Remove leading/trailing dashes
+
+    // Check if new handle is available (excluding current product)
+    const isAvailable = await checkHandleAvailability(titleSlug, productId);
+
+    if (isAvailable) {
+      updatesToApply.handle = titleSlug;
+    } else {
+      // Append counter to make unique handle
+      let counter = 1;
+      let uniqueHandle = `${titleSlug}-${counter}`;
+      let available = await checkHandleAvailability(uniqueHandle, productId);
+
+      while (!available) {
+        counter++;
+        uniqueHandle = `${titleSlug}-${counter}`;
+        available = await checkHandleAvailability(uniqueHandle, productId);
+      }
+
+      updatesToApply.handle = uniqueHandle;
+    }
+  }
+
+  // Check if manually provided handle is available
+  if (updates.handle && updates.handle !== updatesToApply.handle) {
     const isAvailable = await checkHandleAvailability(updates.handle, productId);
     if (!isAvailable) {
       throw new Error('Handle is already taken');
@@ -171,11 +203,11 @@ export const updateProduct = async (
     updated_at: new Date().toISOString(),
   };
 
-  if (updates.title !== undefined) updateData.title = updates.title;
-  if (updates.description !== undefined) updateData.description = updates.description;
-  if (updates.status !== undefined) updateData.status = updates.status;
-  if (updates.handle !== undefined) updateData.handle = updates.handle;
-  if (updates.publishedAt !== undefined) updateData.published_at = updates.publishedAt;
+  if (updatesToApply.title !== undefined) updateData.title = updatesToApply.title;
+  if (updatesToApply.description !== undefined) updateData.description = updatesToApply.description;
+  if (updatesToApply.status !== undefined) updateData.status = updatesToApply.status;
+  if (updatesToApply.handle !== undefined) updateData.handle = updatesToApply.handle;
+  if (updatesToApply.publishedAt !== undefined) updateData.published_at = updatesToApply.publishedAt;
 
   const { error } = await serverClient
     .from('products')
@@ -184,23 +216,23 @@ export const updateProduct = async (
 
   if (error) {
     console.error('Error updating product:', error);
-    return false;
+    return null;
   }
 
-  if (updates.tags !== undefined) {
+  if (updatesToApply.tags !== undefined) {
     await serverClient
       .from('product_tags')
       .delete()
       .eq('product_id', productId);
 
-    if (updates.tags.length > 0) {
-      for (const tag of updates.tags) {
+    if (updatesToApply.tags.length > 0) {
+      for (const tag of updatesToApply.tags) {
         await createProductTag(productId, tag);
       }
     }
   }
 
-  return true;
+  return await getProductById(productId);
 };
 
 /**
@@ -749,4 +781,88 @@ export const getProductImages = async (productId: string) => {
   }
 
   return data;
+};
+
+/**
+ * Get available assets for a user (owned or collaborated assets)
+ * These are assets the user can add to their product variants
+ */
+export const getAvailableAssetsForUser = async (userId: string): Promise<Asset[]> => {
+  // Get assets owned by user
+  const { data: ownedAssets, error: ownedError } = await serverClient
+    .from('assets')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('deleted', false)
+    .order('created_at', { ascending: false });
+
+  if (ownedError) {
+    console.error('Error fetching owned assets:', ownedError);
+    return [];
+  }
+
+  // Get assets where user is a contributor
+  const { data: contributions, error: contribError } = await serverClient
+    .from('asset_contributors')
+    .select('asset_id')
+    .eq('user_id', userId);
+
+  if (contribError || !contributions) {
+    return ownedAssets as Asset[];
+  }
+
+  const contributedAssetIds = contributions.map(c => c.asset_id);
+
+  if (contributedAssetIds.length === 0) {
+    return ownedAssets as Asset[];
+  }
+
+  // Get contributed assets
+  const { data: contributedAssets, error: contributedError } = await serverClient
+    .from('assets')
+    .select('*')
+    .in('id', contributedAssetIds)
+    .eq('deleted', false);
+
+  if (contributedError || !contributedAssets) {
+    return ownedAssets as Asset[];
+  }
+
+  // Combine and deduplicate
+  const allAssets = [...(ownedAssets || []), ...contributedAssets];
+  const uniqueAssets = Array.from(
+    new Map(allAssets.map(asset => [asset.id, asset])).values()
+  );
+
+  return uniqueAssets.sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+};
+
+/**
+ * Calculate total royalty cost for all assets in a variant
+ * Returns the sum of all royalty values (in cents) for assets linked to this variant
+ */
+export const getVariantRoyaltyTotal = async (variantId: string): Promise<number> => {
+  const assets = await getVariantAssets(variantId);
+
+  if (assets.length === 0) {
+    return 0;
+  }
+
+  let total = 0;
+
+  for (const asset of assets) {
+    const { data: royalties, error } = await serverClient
+      .from('asset_royalties')
+      .select('royalty_value')
+      .eq('asset_id', asset.id)
+      .eq('deleted', false);
+
+    if (!error && royalties) {
+      total += royalties.reduce((sum, r) => sum + r.royalty_value, 0);
+    }
+  }
+
+  return total;
 };

@@ -6,12 +6,16 @@ import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
 import AddToCartButton from "@/components/islands/AddToCartButton";
 import ProductDeleteButton from "@/components/islands/ProductDeleteButton";
-import PricingBreakdown from "@/components/islands/PricingBreakdown";
 import ProductBasicInfoForm from "@/components/islands/ProductBasicInfoForm";
 import ProductStatusEditor from "@/components/islands/ProductStatusEditor";
 import ProductTagsForm from "@/components/islands/ProductTagsForm";
 import ProductImagesForm from "@/components/islands/ProductImagesForm";
-import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages } from "@/lib/data-access/products";
+import ProductChat from "@/components/islands/ProductChat";
+import ProductVariantManager from "@/components/islands/ProductVariantManager";
+import ProductVariantEditor from "@/components/islands/ProductVariantEditor";
+import ProductPriceManager from "@/components/islands/ProductPriceManager";
+import VariantAssetPicker from "@/components/islands/VariantAssetPicker";
+import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getVariantAssets } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 import Card from "@/components/Card.astro";
@@ -42,7 +46,8 @@ const coverImage = productImages[0]?.file_url || null;
 const variantsWithPrices = await Promise.all(
   variants.map(async (variant) => {
     const prices = await getVariantPrices(variant.id);
-    return { ...variant, prices };
+    const assets = await getVariantAssets(variant.id);
+    return { ...variant, prices, assets };
   })
 );
 
@@ -213,6 +218,52 @@ const defaultPrice = defaultVariant?.prices?.[0];
                     <p class="variant-item__description">{variant.description}</p>
                   )}
 
+                  {isEditMode && (
+                    <ProductVariantEditor
+                      client:load
+                      variantId={variant.id}
+                      initialTitle={variant.title}
+                      initialDescription={variant.description}
+                    />
+                  )}
+
+                  {isEditMode && currentUser && (
+                    <VariantAssetPicker
+                      client:load
+                      variantId={variant.id}
+                      userId={currentUser.id}
+                    />
+                  )}
+
+                  {!isEditMode && variant.assets && variant.assets.length > 0 && (
+                    <div class="variant-item__assets">
+                      <h5 class="variant-item__assets-title">Included Assets</h5>
+                      <div class="variant-item__assets-list">
+                        {variant.assets.map((asset: any) => (
+                          <a href={`/assets/${asset.handle}`} class="variant-item__asset-card">
+                            <div class="variant-item__asset-image-container">
+                              {asset.cover_image_url ? (
+                                <img
+                                  src={asset.cover_image_url}
+                                  alt={asset.title}
+                                  class="variant-item__asset-image"
+                                />
+                              ) : (
+                                <div class="variant-item__asset-image-placeholder">
+                                  📦
+                                </div>
+                              )}
+                            </div>
+                            <div class="variant-item__asset-info">
+                              <h6 class="variant-item__asset-title">{asset.title}</h6>
+                              <p class="variant-item__asset-handle">@{asset.handle}</p>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {variant.prices && variant.prices.length > 0 ? (
                     <div class="variant-item__pricing">
                       <div class="variant-item__price-list">
@@ -234,7 +285,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
                       </div>
 
                       <div class="variant-item__actions">
-                        {!isOwner && currentUser && (
+                        {!isEditMode && currentUser && (
                           <AddToCartButton
                             client:load
                             productId={productData.id}
@@ -244,7 +295,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
                             size="md"
                           />
                         )}
-                        {!isOwner && !currentUser && (
+                        {!isEditMode && !currentUser && (
                           <a href={`/sign-in?redirect=/products/${product}`}>
                             <Button variant="primary" size="md">
                               <span slot="text">Sign In to Purchase</span>
@@ -254,17 +305,18 @@ const defaultPrice = defaultVariant?.prices?.[0];
                       </div>
                     </div>
                   ) : (
-                    isOwner && (
+                    isEditMode && (
                       <p class="variant-item__no-price">No pricing configured for this variant</p>
                     )
                   )}
 
-                  {isOwner && variant.prices && variant.prices.length > 0 && (
+                  {isEditMode && (
                     <div class="variant-item__breakdown">
-                      <PricingBreakdown
+                      <ProductPriceManager
                         client:load
                         variantId={variant.id}
                         variantTitle={variant.title}
+                        existingPrices={variant.prices || []}
                       />
                     </div>
                   )}
@@ -275,11 +327,11 @@ const defaultPrice = defaultVariant?.prices?.[0];
               <div class="product-empty">
                 <div class="product-empty__icon">📦</div>
                 <p class="product-empty__text">
-                  {isOwner
+                  {isEditMode
                     ? "No variants added yet. Variants let you offer different options (digital/physical) and pricing tiers."
                     : "This product doesn't have any variants available yet."}
                 </p>
-                {isOwner && (
+                {isEditMode && (
                   <p class="product-empty__help">
                     Variants contain the actual downloadable assets or physical items that customers receive.
                   </p>
@@ -287,13 +339,9 @@ const defaultPrice = defaultVariant?.prices?.[0];
               </div>
             )}
           </CardContent>
-          {isOwner && (
+          {isEditMode && (
             <CardFooter>
-              <div class="product-variants__actions">
-                <p class="product-variants__note">
-                  <strong>Note:</strong> Variant management coming soon. For now, variants are created through the API.
-                </p>
-              </div>
+              <ProductVariantManager client:load productId={productData.id} />
             </CardFooter>
           )}
         </Card>
@@ -333,7 +381,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
               </div>
             )}
 
-            {!isOwner && defaultVariant && (
+            {!isEditMode && defaultVariant && (
               <div class="sidebar-card__cta">
                 {currentUser ? (
                   <AddToCartButton
@@ -354,12 +402,12 @@ const defaultPrice = defaultVariant?.prices?.[0];
               </div>
             )}
 
-            {isOwner && (
+            {isEditMode && (
               <div class="sidebar-card__owner">
                 <p class="sidebar-card__owner-text">You own this product</p>
-                <a href={`/products/${product}?mode=edit`} class="sidebar-card__owner-link">
+                <a href={`/products/${product}?mode=preview`} class="sidebar-card__owner-link">
                   <Button variant="outline" size="md">
-                    <span slot="text">Edit Product</span>
+                    <span slot="text">Preview as Customer</span>
                   </Button>
                 </a>
               </div>
@@ -701,6 +749,92 @@ const defaultPrice = defaultVariant?.prices?.[0];
     font-size: var(--text-base);
     color: var(--muted-foreground);
     line-height: var(--leading-relaxed);
+  }
+
+  .variant-item__assets {
+    margin: var(--spacing-lg) 0;
+    padding: var(--spacing-lg);
+    background-color: var(--background);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+  }
+
+  .variant-item__assets-title {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .variant-item__assets-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--gap-md);
+  }
+
+  .variant-item__asset-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+    padding: var(--spacing-md);
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all var(--duration-fast) var(--ease-in-out);
+  }
+
+  .variant-item__asset-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .variant-item__asset-image-container {
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background-color: var(--muted);
+  }
+
+  .variant-item__asset-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .variant-item__asset-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-3xl);
+    color: var(--muted-foreground);
+    opacity: 0.5;
+  }
+
+  .variant-item__asset-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+  }
+
+  .variant-item__asset-title {
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--foreground);
+    line-height: var(--leading-tight);
+  }
+
+  .variant-item__asset-handle {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--muted-foreground);
   }
 
   .variant-item__pricing {
