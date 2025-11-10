@@ -1,0 +1,20 @@
+/* Product Variant Manager */
+.variant-manager {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.variant-manager__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  align-items: flex-start;
+}
+
+.variant-manager__help {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-normal);
+}

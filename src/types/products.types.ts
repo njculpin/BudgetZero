@@ -72,9 +72,8 @@ export interface ProductVariantImage extends BaseEntity {
 }
 
 export interface ProductAsset extends BaseEntity {
-  product_id: string;
-  asset_id: string;
   variant_id: string;
+  asset_id: string;
 }
 
 export interface ProductReview extends BaseEntity {

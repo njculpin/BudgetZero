@@ -1,0 +1,187 @@
+/* Product Price Manager */
+.price-manager {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.price-manager__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price-manager__title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.price-manager__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.price-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background-color: var(--muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.price-item__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.price-item__amount {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.price-item__quantity {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.price-item__delete {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--destructive);
+  color: var(--destructive-foreground);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.price-item__delete:hover:not(:disabled) {
+  background-color: oklch(from var(--destructive) calc(l * 0.9) c h);
+}
+
+.price-item__delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.price-manager__add-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+  align-self: flex-start;
+}
+
+.price-manager__add-button:hover {
+  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+}
+
+.price-manager__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+  padding: var(--spacing-lg);
+  background-color: var(--muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.price-manager__form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap-md);
+}
+
+.price-manager__form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.price-manager__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.price-manager__select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-in-out);
+}
+
+.price-manager__select:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+}
+
+.price-manager__select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.price-manager__form-actions {
+  display: flex;
+  gap: var(--gap-md);
+  align-items: center;
+}
+
+.price-manager__cancel {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.price-manager__cancel:hover:not(:disabled) {
+  background-color: var(--background);
+}
+
+.price-manager__cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .price-manager__form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .price-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-md);
+  }
+
+  .price-item__delete {
+    align-self: stretch;
+  }
+}

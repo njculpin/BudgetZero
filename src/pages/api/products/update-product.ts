@@ -110,7 +110,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       }
     }
 
-    const success = await updateProduct(validatedData.productId, {
+    const updatedProduct = await updateProduct(validatedData.productId, {
       title: validatedData.title,
       description: validatedData.description,
       status: validatedData.status,
@@ -118,14 +118,12 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       tags: validatedData.tags,
     });
 
-    if (!success) {
+    if (!updatedProduct) {
       return new Response(
         JSON.stringify({ error: "Failed to update product" }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
-
-    const updatedProduct = await getProductById(validatedData.productId);
 
     return new Response(JSON.stringify({ product: updatedProduct }), {
       status: 200,
@@ -264,9 +262,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       updateData.tags = JSON.parse(tagsJson);
     }
 
-    const success = await updateProduct(productId, updateData);
+    const updatedProduct = await updateProduct(productId, updateData);
 
-    if (!success) {
+    if (!updatedProduct) {
       return new Response(
         JSON.stringify({ error: "Failed to update product" }),
         {
@@ -275,8 +273,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         }
       );
     }
-
-    const updatedProduct = await getProductById(productId);
 
     return new Response(
       JSON.stringify({
