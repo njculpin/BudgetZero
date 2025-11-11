@@ -1,11 +1,11 @@
 import type { APIRoute } from "astro";
-import { z } from "zod";
 import { setSession } from "@/lib/auth";
-import { deleteAssetRoyalty, getRoyaltyById } from "@/lib/data-access/royalties";
+import { deleteProductImage } from "@/lib/data-access/products";
 import { serverClient } from "@/lib/data-access/client";
+import { z } from "zod";
 
-const deleteRoyaltySchema = z.object({
-  royaltyId: z.string().uuid(),
+const deleteSchema = z.object({
+  imageId: z.string().uuid(),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -43,66 +43,63 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const body = await request.json();
-    const validatedData = deleteRoyaltySchema.parse(body);
+    const validatedData = deleteSchema.parse(body);
 
-    const royalty = await getRoyaltyById(validatedData.royaltyId);
-    if (!royalty) {
-      return new Response(JSON.stringify({ error: "Royalty not found" }), {
+    const { data: image, error: fetchError } = await serverClient
+      .from("product_images")
+      .select("product_id, products(user_id)")
+      .eq("id", validatedData.imageId)
+      .single();
+
+    if (fetchError || !image) {
+      return new Response(JSON.stringify({ error: "Image not found" }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const { data: asset, error: assetError } = await serverClient
-      .from("assets")
-      .select("user_id")
-      .eq("id", royalty.asset_id)
-      .single();
+    const productUserId = (image.products as { user_id: string })?.user_id;
 
-    if (assetError || !asset || asset.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Not authorized" }), {
+    if (productUserId !== userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const success = await deleteAssetRoyalty(validatedData.royaltyId);
+    const success = await deleteProductImage(validatedData.imageId);
 
     if (!success) {
-      return new Response(JSON.stringify({ error: "Failed to delete royalty" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("Delete royalty error:", error);
-
-    if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({
-          error: "Validation failed",
-          details: error.errors,
-        }),
+        JSON.stringify({ error: "Failed to delete image" }),
         {
-          status: 400,
+          status: 500,
           headers: { "Content-Type": "application/json" },
         }
       );
     }
 
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to delete royalty",
-      }),
+      JSON.stringify({ success: true }),
       {
-        status: 500,
+        status: 200,
         headers: { "Content-Type": "application/json" },
       }
+    );
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ error: "Validation failed", details: error.errors }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    console.error("Delete image error:", error);
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Failed to delete image",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 };

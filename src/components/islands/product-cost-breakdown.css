@@ -1,0 +1,187 @@
+/* Product Cost Breakdown */
+.cost-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+  padding: var(--spacing-xl);
+  background-color: var(--muted);
+  border-radius: var(--radius-lg);
+  margin: var(--spacing-lg) 0;
+}
+
+.cost-breakdown__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cost-breakdown__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+/* Summary Section */
+.cost-breakdown__summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.cost-breakdown__summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background-color: var(--background);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.cost-breakdown__summary-item--positive {
+  border-color: var(--chart-2);
+  background-color: oklch(from var(--chart-2) l c h / 0.05);
+}
+
+.cost-breakdown__summary-item--negative {
+  border-color: var(--destructive);
+  background-color: oklch(from var(--destructive) l c h / 0.05);
+}
+
+.cost-breakdown__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+}
+
+.cost-breakdown__value {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.cost-breakdown__value--cost {
+  color: var(--muted-foreground);
+}
+
+.cost-breakdown__value--profit {
+  color: var(--chart-2);
+}
+
+.cost-breakdown__summary-item--negative .cost-breakdown__value--profit {
+  color: var(--destructive);
+}
+
+.cost-breakdown__warning {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  padding: var(--spacing-lg);
+  background-color: oklch(from var(--chart-4) l c h / 0.1);
+  border: 1px solid var(--chart-4);
+  border-radius: var(--radius-md);
+  color: var(--chart-4);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.cost-breakdown__warning svg {
+  flex-shrink: 0;
+}
+
+/* Details Section */
+.cost-breakdown__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border);
+}
+
+.cost-breakdown__details-title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.cost-breakdown__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.cost-breakdown__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--background);
+  border-radius: var(--radius-md);
+  gap: var(--gap-md);
+}
+
+.cost-breakdown__item-link {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--foreground);
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.cost-breakdown__item-link:hover {
+  color: var(--primary);
+}
+
+.cost-breakdown__item-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cost-breakdown__item-cost {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+
+/* Empty State */
+.cost-breakdown__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-md);
+  padding: var(--spacing-4xl);
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.cost-breakdown__empty svg {
+  color: var(--muted-foreground);
+}
+
+.cost-breakdown__empty p {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .cost-breakdown {
+    padding: var(--spacing-lg);
+  }
+
+  .cost-breakdown__value {
+    font-size: var(--text-lg);
+  }
+
+  .cost-breakdown__summary-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-sm);
+  }
+}

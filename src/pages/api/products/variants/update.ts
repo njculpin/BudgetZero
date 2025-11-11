@@ -7,6 +7,7 @@ const updateVariantSchema = z.object({
   variantId: z.string().uuid(),
   title: z.string().min(1).max(200).optional(),
   description: z.string().optional(),
+  sku: z.string().min(1).max(100).optional(),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -49,10 +50,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       {
         title: validatedData.title,
         description: validatedData.description,
-      },
-      {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
+        sku: validatedData.sku,
       }
     );
 

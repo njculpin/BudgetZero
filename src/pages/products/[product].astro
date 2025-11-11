@@ -5,7 +5,6 @@ import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
 import AddToCartButton from "@/components/islands/AddToCartButton";
-import ProductDeleteButton from "@/components/islands/ProductDeleteButton";
 import ProductBasicInfoForm from "@/components/islands/ProductBasicInfoForm";
 import ProductStatusEditor from "@/components/islands/ProductStatusEditor";
 import ProductTagsForm from "@/components/islands/ProductTagsForm";
@@ -15,6 +14,9 @@ import ProductVariantManager from "@/components/islands/ProductVariantManager";
 import ProductVariantEditor from "@/components/islands/ProductVariantEditor";
 import ProductPriceManager from "@/components/islands/ProductPriceManager";
 import VariantAssetPicker from "@/components/islands/VariantAssetPicker";
+import ProductValueBreakdown from "@/components/islands/ProductValueBreakdown";
+import ProductCostBreakdown from "@/components/islands/ProductCostBreakdown";
+import VariantDeleteButton from "@/components/islands/VariantDeleteButton";
 import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getVariantAssets } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
@@ -24,6 +26,7 @@ import CardTitle from "@/components/CardTitle.astro";
 import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
 import CardFooter from "@/components/CardFooter.astro";
+import GalleryGrid from "@/components/GalleryGrid.astro";
 
 const { product } = Astro.params;
 
@@ -184,37 +187,58 @@ const defaultPrice = defaultVariant?.prices?.[0];
             </Card>
           )}
 
+          <!-- Images Section -->
+          {(isEditMode || productImages.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Images</CardTitle>
+                <CardDescription>
+                  {isEditMode
+                    ? 'Upload and manage product images (up to 9). First image is the cover.'
+                    : 'Preview images of the product'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isEditMode && (
+                  <ProductImagesForm
+                    client:load
+                    productId={productData.id}
+                    existingImages={productImages}
+                  />
+                )}
+                {!isEditMode && productImages.length > 0 && (
+                  <GalleryGrid images={productImages.map(img => ({
+                    url: img.file_url,
+                    alt: img.title,
+                    href: img.file_url
+                  }))} cols={3}/>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <!-- Variants Section -->
         <Card>
           <CardHeader>
             <CardTitle>Product Variants</CardTitle>
-            <CardDescription>
-              {variantsWithPrices.length > 0
-                ? `Manage ${variantsWithPrices.length} variant${variantsWithPrices.length === 1 ? '' : 's'}`
-                : 'Add variants to define different options for this product'}
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {variantsWithPrices.length > 0 ? (
               <div class="product-variants__list">
               {variantsWithPrices.map((variant) => (
                 <div class="variant-item">
-                  <div class="variant-item__header">
-                    <div class="variant-item__title-group">
-                      <h3 class="variant-item__name">{variant.title}</h3>
-                      <Badge
-                        variant={variant.is_digital ? 'primary' : 'secondary'}
-                        size="sm"
-                      >
-                        {variant.is_digital ? 'Digital' : 'Physical'}
-                      </Badge>
+                  {!isEditMode && (
+                    <div class="variant-item__header">
+                      <div class="variant-item__title-group">
+                        <h4 class="variant-item__title">{variant.title}</h4>
+                        {variant.sku && (
+                          <span class="variant-item__sku">SKU: <code>{variant.sku}</code></span>
+                        )}
+                      </div>
                     </div>
-                    {variant.sku && (
-                      <span class="variant-item__sku">SKU: <code>{variant.sku}</code></span>
-                    )}
-                  </div>
+                  )}
 
-                  {variant.description && (
+                  {!isEditMode && variant.description && (
                     <p class="variant-item__description">{variant.description}</p>
                   )}
 
@@ -224,6 +248,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
                       variantId={variant.id}
                       initialTitle={variant.title}
                       initialDescription={variant.description}
+                      initialSku={variant.sku}
                     />
                   )}
 
@@ -237,7 +262,22 @@ const defaultPrice = defaultVariant?.prices?.[0];
 
                   {!isEditMode && variant.assets && variant.assets.length > 0 && (
                     <div class="variant-item__assets">
-                      <h5 class="variant-item__assets-title">Included Assets</h5>
+                      <div class="variant-item__assets-header">
+                        <h5 class="variant-item__assets-title">What's Included</h5>
+                        <span class="variant-item__assets-count">
+                          {variant.assets.length} asset{variant.assets.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+
+                      {variant.prices && variant.prices.length > 0 && (
+                        <ProductValueBreakdown
+                          client:load
+                          variantId={variant.id}
+                          price={variant.prices[0].unit_amount}
+                          assetCount={variant.assets.length}
+                        />
+                      )}
+
                       <div class="variant-item__assets-list">
                         {variant.assets.map((asset: any) => (
                           <a href={`/assets/${asset.handle}`} class="variant-item__asset-card">
@@ -264,7 +304,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
                     </div>
                   )}
 
-                  {variant.prices && variant.prices.length > 0 ? (
+                  {!isEditMode && variant.prices && variant.prices.length > 0 && (
                     <div class="variant-item__pricing">
                       <div class="variant-item__price-list">
                         {variant.prices.map((price) => (
@@ -285,7 +325,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
                       </div>
 
                       <div class="variant-item__actions">
-                        {!isEditMode && currentUser && (
+                        {currentUser && (
                           <AddToCartButton
                             client:load
                             productId={productData.id}
@@ -295,7 +335,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
                             size="md"
                           />
                         )}
-                        {!isEditMode && !currentUser && (
+                        {!currentUser && (
                           <a href={`/sign-in?redirect=/products/${product}`}>
                             <Button variant="primary" size="md">
                               <span slot="text">Sign In to Purchase</span>
@@ -304,21 +344,31 @@ const defaultPrice = defaultVariant?.prices?.[0];
                         )}
                       </div>
                     </div>
-                  ) : (
-                    isEditMode && (
-                      <p class="variant-item__no-price">No pricing configured for this variant</p>
-                    )
                   )}
 
                   {isEditMode && (
-                    <div class="variant-item__breakdown">
-                      <ProductPriceManager
-                        client:load
-                        variantId={variant.id}
-                        variantTitle={variant.title}
-                        existingPrices={variant.prices || []}
-                      />
-                    </div>
+                    <ProductPriceManager
+                      client:load
+                      variantId={variant.id}
+                      variantTitle={variant.title}
+                      existingPrices={variant.prices || []}
+                    />
+                  )}
+
+                  {isEditMode && (
+                    <ProductCostBreakdown
+                      client:load
+                      variantId={variant.id}
+                      currentPrice={variant.prices && variant.prices.length > 0 ? variant.prices[0].unit_amount : 0}
+                    />
+                  )}
+
+                  {isEditMode && (
+                    <VariantDeleteButton
+                      client:load
+                      variantId={variant.id}
+                      variantTitle={variant.title}
+                    />
                   )}
                 </div>
               ))}
@@ -355,18 +405,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
               <div class="stat">
                 <p class="stat__value">{variantsWithPrices.length}</p>
                 <p class="stat__label">{variantsWithPrices.length === 1 ? 'Variant' : 'Variants'}</p>
-              </div>
-              <div class="stat">
-                <p class="stat__value">
-                  {variantsWithPrices.filter(v => v.is_digital).length}
-                </p>
-                <p class="stat__label">Digital</p>
-              </div>
-              <div class="stat">
-                <p class="stat__value">
-                  {variantsWithPrices.filter(v => !v.is_digital).length}
-                </p>
-                <p class="stat__label">Physical</p>
               </div>
             </div>
 
@@ -415,6 +453,22 @@ const defaultPrice = defaultVariant?.prices?.[0];
           </div>
         )}
 
+        {isEditMode && currentUser && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Chat</CardTitle>
+              <CardDescription>Discussion between product contributors</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductChat
+                client:load
+                userId={currentUser.id}
+                productId={productData.id}
+              />
+            </CardContent>
+          </Card>
+        )}
+
         {isEditMode && (
           <>
             <!-- Status Card (Edit Mode) -->
@@ -444,21 +498,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
                   client:load
                   productId={productData.id}
                   initialTags={tags.map(t => t.value)}
-                />
-              </CardContent>
-            </Card>
-
-            <!-- Images Card (Edit Mode) -->
-            <Card>
-              <CardHeader>
-                <CardTitle>Cover Image</CardTitle>
-                <CardDescription>Upload a cover image for your product</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProductImagesForm
-                  client:load
-                  productId={productData.id}
-                  currentCoverImage={coverImage}
                 />
               </CardContent>
             </Card>
@@ -725,6 +764,13 @@ const defaultPrice = defaultVariant?.prices?.[0];
     flex-wrap: wrap;
   }
 
+  .variant-item__title {
+    margin: 0;
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
   .variant-item__name {
     margin: 0;
     font-size: var(--text-xl);
@@ -752,44 +798,66 @@ const defaultPrice = defaultVariant?.prices?.[0];
   }
 
   .variant-item__assets {
-    margin: var(--spacing-lg) 0;
-    padding: var(--spacing-lg);
-    background-color: var(--background);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-2xl);
+    background-color: oklch(from var(--primary) l c h / 0.03);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--primary);
+  }
+
+  .variant-item__assets-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border);
   }
 
   .variant-item__assets-title {
-    margin: 0 0 var(--spacing-md) 0;
-    font-size: var(--text-sm);
+    margin: 0;
+    font-size: var(--text-lg);
     font-weight: var(--font-weight-semibold);
     color: var(--foreground);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: var(--gap-md);
+  }
+
+  .variant-item__assets-title::before {
+    content: "📦";
+    font-size: var(--text-xl);
+  }
+
+  .variant-item__assets-count {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--primary-foreground);
+    padding: var(--spacing-xs) var(--spacing-lg);
+    background-color: var(--primary);
+    border-radius: var(--radius-full);
   }
 
   .variant-item__assets-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--gap-md);
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--gap-lg);
   }
 
   .variant-item__asset-card {
     display: flex;
     flex-direction: column;
-    gap: var(--gap-sm);
-    padding: var(--spacing-md);
+    gap: var(--gap-md);
+    padding: var(--spacing-lg);
     background-color: var(--card);
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
     border-radius: var(--radius-md);
     text-decoration: none;
-    transition: all var(--duration-fast) var(--ease-in-out);
+    transition: border-color var(--duration-fast) var(--ease-in-out);
   }
 
   .variant-item__asset-card:hover {
     border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
   }
 
   .variant-item__asset-image-container {
@@ -814,7 +882,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
     justify-content: center;
     font-size: var(--text-3xl);
     color: var(--muted-foreground);
-    opacity: 0.5;
   }
 
   .variant-item__asset-info {
@@ -825,22 +892,26 @@ const defaultPrice = defaultVariant?.prices?.[0];
 
   .variant-item__asset-title {
     margin: 0;
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-medium);
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
     color: var(--foreground);
     line-height: var(--leading-tight);
   }
 
   .variant-item__asset-handle {
     margin: 0;
-    font-size: var(--text-xs);
-    color: var(--muted-foreground);
+    font-size: var(--text-sm);
+    color: var(--primary);
+    font-weight: var(--font-weight-medium);
   }
 
   .variant-item__pricing {
     display: flex;
     flex-direction: column;
     gap: var(--gap-xl);
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-2xl);
+    border-top: 2px dashed var(--border);
   }
 
   .variant-item__price-list {
@@ -853,6 +924,9 @@ const defaultPrice = defaultVariant?.prices?.[0];
     display: flex;
     align-items: baseline;
     gap: var(--gap-md);
+    padding: var(--spacing-md);
+    background-color: var(--background);
+    border-radius: var(--radius-md);
   }
 
   .variant-item__price-amount {
@@ -1065,6 +1139,20 @@ const defaultPrice = defaultVariant?.prices?.[0];
 
     .variant-item__header {
       flex-direction: column;
+    }
+
+    .variant-item__assets-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .variant-item__title {
+      font-size: var(--text-xl);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .variant-item__assets-list {
+      grid-template-columns: 1fr;
     }
   }
 </style>
