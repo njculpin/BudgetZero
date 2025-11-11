@@ -31,7 +31,8 @@
       "Bash(fi)",
       "Bash(done)",
       "Bash(supabase migration:*)",
-      "Bash(supabase stop:*)"
+      "Bash(supabase stop:*)",
+      "Bash(lsof:*)"
     ],
     "deny": [],
     "ask": []

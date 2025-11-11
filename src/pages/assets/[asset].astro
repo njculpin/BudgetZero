@@ -19,6 +19,8 @@ import AssetFileForm from "@/components/islands/AssetFileForm";
 import AssetImagesForm from "@/components/islands/AssetImagesForm";
 import AssetBasicInfoForm from "@/components/islands/AssetBasicInfoForm";
 import AssetStatusEditor from "@/components/islands/AssetStatusEditor";
+import AssetProductPicker from "@/components/islands/AssetProductPicker";
+import AssetRoyaltyManager from "@/components/islands/AssetRoyaltyManager";
 
 const { asset } = Astro.params;
 
@@ -285,42 +287,58 @@ const isShopMode = !isContributor || mode === "shop";
               )}
             </CardHeader>
             <CardContent>
-              <div class="royalties-section">
-                <div class="royalties-section__price">
-                  <p class="royalties-section__price-label">Cost per use in product</p>
-                  <p class="royalties-section__price-value">${(totalRoyalty / 100).toFixed(2)}</p>
-                </div>
+              {isEditMode ? (
+                <AssetRoyaltyManager
+                  client:load
+                  assetId={assetData.id}
+                  existingRoyalties={royaltiesWithUsers.map((r) => ({
+                    id: r.id,
+                    user_id: r.user_id,
+                    user_name: r.user?.name,
+                    user_handle: r.user?.handle,
+                    royalty_value: r.royalty_value,
+                  }))}
+                  totalRoyalty={totalRoyalty}
+                />
+              ) : (
+                <div class="royalties-section">
+                  <div class="royalties-section__price">
+                    <p class="royalties-section__price-label">Cost per use in product</p>
+                    <p class="royalties-section__price-value">${(totalRoyalty / 100).toFixed(2)}</p>
+                  </div>
 
-                <div>
-                  <h4 class="royalties-section__split-title">Revenue Split</h4>
-                  <div class="royalty-list">
-                    {royaltiesWithUsers.map((royalty) => (
-                      <div class="royalty-item">
-                        <div class="royalty-item__info">
-                          <span class="royalty-item__name">
-                            {royalty.user?.name || royalty.user?.handle || "Unknown"}
+                  <div>
+                    <h4 class="royalties-section__split-title">Revenue Split</h4>
+                    <div class="royalty-list">
+                      {royaltiesWithUsers.map((royalty) => (
+                        <div class="royalty-item">
+                          <div class="royalty-item__info">
+                            <span class="royalty-item__name">
+                              {royalty.user?.name || royalty.user?.handle || "Unknown"}
+                            </span>
+                            {royalty.user_id === assetData.user_id && (
+                              <span class="royalty-item__badge">Creator</span>
+                            )}
+                          </div>
+                          <span class="royalty-item__amount">
+                            ${(royalty.royalty_value / 100).toFixed(2)}
                           </span>
-                          {royalty.user_id === assetData.user_id && (
-                            <span class="royalty-item__badge">Creator</span>
-                          )}
                         </div>
-                        <span class="royalty-item__amount">
-                          ${(royalty.royalty_value / 100).toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {isContributor && (
-                  <div class="royalties-section__actions">
-                    <!-- TODO: add to existing or new product, search for existing product -->
-                    <Button variant="primary" size="md">
-                      <span slot="text">Add to Product</span>
-                    </Button>
-                  </div>
-                )}
-              </div>
+                  {isContributor && currentUser && (
+                    <div class="royalties-section__actions">
+                      <AssetProductPicker
+                        client:load
+                        assetId={assetData.id}
+                        userId={currentUser.id}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 

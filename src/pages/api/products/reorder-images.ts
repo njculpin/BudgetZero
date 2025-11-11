@@ -1,11 +1,16 @@
 import type { APIRoute } from "astro";
-import { z } from "zod";
 import { setSession } from "@/lib/auth";
-import { deleteAssetRoyalty, getRoyaltyById } from "@/lib/data-access/royalties";
-import { serverClient } from "@/lib/data-access/client";
+import { reorderProductImages, getProductById } from "@/lib/data-access/products";
+import { z } from "zod";
 
-const deleteRoyaltySchema = z.object({
-  royaltyId: z.string().uuid(),
+const reorderSchema = z.object({
+  productId: z.string().uuid(),
+  imageOrders: z.array(
+    z.object({
+      id: z.string().uuid(),
+      position: z.number().int().min(0),
+    })
+  ),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -43,66 +48,56 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const body = await request.json();
-    const validatedData = deleteRoyaltySchema.parse(body);
+    const validatedData = reorderSchema.parse(body);
 
-    const royalty = await getRoyaltyById(validatedData.royaltyId);
-    if (!royalty) {
-      return new Response(JSON.stringify({ error: "Royalty not found" }), {
+    const product = await getProductById(validatedData.productId);
+    if (!product) {
+      return new Response(JSON.stringify({ error: "Product not found" }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const { data: asset, error: assetError } = await serverClient
-      .from("assets")
-      .select("user_id")
-      .eq("id", royalty.asset_id)
-      .single();
-
-    if (assetError || !asset || asset.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Not authorized" }), {
+    if (product.user_id !== userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const success = await deleteAssetRoyalty(validatedData.royaltyId);
+    const success = await reorderProductImages(validatedData.imageOrders);
 
     if (!success) {
-      return new Response(JSON.stringify({ error: "Failed to delete royalty" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("Delete royalty error:", error);
-
-    if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({
-          error: "Validation failed",
-          details: error.errors,
-        }),
+        JSON.stringify({ error: "Failed to reorder images" }),
         {
-          status: 400,
+          status: 500,
           headers: { "Content-Type": "application/json" },
         }
       );
     }
 
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to delete royalty",
-      }),
+      JSON.stringify({ success: true }),
       {
-        status: 500,
+        status: 200,
         headers: { "Content-Type": "application/json" },
       }
+    );
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ error: "Validation failed", details: error.errors }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    console.error("Reorder images error:", error);
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Failed to reorder images",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 };

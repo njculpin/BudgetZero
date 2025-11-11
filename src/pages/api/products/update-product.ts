@@ -197,7 +197,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const description = formData.get("description") as string;
     const status = formData.get("status") as string;
     const tagsJson = formData.get("tags") as string;
+
+    // Handle both single cover image and multiple images
     const coverImageFile = formData.get("coverImage") as File | null;
+    const imageFiles = formData.getAll("images") as File[];
 
     // Verify ownership
     const product = await getProductById(productId);
@@ -208,8 +211,33 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Handle cover image upload if provided
-    if (coverImageFile && coverImageFile.size > 0) {
+    // Handle multiple image uploads if provided
+    if (imageFiles && imageFiles.length > 0) {
+      for (const imageFile of imageFiles) {
+        if (imageFile && imageFile.size > 0) {
+          const filePath = generateFilePath(userId, imageFile.name, productId);
+          const uploadResult = await uploadFile({
+            bucket: "product-images",
+            path: filePath,
+            file: imageFile,
+            accessToken: currentAccessToken,
+          });
+
+          if (uploadResult) {
+            await createProductImage(productId, {
+              title: imageFile.name,
+              description: `Product image: ${imageFile.name}`,
+              file_url: uploadResult.url,
+              storage_path: uploadResult.path,
+              file_size_bytes: uploadResult.size,
+              mime_type: imageFile.type,
+            });
+          }
+        }
+      }
+    }
+    // Fallback to single cover image upload for backward compatibility
+    else if (coverImageFile && coverImageFile.size > 0) {
       const filePath = generateFilePath(userId, coverImageFile.name, productId);
       const uploadResult = await uploadFile({
         bucket: "product-images",

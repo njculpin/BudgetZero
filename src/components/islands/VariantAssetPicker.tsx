@@ -29,28 +29,39 @@ export default function VariantAssetPicker(props: VariantAssetPickerProps) {
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal("");
 
-  // Fetch linked assets for this variant
+  const [mounted, setMounted] = createSignal(false);
+
+  onMount(() => {
+    setMounted(true);
+  });
+
+  // Fetch linked assets for this variant - only run on client after mount
   const [linkedAssets, { refetch: refetchLinkedAssets }] = createResource(
-    async () => {
-      const response = await fetch(`/api/products/variants/${props.variantId}/assets`);
+    () => mounted() && props.variantId,
+    async (variantId) => {
+      const response = await fetch(`/api/products/variants/${variantId}/assets`);
       if (!response.ok) return [];
       const data = await response.json();
       return data.assets || [];
     }
   );
 
-  // Fetch available assets for the user
-  const [availableAssets] = createResource(async () => {
-    const response = await fetch(`/api/assets/available/${props.userId}`);
-    if (!response.ok) return [];
-    const data = await response.json();
-    return data.assets || [];
-  });
+  // Fetch available assets for the user - only run on client after mount
+  const [availableAssets] = createResource(
+    () => mounted() && props.userId,
+    async (userId) => {
+      const response = await fetch(`/api/assets/available/${userId}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.assets || [];
+    }
+  );
 
-  // Calculate total royalty cost
+  // Calculate total royalty cost - only run on client after mount
   const [royaltyTotal, { refetch: refetchRoyaltyTotal }] = createResource(
-    async () => {
-      const response = await fetch(`/api/products/variants/${props.variantId}/royalty-total`);
+    () => mounted() && props.variantId,
+    async (variantId) => {
+      const response = await fetch(`/api/products/variants/${variantId}/royalty-total`);
       if (!response.ok) return 0;
       const data = await response.json();
       return data.total || 0;

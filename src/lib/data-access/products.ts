@@ -405,6 +405,7 @@ export const updateVariant = async (
 
   if (updates.title !== undefined) updateData.title = updates.title;
   if (updates.description !== undefined) updateData.description = updates.description;
+  if (updates.sku !== undefined) updateData.sku = updates.sku;
   if (updates.options !== undefined) updateData.options = updates.options;
   if (updates.position !== undefined) updateData.position = updates.position;
 
@@ -781,6 +782,48 @@ export const getProductImages = async (productId: string) => {
   }
 
   return data;
+};
+
+/**
+ * Reorder product images
+ */
+export const reorderProductImages = async (
+  imageOrders: { id: string; position: number }[]
+): Promise<boolean> => {
+  try {
+    for (const order of imageOrders) {
+      const { error } = await serverClient
+        .from('product_images')
+        .update({ position: order.position })
+        .eq('id', order.id);
+
+      if (error) {
+        console.error('Error updating image position:', error);
+        return false;
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error('Error reordering images:', error);
+    return false;
+  }
+};
+
+/**
+ * Delete a product image (soft delete)
+ */
+export const deleteProductImage = async (imageId: string): Promise<boolean> => {
+  const { error } = await serverClient
+    .from('product_images')
+    .update({ deleted: true, deleted_at: new Date().toISOString() })
+    .eq('id', imageId);
+
+  if (error) {
+    console.error('Error deleting product image:', error);
+    return false;
+  }
+
+  return true;
 };
 
 /**

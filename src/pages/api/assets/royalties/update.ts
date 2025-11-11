@@ -1,11 +1,12 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { setSession } from "@/lib/auth";
-import { deleteAssetRoyalty, getRoyaltyById } from "@/lib/data-access/royalties";
+import { updateAssetRoyalty, getRoyaltyById } from "@/lib/data-access/royalties";
 import { serverClient } from "@/lib/data-access/client";
 
-const deleteRoyaltySchema = z.object({
+const updateRoyaltySchema = z.object({
   royaltyId: z.string().uuid(),
+  royaltyValue: z.number().int().min(0),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -43,8 +44,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const body = await request.json();
-    const validatedData = deleteRoyaltySchema.parse(body);
+    const validatedData = updateRoyaltySchema.parse(body);
 
+    // Get the royalty to verify ownership through asset
     const royalty = await getRoyaltyById(validatedData.royaltyId);
     if (!royalty) {
       return new Response(JSON.stringify({ error: "Royalty not found" }), {
@@ -53,6 +55,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
+    // Verify user owns the asset
     const { data: asset, error: assetError } = await serverClient
       .from("assets")
       .select("user_id")
@@ -66,21 +69,28 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    const success = await deleteAssetRoyalty(validatedData.royaltyId);
+    // Update the royalty
+    const success = await updateAssetRoyalty(
+      validatedData.royaltyId,
+      validatedData.royaltyValue
+    );
 
     if (!success) {
-      return new Response(JSON.stringify({ error: "Failed to delete royalty" }), {
+      return new Response(JSON.stringify({ error: "Failed to update royalty" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
-    console.error("Delete royalty error:", error);
+    console.error("Update royalty error:", error);
 
     if (error instanceof z.ZodError) {
       return new Response(
@@ -97,7 +107,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to delete royalty",
+        error: error instanceof Error ? error.message : "Failed to update royalty",
       }),
       {
         status: 500,
