@@ -1,0 +1,65 @@
+---
+import Button from "./Button.astro";
+
+const currentDate = new Date()
+const year = currentDate.getFullYear()
+---
+
+<div class="footer__container">
+    <div class="footer__content">
+        <a href="/" class="copyright">
+            <p class="copyright__label">Powered by Game Loopers @ {year}</p>
+        </a>
+        <div class="footer__links">
+            <a href="/sign-up">
+                <Button variant="ghost-secondary" size="sm">
+                    <span slot="text"><p>Make Yours Today</p></span>
+                </Button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .footer__container {
+        background: var(--primary);
+        padding: var(--spacing-2xl);
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    .footer__content {
+        max-width: var(--container-7xl);
+        margin: 0 auto;
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        gap: var(--spacing-3xl);
+        flex-wrap: wrap;
+    }
+    .copyright__label {
+        display: inline-block;
+        font-size: var(--text-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--color-white);
+        cursor: pointer;
+    }
+    .footer__links {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-2xl);
+    }
+
+    /* Responsive: Stack on mobile, reduce padding */
+    @media (max-width: 768px) {
+        .footer__container {
+            padding: var(--spacing-3xl) var(--spacing-2xl);
+        }
+
+        .footer__content {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-2xl);
+        }
+    }
+</style>

@@ -113,56 +113,50 @@ export const updateJam = async (
 };
 
 /**
- * Validate that jam dates follow Monday-Sunday pattern
- * and don't conflict with existing jams
+ * Validate jam dates
  */
 export const validateJamDates = async (
   jamId: string,
   startDate: Date,
   endDate: Date
 ): Promise<{ valid: boolean; error?: string }> => {
-  // Check if start is Monday
-  const startDay = startDate.getDay();
-  if (startDay !== 1) {
-    return { valid: false, error: "Start date must be a Monday" };
+  // Check if start date is before end date
+  if (startDate >= endDate) {
+    return { valid: false, error: "Start date must be before end date" };
   }
 
-  // Check if end is Sunday
-  const endDay = endDate.getDay();
-  if (endDay !== 0) {
-    return { valid: false, error: "End date must be a Sunday" };
-  }
-
-  // Check if they're in the same week
-  const daysDiff = Math.floor(
-    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  if (daysDiff !== 6) {
-    return {
-      valid: false,
-      error: "Jam must run for exactly one week (Monday-Sunday)",
-    };
-  }
-
-  // Check for conflicting jams in the same week
+  // Check for conflicting jams with overlapping dates
   const { data, error } = await serverClient
     .from("jams")
-    .select("id")
+    .select("id, start_date, end_date")
     .eq("deleted", false)
-    .neq("id", jamId) // Exclude current jam
-    .gte("start_date", startDate.toISOString())
-    .lte("start_date", endDate.toISOString());
+    .neq("id", jamId); // Exclude current jam
 
   if (error) {
     console.error("Error checking for conflicting jams:", error);
     return { valid: false, error: "Failed to validate dates" };
   }
 
+  // Check for date overlaps
   if (data && data.length > 0) {
-    return {
-      valid: false,
-      error: "Another jam is already scheduled for this week",
-    };
+    const hasConflict = data.some((jam) => {
+      const existingStart = new Date(jam.start_date);
+      const existingEnd = new Date(jam.end_date);
+
+      // Check if there's any overlap
+      return (
+        (startDate >= existingStart && startDate <= existingEnd) ||
+        (endDate >= existingStart && endDate <= existingEnd) ||
+        (startDate <= existingStart && endDate >= existingEnd)
+      );
+    });
+
+    if (hasConflict) {
+      return {
+        valid: false,
+        error: "Another jam is already scheduled during this time period",
+      };
+    }
   }
 
   return { valid: true };
@@ -195,8 +189,7 @@ export const getActiveJam = async (): Promise<Jam | null> => {
     .from("jams")
     .select("*")
     .eq("deleted", false)
-    .eq("status", "active")
-    .limit(10);
+    .limit(10)
 
   if (error || !data || data.length === 0) {
     return null;

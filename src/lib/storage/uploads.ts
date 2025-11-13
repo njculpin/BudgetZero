@@ -6,7 +6,8 @@ export type StorageBucket =
   | "asset-images"
   | "product-images"
   | "user-avatars"
-  | "documents";
+  | "documents"
+  | "jam-images";
 
 export interface UploadResult {
   path: string;

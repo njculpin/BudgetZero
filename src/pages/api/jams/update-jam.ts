@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { updateJam, validateJamDates, getJamByHandle } from "@/lib/data-access/jams";
 import { setSession } from "@/lib/auth";
+import { uploadFile, generateFilePath } from "@/lib/storage";
 
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   // Check authentication
@@ -36,6 +37,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const startDate = formData.get("start_date") as string;
   const endDate = formData.get("end_date") as string;
   const handle = formData.get("handle") as string;
+  const coverImageFile = formData.get("cover_image") as File | null;
 
   if (!jamId || !title || !startDate || !endDate || !handle) {
     return redirect(
@@ -79,6 +81,54 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     );
   }
 
+  // Get session for file upload
+  const session = await setSession({
+    refresh_token: refreshToken.value,
+    access_token: accessToken.value,
+  });
+
+  const currentAccessToken = session.data.session?.access_token;
+
+  // Handle cover image upload
+  let preview_image_url = jam.preview_image_url;
+  let preview_image_storage_path = jam.preview_image_storage_path;
+  let preview_image_mime_type = jam.preview_image_mime_type;
+
+  if (coverImageFile && coverImageFile.size > 0) {
+    // Validate file type
+    if (!coverImageFile.type.startsWith("image/")) {
+      return redirect(
+        `/jams/${handle}?mode=edit&error=${encodeURIComponent("Please select a valid image file")}`,
+        302
+      );
+    }
+
+    // Validate file size (5MB max)
+    if (coverImageFile.size > 5 * 1024 * 1024) {
+      return redirect(
+        `/jams/${handle}?mode=edit&error=${encodeURIComponent("Image must be smaller than 5MB")}`,
+        302
+      );
+    }
+
+    if (currentAccessToken) {
+      const filePath = generateFilePath(currentUser.id, coverImageFile.name);
+      const uploadResult = await uploadFile({
+        bucket: "jam-images",
+        path: filePath,
+        file: coverImageFile,
+        accessToken: currentAccessToken,
+        upsert: true,
+      });
+
+      if (uploadResult) {
+        preview_image_url = uploadResult.url;
+        preview_image_storage_path = uploadResult.path;
+        preview_image_mime_type = uploadResult.type;
+      }
+    }
+  }
+
   // Update the jam
   const updatedJam = await updateJam(jamId, {
     title: title.trim(),
@@ -86,6 +136,9 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     rules: rules.trim(),
     start_date: parsedStartDate.toISOString(),
     end_date: parsedEndDate.toISOString(),
+    preview_image_url,
+    preview_image_storage_path,
+    preview_image_mime_type,
   });
 
   if (!updatedJam) {

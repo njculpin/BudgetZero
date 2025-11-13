@@ -157,7 +157,7 @@ const successMessage = Astro.url.searchParams.get("success");
                 <p class="alert__message">Jam updated successfully!</p>
               </div>
             )}
-            <form method="post" action="/api/jams/update-jam" class="edit-form">
+            <form method="post" action="/api/jams/update-jam" class="edit-form" enctype="multipart/form-data">
               <input type="hidden" name="jamId" value={jam.id} />
               <input type="hidden" name="handle" value={jam.handle} />
 
@@ -199,10 +199,33 @@ const successMessage = Astro.url.searchParams.get("success");
                 >{jam.rules || ''}</textarea>
               </div>
 
+              <div class="edit-form__field">
+                <label for="cover_image" class="edit-form__label">
+                  Cover Image
+                </label>
+                {jam.preview_image_url && (
+                  <div class="edit-form__image-preview">
+                    <img
+                      src={jam.preview_image_url}
+                      alt={jam.title}
+                      class="edit-form__preview-image"
+                    />
+                  </div>
+                )}
+                <input
+                  type="file"
+                  id="cover_image"
+                  name="cover_image"
+                  class="edit-form__input"
+                  accept="image/*"
+                />
+                <p class="edit-form__hint">Upload a cover image for your jam (max 5MB)</p>
+              </div>
+
               <div class="edit-form__date-group">
                 <div class="edit-form__field">
                   <label for="start_date" class="edit-form__label">
-                    Start Date (Monday)
+                    Start Date
                   </label>
                   <input
                     type="date"
@@ -210,14 +233,12 @@ const successMessage = Astro.url.searchParams.get("success");
                     name="start_date"
                     class="edit-form__input"
                     value={jam.start_date.split('T')[0]}
-                    required
                   />
-                  <p class="edit-form__hint">Must be a Monday</p>
                 </div>
 
                 <div class="edit-form__field">
                   <label for="end_date" class="edit-form__label">
-                    End Date (Sunday)
+                    End Date
                   </label>
                   <input
                     type="date"
@@ -225,9 +246,7 @@ const successMessage = Astro.url.searchParams.get("success");
                     name="end_date"
                     class="edit-form__input"
                     value={jam.end_date.split('T')[0]}
-                    required
                   />
-                  <p class="edit-form__hint">Must be a Sunday</p>
                 </div>
               </div>
 
@@ -782,16 +801,30 @@ const successMessage = Astro.url.searchParams.get("success");
     min-height: 100px;
   }
 
+  .edit-form__image-preview {
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .edit-form__preview-image {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .edit-form__hint {
+    font-size: var(--text-xs);
+    color: var(--muted-foreground);
+    margin: 0;
+  }
+
   .edit-form__date-group {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--gap-md);
-  }
-
-  .edit-form__hint {
-    margin: 0;
-    font-size: var(--text-xs);
-    color: var(--muted-foreground);
   }
 
   .edit-form__actions {
@@ -889,46 +922,3 @@ const successMessage = Astro.url.searchParams.get("success");
     }
   }
 </style>
-
-<script>
-  // Client-side date validation for jam dates
-  const startDateInput = document.getElementById('start_date') as HTMLInputElement;
-  const endDateInput = document.getElementById('end_date') as HTMLInputElement;
-
-  if (startDateInput && endDateInput) {
-    const validateDates = () => {
-      const startDate = new Date(startDateInput.value);
-      const endDate = new Date(endDateInput.value);
-
-      // Check if start date is Monday (1)
-      if (startDate.getDay() !== 1) {
-        startDateInput.setCustomValidity('Start date must be a Monday');
-      } else {
-        startDateInput.setCustomValidity('');
-      }
-
-      // Check if end date is Sunday (0)
-      if (endDate.getDay() !== 0) {
-        endDateInput.setCustomValidity('End date must be a Sunday');
-      } else {
-        endDateInput.setCustomValidity('');
-      }
-
-      // Check if they're exactly 6 days apart
-      const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysDiff !== 6) {
-        endDateInput.setCustomValidity('Jam must run for exactly one week (Monday to Sunday)');
-      } else if (endDate.getDay() === 0) {
-        endDateInput.setCustomValidity('');
-      }
-    };
-
-    startDateInput.addEventListener('change', validateDates);
-    endDateInput.addEventListener('change', validateDates);
-
-    // Validate on page load if dates are present
-    if (startDateInput.value && endDateInput.value) {
-      validateDates();
-    }
-  }
-</script>

@@ -5,9 +5,9 @@ import { updateVariant, getVariantById } from "@/lib/data-access/products";
 
 const updateVariantSchema = z.object({
   variantId: z.string().uuid(),
-  title: z.string().min(1).max(200).optional(),
-  description: z.string().optional(),
-  sku: z.string().min(1).max(100).optional(),
+  title: z.string().min(1).max(200),
+  description: z.string().nullable().optional(),
+  sku: z.string().min(1).max(100),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {

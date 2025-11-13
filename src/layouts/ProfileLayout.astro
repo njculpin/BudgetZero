@@ -2,7 +2,7 @@
 // This page is for the public user profile which will not show a header.
 import '@fontsource/inter';
 import '@/styles/global.css'
-import Footer from '@/components/Footer.astro';
+import ProfileFooter from '@/components/ProfileFooter.astro';
 
 const { title = "Game Loopers" } = Astro.props;
 ---
@@ -20,7 +20,7 @@ const { title = "Game Loopers" } = Astro.props;
 		<slot />
 	</body>
 	<footer>
-		<Footer/>
+		<ProfileFooter/>
 	</footer>
 </html>
 
