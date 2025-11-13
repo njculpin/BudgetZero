@@ -1,270 +1,504 @@
 # Game Loopers Design System
 
-**Version**: 1.0.0
-**Last Updated**: 2025-01-01
-**Status**: Living Document
+**Version**: 2.0.0
+**Last Updated**: January 2025
+**Status**: Production Ready
 
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Design Principles](#design-principles)
-3. [Design Tokens](#design-tokens)
+3. [Complete Token Reference](#complete-token-reference)
 4. [Typography System](#typography-system)
 5. [Color System](#color-system)
 6. [Spacing System](#spacing-system)
-7. [Component Architecture](#component-architecture)
+7. [Component Tokens](#component-tokens)
 8. [BEM Methodology](#bem-methodology)
 9. [Component Patterns](#component-patterns)
 10. [Accessibility Guidelines](#accessibility-guidelines)
 11. [Dark Mode](#dark-mode)
+12. [Migration Guide](#migration-guide)
 
 ---
 
 ## Introduction
 
-Game Loopers uses a **token-based design system** with BEM (Block Element Modifier) CSS methodology. All design tokens are defined in `src/styles/global.css` as CSS custom properties (variables) and should be used consistently across all components.
+Game Loopers uses a **comprehensive token-based design system** with BEM (Block Element Modifier) CSS methodology. All design tokens are defined in `/src/styles/global.css` as CSS custom properties and must be used exclusively—no hardcoded values.
 
 ### Key Technologies
 - **CSS Architecture**: BEM (Block Element Modifier)
-- **Design Tokens**: CSS Custom Properties
+- **Design Tokens**: CSS Custom Properties (480+ tokens)
 - **Styling**: Scoped CSS in Astro components, BEM for SolidJS islands
 - **Font**: Inter (sans-serif)
-- **Color Model**: OKLCH for better perceptual uniformity
+- **Color Model**: OKLCH for better perceptual uniformity and dark mode
+
+### Design System Philosophy
+
+**1. Token-First Approach**: Every visual property must use a design token. Hardcoded values are forbidden.
+
+**2. Semantic Naming**: Tokens use descriptive, semantic names that communicate intent:
+- `--primary` (core semantic token for brand color)
+- `--color-success` (status-specific semantic token)
+- `--button-height-md` (component-specific semantic token)
+
+**3. Composability**: Tokens build on each other:
+```css
+--button-padding-x-md: var(--spacing-2xl); /* Composed from spacing token */
+--card-border: var(--border-default); /* Composed from border tokens */
+```
+
+**4. Accessibility First**: All tokens ensure WCAG 2.1 AA compliance minimum.
 
 ---
 
 ## Design Principles
 
 ### 1. Consistency
-- Use design tokens exclusively—never hardcode values
+- **Always use design tokens**—never hardcode values
 - Follow BEM naming conventions strictly
-- Maintain consistent spacing, sizing, and visual hierarchy
+- Maintain consistent spacing, sizing, and visual hierarchy across all components
 
 ### 2. Scalability
-- Components should be composable and reusable
+- Components must be composable and reusable
 - Design tokens enable easy theming and global changes
 - BEM prevents CSS specificity conflicts
 
-### 3. Accessibility First
-- WCAG 2.1 AA compliance minimum
-- Semantic HTML structure
-- Keyboard navigation support
-- Screen reader friendly
+### 3. Accessibility
+- WCAG 2.1 AA compliance minimum (4.5:1 contrast for text)
+- Semantic HTML structure required
+- Keyboard navigation support mandatory
+- Screen reader friendly patterns
+- Visible focus states on all interactive elements
 
 ### 4. Performance
 - Minimize CSS specificity
-- Avoid inline styles (except dynamic values)
+- Avoid inline styles (except dynamic values passed as CSS custom properties)
 - Use CSS custom properties for runtime theming
 
 ---
 
-## Design Tokens
+## Complete Token Reference
 
-All design tokens are defined in `src/styles/global.css`. **NEVER hardcode these values**—always reference the token.
+### Core Semantic Colors
 
-### Usage Example
 ```css
-/* ❌ Bad - Hardcoded */
-.button {
-  padding: 16px;
-  border-radius: 8px;
-  color: #000;
+/* Primary Brand Colors */
+--background: oklch(1 0 0)              /* Pure white background */
+--foreground: oklch(0.145 0 0)          /* Near black text */
+--primary: oklch(0.205 0 0)             /* Primary action color */
+--primary-foreground: oklch(0.985 0 0)  /* Text on primary */
+
+/* Secondary & Muted */
+--secondary: oklch(0.97 0 0)
+--secondary-foreground: oklch(0.205 0 0)
+--muted: oklch(0.97 0 0)                /* Subtle backgrounds */
+--muted-foreground: oklch(0.556 0 0)    /* De-emphasized text */
+
+/* Accent & Destructive */
+--accent: oklch(0.696 0.17 162.48)      /* Highlights, featured content */
+--accent-foreground: oklch(0.985 0 0)
+--destructive: oklch(0.577 0.245 27.325) /* Errors, delete actions */
+--destructive-foreground: var(--color-white)
+
+/* UI Element Colors */
+--card: oklch(1 0 0)                    /* Card backgrounds */
+--card-foreground: oklch(0.145 0 0)
+--border: oklch(0.922 0 0)              /* Standard borders */
+--input: oklch(0.922 0 0)               /* Input borders */
+--ring: oklch(0.708 0 0)                /* Focus ring color */
+```
+
+### Status Colors
+
+```css
+/* Success */
+--color-success: oklch(0.577 0.15 145)
+--color-success-foreground: oklch(0.985 0 0)
+
+/* Warning */
+--color-warning: oklch(0.828 0.189 84.429)
+--color-warning-foreground: oklch(0.145 0 0)
+
+/* Info */
+--color-info: oklch(0.6 0.118 184.704)
+--color-info-foreground: oklch(0.985 0 0)
+
+/* Error (alias) */
+--color-error: var(--destructive)
+```
+
+**Usage**:
+```css
+/* ✅ Good */
+.alert--success {
+  background-color: oklch(from var(--color-success) l c h / 0.1);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
 }
 
-/* ✅ Good - Using tokens */
-.button {
-  padding: var(--spacing-2xl);
-  border-radius: var(--radius-lg);
-  color: var(--foreground);
+/* ❌ Bad */
+.alert--success {
+  background-color: rgba(34, 197, 94, 0.1); /* Hardcoded */
+  color: #22c55e; /* Hardcoded */
 }
 ```
 
----
+### Interactive Colors
 
-## Typography System
-
-### Font Stack
 ```css
---font-family-sans: "Inter", Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+--color-link: var(--primary)
+--color-link-hover: oklch(from var(--primary) calc(l * 0.85) c h)
+--color-link-visited: oklch(from var(--primary) calc(l * 0.75) c h)
 ```
 
-### Font Sizes
-| Token | Size | Line Height | Use Case |
-|-------|------|-------------|----------|
-| `--text-xs` | 0.75rem (12px) | 1.33 | Labels, captions |
-| `--text-sm` | 0.875rem (14px) | 1.43 | Body small, helper text |
-| `--text-base` | 1rem (16px) | 1.5 | Body text |
-| `--text-lg` | 1.125rem (18px) | 1.56 | Subheadings |
-| `--text-xl` | 1.25rem (20px) | 1.4 | Card titles |
-| `--text-2xl` | 1.5rem (24px) | 1.33 | Page titles |
-| `--text-3xl` | 1.875rem (30px) | 1.2 | Hero titles |
-| `--text-4xl` | 2.25rem (36px) | 1.11 | Large headers |
-| `--text-5xl` | 3rem (48px) | 1 | Display text |
+### Overlay Colors
 
-### Font Weights
-| Token | Value | Use Case |
-|-------|-------|----------|
-| `--font-weight-normal` | 400 | Body text |
-| `--font-weight-medium` | 500 | Emphasis, labels |
-| `--font-weight-semibold` | 600 | Subheadings, buttons |
-| `--font-weight-bold` | 700 | Headings, important UI |
-
-### Line Heights
 ```css
+--overlay-light: oklch(0 0 0 / 0.1)    /* 10% black overlay */
+--overlay-medium: oklch(0 0 0 / 0.3)   /* 30% black overlay */
+--overlay-dark: oklch(0 0 0 / 0.7)     /* 70% black overlay */
+```
+
+### Typography Tokens
+
+```css
+/* Font Sizes */
+--text-xs: 0.75rem      /* 12px - Labels, captions */
+--text-sm: 0.875rem     /* 14px - Body small, helper text */
+--text-base: 1rem       /* 16px - Default body text */
+--text-lg: 1.125rem     /* 18px - Subheadings */
+--text-xl: 1.25rem      /* 20px - Card titles */
+--text-2xl: 1.5rem      /* 24px - Section titles */
+--text-3xl: 1.875rem    /* 30px - Page titles */
+--text-4xl: 2.25rem     /* 36px - Hero titles */
+--text-5xl: 3rem        /* 48px - Display text */
+--text-6xl: 3.75rem     /* 60px - Large display */
+--text-7xl: 4.5rem      /* 72px */
+--text-8xl: 6rem        /* 96px */
+--text-9xl: 8rem        /* 128px */
+
+/* Font Weights */
+--font-weight-thin: 100
+--font-weight-extralight: 200
+--font-weight-light: 300
+--font-weight-normal: 400
+--font-weight-medium: 500
+--font-weight-semibold: 600
+--font-weight-bold: 700
+--font-weight-extrabold: 800
+--font-weight-black: 900
+
+/* Line Heights */
 --leading-tight: 1.25
+--leading-snug: 1.375
 --leading-normal: 1.5
 --leading-relaxed: 1.625
 --leading-loose: 2
-```
 
-### Letter Spacing
-```css
+/* Letter Spacing */
+--tracking-tighter: -0.05em
 --tracking-tight: -0.025em
 --tracking-normal: 0em
 --tracking-wide: 0.025em
+--tracking-wider: 0.05em
+--tracking-widest: 0.1em
 ```
 
-### Typography Rules
-1. **Body text**: `--text-base` with `--font-weight-normal`
-2. **Headings**: Use semantic HTML (h1-h6) with appropriate font sizes
-3. **Labels**: `--text-sm` with `--font-weight-medium`
-4. **Helper text**: `--text-sm` with `--muted-foreground` color
-5. **Buttons**: `--text-sm` or `--text-base` with `--font-weight-semibold`
+### Spacing Tokens
 
----
-
-## Color System
-
-### Semantic Colors (Light Mode)
 ```css
---background: oklch(1 0 0)              /* Pure white */
---foreground: oklch(0.145 0 0)          /* Near black for text */
---card: oklch(1 0 0)                    /* Card background */
---muted: oklch(0.97 0 0)                /* Subtle backgrounds */
---muted-foreground: oklch(0.556 0 0)    /* Muted text */
---border: oklch(0.922 0 0)              /* Subtle borders */
---primary: oklch(0.205 0 0)             /* Primary action color */
---accent: oklch(0.696 0.17 162.48)      /* Accent/highlight */
---destructive: oklch(0.577 0.245 27.325) /* Error/danger */
-```
+/* Gap (for flex/grid layouts) */
+--gap-xxs: 0.25rem     /* 4px */
+--gap-xs: 0.5rem       /* 8px */
+--gap-sm: 0.625rem     /* 10px */
+--gap-md: 0.75rem      /* 12px */
+--gap-lg: 1rem         /* 16px */
+--gap-xl: 1.5rem       /* 24px */
+--gap-2xl: 2rem        /* 32px */
 
-### Color Usage Guidelines
-
-#### Primary Actions
-```css
-/* Primary buttons, links, active states */
-background-color: var(--primary);
-color: var(--primary-foreground);
-```
-
-#### Secondary Actions
-```css
-/* Secondary buttons, less prominent actions */
-background-color: var(--secondary);
-color: var(--secondary-foreground);
-```
-
-#### Muted/Subtle Elements
-```css
-/* Disabled states, subtle backgrounds */
-background-color: var(--muted);
-color: var(--muted-foreground);
-```
-
-#### Destructive Actions
-```css
-/* Delete buttons, error messages */
-background-color: var(--destructive);
-color: white;
-```
-
-#### Borders
-```css
-/* Standard borders */
-border: 1px solid var(--border);
-```
-
-### Color Accessibility
-- **Contrast ratio**: Minimum 4.5:1 for normal text, 3:1 for large text
-- **Primary text**: Always use `var(--foreground)` on `var(--background)`
-- **Interactive elements**: Must have clear focus states
-
----
-
-## Spacing System
-
-### Gap (for flex/grid layouts)
-```css
---gap-xxs: 0.25rem  /* 4px */
---gap-xs: 0.5rem    /* 8px */
---gap-sm: 0.625rem  /* 10px */
---gap-md: 0.75rem   /* 12px */
---gap-lg: 1rem      /* 16px */
---gap-xl: 1.5rem    /* 24px */
---gap-2xl: 2rem     /* 32px */
-```
-
-### Spacing (for padding/margin)
-```css
+/* Spacing (for padding/margin) */
 --spacing-xxs: 0.25rem  /* 4px */
 --spacing-xs: 0.375rem  /* 6px */
 --spacing-sm: 0.5rem    /* 8px */
 --spacing-md: 0.625rem  /* 10px */
 --spacing-lg: 0.75rem   /* 12px */
 --spacing-xl: 0.875rem  /* 14px */
---spacing-2xl: 1rem     /* 16px */
---spacing-3xl: 1.5rem   /* 24px */
---spacing-4xl: 2rem     /* 32px */
---spacing-5xl: 3rem     /* 48px */
---spacing-6xl: 4rem     /* 64px */
+--spacing-2xl: 1rem     /* 16px - Most common */
+--spacing-3xl: 1.5rem   /* 24px - Section spacing */
+--spacing-4xl: 2rem     /* 32px - Large sections */
+--spacing-5xl: 3rem     /* 48px - Hero padding */
+--spacing-6xl: 4rem     /* 64px - Page sections */
 ```
 
-### Spacing Scale Usage
-- **Tight spacing**: Use `--spacing-xs` to `--spacing-sm` for dense UI
-- **Standard spacing**: Use `--spacing-lg` to `--spacing-2xl` for most UI elements
-- **Generous spacing**: Use `--spacing-3xl` to `--spacing-5xl` for section separation
-- **Large spacing**: Use `--spacing-6xl` for major page sections
+**When to use gap vs spacing**:
+- Use `--gap-*` for `gap` property in flex/grid layouts
+- Use `--spacing-*` for `padding` and `margin`
 
-### Border Radius
+### Border Tokens
+
 ```css
---radius-xs: 0.125rem   /* 2px */
---radius-sm: 0.25rem    /* 4px */
---radius-md: 0.375rem   /* 6px */
---radius-lg: 0.5rem     /* 8px */
---radius-xl: 0.75rem    /* 12px */
---radius-2xl: 1rem      /* 16px */
---radius-full: 9999px   /* Pill shape */
+/* Border Widths */
+--border-width-none: 0
+--border-width-thin: 1px      /* Standard borders */
+--border-width-medium: 2px    /* Emphasized borders */
+--border-width-thick: 3px     /* Strong emphasis */
+
+/* Border Styles (Semantic - Use These!) */
+--border-default: var(--border-width-thin) solid var(--border)
+--border-emphasis: var(--border-width-medium) solid var(--border)
+--border-strong: var(--border-width-thick) solid var(--primary)
+--border-dashed: var(--border-width-thin) dashed var(--border)
+
+/* Border Radius */
+--radius-xs: 0.125rem    /* 2px - Tight corners */
+--radius-sm: 0.25rem     /* 4px - Subtle */
+--radius-md: 0.375rem    /* 6px - Standard */
+--radius-lg: 0.5rem      /* 8px - Cards, buttons */
+--radius-xl: 0.75rem     /* 12px - Large cards */
+--radius-2xl: 1rem       /* 16px - Modals */
+--radius-3xl: 1.5rem     /* 24px */
+--radius-4xl: 2rem       /* 32px */
+--radius-full: 9999px    /* Pills, badges */
+```
+
+**Usage**:
+```css
+/* ✅ Good - Use semantic border tokens */
+.card {
+  border: var(--border-default);
+  border-radius: var(--radius-xl);
+}
+
+/* ❌ Bad - Hardcoded values */
+.card {
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+}
+```
+
+### Opacity Scale
+
+```css
+--opacity-0: 0
+--opacity-5: 0.05
+--opacity-10: 0.1
+--opacity-20: 0.2
+--opacity-30: 0.3
+--opacity-40: 0.4
+--opacity-50: 0.5
+--opacity-60: 0.6
+--opacity-70: 0.7
+--opacity-80: 0.8
+--opacity-90: 0.9
+--opacity-95: 0.95
+--opacity-100: 1
+
+/* Semantic Opacity */
+--opacity-disabled: var(--opacity-50)
 ```
 
 ### Shadow System
+
 ```css
+/* Box Shadows (Elevation) */
+--shadow-2xs: 0 1px rgb(0 0 0 / 0.05)
 --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05)
---shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1)
---shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1)
---shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1)
---shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1)
+--shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)
+--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)
+--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)
+--shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)
+--shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25)
+
+/* Inset Shadows */
+--inset-shadow-2xs: inset 0 1px rgb(0 0 0 / 0.05)
+--inset-shadow-xs: inset 0 1px 1px rgb(0 0 0 / 0.05)
+--inset-shadow-sm: inset 0 2px 4px rgb(0 0 0 / 0.05)
+```
+
+### Transition Tokens
+
+```css
+/* Durations */
+--duration-fastest: 75ms
+--duration-fast: 150ms
+--duration-normal: 200ms
+--duration-slow: 300ms
+--duration-slower: 500ms
+
+/* Easing Functions */
+--ease-in: cubic-bezier(0.4, 0, 1, 1)
+--ease-out: cubic-bezier(0, 0, 0.2, 1)
+--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1)
+```
+
+### Focus Tokens
+
+```css
+--focus-ring-width: 2px
+--focus-ring-offset: 2px
+--focus-ring-color: var(--ring)
+--focus-ring-opacity: var(--opacity-20)
+--focus-shadow: 0 0 0 3px oklch(from var(--ring) l c h / var(--focus-ring-opacity))
+```
+
+**Standard Focus State Pattern**:
+```css
+.interactive-element:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: var(--focus-shadow);
+}
+```
+
+### Icon Sizes
+
+```css
+--icon-size-xs: 0.875rem   /* 14px */
+--icon-size-sm: 1rem       /* 16px */
+--icon-size-md: 1.25rem    /* 20px */
+--icon-size-lg: 1.5rem     /* 24px */
+--icon-size-xl: 2rem       /* 32px */
+--icon-size-2xl: 2.5rem    /* 40px */
+--icon-size-3xl: 3rem      /* 48px */
+```
+
+### Transform Tokens
+
+```css
+--transform-hover-lift: translateY(-1px)
+--transform-hover-lift-strong: translateY(-2px)
+--transform-active-press: translateY(0)
+--transform-scale-hover: scale(1.02)
+--transform-scale-hover-strong: scale(1.05)
+--transform-scale-active: scale(0.98)
+```
+
+### Z-Index Scale
+
+```css
+--z-base: 0
+--z-dropdown: 1000
+--z-sticky: 1100
+--z-fixed: 1200
+--z-modal-backdrop: 1300
+--z-modal: 1400
+--z-popover: 1500
+--z-tooltip: 1600
 ```
 
 ---
 
-## Component Architecture
+## Component Tokens
 
-### File Structure
-```
-src/
-├── components/
-│   ├── islands/           # SolidJS interactive components
-│   │   ├── base/         # Base form components
-│   │   └── *.tsx         # Feature components
-│   └── *.astro           # Static Astro components
-├── styles/
-│   └── global.css        # Design tokens and global styles
-└── pages/                # Astro pages with scoped styles
+Component tokens provide semantic names for common component patterns.
+
+### Button Tokens
+
+```css
+--button-height-sm: 2rem
+--button-height-md: 2.25rem
+--button-height-lg: 2.5rem
+--button-height-xl: 3rem
+--button-padding-x-sm: var(--spacing-lg)
+--button-padding-x-md: var(--spacing-2xl)
+--button-padding-x-lg: var(--spacing-3xl)
+--button-gap: var(--gap-xs)
+--button-radius: var(--radius-md)
+--button-font-weight: var(--font-weight-semibold)
+--button-transition: all var(--duration-fast) var(--ease-in-out)
 ```
 
-### Component CSS Organization
-1. **Astro Components**: Scoped `<style>` blocks using BEM
-2. **SolidJS Islands**: Import `base/base.css` + component-specific CSS
-3. **Global Styles**: Design tokens only in `global.css`
+**Button Implementation**:
+```css
+.button {
+  height: var(--button-height-md);
+  padding: 0 var(--button-padding-x-md);
+  gap: var(--button-gap);
+  border-radius: var(--button-radius);
+  font-weight: var(--button-font-weight);
+  transition: var(--button-transition);
+}
+
+.button--primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.button--primary:hover {
+  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  transform: var(--transform-hover-lift);
+  box-shadow: var(--shadow-md);
+}
+
+.button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
+```
+
+### Input Tokens
+
+```css
+--input-height-sm: var(--height-input-sm)
+--input-height-md: var(--height-input-md)
+--input-height-lg: var(--height-input-lg)
+--input-padding-x: var(--spacing-lg)
+--input-padding-y: var(--spacing-sm)
+--input-border: var(--border-default)
+--input-border-focus: var(--border-width-thin) solid var(--ring)
+--input-radius: var(--radius-md)
+--input-font-size: var(--text-sm)
+--input-transition: all var(--duration-normal) var(--ease-in-out)
+```
+
+### Card Tokens
+
+```css
+--card-padding-sm: var(--spacing-2xl)
+--card-padding-md: var(--spacing-3xl)
+--card-padding-lg: var(--spacing-4xl)
+--card-gap: var(--gap-xl)
+--card-radius: var(--radius-xl)
+--card-border: var(--border-default)
+--card-shadow: var(--shadow-sm)
+```
+
+### Badge Tokens
+
+```css
+--badge-height: 1.5rem
+--badge-padding: var(--spacing-xs) var(--spacing-md)
+--badge-radius: var(--radius-full)
+--badge-font-size: var(--text-xs)
+--badge-font-weight: var(--font-weight-semibold)
+```
+
+### Modal/Overlay Tokens
+
+```css
+--modal-backdrop: var(--overlay-dark)
+--modal-max-width: var(--container-2xl)
+--modal-padding: var(--spacing-4xl)
+--modal-radius: var(--radius-2xl)
+--modal-shadow: var(--shadow-2xl)
+```
+
+### Layout Tokens
+
+```css
+/* Hero Sections */
+--hero-min-height: 300px
+--hero-min-height-lg: 400px
+--hero-padding: var(--spacing-5xl) var(--spacing-4xl)
+--hero-padding-sm: var(--spacing-3xl) var(--spacing-2xl)
+
+/* Grid Columns */
+--grid-cols-1: 1fr
+--grid-cols-2: repeat(2, 1fr)
+--grid-cols-3: repeat(3, 1fr)
+--grid-cols-4: repeat(4, 1fr)
+--grid-cols-5: repeat(5, 1fr)
+--grid-cols-sidebar: 2fr 1fr
+```
 
 ---
 
@@ -272,54 +506,28 @@ src/
 
 ### BEM Structure
 ```
-block__element--modifier
+.block__element--modifier
 ```
 
-### Block
-The standalone entity that is meaningful on its own.
+### Rules
 
-```css
-.button { }
-.card { }
-.form-field { }
-```
+1. **Block**: Standalone entity (`.button`, `.card`, `.form-field`)
+2. **Element**: Part of block with no standalone meaning (`.button__icon`, `.card__header`)
+3. **Modifier**: Flag for appearance/state (`.button--primary`, `.card--elevated`)
 
-### Element
-A part of a block that has no standalone meaning.
+### Best Practices
 
-```css
-.button__icon { }
-.button__text { }
-.card__header { }
-.card__content { }
-.form-field__label { }
-.form-field__input { }
-```
-
-### Modifier
-A flag on a block or element for appearance, behavior, or state.
-
-```css
-.button--primary { }
-.button--secondary { }
-.button--disabled { }
-.card--elevated { }
-.form-field__input--error { }
-```
-
-### BEM Examples
-
-#### Good BEM Structure
+✅ **Good BEM**:
 ```html
-<div class="card">
+<div class="card card--elevated">
   <div class="card__header">
-    <h2 class="card__title">Title</h2>
+    <h3 class="card__title">Title</h3>
     <p class="card__description">Description</p>
   </div>
   <div class="card__content">
-    <button class="button button--primary">
-      <span class="button__icon">🔥</span>
-      <span class="button__text">Click Me</span>
+    <button class="button button--primary button--md">
+      <span class="button__icon">+</span>
+      <span class="button__text">Add Item</span>
     </button>
   </div>
 </div>
@@ -328,50 +536,41 @@ A flag on a block or element for appearance, behavior, or state.
 ```css
 .card {
   background-color: var(--card);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-3xl);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+}
+
+.card--elevated {
+  box-shadow: var(--shadow-lg);
 }
 
 .card__header {
-  margin-bottom: var(--spacing-2xl);
+  padding: var(--card-padding-md);
+  border-bottom: var(--border-default);
 }
 
 .card__title {
+  margin: 0;
   font-size: var(--text-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--foreground);
-  margin: 0;
-}
-
-.card__description {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-  margin: var(--spacing-xs) 0 0 0;
 }
 ```
 
-#### Bad Examples (Avoid These)
+❌ **Bad BEM**:
 ```css
-/* ❌ Too deep nesting */
+/* Don't nest selectors */
+.card .card__header { }
+
+/* Don't go more than 2 levels deep */
 .card__header__title__text { }
 
-/* ❌ Not following BEM */
-.card .header .title { }
-
-/* ❌ Mixing BEM with nested selectors */
-.card__header > h2 { }
-
-/* ❌ Using IDs or inline styles */
+/* Don't use IDs */
 #card { }
-style="padding: 16px"
-```
 
-### BEM Best Practices
-1. **Flat structure**: Max 2 levels (block__element--modifier)
-2. **No nesting**: Avoid `.block .block__element`
-3. **Meaningful names**: Be descriptive but concise
-4. **Consistent modifiers**: Use same modifier names across blocks
-5. **Single responsibility**: One block per component concern
+/* Don't use descendant selectors */
+.card > h3 { }
+```
 
 ---
 
@@ -379,7 +578,6 @@ style="padding: 16px"
 
 ### Form Fields
 
-#### Standard Input Field
 ```html
 <div class="form-field">
   <label class="form-field__label" for="email">
@@ -416,18 +614,17 @@ style="padding: 16px"
 }
 
 .form-field__input {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: 1px solid var(--input);
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  color: var(--foreground);
-  background-color: transparent;
+  height: var(--input-height-md);
+  padding: var(--input-padding-y) var(--input-padding-x);
+  border: var(--input-border);
+  border-radius: var(--input-radius);
+  font-size: var(--input-font-size);
+  transition: var(--input-transition);
 }
 
-.form-field__input:focus {
-  outline: none;
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+.form-field__input:focus-visible {
+  border: var(--input-border-focus);
+  box-shadow: var(--focus-shadow);
 }
 
 .form-field__help {
@@ -437,89 +634,80 @@ style="padding: 16px"
 }
 ```
 
-### Buttons
+### Status Badges
 
-#### Primary Button
 ```html
-<button class="button button--primary">
-  <span class="button__text">Submit</span>
-</button>
+<span class="badge badge--success">Published</span>
+<span class="badge badge--warning">Draft</span>
+<span class="badge badge--error">Archived</span>
 ```
 
 ```css
-.button {
+.badge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--gap-sm);
-  padding: var(--spacing-md) var(--spacing-3xl);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-semibold);
-  border: none;
-  cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-in-out);
+  height: var(--badge-height);
+  padding: var(--badge-padding);
+  border-radius: var(--badge-radius);
+  font-size: var(--badge-font-size);
+  font-weight: var(--badge-font-weight);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.button--primary {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
+.badge--success {
+  background-color: oklch(from var(--color-success) l c h / var(--opacity-20));
+  color: var(--color-success);
 }
 
-.button--primary:hover {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+.badge--warning {
+  background-color: oklch(from var(--color-warning) l c h / var(--opacity-20));
+  color: var(--color-warning);
 }
 
-.button__text {
-  /* Spans need explicit styling */
-  font-size: inherit;
-  font-weight: inherit;
-  color: inherit;
+.badge--error {
+  background-color: oklch(from var(--destructive) l c h / var(--opacity-20));
+  color: var(--destructive);
 }
 ```
 
-### Cards
+### Empty States
 
 ```html
-<div class="card">
-  <div class="card__header">
-    <h2 class="card__title">Card Title</h2>
-    <p class="card__description">Card description</p>
-  </div>
-  <div class="card__content">
-    Content here
-  </div>
+<div class="empty-state">
+  <div class="empty-state__icon">📦</div>
+  <p class="empty-state__text">
+    No items found. Create your first item to get started.
+  </p>
+  <button class="button button--primary">
+    <span class="button__text">Create Item</span>
+  </button>
 </div>
 ```
 
 ```css
-.card {
-  background-color: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-xl);
+  padding: var(--spacing-5xl) var(--spacing-2xl);
+  text-align: center;
 }
 
-.card__header {
-  padding: var(--spacing-3xl);
-  border-bottom: 1px solid var(--border);
-}
-
-.card__title {
-  margin: 0;
-  font-size: var(--text-xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
-
-.card__description {
-  margin: var(--spacing-xs) 0 0 0;
-  font-size: var(--text-sm);
+.empty-state__icon {
+  font-size: var(--icon-size-2xl);
   color: var(--muted-foreground);
+  opacity: var(--opacity-50);
 }
 
-.card__content {
-  padding: var(--spacing-3xl);
+.empty-state__text {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+  max-width: 40ch;
+  line-height: var(--leading-relaxed);
 }
 ```
 
@@ -527,29 +715,47 @@ style="padding: 16px"
 
 ## Accessibility Guidelines
 
+### Focus States (MANDATORY)
+
+All interactive elements MUST have visible focus states:
+
+```css
+.button:focus-visible,
+.link:focus-visible,
+.input:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: var(--focus-shadow);
+}
+```
+
+### Color Contrast
+
+- **Normal text**: 4.5:1 minimum
+- **Large text (18px+)**: 3:1 minimum
+- **UI components**: 3:1 minimum
+
+Test all color combinations with contrast checkers.
+
 ### Semantic HTML
-Always use proper semantic elements:
-- `<button>` for actions
-- `<a>` for navigation
-- `<input>`, `<select>`, `<textarea>` for form controls
-- `<h1>` - `<h6>` for headings (maintain hierarchy)
-- `<main>`, `<nav>`, `<aside>`, `<section>` for layout
 
-### Form Accessibility
 ```html
-<!-- ✅ Good: Associated label -->
-<label for="username">Username</label>
-<input id="username" type="text" />
+<!-- ✅ Good -->
+<button type="button">Click Me</button>
+<a href="/page">Navigate</a>
+<input type="email" id="email" />
+<label for="email">Email</label>
 
-<!-- ✅ Good: Helper text with aria-describedby -->
-<input
-  id="email"
-  type="email"
-  aria-describedby="email-help"
-/>
-<p id="email-help">We'll never share your email</p>
+<!-- ❌ Bad -->
+<div onclick="...">Click Me</div> <!-- Not keyboard accessible -->
+<span class="link">Navigate</span> <!-- Not a real link -->
+<input /> <!-- Missing label -->
+```
 
-<!-- ✅ Good: Error message -->
+### ARIA Labels
+
+```html
+<!-- Form error -->
 <input
   id="password"
   type="password"
@@ -559,139 +765,156 @@ Always use proper semantic elements:
 <p id="password-error" role="alert">
   Password must be at least 8 characters
 </p>
+
+<!-- Loading state -->
+<button aria-busy="true" disabled>
+  <span class="button__text">Loading...</span>
+</button>
+
+<!-- Descriptive button -->
+<button aria-label="Delete product">
+  <span class="button__icon">🗑️</span>
+</button>
 ```
-
-### Focus States
-**All interactive elements MUST have visible focus states.**
-
-```css
-.button:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.form-field__input:focus {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
-}
-```
-
-### Color Contrast
-- Normal text: 4.5:1 minimum
-- Large text (18px+): 3:1 minimum
-- UI components: 3:1 minimum
-
-### Keyboard Navigation
-- Tab order must be logical
-- Skip links for main content
-- Modal traps focus
-- Escape key closes modals/dropdowns
 
 ---
 
 ## Dark Mode
 
-Dark mode tokens are defined in `.dark` class in `global.css`.
+### Implementation
 
-### Usage
+Dark mode uses the `.dark` class on `<html>`:
+
 ```html
 <html class="dark">
-  <!-- Dark mode active -->
+  <!-- All colors automatically switch -->
 </html>
 ```
 
-### Dark Mode Colors
-All color tokens automatically switch in dark mode:
-- `--background` becomes near-black
-- `--foreground` becomes near-white
-- `--muted` adjusts for dark backgrounds
-- Borders use alpha transparency for better blending
+### Dark Mode Color Adjustments
 
-### Dark Mode Best Practices
-1. **Use semantic tokens**: Never hardcode colors—tokens handle both modes
-2. **Test in both modes**: Ensure contrast is maintained
-3. **Avoid pure black**: Use `--background` (slightly off-black)
-4. **Border transparency**: `oklch(1 0 0 / 10%)` for subtle borders
+The `.dark` class in global.css automatically adjusts all semantic colors:
+
+```css
+.dark {
+  --background: oklch(0.145 0 0);     /* Near black */
+  --foreground: oklch(0.985 0 0);     /* Near white */
+  --primary: oklch(0.922 0 0);        /* Lighter for contrast */
+  --card-shadow: none;                /* Shadows less visible */
+}
+```
+
+### Testing Dark Mode
+
+Always test components in both light and dark modes:
+
+```bash
+# In browser console
+document.documentElement.classList.toggle('dark');
+```
 
 ---
 
-## Common Styling Issues & Solutions
+## Migration Guide
 
-### Issue: Span Elements Have No Styles
+### Replacing Hardcoded Values
 
-**Problem**: Spans are inline elements with no default styling.
-
-**Solution**: Always explicitly style spans or inherit from parent.
-
+**Colors**:
 ```css
-/* ❌ Bad: Unstyled span */
-<span>Text</span>
+/* ❌ Before */
+.card {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #e5e5e5;
+}
 
-/* ✅ Good: Explicitly styled */
-.button__text {
-  font-size: var(--text-sm);
+/* ✅ After */
+.card {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: var(--card-border);
+}
+```
+
+**Spacing**:
+```css
+/* ❌ Before */
+.button {
+  padding: 8px 16px;
+  margin-bottom: 24px;
+}
+
+/* ✅ After */
+.button {
+  padding: var(--spacing-sm) var(--spacing-2xl);
+  margin-bottom: var(--spacing-3xl);
+}
+```
+
+**Typography**:
+```css
+/* ❌ Before */
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* ✅ After */
+.title {
+  font-size: var(--text-2xl);
   font-weight: var(--font-weight-semibold);
-  color: inherit; /* Inherits from .button */
-}
-
-/* ✅ Good: Using inherit for color */
-.card__badge {
-  display: inline-block;
-  padding: var(--spacing-xxs) var(--spacing-sm);
-  font-size: var(--text-xs);
-  font-weight: var(--font-weight-medium);
-  color: inherit; /* Takes parent's color */
-  background-color: var(--muted);
-  border-radius: var(--radius-full);
+  line-height: var(--leading-normal);
 }
 ```
 
-### Issue: Inconsistent Spacing
-
-**Problem**: Hardcoded pixel values create inconsistency.
-
-**Solution**: Always use spacing tokens.
-
+**Borders**:
 ```css
-/* ❌ Bad */
-margin-bottom: 15px;
-padding: 20px 25px;
+/* ❌ Before */
+.card {
+  border: 2px solid #333;
+  border-radius: 12px;
+}
 
-/* ✅ Good */
-margin-bottom: var(--spacing-xl);
-padding: var(--spacing-3xl) var(--spacing-4xl);
+/* ✅ After */
+.card {
+  border: var(--border-emphasis);
+  border-radius: var(--radius-xl);
+}
 ```
 
-### Issue: Color Inconsistency
-
-**Problem**: Hardcoded hex colors don't support dark mode.
-
-**Solution**: Always use semantic color tokens.
-
+**Hover States**:
 ```css
-/* ❌ Bad */
-color: #666;
-background-color: #f5f5f5;
+/* ❌ Before */
+.button:hover {
+  opacity: 0.8;
+}
 
-/* ✅ Good */
-color: var(--muted-foreground);
-background-color: var(--muted);
+/* ✅ After */
+.button--primary:hover {
+  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  transform: var(--transform-hover-lift);
+  box-shadow: var(--shadow-md);
+}
 ```
 
 ---
 
-## Checklist for New Components
+## Component Checklist
+
+Before committing new components, verify:
 
 - [ ] Uses BEM naming convention
-- [ ] All values use design tokens (no hardcoded values)
-- [ ] Span elements have explicit styling
-- [ ] Interactive elements have focus states
-- [ ] Color contrast meets WCAG AA standards
+- [ ] All values use design tokens (no hardcoded px/colors/etc)
+- [ ] Span elements have explicit styling or inherit
+- [ ] All interactive elements have visible focus states
+- [ ] Color contrast meets WCAG AA (4.5:1 for text)
 - [ ] Works in both light and dark mode
-- [ ] Keyboard accessible
+- [ ] Keyboard accessible (proper tab order)
 - [ ] Semantic HTML used
-- [ ] No deep nesting (max 2 levels)
+- [ ] No nesting beyond 2 levels (block__element--modifier)
 - [ ] Responsive design considered
+- [ ] No unused CSS rules
 
 ---
 
@@ -701,8 +924,46 @@ background-color: var(--muted);
 - **OKLCH Color**: https://oklch.com/
 - **WCAG Guidelines**: https://www.w3.org/WAI/WCAG21/quickref/
 - **CSS Custom Properties**: https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties
+- **Contrast Checker**: https://webaim.org/resources/contrastchecker/
 
 ---
 
+## Quick Reference
+
+### Common Patterns
+
+```css
+/* Standard button hover */
+.button:hover {
+  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  transform: var(--transform-hover-lift);
+  box-shadow: var(--shadow-md);
+}
+
+/* Focus state */
+.interactive:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Disabled state */
+.button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Card structure */
+.card {
+  background-color: var(--card);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+```
+
+---
+
+**Version**: 2.0.0
 **Last Updated**: January 2025
 **Maintained by**: Game Loopers Team

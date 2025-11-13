@@ -32,7 +32,8 @@
       "Bash(done)",
       "Bash(supabase migration:*)",
       "Bash(supabase stop:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

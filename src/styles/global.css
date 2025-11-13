@@ -44,6 +44,26 @@
   --sidebar-ring: oklch(0.708 0 0);
   --color-black: #000;
   --color-white: #fff;
+  --destructive-foreground: var(--color-white);
+
+  /* ===== Status Colors (Semantic) ===== */
+  --color-success: oklch(0.577 0.15 145);
+  --color-success-foreground: oklch(0.985 0 0);
+  --color-warning: oklch(0.828 0.189 84.429);
+  --color-warning-foreground: oklch(0.145 0 0);
+  --color-info: oklch(0.6 0.118 184.704);
+  --color-info-foreground: oklch(0.985 0 0);
+  --color-error: var(--destructive);
+
+  /* ===== Interactive Colors ===== */
+  --color-link: var(--primary);
+  --color-link-hover: oklch(from var(--primary) calc(l * 0.85) c h);
+  --color-link-visited: oklch(from var(--primary) calc(l * 0.75) c h);
+
+  /* ===== Overlay Colors ===== */
+  --overlay-light: oklch(0 0 0 / 0.1);
+  --overlay-medium: oklch(0 0 0 / 0.3);
+  --overlay-dark: oklch(0 0 0 / 0.7);
 
   /* ===== Breakpoints ===== */
   --breakpoint-sm: 40rem;
@@ -149,6 +169,34 @@
   --radius-4xl: 2rem;
   --radius-full: 9999px;
 
+  /* ===== Border Widths ===== */
+  --border-width-none: 0;
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 3px;
+
+  /* ===== Border Styles (Semantic) ===== */
+  --border-default: var(--border-width-thin) solid var(--border);
+  --border-emphasis: var(--border-width-medium) solid var(--border);
+  --border-strong: var(--border-width-thick) solid var(--primary);
+  --border-dashed: var(--border-width-thin) dashed var(--border);
+
+  /* ===== Opacity Scale ===== */
+  --opacity-0: 0;
+  --opacity-5: 0.05;
+  --opacity-10: 0.1;
+  --opacity-20: 0.2;
+  --opacity-30: 0.3;
+  --opacity-40: 0.4;
+  --opacity-50: 0.5;
+  --opacity-60: 0.6;
+  --opacity-70: 0.7;
+  --opacity-80: 0.8;
+  --opacity-90: 0.9;
+  --opacity-95: 0.95;
+  --opacity-100: 1;
+  --opacity-disabled: var(--opacity-50);
+
   /* ===== Component Heights ===== */
   --height-input-sm: 2rem; /* 32px */
   --height-input-md: 2.25rem; /* 36px */
@@ -211,6 +259,92 @@
   --animate-ping: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
   --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-bounce: bounce 1s infinite;
+
+  /* ===== Focus Tokens ===== */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--ring);
+  --focus-ring-opacity: var(--opacity-20);
+  --focus-shadow: 0 0 0 3px oklch(from var(--ring) l c h / var(--focus-ring-opacity));
+
+  /* ===== Icon Sizes ===== */
+  --icon-size-xs: 0.875rem; /* 14px */
+  --icon-size-sm: 1rem; /* 16px */
+  --icon-size-md: 1.25rem; /* 20px */
+  --icon-size-lg: 1.5rem; /* 24px */
+  --icon-size-xl: 2rem; /* 32px */
+  --icon-size-2xl: 2.5rem; /* 40px */
+  --icon-size-3xl: 3rem; /* 48px */
+
+  /* ===== Transform Values ===== */
+  --transform-hover-lift: translateY(-1px);
+  --transform-hover-lift-strong: translateY(-2px);
+  --transform-active-press: translateY(0);
+  --transform-scale-hover: scale(1.02);
+  --transform-scale-hover-strong: scale(1.05);
+  --transform-scale-active: scale(0.98);
+
+  /* ===== Component Tokens: Buttons ===== */
+  --button-height-sm: 2rem;
+  --button-height-md: 2.25rem;
+  --button-height-lg: 2.5rem;
+  --button-height-xl: 3rem;
+  --button-padding-x-sm: var(--spacing-lg);
+  --button-padding-x-md: var(--spacing-2xl);
+  --button-padding-x-lg: var(--spacing-3xl);
+  --button-gap: var(--gap-xs);
+  --button-radius: var(--radius-md);
+  --button-font-weight: var(--font-weight-semibold);
+  --button-transition: all var(--duration-fast) var(--ease-in-out);
+
+  /* ===== Component Tokens: Inputs ===== */
+  --input-height-sm: var(--height-input-sm);
+  --input-height-md: var(--height-input-md);
+  --input-height-lg: var(--height-input-lg);
+  --input-padding-x: var(--spacing-lg);
+  --input-padding-y: var(--spacing-sm);
+  --input-border: var(--border-default);
+  --input-border-focus: var(--border-width-thin) solid var(--ring);
+  --input-radius: var(--radius-md);
+  --input-font-size: var(--text-sm);
+  --input-transition: all var(--duration-normal) var(--ease-in-out);
+
+  /* ===== Component Tokens: Cards ===== */
+  --card-padding-sm: var(--spacing-2xl);
+  --card-padding-md: var(--spacing-3xl);
+  --card-padding-lg: var(--spacing-4xl);
+  --card-gap: var(--gap-xl);
+  --card-radius: var(--radius-xl);
+  --card-border: var(--border-default);
+  --card-shadow: var(--shadow-sm);
+
+  /* ===== Component Tokens: Badges ===== */
+  --badge-height: 1.5rem;
+  --badge-padding: var(--spacing-xs) var(--spacing-md);
+  --badge-radius: var(--radius-full);
+  --badge-font-size: var(--text-xs);
+  --badge-font-weight: var(--font-weight-semibold);
+
+  /* ===== Component Tokens: Modals/Overlays ===== */
+  --modal-backdrop: var(--overlay-dark);
+  --modal-max-width: var(--container-2xl);
+  --modal-padding: var(--spacing-4xl);
+  --modal-radius: var(--radius-2xl);
+  --modal-shadow: var(--shadow-2xl);
+
+  /* ===== Layout Tokens: Hero Sections ===== */
+  --hero-min-height: 300px;
+  --hero-min-height-lg: 400px;
+  --hero-padding: var(--spacing-5xl) var(--spacing-4xl);
+  --hero-padding-sm: var(--spacing-3xl) var(--spacing-2xl);
+
+  /* ===== Layout Tokens: Grid Columns ===== */
+  --grid-cols-1: 1fr;
+  --grid-cols-2: repeat(2, 1fr);
+  --grid-cols-3: repeat(3, 1fr);
+  --grid-cols-4: repeat(4, 1fr);
+  --grid-cols-5: repeat(5, 1fr);
+  --grid-cols-sidebar: 2fr 1fr;
 }
 
 .dark {
@@ -229,6 +363,7 @@
   --accent: oklch(0.696 0.17 162.48);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: var(--color-white);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -245,6 +380,17 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* ===== Dark Mode Adjustments ===== */
+  --color-success: oklch(0.65 0.15 145);
+  --color-success-foreground: oklch(0.145 0 0);
+  --color-warning: oklch(0.75 0.16 84.429);
+  --color-warning-foreground: oklch(0.145 0 0);
+  --color-info: oklch(0.65 0.12 184.704);
+  --color-info-foreground: oklch(0.145 0 0);
+
+  /* Card shadows less visible in dark mode */
+  --card-shadow: none;
 }
 
 /* ===== Typography ===== */

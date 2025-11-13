@@ -126,7 +126,7 @@ const currency = checkoutSession.currency || 'usd';
 .success-icon {
   width: 64px;
   height: 64px;
-  color: #10b981;
+  color: var(--success);
   margin-bottom: var(--spacing-3xl);
 }
 
@@ -146,8 +146,8 @@ const currency = checkoutSession.currency || 'usd';
 
 .success-details {
   width: 100%;
-  background-color: var(--color-background, #f9fafb);
-  border: 1px solid var(--border);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--spacing-3xl);
   margin-bottom: var(--spacing-3xl);

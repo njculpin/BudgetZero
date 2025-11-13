@@ -223,6 +223,30 @@ export const getSaleItemAssets = async (saleItemId: string): Promise<SaleItemAss
 };
 
 /**
+ * Create a sale item asset (link asset to sale item)
+ */
+export const createSaleItemAsset = async (
+  saleItemId: string,
+  assetId: string
+): Promise<SaleItemAsset | null> => {
+  const { data, error } = await serverClient
+    .from('sale_item_assets')
+    .insert({
+      sale_item_id: saleItemId,
+      asset_id: assetId,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating sale item asset:', error);
+    return null;
+  }
+
+  return data as SaleItemAsset;
+};
+
+/**
  * Check if user has purchased a specific asset
  */
 export const hasUserPurchasedAsset = async (

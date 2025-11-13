@@ -10,7 +10,7 @@
   justify-content: space-between;
   align-items: center;
   padding-bottom: var(--spacing-md);
-  border-bottom: 2px solid var(--border);
+  border-bottom: var(--border-width-thick) solid var(--border);
 }
 
 .price-manager__title {
@@ -34,7 +34,7 @@
   padding: var(--spacing-xl);
   background-color: var(--card);
   border-radius: var(--radius-lg);
-  border: 2px solid var(--border);
+  border: var(--border-width-thick) solid var(--border);
   transition: all var(--duration-fast) var(--ease-in-out);
   box-shadow: var(--shadow-sm);
 }
@@ -83,7 +83,7 @@
 }
 
 .price-item__delete:disabled {
-  opacity: 0.5;
+  opacity: var(--opacity-50);
   cursor: not-allowed;
 }
 
@@ -114,7 +114,7 @@
   padding: var(--spacing-lg);
   background-color: var(--muted);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border);
+  border: var(--border-width-default) solid var(--border);
 }
 
 .price-manager__form-row {
@@ -137,7 +137,7 @@
 
 .price-manager__select {
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--border);
+  border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-md);
   background-color: var(--background);
   color: var(--foreground);
@@ -154,7 +154,7 @@
 }
 
 .price-manager__select:disabled {
-  opacity: 0.5;
+  opacity: var(--opacity-50);
   cursor: not-allowed;
 }
 
@@ -168,7 +168,7 @@
   padding: var(--spacing-sm) var(--spacing-lg);
   background-color: transparent;
   color: var(--foreground);
-  border: 1px solid var(--border);
+  border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
@@ -181,7 +181,7 @@
 }
 
 .price-manager__cancel:disabled {
-  opacity: 0.5;
+  opacity: var(--opacity-50);
   cursor: not-allowed;
 }
 
