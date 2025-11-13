@@ -171,15 +171,15 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
 }
 
 .cart-alert--success {
-  background-color: #d1fae5;
-  color: #065f46;
-  border: 1px solid #059669;
+  background-color: var(--success-bg);
+  color: var(--success-fg);
+  border: var(--border-width-default) solid var(--success);
 }
 
 .cart-alert--error {
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #dc2626;
+  background-color: var(--destructive-bg);
+  color: var(--destructive-fg);
+  border: var(--border-width-default) solid var(--destructive);
 }
 
 .cart-layout {
@@ -213,7 +213,7 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
 }
 
 .cart-summary__row--total {
-  border-top: 2px solid var(--border);
+  border-top: var(--border-width-thick) solid var(--border);
   padding-top: var(--spacing-2xl);
   margin-top: var(--spacing-md);
 }

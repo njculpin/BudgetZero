@@ -14,7 +14,7 @@
   grid-template-columns: 1fr auto auto;
   gap: var(--gap-lg);
   padding: var(--spacing-3xl);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width-default) solid var(--border);
   align-items: center;
 }
 
@@ -102,7 +102,7 @@
 }
 
 .cart-item-row__quantity-input:disabled {
-  opacity: 0.5;
+  opacity: var(--opacity-50);
   cursor: not-allowed;
 }
 

@@ -32,8 +32,12 @@ if (accessToken && refreshToken) {
   }
 }
 
+if (!currentUser) {
+  return Astro.redirect("/sign-in");
+}
+
 // Get user's purchases
-const sales = await getUserSales();
+const sales = await getUserSales(currentUser.id);
 const completedSales = sales.filter(sale => sale.status === 'paid');
 
 // Fetch details for each purchase
@@ -223,8 +227,8 @@ const purchasesWithDetails = await Promise.all(
 
 .purchase-item {
   padding: var(--spacing-3xl);
-  background-color: var(--color-background, #f9fafb);
-  border: 1px solid var(--border);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-md);
 }
 
@@ -267,8 +271,8 @@ const purchasesWithDetails = await Promise.all(
 
 .asset-download {
   padding: var(--spacing-2xl);
-  background-color: white;
-  border: 1px solid var(--border);
+  background-color: var(--card);
+  border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-md);
 }
 
@@ -309,8 +313,8 @@ const purchasesWithDetails = await Promise.all(
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-lg);
-  background-color: var(--color-background, #f9fafb);
-  border: 1px solid var(--border);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-sm);
 }
 

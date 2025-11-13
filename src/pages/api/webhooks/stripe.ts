@@ -1,8 +1,9 @@
 import type { APIRoute } from "astro";
 import { verifyWebhookSignature, type Stripe } from "@/lib/payments";
-import { createSale, createSaleItem } from "@/lib/data-access/sales";
+import { createSale, createSaleItem, createSaleItemAsset } from "@/lib/data-access/sales";
 import { getCartItems, clearCart } from "@/lib/data-access/cart";
 import { getProductById, getVariantById, getVariantPrices } from "@/lib/data-access/products";
+import { serverClient } from "@/lib/data-access/client";
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -46,10 +47,21 @@ export const POST: APIRoute = async ({ request }) => {
         // Extract metadata
         const userId = session.metadata?.userId;
         const cartId = session.metadata?.cartId;
+        const userEmail = session.customer_email;
 
         if (!userId || !cartId) {
           console.error('Missing userId or cartId in session metadata');
           return new Response('Missing metadata', { status: 400 });
+        }
+
+        if (!userEmail) {
+          console.error('Missing customer email');
+          return new Response('Missing customer email', { status: 400 });
+        }
+
+        if (!session.amount_total) {
+          console.error('Missing amount total');
+          return new Response('Missing amount total', { status: 400 });
         }
 
         // Get cart items
@@ -60,28 +72,98 @@ export const POST: APIRoute = async ({ request }) => {
           return new Response('Cart is empty', { status: 400 });
         }
 
-        // Note: We need auth tokens to create records, but webhooks don't have user session
-        // For MVP, we'll need to use a service account or admin access
-        // For now, let's log a TODO and return success
+        try {
+          // 1. Create Sale record
+          const sale = await createSale({
+            userId,
+            userEmail,
+            priceCents: session.amount_total,
+            taxCents: 0,
+            currency: session.currency || 'usd',
+            stripeChargeId: session.payment_intent as string || session.id,
+            status: 'paid',
+          });
 
-        console.log('TODO: Create sale record for user:', userId);
-        console.log('Session ID:', session.id);
-        console.log('Amount:', session.amount_total);
-        console.log('Cart items:', cartItems.length);
+          if (!sale) {
+            throw new Error('Failed to create sale record');
+          }
 
-        // In production, you would:
-        // 1. Use Supabase service role key to create sale records
-        // 2. Create Sale with stripe charge ID
-        // 3. Create SaleItems for each cart item
-        // 4. Link assets to sale items
-        // 5. Create royalty transaction records
-        // 6. Clear the cart
+          console.log('Created sale:', sale.id);
 
-        // For now, return success so Stripe doesn't retry
-        return new Response(
-          JSON.stringify({ received: true }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
+          // 2. Create SaleItems and link assets for each cart item
+          for (const cartItem of cartItems) {
+            // Get product and variant details
+            const product = await getProductById(cartItem.product_id);
+            const variant = await getVariantById(cartItem.variant_id);
+            const prices = variant ? await getVariantPrices(variant.id) : [];
+            const price = prices.length > 0 ? prices[0] : null;
+
+            if (!product || !variant || !price) {
+              console.error(`Invalid cart item: ${cartItem.id}`);
+              continue;
+            }
+
+            // Create sale item with product snapshot
+            const saleItem = await createSaleItem({
+              saleId: sale.id,
+              productId: cartItem.product_id,
+              variantId: cartItem.variant_id,
+              priceCents: price.unit_amount,
+              currency: price.currency,
+              quantity: cartItem.quantity,
+              snapshot: {
+                product_title: product.title,
+                variant_title: variant.title,
+                variant_sku: variant.sku,
+                product_description: product.description,
+                variant_description: variant.description,
+              },
+            });
+
+            if (!saleItem) {
+              console.error(`Failed to create sale item for cart item: ${cartItem.id}`);
+              continue;
+            }
+
+            console.log('Created sale item:', saleItem.id);
+
+            // 3. Get variant assets and link them to the sale item
+            const { data: productAssets } = await serverClient
+              .from('product_assets')
+              .select('asset_id')
+              .eq('variant_id', cartItem.variant_id);
+
+            if (productAssets && productAssets.length > 0) {
+              for (const productAsset of productAssets) {
+                const saleItemAsset = await createSaleItemAsset(
+                  saleItem.id,
+                  productAsset.asset_id
+                );
+
+                if (saleItemAsset) {
+                  console.log('Linked asset to sale item:', productAsset.asset_id);
+                }
+              }
+            }
+          }
+
+          // 4. Clear the cart
+          const cleared = await clearCart(cartId);
+          if (cleared) {
+            console.log('Cart cleared:', cartId);
+          }
+
+          console.log('Purchase fulfillment complete for sale:', sale.id);
+
+          return new Response(
+            JSON.stringify({ received: true, saleId: sale.id }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        } catch (error) {
+          console.error('Error processing checkout:', error);
+          // Return 500 so Stripe retries
+          throw error;
+        }
       }
 
       case 'payment_intent.succeeded': {

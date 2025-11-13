@@ -630,7 +630,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
     background-color: oklch(from var(--background) l c h / 0.95);
     backdrop-filter: blur(8px);
     border-radius: var(--radius-full);
-    border: 1px solid var(--border);
+    border: var(--border-width-default) solid var(--border);
     box-shadow: var(--shadow-lg);
   }
 
@@ -746,7 +746,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
     padding: var(--spacing-2xl);
     background-color: var(--muted);
     border-radius: var(--radius-md);
-    border: 1px solid var(--border);
+    border: var(--border-width-default) solid var(--border);
   }
 
   .variant-item__header {
@@ -802,7 +802,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
     padding: var(--spacing-2xl);
     background-color: oklch(from var(--primary) l c h / 0.03);
     border-radius: var(--radius-lg);
-    border: 1px solid var(--primary);
+    border: var(--border-width-default) solid var(--primary);
   }
 
   .variant-item__assets-header {
@@ -850,7 +850,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
     gap: var(--gap-md);
     padding: var(--spacing-lg);
     background-color: var(--card);
-    border: 2px solid var(--border);
+    border: var(--border-width-thick) solid var(--border);
     border-radius: var(--radius-md);
     text-decoration: none;
     transition: border-color var(--duration-fast) var(--ease-in-out);
@@ -987,7 +987,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
     top: var(--spacing-2xl);
     padding: var(--spacing-2xl);
     background-color: var(--card);
-    border: 1px solid var(--border);
+    border: var(--border-width-default) solid var(--border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
   }
