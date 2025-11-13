@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
 import { updateProduct, getProductById, getProductVariants, getVariantAssets, createProductImage } from "@/lib/data-access/products";
-import { getAssetById } from "@/lib/data-access/assets";
 import { uploadFile, generateFilePath } from "@/lib/storage";
 import { z } from "zod";
 
@@ -23,16 +22,7 @@ async function validatePublishStatus(productId: string): Promise<{ valid: boolea
   for (const variant of variants) {
     const assets = await getVariantAssets(variant.id);
 
-    for (const assetLink of assets) {
-      const asset = await getAssetById(assetLink.asset_id);
-
-      if (!asset) {
-        return {
-          valid: false,
-          error: `Asset not found for variant "${variant.title}"`
-        };
-      }
-
+    for (const asset of assets) {
       if (asset.status !== 'published') {
         return {
           valid: false,

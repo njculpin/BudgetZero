@@ -20,6 +20,7 @@ import VariantDeleteButton from "@/components/islands/VariantDeleteButton";
 import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getVariantAssets } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
+import type { Asset } from "@/types";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
@@ -279,7 +280,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
                       )}
 
                       <div class="variant-item__assets-list">
-                        {variant.assets.map((asset: any) => (
+                        {variant.assets.map((asset: Asset) => (
                           <a href={`/assets/${asset.handle}`} class="variant-item__asset-card">
                             <div class="variant-item__asset-image-container">
                               {asset.cover_image_url ? (
