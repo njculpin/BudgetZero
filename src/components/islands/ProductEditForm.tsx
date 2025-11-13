@@ -160,8 +160,8 @@ export default function ProductEditForm(props: ProductEditFormProps) {
         label="Status"
         name="status"
         value={status()}
-        onChange={(e: any) =>
-          setStatus(e.currentTarget.value as "draft" | "published" | "archived")
+        onChange={(e: Event) =>
+          setStatus((e.currentTarget as HTMLSelectElement).value as "draft" | "published" | "archived")
         }
         options={[
           { value: "draft", label: "Draft" },

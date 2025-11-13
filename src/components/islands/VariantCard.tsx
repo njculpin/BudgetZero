@@ -309,7 +309,7 @@ export default function VariantCard(props: VariantCardProps) {
             label=""
             name="assetId"
             value={selectedAssetId()}
-            onChange={(e: any) => setSelectedAssetId(e.currentTarget.value)}
+            onChange={(e: Event) => setSelectedAssetId((e.currentTarget as HTMLSelectElement).value)}
             options={[
               { value: "", label: "Select an asset to link..." },
               ...props.availableAssets.map((asset) => ({
@@ -428,7 +428,7 @@ export default function VariantCard(props: VariantCardProps) {
                 label="Currency"
                 name="currency"
                 value={priceCurrency()}
-                onChange={(e: any) => setPriceCurrency(e.currentTarget.value)}
+                onChange={(e: Event) => setPriceCurrency((e.currentTarget as HTMLSelectElement).value)}
                 options={[
                   { value: "usd", label: "USD ($)" },
                   { value: "eur", label: "EUR (€)" },

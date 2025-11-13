@@ -71,7 +71,7 @@ export default function AssetLicensingForm(props: AssetLicensingFormProps) {
         label="License Type"
         name="licenseType"
         value={licenseType()}
-        onChange={(e: any) => setLicenseType(e.currentTarget.value)}
+        onChange={(e: Event) => setLicenseType((e.currentTarget as HTMLSelectElement).value)}
         options={[
           {
             value: "standard",
