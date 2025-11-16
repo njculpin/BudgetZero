@@ -1,0 +1,66 @@
+---
+interface Props {
+  label: string;
+  name: string;
+  type?: string;
+  required?: boolean;
+  error?: string;
+  helpText?: string;
+  className?: string;
+}
+
+const {
+  label,
+  name,
+  type = "text",
+  required = false,
+  error,
+  helpText,
+  className = ""
+} = Astro.props;
+---
+
+<div class={`form-field ${className}`}>
+  <label for={name} class="form-field__label">
+    {label}
+    {required && <span class="form-field__required">*</span>}
+  </label>
+  <slot />
+  {error && <p class="form-field__error" role="alert">{error}</p>}
+  {!error && helpText && <p class="form-field__help">{helpText}</p>}
+</div>
+
+<style>
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.form-field__label {
+  display: inline-block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.form-field__required {
+  color: var(--destructive);
+  margin-left: var(--spacing-xxs);
+}
+
+.form-field__error {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--destructive);
+  font-weight: var(--font-weight-medium);
+}
+
+.form-field__help {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+</style>

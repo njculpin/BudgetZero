@@ -1,10 +1,10 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import SubscribeCTA from "@/components/SubscribeCTA.astro";
-import Hero from "@/components/Hero.astro";
+import HomeSubscribeSection from "@/components/HomeSubscribeSection.astro";
+import HomeHeroSection from "@/components/HomeHeroSection.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
-import Features from "@/components/Features.astro"
-import Jams from "@/components/Jams.astro";
+import HomeFeaturesSection from "@/components/HomeFeaturesSection.astro";
+import HomeJamsSection from "@/components/HomeJamsSection.astro";
 import { getUsersByDateJoined } from "@/lib/data-access/users";
 import type { User } from "@/types";
 import { getAllProducts, getProductImages } from "@/lib/data-access/products";
@@ -87,13 +87,13 @@ const activeJam = await getActiveJam()
   <div class="page">
     <div class="page__container">
       <div class="page-columns__column">
-      {activeJam && <Jams jam={activeJam} />}
-      <Hero/>
+      {activeJam && <HomeJamsSection jam={activeJam} />}
+      <HomeHeroSection/>
       <GalleryGrid images={products} cols={5} />
-      <Features features={features}/>
+      <HomeFeaturesSection features={features}/>
       <GalleryGrid images={assets} cols={5}/>
       <GalleryGrid images={profiles} cols={9} borderRadius="circle"/>
-      <SubscribeCTA/>
+      <HomeSubscribeSection/>
       </div>
     </div>
   </div>

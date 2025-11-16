@@ -736,3 +736,37 @@ export const reorderAssetFiles = async (
     return false;
   }
 };
+
+/**
+ * Get assets by tag
+ */
+export const getAssetsByTag = async (tag: string): Promise<Asset[]> => {
+  const { data, error } = await serverClient
+    .from('asset_tags')
+    .select(`
+      asset_id,
+      assets!inner(*)
+    `)
+    .eq('value', tag)
+    .eq('deleted', false)
+    .eq('assets.deleted', false)
+    .eq('assets.status', 'published');
+
+  if (error) {
+    console.error('Error fetching assets by tag:', error);
+    return [];
+  }
+
+  if (!data) return [];
+
+  // Extract unique assets
+  const assetMap = new Map<string, Asset>();
+  for (const item of data) {
+    const asset = item.assets as Asset;
+    if (!assetMap.has(asset.id)) {
+      assetMap.set(asset.id, asset);
+    }
+  }
+
+  return Array.from(assetMap.values());
+};

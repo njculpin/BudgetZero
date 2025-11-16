@@ -1,5 +1,5 @@
 import { createSignal, For } from 'solid-js';
-import './TagInput.css';
+import './tag-input.css';
 
 interface TagInputProps {
   name: string;

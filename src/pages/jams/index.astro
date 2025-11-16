@@ -42,6 +42,19 @@ const allJams = await getAllJams(searchQuery, tagArray, limit, offset);
 const allProductOwnerIds = [...new Set(allJams.map(p => p.user_id))];
 const allProductOwners = await Promise.all(allProductOwnerIds.map(id => getUserById(id)));
 const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]));
+
+// Calculate jam statuses
+const now = new Date();
+const jamStatuses = new Map(allJams.map(jam => {
+  const startDate = new Date(jam.start_date);
+  const endDate = new Date(jam.end_date);
+  const startTime = startDate.getTime();
+  const endTime = endDate.getTime();
+  const nowTime = now.getTime();
+
+  const status = nowTime < startTime ? 'upcoming' : (nowTime >= startTime && nowTime <= endTime) ? 'active' : 'ended';
+  return [jam.id, status];
+}));
 ---
 
 <Layout title="Jams - Game Loopers">
@@ -91,6 +104,8 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
               const owner = allOwnersMap.get(jam.user_id);
               const startDate = new Date(jam.start_date);
               const endDate = new Date(jam.end_date);
+              const calculatedStatus = jamStatuses.get(jam.id) || 'upcoming';
+
               return (
                 <a href={`/jams/${jam.handle}`} class="jam-card">
                   <div class="jam-card__content">
@@ -110,8 +125,8 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
                       <span class="jam-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
                     </div>
                     <div class="jam-card__footer">
-                      <span class={`jam-card__status jam-card__status--${jam.status}`}>
-                        {jam.status.toUpperCase()}
+                      <span class={`jam-card__status jam-card__status--${calculatedStatus}`}>
+                        {calculatedStatus.toUpperCase()}
                       </span>
                       <span class="jam-card__dates">
                         {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}

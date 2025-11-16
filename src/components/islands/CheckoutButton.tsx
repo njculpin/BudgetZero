@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { LoadingButton, ErrorMessage } from "./base";
 import "./base/base.css";
-import "./CheckoutButton.css";
+import "./checkout-button.css";
 
 interface CheckoutButtonProps {
   variant?: "primary" | "secondary" | "outline";
@@ -19,7 +19,7 @@ export default function CheckoutButton(props: CheckoutButtonProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/checkout", {
+      const response = await fetch("/api/checkout/create-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

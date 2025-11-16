@@ -1,22 +1,47 @@
 ---
-const { className = "", type = "text", ...props } = Astro.props;
+interface Props {
+  type?: string;
+  name: string;
+  id?: string;
+  value?: string;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  error?: boolean;
+  className?: string;
+}
+
+const {
+  type = "text",
+  name,
+  id,
+  value,
+  placeholder,
+  required = false,
+  disabled = false,
+  error = false,
+  className = ""
+} = Astro.props;
 ---
 
 <input
   type={type}
-  class={`input ${className}`}
-  data-slot="input"
-  {...props}
+  name={name}
+  id={id || name}
+  value={value}
+  placeholder={placeholder}
+  required={required}
+  disabled={disabled}
+  class={`input ${error ? 'input--error' : ''} ${className}`}
 />
 
 <style>
-/* ===== Base Input ===== */
 .input {
   min-width: 0;
   height: var(--height-input-md);
   padding: var(--spacing-xxs) var(--spacing-lg);
   border-radius: var(--radius-md);
-  border: var(--border-width-default) solid var(--input-border);
+  border: 1px solid var(--input);
   background-color: transparent;
   color: var(--foreground);
   font-size: var(--text-base);
@@ -30,36 +55,23 @@ const { className = "", type = "text", ...props } = Astro.props;
   color: var(--muted-foreground);
 }
 
-/* ===== Focus ===== */
 .input:focus-visible {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
 }
 
-/* ===== Disabled ===== */
 .input:disabled {
   pointer-events: none;
   cursor: not-allowed;
-  opacity: var(--opacity-50);
+  opacity: var(--opacity-disabled);
 }
 
-/* ===== Invalid / aria-invalid ===== */
-.input[aria-invalid="true"] {
+.input--error {
+  border-color: var(--destructive);
+}
+
+.input--error:focus-visible {
   border-color: var(--destructive);
   box-shadow: 0 0 0 3px oklch(from var(--destructive) l c h / 0.2);
-}
-
-/* ===== File input (if needed) ===== */
-.input[type="file"] {
-  color: var(--foreground);
-}
-
-.input[type="file"]::file-selector-button {
-  display: inline-flex;
-  height: var(--height-input-sm);
-  border: 0;
-  background: transparent;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
 }
 </style>

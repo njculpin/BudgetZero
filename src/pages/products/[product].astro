@@ -18,6 +18,7 @@ import ProductValueBreakdown from "@/components/islands/ProductValueBreakdown";
 import ProductCostBreakdown from "@/components/islands/ProductCostBreakdown";
 import VariantDeleteButton from "@/components/islands/VariantDeleteButton";
 import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getVariantAssets } from "@/lib/data-access/products";
+import { getAssetImages } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 import type { Asset } from "@/types";
@@ -52,6 +53,17 @@ const variantsWithPrices = await Promise.all(
     const prices = await getVariantPrices(variant.id);
     const assets = await getVariantAssets(variant.id);
     return { ...variant, prices, assets };
+  })
+);
+
+// Fetch asset images for all assets across all variants
+const assetImagesMap = new Map();
+const allAssets = variantsWithPrices.flatMap(v => v.assets || []);
+await Promise.all(
+  allAssets.map(async (asset) => {
+    const images = await getAssetImages(asset.id);
+    const coverImage = images[0]?.file_url || null;
+    assetImagesMap.set(asset.id, coverImage);
   })
 );
 
@@ -280,27 +292,30 @@ const defaultPrice = defaultVariant?.prices?.[0];
                       )}
 
                       <div class="variant-item__assets-list">
-                        {variant.assets.map((asset: Asset) => (
-                          <a href={`/assets/${asset.handle}`} class="variant-item__asset-card">
-                            <div class="variant-item__asset-image-container">
-                              {asset.cover_image_url ? (
-                                <img
-                                  src={asset.cover_image_url}
-                                  alt={asset.title}
-                                  class="variant-item__asset-image"
-                                />
-                              ) : (
-                                <div class="variant-item__asset-image-placeholder">
-                                  📦
-                                </div>
-                              )}
-                            </div>
-                            <div class="variant-item__asset-info">
-                              <h6 class="variant-item__asset-title">{asset.title}</h6>
-                              <p class="variant-item__asset-handle">@{asset.handle}</p>
-                            </div>
-                          </a>
-                        ))}
+                        {variant.assets.map((asset: Asset) => {
+                          const assetCoverImage = assetImagesMap.get(asset.id);
+                          return (
+                            <a href={`/assets/${asset.handle}`} class="variant-item__asset-card">
+                              <div class="variant-item__asset-image-container">
+                                {assetCoverImage ? (
+                                  <img
+                                    src={assetCoverImage}
+                                    alt={asset.title}
+                                    class="variant-item__asset-image"
+                                  />
+                                ) : (
+                                  <div class="variant-item__asset-image-placeholder">
+                                    📦
+                                  </div>
+                                )}
+                              </div>
+                              <div class="variant-item__asset-info">
+                                <h6 class="variant-item__asset-title">{asset.title}</h6>
+                                <p class="variant-item__asset-handle">@{asset.handle}</p>
+                              </div>
+                            </a>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -400,58 +415,51 @@ const defaultPrice = defaultVariant?.prices?.[0];
 
         <!-- Sidebar Column -->
         <div class="page-columns__column">
-        {!isEditMode && variantsWithPrices.length > 0 && (
-          <div class="sidebar-card sidebar-card--sticky">
-            <div class="sidebar-card__stats">
-              <div class="stat">
-                <p class="stat__value">{variantsWithPrices.length}</p>
-                <p class="stat__label">{variantsWithPrices.length === 1 ? 'Variant' : 'Variants'}</p>
-              </div>
-            </div>
+        {!isEditMode && variantsWithPrices.length > 0 && defaultPrice && (
+          <Card>
+            <CardContent>
+              <div class="product-purchase">
+                <div class="product-purchase__price">
+                  <p class="product-purchase__price-label">Price</p>
+                  <p class="product-purchase__price-value">
+                    {defaultPrice.unit_amount === 0
+                      ? 'FREE'
+                      : `$${(defaultPrice.unit_amount / 100).toFixed(2)}`}
+                  </p>
+                  {variantsWithPrices.length > 1 && (
+                    <p class="product-purchase__variant-note">
+                      {variantsWithPrices.length} variants available
+                    </p>
+                  )}
+                </div>
 
-            {defaultPrice && (
-              <div class="sidebar-card__price">
-                <p class="sidebar-card__price-label">Starting at</p>
-                <p class="sidebar-card__price-value">
-                  {defaultPrice.unit_amount === 0
-                    ? 'FREE'
-                    : `${defaultPrice.currency.toUpperCase()} ${(defaultPrice.unit_amount / 100).toFixed(2)}`}
+                {defaultVariant && (
+                  <div class="product-purchase__actions">
+                    {currentUser ? (
+                      <AddToCartButton
+                        client:load
+                        productId={productData.id}
+                        variantId={defaultVariant.id}
+                        quantity={1}
+                        variant="primary"
+                        size="lg"
+                      />
+                    ) : (
+                      <a href={`/sign-in?redirect=/products/${product}`} class="product-purchase__cta-link">
+                        <Button variant="primary" size="lg">
+                          <span slot="text">Sign In to Purchase</span>
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                <p class="product-purchase__note">
+                  Instant access after purchase • Digital download
                 </p>
               </div>
-            )}
-
-            {!isEditMode && defaultVariant && (
-              <div class="sidebar-card__cta">
-                {currentUser ? (
-                  <AddToCartButton
-                    client:load
-                    productId={productData.id}
-                    variantId={defaultVariant.id}
-                    quantity={1}
-                    variant="primary"
-                    size="lg"
-                  />
-                ) : (
-                  <a href={`/sign-in?redirect=/products/${product}`} class="sidebar-card__cta-link">
-                    <Button variant="primary" size="lg">
-                      <span slot="text">Sign In to Purchase</span>
-                    </Button>
-                  </a>
-                )}
-              </div>
-            )}
-
-            {isEditMode && (
-              <div class="sidebar-card__owner">
-                <p class="sidebar-card__owner-text">You own this product</p>
-                <a href={`/products/${product}?mode=preview`} class="sidebar-card__owner-link">
-                  <Button variant="outline" size="md">
-                    <span slot="text">Preview as Customer</span>
-                  </Button>
-                </a>
-              </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {isEditMode && currentUser && (
@@ -982,89 +990,60 @@ const defaultPrice = defaultVariant?.prices?.[0];
     max-width: 40ch;
   }
 
-  /* ===== Sidebar Card ===== */
-  .sidebar-card {
-    position: sticky;
-    top: var(--spacing-2xl);
-    padding: var(--spacing-2xl);
-    background-color: var(--card);
-    border: var(--border-width-default) solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
+  /* ===== Product Purchase Section ===== */
+  .product-purchase {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xl);
   }
 
-  .sidebar-card__stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--gap-lg);
-    padding-bottom: var(--spacing-2xl);
-    margin-bottom: var(--spacing-2xl);
+  .product-purchase__price {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+    padding-bottom: var(--spacing-xl);
     border-bottom: 1px solid var(--border);
   }
 
-  .stat {
-    text-align: center;
-  }
-
-  .stat__value {
-    margin: 0 0 var(--spacing-xs) 0;
-    font-size: var(--text-3xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--foreground);
-  }
-
-  .stat__label {
+  .product-purchase__price-label {
     margin: 0;
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
     color: var(--muted-foreground);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
-  .sidebar-card__price {
-    padding-bottom: var(--spacing-2xl);
-    margin-bottom: var(--spacing-2xl);
-    border-bottom: 1px solid var(--border);
-    text-align: center;
-  }
-
-  .sidebar-card__price-label {
-    margin: 0 0 var(--spacing-xs) 0;
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-  }
-
-  .sidebar-card__price-value {
+  .product-purchase__price-value {
     margin: 0;
     font-size: var(--text-4xl);
     font-weight: var(--font-weight-bold);
     color: var(--foreground);
+    line-height: var(--leading-tight);
   }
 
-  .sidebar-card__cta {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .sidebar-card__cta-link {
-    text-decoration: none;
-  }
-
-  .sidebar-card__owner {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-md);
-    text-align: center;
-  }
-
-  .sidebar-card__owner-text {
+  .product-purchase__variant-note {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted-foreground);
   }
 
-  .sidebar-card__owner-link {
+  .product-purchase__actions {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-purchase__cta-link {
     text-decoration: none;
+  }
+
+  .product-purchase__note {
+    margin: 0;
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid var(--border);
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    text-align: center;
   }
 
   /* ===== Creator Card ===== */
@@ -1131,11 +1110,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
 
     .product-hero__title {
       font-size: var(--text-3xl);
-    }
-
-    .sidebar-card__stats {
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--gap-md);
     }
 
     .variant-item__header {

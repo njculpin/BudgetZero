@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import "./ProductCreateForm.css";
+import "./product-create-form.css";
 
 export default function ProductCreateForm() {
   const [title, setTitle] = createSignal<string>("");

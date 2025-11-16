@@ -1,5 +1,5 @@
 import type { JSX } from "solid-js";
-import "./LoadingButton.css";
+import "./loading-button.css";
 
 interface LoadingButtonProps {
   type?: "button" | "submit" | "reset";

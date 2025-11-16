@@ -8,6 +8,11 @@ export interface User extends BaseEntity {
   avatar_url: string;
   stripe_account_id: string;
   stripe_customer_id: string;
+  stripe_connect_account_id: string | null;
+  stripe_connect_onboarded: boolean;
+  stripe_connect_details_submitted: boolean;
+  stripe_connect_charges_enabled: boolean;
+  stripe_connect_payouts_enabled: boolean;
 }
 
 export interface UserTag extends BaseEntity {

@@ -1,5 +1,5 @@
 import { createSignal, onCleanup } from "solid-js";
-import "./UserEditForm.css";
+import "./user-edit-form.css";
 
 interface UserEditFormProps {
   handle: string;

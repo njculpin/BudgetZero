@@ -11,6 +11,7 @@ import {
   getAssetFiles,
   getAssetImages,
 } from "@/lib/data-access/assets";
+import { serverClient } from "@/lib/data-access/client";
 import { uploadFile, generateFilePath } from "@/lib/storage";
 
 const updateAssetSchema = z.object({
@@ -134,16 +135,22 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Handle tags - delete existing and create new ones
+    // Handle tags - delete all existing and create new ones
     if (tagsJson) {
       const tags = JSON.parse(tagsJson) as string[];
-      const existingTags = await getAssetTags(assetId);
 
-      // For now, just add new tags (we can add delete functionality later)
+      // Delete all existing tags
+      const existingTags = await getAssetTags(assetId);
+      for (const existingTag of existingTags) {
+        await serverClient
+          .from('asset_tags')
+          .delete()
+          .eq('id', existingTag.id);
+      }
+
+      // Create new tags from the array
       for (const tag of tags) {
-        if (!existingTags.find((t) => t.value === tag)) {
-          await createAssetTag(assetId, tag);
-        }
+        await createAssetTag(assetId, tag);
       }
     }
 

@@ -1,6 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import UserEditForm from "@/components/islands/UserEditForm";
@@ -10,6 +12,8 @@ import { setSession } from "../lib/auth";
 import { getUserById } from "@/lib/data-access/users";
 import { getUserProducts, getProductImages } from "@/lib/data-access/products";
 import { getUserAssets, getAssetImages } from "@/lib/data-access/assets";
+import { getUserEarningsSummary, getRoyaltyTransactionHistory } from "@/lib/data-access/royalties";
+import { getAvailablePayoutBalance, getUserPayouts } from "@/lib/data-access/payouts";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -52,6 +56,14 @@ const userHandle = userProfile?.handle;
 // Fetch user's content
 const userProducts = userId ? await getUserProducts(userId) : [];
 const userAssets = userId ? await getUserAssets(userId) : [];
+
+// Fetch royalty earnings
+const earningsSummary = userId ? await getUserEarningsSummary(userId) : null;
+const recentTransactions = userId ? await getRoyaltyTransactionHistory(userId) : [];
+
+// Fetch payout data
+const availableBalance = userId ? await getAvailablePayoutBalance(userId) : { totalCents: 0, transactionIds: [] };
+const recentPayouts = userId ? await getUserPayouts(userId) : [];
 
 // Create unified content array with images
 type ContentItem = {
@@ -135,6 +147,211 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
 
           <!-- Center Column: Content Grid (2/4) -->
           <div class="dashboard__main">
+
+            <!-- Royalty Earnings Section -->
+            {earningsSummary && earningsSummary.transactionCount > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Royalty Earnings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div class="earnings-summary">
+                    <div class="earnings-summary__grid">
+                      <div class="earnings-summary__stat">
+                        <span class="earnings-summary__label">Total Earnings</span>
+                        <span class="earnings-summary__value">
+                          ${(earningsSummary.totalEarnings / 100).toFixed(2)}
+                        </span>
+                      </div>
+                      <div class="earnings-summary__stat">
+                        <span class="earnings-summary__label">This Month</span>
+                        <span class="earnings-summary__value">
+                          ${(earningsSummary.thisMonthEarnings / 100).toFixed(2)}
+                        </span>
+                      </div>
+                      <div class="earnings-summary__stat">
+                        <span class="earnings-summary__label">Last Month</span>
+                        <span class="earnings-summary__value">
+                          ${(earningsSummary.lastMonthEarnings / 100).toFixed(2)}
+                        </span>
+                      </div>
+                      <div class="earnings-summary__stat">
+                        <span class="earnings-summary__label">Transactions</span>
+                        <span class="earnings-summary__value">
+                          {earningsSummary.transactionCount}
+                        </span>
+                      </div>
+                    </div>
+
+                    {recentTransactions.length > 0 && (
+                      <div class="earnings-transactions">
+                        <h3 class="earnings-transactions__title">Recent Transactions</h3>
+                        <div class="earnings-transactions__list">
+                          {recentTransactions.slice(0, 5).map((transaction) => (
+                            <div class="transaction-item">
+                              <div class="transaction-item__content">
+                                <span class="transaction-item__title">
+                                  {transaction.productTitle} - {transaction.variantTitle}
+                                </span>
+                                <span class="transaction-item__subtitle">
+                                  {transaction.assetTitle}
+                                </span>
+                                <span class="transaction-item__date">
+                                  {new Date(transaction.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <div class="transaction-item__amount">
+                                <span class={`transaction-item__status transaction-item__status--${transaction.status}`}>
+                                  {transaction.status}
+                                </span>
+                                <span class="transaction-item__value">
+                                  ${(transaction.calculatedCents / 100).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <!-- Payout Section -->
+            {!userProfile?.stripe_connect_onboarded ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Get Paid for Your Work</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div class="payout-setup">
+                    <div class="payout-setup__info">
+                      <p class="payout-setup__description">
+                        Connect your bank account to receive royalty payouts when your assets are purchased. Set up takes just a few minutes.
+                      </p>
+                      <div class="payout-setup__features">
+                        <div class="payout-setup__feature">
+                          <svg class="payout-setup__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                          </svg>
+                          <span>Secure & powered by Stripe</span>
+                        </div>
+                        <div class="payout-setup__feature">
+                          <svg class="payout-setup__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                          <span>Processed within 2-3 business days</span>
+                        </div>
+                        <div class="payout-setup__feature">
+                          <svg class="payout-setup__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                          </svg>
+                          <span>Request payouts anytime from your dashboard</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="payout-setup__actions">
+                      <a href="/connect/onboarding">
+                        <Button variant="primary" size="lg">
+                          <span slot="text">Connect Bank Account</span>
+                        </Button>
+                      </a>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : availableBalance.totalCents > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Available for Payout</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div class="payout-available">
+                    <div class="payout-available__amount">
+                      <span class="payout-available__label">Available Balance</span>
+                      <span class="payout-available__value">
+                        ${(availableBalance.totalCents / 100).toFixed(2)} USD
+                      </span>
+                    </div>
+
+                    <div class="payout-available__actions">
+                      <a href="/payouts">
+                        <Button variant="primary" size="md">
+                          <span slot="text">Request Payout</span>
+                        </Button>
+                      </a>
+                      <p class="payout-available__note">
+                        Payouts are typically processed within 2-3 business days
+                      </p>
+                    </div>
+                  </div>
+
+                  {recentPayouts.length > 0 && (
+                    <div class="payout-history">
+                      <h3 class="payout-history__title">Recent Payouts</h3>
+                      <div class="payout-history__list">
+                        {recentPayouts.slice(0, 5).map((payout) => (
+                          <div class="payout-item">
+                            <div class="payout-item__content">
+                              <span class="payout-item__date">
+                                {new Date(payout.requested_at).toLocaleDateString()}
+                              </span>
+                              <span class={`payout-item__status payout-item__status--${payout.status}`}>
+                                {payout.status}
+                              </span>
+                            </div>
+                            <div class="payout-item__amount">
+                              ${(payout.amount_cents / 100).toFixed(2)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div class="payout-history__view-all">
+                        <a href="/payouts" class="payout-history__link">
+                          View All Payouts →
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : recentPayouts.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payout History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div class="payout-history">
+                    <p class="payout-history__empty">No balance available for payout. You'll see new transactions here when your assets generate royalties.</p>
+                    <div class="payout-history__list">
+                      {recentPayouts.slice(0, 5).map((payout) => (
+                        <div class="payout-item">
+                          <div class="payout-item__content">
+                            <span class="payout-item__date">
+                              {new Date(payout.requested_at).toLocaleDateString()}
+                            </span>
+                            <span class={`payout-item__status payout-item__status--${payout.status}`}>
+                              {payout.status}
+                            </span>
+                          </div>
+                          <div class="payout-item__amount">
+                            ${(payout.amount_cents / 100).toFixed(2)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div class="payout-history__view-all">
+                      <a href="/payouts" class="payout-history__link">
+                        View All Payouts →
+                      </a>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <!-- Content Grid -->
             {contentItems.length > 0 ? (
@@ -443,6 +660,374 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
   color: var(--muted-foreground);
   max-width: 32rem;
   margin: 0;
+}
+
+/* ===== Earnings Summary ===== */
+.earnings-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3xl);
+}
+
+.earnings-summary__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gap-2xl);
+}
+
+@media (min-width: 768px) {
+  .earnings-summary__grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.earnings-summary__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.earnings-summary__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+}
+
+.earnings-summary__value {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+/* ===== Earnings Transactions ===== */
+.earnings-transactions {
+  padding-top: var(--spacing-2xl);
+  border-top: 1px solid var(--border);
+}
+
+.earnings-transactions__title {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.earnings-transactions__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--spacing-lg);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+  gap: var(--gap-lg);
+}
+
+.transaction-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+  flex: 1;
+}
+
+.transaction-item__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.transaction-item__subtitle {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+}
+
+.transaction-item__date {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+}
+
+.transaction-item__amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--gap-xs);
+}
+
+.transaction-item__status {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.transaction-item__status--pending {
+  background-color: rgba(254, 243, 199, 0.9);
+  color: #92400e;
+}
+
+.transaction-item__status--paid {
+  background-color: rgba(209, 250, 229, 0.9);
+  color: #065f46;
+}
+
+.transaction-item__status--ready_to_pay {
+  background-color: rgba(191, 219, 254, 0.9);
+  color: #1e40af;
+}
+
+.transaction-item__value {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+@media (max-width: 640px) {
+  .transaction-item {
+    flex-direction: column;
+  }
+
+  .transaction-item__amount {
+    align-items: flex-start;
+  }
+}
+
+/* ===== Payout Setup ===== */
+.payout-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3xl);
+  padding: var(--spacing-2xl);
+}
+
+.payout-setup__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
+}
+
+.payout-setup__description {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.payout-setup__features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.payout-setup__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-md);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.payout-setup__icon {
+  flex-shrink: 0;
+  color: var(--primary);
+  margin-top: 2px;
+}
+
+.payout-setup__actions {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--spacing-lg);
+}
+
+.payout-setup__actions a {
+  text-decoration: none;
+}
+
+/* ===== Payout Available ===== */
+.payout-available {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3xl);
+}
+
+.payout-available__amount {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  padding: var(--spacing-3xl);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.payout-available__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+}
+
+.payout-available__value {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.payout-available__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-lg);
+}
+
+.payout-available__actions form {
+  margin: 0;
+}
+
+.payout-available__actions a {
+  text-decoration: none;
+}
+
+.payout-available__note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.payout-connect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-lg);
+  padding: var(--spacing-2xl);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.payout-connect__message {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.payout-connect a {
+  text-decoration: none;
+}
+
+/* ===== Payout History ===== */
+.payout-history {
+  padding-top: var(--spacing-2xl);
+  border-top: 1px solid var(--border);
+}
+
+.payout-history__title {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.payout-history__empty {
+  margin: 0 0 var(--spacing-xl) 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  text-align: center;
+  line-height: var(--leading-relaxed);
+}
+
+.payout-history__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.payout-history__view-all {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-lg);
+}
+
+.payout-history__link {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--duration-normal) var(--ease-in-out);
+}
+
+.payout-history__link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.payout-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.payout-item__content {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-lg);
+}
+
+.payout-item__date {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.payout-item__status {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.payout-item__status--pending {
+  background-color: rgba(254, 243, 199, 0.9);
+  color: #92400e;
+}
+
+.payout-item__status--processing {
+  background-color: rgba(191, 219, 254, 0.9);
+  color: #1e40af;
+}
+
+.payout-item__status--paid {
+  background-color: rgba(209, 250, 229, 0.9);
+  color: #065f46;
+}
+
+.payout-item__status--failed {
+  background-color: rgba(254, 202, 202, 0.9);
+  color: #991b1b;
+}
+
+.payout-item__status--cancelled {
+  background-color: rgba(229, 231, 235, 0.9);
+  color: #374151;
+}
+
+.payout-item__amount {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
 }
 
 </style>

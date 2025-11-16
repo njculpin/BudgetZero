@@ -1,0 +1,63 @@
+---
+interface Props {
+  variant: "error" | "success" | "warning" | "info";
+  message: string;
+}
+
+const { variant, message } = Astro.props;
+---
+
+<div class={`alert alert--${variant}`}>
+  <p class="alert__message">{message}</p>
+</div>
+
+<style>
+  .alert {
+    padding: var(--spacing-lg) var(--spacing-2xl);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .alert--error {
+    background-color: oklch(from var(--color-error) l c h / 0.1);
+    border: var(--border-width-default) solid oklch(from var(--color-error) l c h / 0.3);
+  }
+
+  .alert--success {
+    background-color: oklch(from var(--color-success) l c h / 0.1);
+    border: var(--border-width-default) solid oklch(from var(--color-success) l c h / 0.3);
+  }
+
+  .alert--warning {
+    background-color: oklch(from var(--color-warning) l c h / 0.1);
+    border: var(--border-width-default) solid oklch(from var(--color-warning) l c h / 0.3);
+  }
+
+  .alert--info {
+    background-color: oklch(from var(--color-info) l c h / 0.1);
+    border: var(--border-width-default) solid oklch(from var(--color-info) l c h / 0.3);
+  }
+
+  .alert__message {
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--foreground);
+  }
+
+  .alert--error .alert__message {
+    color: var(--color-error);
+  }
+
+  .alert--success .alert__message {
+    color: var(--color-success);
+  }
+
+  .alert--warning .alert__message {
+    color: var(--color-warning);
+  }
+
+  .alert--info .alert__message {
+    color: var(--color-info);
+  }
+</style>

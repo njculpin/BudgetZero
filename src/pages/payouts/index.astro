@@ -1,0 +1,806 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+import Button from "@/components/Button.astro";
+import { setSession } from "@/lib/auth";
+import { getUserById } from "@/lib/data-access/users";
+
+// Check authentication
+let currentUser = null;
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {
+    // Continue as guest
+  }
+}
+
+if (!currentUser) {
+  return Astro.redirect("/sign-in?redirect=/payouts");
+}
+
+const user = await getUserById(currentUser.id);
+
+if (!user) {
+  return Astro.redirect("/dashboard");
+}
+---
+
+<Layout title="Payouts - Game Loopers">
+  <div class="page">
+    <div class="page__container">
+      <div class="payouts-page">
+        <div class="payouts-header">
+          <h1 class="payouts-header__title">Payouts</h1>
+          <p class="payouts-header__description">
+            Manage your earnings from sales and royalties
+          </p>
+        </div>
+
+        <div class="payouts-grid">
+          {/* Available Balance Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Balance</CardTitle>
+              <CardDescription>Earnings ready to be paid out</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div id="balance-content" class="balance-content">
+                <div class="balance-loading">
+                  <div class="balance-loading__spinner"></div>
+                  <p class="balance-loading__text">Loading balance...</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Manage your payout settings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div class="actions-list">
+                <a href="/connect/dashboard" class="action-link">
+                  <div class="action-link__icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="action-link__content">
+                    <div class="action-link__title">Payout Settings</div>
+                    <div class="action-link__description">Manage your bank account</div>
+                  </div>
+                </a>
+
+                <a href="/dashboard" class="action-link">
+                  <div class="action-link__icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                      <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                  </div>
+                  <div class="action-link__content">
+                    <div class="action-link__title">Back to Dashboard</div>
+                    <div class="action-link__description">Return to main dashboard</div>
+                  </div>
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Payout History */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Payout History</CardTitle>
+            <CardDescription>Your recent payout requests</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div id="history-content" class="history-content">
+              <div class="history-loading">
+                <div class="history-loading__spinner"></div>
+                <p class="history-loading__text">Loading history...</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+
+  {/* Request Payout Modal */}
+  <div id="request-modal" class="modal" style="display: none;">
+    <div class="modal__overlay"></div>
+    <div class="modal__content">
+      <div class="modal__header">
+        <h2 class="modal__title">Request Payout</h2>
+        <button id="close-modal" class="modal__close" type="button">×</button>
+      </div>
+      <form id="payout-form" class="modal__form">
+        <div class="form-field">
+          <label class="form-field__label">Amount</label>
+          <div class="form-field__input-wrapper">
+            <span class="form-field__prefix">$</span>
+            <input
+              id="amount-input"
+              type="number"
+              step="0.01"
+              min="10"
+              class="form-field__input"
+              placeholder="0.00"
+              required
+            />
+          </div>
+          <p class="form-field__help">Minimum payout: $10.00</p>
+        </div>
+
+        <div class="form-field">
+          <label class="form-field__label">Notes (optional)</label>
+          <textarea
+            id="notes-input"
+            class="form-field__textarea"
+            rows="3"
+            placeholder="Add any notes about this payout..."
+          ></textarea>
+        </div>
+
+        <div class="modal__actions">
+          <button type="button" id="cancel-button" class="modal__button modal__button--secondary">
+            Cancel
+          </button>
+          <button type="submit" id="submit-button" class="modal__button modal__button--primary">
+            Request Payout
+          </button>
+        </div>
+
+        <div id="form-error" class="form-error" style="display: none;"></div>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  let availableBalanceCents = 0;
+
+  async function loadData() {
+    try {
+      const response = await fetch('/api/payouts/get-balance');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load data');
+      }
+
+      availableBalanceCents = data.availableBalance;
+
+      // Update balance display
+      const balanceContent = document.getElementById('balance-content');
+      if (balanceContent) {
+        balanceContent.innerHTML = `
+          <div class="balance-display">
+            <div class="balance-display__amount">$${(data.availableBalance / 100).toFixed(2)}</div>
+            <div class="balance-display__info">From ${data.transactionCount} transaction${data.transactionCount !== 1 ? 's' : ''}</div>
+            ${data.availableBalance >= 1000 ? `
+              <button id="request-payout-button" class="balance-display__button" type="button">
+                Request Payout
+              </button>
+            ` : `
+              <div class="balance-display__message">
+                Minimum payout amount is $10.00
+              </div>
+            `}
+          </div>
+        `;
+
+        // Attach event listener to request button
+        document.getElementById('request-payout-button')?.addEventListener('click', () => {
+          showRequestModal();
+        });
+      }
+
+      // Update history display
+      const historyContent = document.getElementById('history-content');
+      if (historyContent) {
+        if (data.payouts.length === 0) {
+          historyContent.innerHTML = `
+            <div class="history-empty">
+              <p class="history-empty__text">No payout requests yet</p>
+            </div>
+          `;
+        } else {
+          const payoutsHtml = data.payouts.map((payout: any) => {
+            const statusClass = `status-badge--${payout.status}`;
+            const date = new Date(payout.requested_at).toLocaleDateString();
+
+            return `
+              <div class="payout-item">
+                <div class="payout-item__main">
+                  <div class="payout-item__amount">$${(payout.amount_cents / 100).toFixed(2)}</div>
+                  <div class="payout-item__date">${date}</div>
+                </div>
+                <div class="payout-item__status">
+                  <span class="status-badge ${statusClass}">${payout.status}</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          historyContent.innerHTML = `<div class="payout-list">${payoutsHtml}</div>`;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+
+      const balanceContent = document.getElementById('balance-content');
+      if (balanceContent) {
+        balanceContent.innerHTML = `
+          <div class="balance-error">
+            <p class="balance-error__text">Failed to load balance</p>
+            <button class="balance-error__button" onclick="loadData()">Retry</button>
+          </div>
+        `;
+      }
+    }
+  }
+
+  function showRequestModal() {
+    const modal = document.getElementById('request-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+
+      // Set max amount
+      const amountInput = document.getElementById('amount-input') as HTMLInputElement;
+      if (amountInput) {
+        amountInput.max = (availableBalanceCents / 100).toString();
+        amountInput.value = (availableBalanceCents / 100).toFixed(2);
+      }
+    }
+  }
+
+  function hideRequestModal() {
+    const modal = document.getElementById('request-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+
+    // Reset form
+    const form = document.getElementById('payout-form') as HTMLFormElement;
+    if (form) {
+      form.reset();
+    }
+
+    const formError = document.getElementById('form-error');
+    if (formError) {
+      formError.style.display = 'none';
+    }
+  }
+
+  // Modal close handlers
+  document.getElementById('close-modal')?.addEventListener('click', hideRequestModal);
+  document.getElementById('cancel-button')?.addEventListener('click', hideRequestModal);
+  document.querySelector('.modal__overlay')?.addEventListener('click', hideRequestModal);
+
+  // Form submission
+  document.getElementById('payout-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const submitButton = document.getElementById('submit-button') as HTMLButtonElement;
+    const formError = document.getElementById('form-error');
+    const amountInput = document.getElementById('amount-input') as HTMLInputElement;
+    const notesInput = document.getElementById('notes-input') as HTMLTextAreaElement;
+
+    if (!submitButton || !formError) return;
+
+    formError.style.display = 'none';
+    submitButton.disabled = true;
+    submitButton.textContent = 'Processing...';
+
+    try {
+      const amountCents = Math.round(parseFloat(amountInput.value) * 100);
+
+      const response = await fetch('/api/payouts/request-payout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountCents,
+          notes: notesInput.value || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to request payout');
+      }
+
+      // Success! Reload data and close modal
+      hideRequestModal();
+      await loadData();
+
+      alert('Payout requested successfully! You will be notified when it is processed.');
+    } catch (error) {
+      formError.textContent = error instanceof Error ? error.message : 'Failed to request payout';
+      formError.style.display = 'block';
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Request Payout';
+    }
+  });
+
+  // Load data on page load
+  loadData();
+</script>
+
+<style>
+  .payouts-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-3xl);
+  }
+
+  .payouts-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+  }
+
+  .payouts-header__title {
+    margin: 0;
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+  }
+
+  .payouts-header__description {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--muted-foreground);
+  }
+
+  .payouts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: var(--gap-2xl);
+  }
+
+  /* Balance */
+  .balance-content {
+    min-height: 200px;
+  }
+
+  .balance-loading,
+  .history-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-4xl);
+    gap: var(--gap-lg);
+  }
+
+  .balance-loading__spinner,
+  .history-loading__spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--muted);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .balance-loading__text,
+  .history-loading__text {
+    margin: 0;
+    color: var(--muted-foreground);
+    font-size: var(--text-sm);
+  }
+
+  .balance-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-4xl);
+    gap: var(--gap-lg);
+  }
+
+  .balance-display__amount {
+    font-size: var(--text-5xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+  }
+
+  .balance-display__info {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .balance-display__button {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-3xl);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--duration-normal) var(--ease-in-out);
+  }
+
+  .balance-display__button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .balance-display__message {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-xl);
+    background-color: var(--muted);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    text-align: center;
+  }
+
+  .balance-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-4xl);
+    gap: var(--gap-lg);
+  }
+
+  .balance-error__text {
+    margin: 0;
+    color: #dc2626;
+    font-size: var(--text-sm);
+  }
+
+  .balance-error__button {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+  }
+
+  /* Actions */
+  .actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .action-link {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-lg);
+    padding: var(--spacing-lg);
+    background-color: var(--muted);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all var(--duration-normal) var(--ease-in-out);
+  }
+
+  .action-link:hover {
+    background-color: var(--accent);
+  }
+
+  .action-link__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background-color: var(--background);
+    color: var(--primary);
+  }
+
+  .action-link__content {
+    flex: 1;
+  }
+
+  .action-link__title {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .action-link__description {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  /* History */
+  .history-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-5xl);
+    text-align: center;
+  }
+
+  .history-empty__text {
+    margin: 0;
+    color: var(--muted-foreground);
+  }
+
+  .payout-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .payout-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    background-color: var(--muted);
+    border-radius: var(--radius-md);
+  }
+
+  .payout-item__main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+  }
+
+  .payout-item__amount {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .payout-item__date {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .status-badge {
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .status-badge--pending {
+    background-color: rgba(251, 191, 36, 0.2);
+    color: #f59e0b;
+  }
+
+  .status-badge--processing {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+  }
+
+  .status-badge--paid {
+    background-color: rgba(34, 197, 94, 0.2);
+    color: #16a34a;
+  }
+
+  .status-badge--failed {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+  }
+
+  /* Modal */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-2xl);
+  }
+
+  .modal__overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal__content {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    background-color: var(--card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-3xl);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal__title {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .modal__close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--text-3xl);
+    line-height: 1;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    transition: all var(--duration-normal) var(--ease-in-out);
+  }
+
+  .modal__close:hover {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+
+  .modal__form {
+    padding: var(--spacing-3xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xl);
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+  }
+
+  .form-field__label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .form-field__input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .form-field__prefix {
+    position: absolute;
+    left: var(--spacing-md);
+    font-size: var(--text-base);
+    color: var(--muted-foreground);
+    pointer-events: none;
+  }
+
+  .form-field__input {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) var(--spacing-3xl);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: var(--text-base);
+  }
+
+  .form-field__textarea {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: var(--text-base);
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  .form-field__help {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--muted-foreground);
+  }
+
+  .modal__actions {
+    display: flex;
+    gap: var(--gap-md);
+    padding-top: var(--spacing-lg);
+  }
+
+  .modal__button {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--duration-normal) var(--ease-in-out);
+  }
+
+  .modal__button--primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  .modal__button--primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  .modal__button--primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .modal__button--secondary {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+
+  .modal__button--secondary:hover {
+    background-color: var(--accent);
+  }
+
+  .form-error {
+    padding: var(--spacing-md);
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    color: #dc2626;
+    font-size: var(--text-sm);
+  }
+
+  @media (max-width: 768px) {
+    .payouts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .modal {
+      padding: var(--spacing-md);
+    }
+
+    .modal__actions {
+      flex-direction: column;
+    }
+  }
+</style>

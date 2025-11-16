@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import "./RegisterForm.css";
+import "./register-form.css";
 
 export default function RegisterForm() {
   const [email, setEmail] = createSignal<string>("");
@@ -55,14 +55,14 @@ export default function RegisterForm() {
           )}
 
           <div class="auth-form__field">
-            <label for="email" class="label">
+            <label for="email" class="auth-form__label">
               Email
             </label>
             <input
               type="email"
               name="email"
               id="email"
-              class="input"
+              class="auth-form__input"
               value={email()}
               onInput={(e: InputEvent) =>
                 setEmail((e.currentTarget as HTMLInputElement).value)
@@ -74,14 +74,14 @@ export default function RegisterForm() {
           </div>
 
           <div class="auth-form__field">
-            <label for="password" class="label">
+            <label for="password" class="auth-form__label">
               Password
             </label>
             <input
               type="password"
               name="password"
               id="password"
-              class="input"
+              class="auth-form__input"
               value={password()}
               onInput={(e: InputEvent) =>
                 setPassword((e.currentTarget as HTMLInputElement).value)
