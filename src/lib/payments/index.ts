@@ -15,5 +15,19 @@ export {
   getCheckoutSession,
 } from './checkout';
 
+export {
+  createConnectAccount,
+  createAccountLink,
+  getConnectAccount,
+  getConnectAccountStatus,
+  createTransfer,
+  createLoginLink,
+} from './connect';
+
+export type {
+  CreateConnectAccountParams,
+  ConnectAccountStatus,
+} from './connect';
+
 // Re-export types for convenience
 export type { default as Stripe } from 'stripe';

@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { ErrorMessage, ConfirmDialog } from "./base";
 import "./base/base.css";
-import "./CartItemRow.css";
+import "./cart-item-row.css";
 import type { CartItem } from "@/types";
 import type { Product, ProductVariant, ProductVariantPrice } from "@/types";
 

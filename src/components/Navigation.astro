@@ -28,6 +28,7 @@ const authedLinks = [
   { href: "/products", label: "Products" },
   { href: "/jams", label: "Jams" },
   { href: "/purchases", label: "Purchases" },
+  { href: "/connect/onboarding", label: "Payouts" },
   { href: "/users", label: "Users" },
   { href: "/tags", label: "Tags" },
   { href: "/about", label: "About" },
@@ -80,6 +81,11 @@ const unAuthedLinks = [
       <a href="/purchases">
         <Button variant="ghost" size="sm">
           <span slot="text"><p>Purchases</p></span>
+        </Button>
+      </a>
+      <a href="/connect/onboarding">
+        <Button variant="ghost" size="sm">
+          <span slot="text"><p>Payouts</p></span>
         </Button>
       </a>
       <a href="/users">
@@ -159,6 +165,12 @@ const unAuthedLinks = [
   gap: var(--gap-xs);
   text-decoration: none;
   color: var(--foreground);
+  border-radius: var(--radius-md);
+}
+
+.navigation__brand:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .navigation__logo {
@@ -195,6 +207,11 @@ const unAuthedLinks = [
 .navigation__link:hover {
   color: var(--foreground);
   background-color: var(--accent);
+}
+
+.navigation__link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .navigation__link--active {
@@ -241,6 +258,12 @@ const unAuthedLinks = [
   cursor: pointer;
   padding: 0;
   z-index: 60;
+  border-radius: var(--radius-sm);
+}
+
+.navigation__hamburger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .navigation__hamburger-line {
@@ -327,6 +350,11 @@ const unAuthedLinks = [
   background-color: var(--accent);
 }
 
+.navigation__drawer-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 .navigation__drawer-actions {
   display: flex;
   flex-direction: column;
@@ -346,6 +374,11 @@ const unAuthedLinks = [
   cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;
+}
+
+.navigation__drawer-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .navigation__drawer-button--primary {

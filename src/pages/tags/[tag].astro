@@ -1,11 +1,377 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardContent from "@/components/CardContent.astro";
+import { getProductsByTag, getProductImages } from "@/lib/data-access/products";
+import { getAssetsByTag, getAssetImages } from "@/lib/data-access/assets";
+
+const { tag } = Astro.params;
+
+if (!tag) {
+  return Astro.redirect("/tags");
+}
+
+// Decode the tag from the URL
+const decodedTag = decodeURIComponent(tag);
+
+// Fetch products and assets with this tag
+const [products, assets] = await Promise.all([
+  getProductsByTag(decodedTag),
+  getAssetsByTag(decodedTag)
+]);
+
+// Fetch cover images for each product
+const productsWithImages = await Promise.all(
+  products.map(async (product) => {
+    const images = await getProductImages(product.id);
+    const coverImage = images.length > 0
+      ? images.sort((a, b) => a.position - b.position)[0]
+      : null;
+
+    return {
+      ...product,
+      coverImageUrl: coverImage?.file_url || 'https://placehold.co/600x400?text=Product',
+    };
+  })
+);
+
+// Fetch cover images for each asset
+const assetsWithImages = await Promise.all(
+  assets.map(async (asset) => {
+    const images = await getAssetImages(asset.id);
+    const coverImage = images.length > 0
+      ? images.sort((a, b) => a.position - b.position)[0]
+      : null;
+
+    return {
+      ...asset,
+      coverImageUrl: coverImage?.file_url || 'https://placehold.co/600x400?text=Asset',
+    };
+  })
+);
+
+const totalCount = productsWithImages.length + assetsWithImages.length;
 ---
 
-<Layout title="Tag - Game Loopers">
+<Layout title={`${decodedTag} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
-       <h1>Tags</h1>
+      <div class="tags-page">
+        <!-- Header -->
+        <div class="tags-header">
+          <h1 class="tags-header__title">#{decodedTag}</h1>
+          <div class="tags-header__counts">
+            <p class="tags-header__count">
+              {totalCount} total {totalCount === 1 ? 'item' : 'items'}
+            </p>
+            <div class="tags-header__breakdown">
+              {productsWithImages.length > 0 && (
+                <span class="tags-header__breakdown-item">
+                  {productsWithImages.length} product{productsWithImages.length !== 1 ? 's' : ''}
+                </span>
+              )}
+              {assetsWithImages.length > 0 && (
+                <span class="tags-header__breakdown-item">
+                  {assetsWithImages.length} asset{assetsWithImages.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {totalCount > 0 ? (
+          <>
+            <!-- Products Section -->
+            {productsWithImages.length > 0 && (
+              <div class="tag-section">
+                <h2 class="tag-section__title">Products</h2>
+                <div class="items-grid">
+                  {productsWithImages.map((product) => (
+                    <a href={`/products/${product.handle}`} class="item-card">
+                      <div class="item-card__badge item-card__badge--product">Product</div>
+                      <div class="item-card__content">
+                        <img
+                          src={product.coverImageUrl}
+                          alt={product.title}
+                          class="item-card__image"
+                          loading="lazy"
+                        />
+                        <div class="item-card__info">
+                          <h3 class="item-card__title">{product.title}</h3>
+                          {product.description && (
+                            <p class="item-card__description">
+                              {product.description.substring(0, 100)}{product.description.length > 100 ? '...' : ''}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <!-- Assets Section -->
+            {assetsWithImages.length > 0 && (
+              <div class="tag-section">
+                <h2 class="tag-section__title">Assets</h2>
+                <div class="items-grid">
+                  {assetsWithImages.map((asset) => (
+                    <a href={`/assets/${asset.handle}`} class="item-card">
+                      <div class="item-card__badge item-card__badge--asset">Asset</div>
+                      <div class="item-card__content">
+                        <img
+                          src={asset.coverImageUrl}
+                          alt={asset.title}
+                          class="item-card__image"
+                          loading="lazy"
+                        />
+                        <div class="item-card__info">
+                          <h3 class="item-card__title">{asset.title}</h3>
+                          {asset.description && (
+                            <p class="item-card__description">
+                              {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <Card>
+            <CardContent>
+              <div class="tags-empty">
+                <svg class="tags-empty__icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+                <p class="tags-empty__text">No items found with this tag</p>
+                <a href="/tags" class="tags-empty__link">Browse all tags</a>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <!-- Back Link -->
+        <div class="tags-actions">
+          <a href="/tags" class="tags-actions__link">
+            ← Back to All Tags
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </Layout>
+
+<style>
+/* ===== Tags Page ===== */
+.tags-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-4xl);
+}
+
+/* ===== Tags Header ===== */
+.tags-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.tags-header__title {
+  margin: 0;
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.tags-header__counts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.tags-header__count {
+  margin: 0;
+  font-size: var(--text-lg);
+  color: var(--foreground);
+  font-weight: var(--font-weight-medium);
+}
+
+.tags-header__breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-lg);
+}
+
+.tags-header__breakdown-item {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+/* ===== Tag Section ===== */
+.tag-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
+}
+
+.tag-section__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+/* ===== Items Grid ===== */
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--gap-2xl);
+}
+
+@media (min-width: 768px) {
+  .items-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .items-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== Item Card ===== */
+.item-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-decoration: none;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.item-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.item-card__badge {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 1;
+}
+
+.item-card__badge--product {
+  background-color: rgba(59, 130, 246, 0.9);
+  color: white;
+}
+
+.item-card__badge--asset {
+  background-color: rgba(168, 85, 247, 0.9);
+  color: white;
+}
+
+.item-card__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-card__image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+}
+
+.item-card__info {
+  padding: var(--spacing-3xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.item-card__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.item-card__description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+/* ===== Empty State ===== */
+.tags-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-5xl) var(--spacing-4xl);
+  text-align: center;
+  gap: var(--gap-lg);
+}
+
+.tags-empty__icon {
+  color: var(--muted-foreground);
+  opacity: 0.5;
+}
+
+.tags-empty__text {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.tags-empty__link {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--duration-normal) var(--ease-in-out);
+}
+
+.tags-empty__link:hover {
+  color: var(--foreground);
+}
+
+/* ===== Tags Actions ===== */
+.tags-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--spacing-2xl);
+}
+
+.tags-actions__link {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--duration-normal) var(--ease-in-out);
+}
+
+.tags-actions__link:hover {
+  color: var(--foreground);
+}
+</style>

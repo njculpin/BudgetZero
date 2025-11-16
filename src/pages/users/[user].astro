@@ -6,7 +6,6 @@ import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import { getUserByHandle } from "@/lib/data-access/users";
-import { getUserAssets, getAssetImages } from "@/lib/data-access/assets";
 import { getUserProducts, getProductImages } from "@/lib/data-access/products";
 import { setSession } from "@/lib/auth";
 
@@ -42,17 +41,14 @@ if (accessToken && refreshToken) {
   }
 }
 
-// Fetch user's assets and products (published only for public profile)
-const userAssets = await getUserAssets(profileUser.id);
+// Fetch user's products (published only for public profile)
 const userProducts = await getUserProducts(profileUser.id);
 
 // Filter for published only
-const publishedAssets = userAssets.filter(asset => asset.status === 'published');
 const publishedProducts = userProducts.filter(product => product.status === 'published');
 
-// Create unified content array with images
+// Create product content array with images
 type ContentItem = {
-  type: 'asset' | 'product';
   id: string;
   handle: string;
   title: string;
@@ -60,36 +56,21 @@ type ContentItem = {
   createdAt: string;
 };
 
-const contentItems: ContentItem[] = await Promise.all([
-  ...publishedAssets.map(async (asset) => {
-    const images = await getAssetImages(asset.id);
-    const coverImage = images.length > 0
-      ? images.sort((a, b) => a.position - b.position)[0]
-      : null;
-    return {
-      type: 'asset' as const,
-      id: asset.id,
-      handle: asset.handle,
-      title: asset.title,
-      imageUrl: coverImage?.file_url || 'https://placehold.co/400x400?text=Asset',
-      createdAt: asset.created_at,
-    };
-  }),
-  ...publishedProducts.map(async (product) => {
+const contentItems: ContentItem[] = await Promise.all(
+  publishedProducts.map(async (product) => {
     const images = await getProductImages(product.id);
     const coverImage = images.length > 0
       ? images.sort((a, b) => a.position - b.position)[0]
       : null;
     return {
-      type: 'product' as const,
       id: product.id,
       handle: product.handle,
       title: product.title,
       imageUrl: coverImage?.file_url || 'https://placehold.co/400x400?text=Product',
       createdAt: product.created_at,
     };
-  }),
-]);
+  })
+);
 
 // Sort by creation date (newest first)
 contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -128,6 +109,20 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
               {profileUser.bio && (
                 <p class="profile-header__bio">{profileUser.bio}</p>
               )}
+
+              <!-- Profile Stats -->
+              <div class="profile-stats">
+                <div class="profile-stat">
+                  <span class="profile-stat__value">{publishedProducts.length}</span>
+                  <span class="profile-stat__label">{publishedProducts.length === 1 ? 'Product' : 'Products'}</span>
+                </div>
+                <div class="profile-stat">
+                  <span class="profile-stat__value">
+                    {new Date(profileUser.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </span>
+                  <span class="profile-stat__label">Member since</span>
+                </div>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -138,7 +133,7 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
         <div class="profile-content-grid">
           {contentItems.map((item) => (
             <a
-              href={`/${item.type === 'asset' ? 'assets' : 'products'}/${item.handle}`}
+              href={`/products/${item.handle}`}
               class="profile-content-item"
               title={item.title}
             >
@@ -148,19 +143,11 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
                 class="profile-content-item__image"
               />
               <div class="profile-content-item__overlay">
-                {item.type === 'asset' ? (
-                  <svg class="profile-content-item__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                ) : (
-                  <svg class="profile-content-item__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="9" cy="21" r="1"></circle>
-                    <circle cx="20" cy="21" r="1"></circle>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                  </svg>
-                )}
+                <svg class="profile-content-item__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
               </div>
             </a>
           ))}
@@ -175,7 +162,7 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
                 <polyline points="21 15 16 10 5 21"/>
               </svg>
               <p class="profile-empty__text">
-                {profileUser.name || profileUser.handle} hasn't published any content yet.
+                {profileUser.name || profileUser.handle} hasn't published any products yet.
               </p>
             </div>
           </CardContent>
@@ -254,11 +241,35 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
   color: var(--color-text, #111);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
-  margin: 0;
+  margin: 0 0 var(--spacing-lg) 0;
 }
 
 .profile-header__actions {
   flex-shrink: 0;
+}
+
+/* ===== Profile Stats ===== */
+.profile-stats {
+  display: flex;
+  gap: var(--gap-2xl);
+  margin-top: var(--spacing-lg);
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.profile-stat__value {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.profile-stat__label {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
 }
 
 /* ===== Content Grid (Instagram-style) ===== */

@@ -33,7 +33,8 @@
       "Bash(supabase migration:*)",
       "Bash(supabase stop:*)",
       "Bash(lsof:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npx astro check:*)"
     ],
     "deny": [],
     "ask": []

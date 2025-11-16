@@ -1,0 +1,235 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardContent from "@/components/CardContent.astro";
+import Button from "@/components/Button.astro";
+import { setSession } from "@/lib/auth";
+
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect("/sign-in");
+}
+
+let session;
+try {
+  session = await setSession({
+    refresh_token: refreshToken.value,
+    access_token: accessToken.value,
+  });
+  if (session.error || !session.data.user) {
+    return Astro.redirect("/sign-in");
+  }
+} catch (error) {
+  return Astro.redirect("/sign-in");
+}
+---
+
+<Layout title="Onboarding Complete - Game Loopers">
+  <div class="page">
+    <div class="page__container">
+      <div class="complete-page">
+        <Card>
+          <CardHeader>
+            <CardTitle>Setting Up Your Account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="complete-loading">
+              <div class="spinner"></div>
+              <p class="complete-loading__text">
+                We're verifying your information with Stripe. This will only take a moment...
+              </p>
+            </div>
+
+            <div id="complete-success" class="complete-success" style="display: none;">
+              <svg class="complete-success__icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+              <h2 class="complete-success__title">Bank Account Connected!</h2>
+              <p class="complete-success__message">
+                Your bank account has been successfully connected. You can now request payouts from your dashboard.
+              </p>
+              <div class="complete-success__actions">
+                <a href="/dashboard">
+                  <Button variant="primary" size="lg">
+                    <span slot="text">Go to Dashboard</span>
+                  </Button>
+                </a>
+              </div>
+            </div>
+
+            <div id="complete-error" class="complete-error" style="display: none;">
+              <svg class="complete-error__icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+              <h2 class="complete-error__title">Verification Pending</h2>
+              <p class="complete-error__message">
+                Your information is still being verified. This can take a few minutes. You'll receive an email once verification is complete.
+              </p>
+              <div class="complete-error__actions">
+                <a href="/dashboard">
+                  <Button variant="outline" size="lg">
+                    <span slot="text">Go to Dashboard</span>
+                  </Button>
+                </a>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  async function refreshStatus() {
+    try {
+      const response = await fetch('/api/connect/refresh-status', {
+        method: 'POST',
+      });
+
+      const status = await response.json();
+
+      const loading = document.querySelector('.complete-loading');
+      const success = document.getElementById('complete-success');
+      const error = document.getElementById('complete-error');
+
+      if (loading) loading.style.display = 'none';
+
+      if (status.payoutsEnabled) {
+        if (success) success.style.display = 'flex';
+      } else {
+        if (error) error.style.display = 'flex';
+      }
+    } catch (err) {
+      const loading = document.querySelector('.complete-loading');
+      const error = document.getElementById('complete-error');
+
+      if (loading) loading.style.display = 'none';
+      if (error) error.style.display = 'flex';
+    }
+  }
+
+  // Refresh status after a brief delay
+  setTimeout(refreshStatus, 2000);
+</script>
+
+<style>
+/* ===== Complete Page ===== */
+.complete-page {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+/* ===== Loading State ===== */
+.complete-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-6xl) var(--spacing-4xl);
+  gap: var(--gap-2xl);
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--muted);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spinner-rotation 1s linear infinite;
+}
+
+@keyframes spinner-rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.complete-loading__text {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+/* ===== Success State ===== */
+.complete-success {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-4xl);
+  gap: var(--gap-lg);
+}
+
+.complete-success__icon {
+  color: var(--success);
+  width: 64px;
+  height: 64px;
+}
+
+.complete-success__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.complete-success__message {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.complete-success__actions {
+  margin-top: var(--spacing-lg);
+}
+
+.complete-success__actions a {
+  text-decoration: none;
+}
+
+/* ===== Error State ===== */
+.complete-error {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-4xl);
+  gap: var(--gap-lg);
+}
+
+.complete-error__icon {
+  color: var(--muted-foreground);
+  width: 64px;
+  height: 64px;
+}
+
+.complete-error__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.complete-error__message {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.complete-error__actions {
+  margin-top: var(--spacing-lg);
+}
+
+.complete-error__actions a {
+  text-decoration: none;
+}
+</style>

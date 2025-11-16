@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { FileUploadField, ErrorMessage, SuccessMessage } from "./base";
 import "./base/base.css";
-import "./FileUpload.css";
+import "./file-upload.css";
 import type { StorageBucket } from "@/lib/storage";
 
 export interface UploadedFile {

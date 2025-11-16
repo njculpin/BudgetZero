@@ -641,6 +641,40 @@ export const getPopularProductTags = async (limit: number = 20): Promise<Array<{
 };
 
 /**
+ * Get products by tag
+ */
+export const getProductsByTag = async (tag: string): Promise<Product[]> => {
+  const { data, error } = await serverClient
+    .from('product_tags')
+    .select(`
+      product_id,
+      products!inner(*)
+    `)
+    .eq('value', tag)
+    .eq('deleted', false)
+    .eq('products.deleted', false)
+    .eq('products.status', 'published');
+
+  if (error) {
+    console.error('Error fetching products by tag:', error);
+    return [];
+  }
+
+  if (!data) return [];
+
+  // Extract unique products
+  const productMap = new Map<string, Product>();
+  for (const item of data) {
+    const product = item.products as Product;
+    if (!productMap.has(product.id)) {
+      productMap.set(product.id, product);
+    }
+  }
+
+  return Array.from(productMap.values());
+};
+
+/**
  * Search products by title or handle
  * Returns up to 10 matching products owned by the specified user
  */

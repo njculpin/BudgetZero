@@ -172,6 +172,7 @@
   /* ===== Border Widths ===== */
   --border-width-none: 0;
   --border-width-thin: 1px;
+  --border-width-default: var(--border-width-thin); /* Alias for consistency */
   --border-width-medium: 2px;
   --border-width-thick: 3px;
 

@@ -7,7 +7,7 @@ import {
 } from "./base";
 import "./base/base.css";
 
-export interface AddToProductFormProps {
+export interface AssetAddToProductFormProps {
   assetId: string;
 }
 
@@ -18,7 +18,7 @@ interface Product {
   status: string;
 }
 
-export default function AddToProductForm(props: AddToProductFormProps) {
+export default function AssetAddToProductForm(props: AssetAddToProductFormProps) {
   const [mode, setMode] = createSignal<"existing" | "new">("existing");
   const [searchQuery, setSearchQuery] = createSignal("");
   const [searchResults, setSearchResults] = createSignal<Product[]>([]);

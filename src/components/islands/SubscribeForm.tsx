@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import "./SubscribeForm.css";
+import "./subscribe-form.css";
 
 export default function SubscribeForm() {
   const [email, setEmail] = createSignal<string>("");

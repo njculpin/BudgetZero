@@ -1,0 +1,71 @@
+---
+interface Props {
+  name: string;
+  id?: string;
+  value?: string;
+  required?: boolean;
+  disabled?: boolean;
+  error?: boolean;
+  className?: string;
+}
+
+const {
+  name,
+  id,
+  value,
+  required = false,
+  disabled = false,
+  error = false,
+  className = ""
+} = Astro.props;
+---
+
+<select
+  name={name}
+  id={id || name}
+  value={value}
+  required={required}
+  disabled={disabled}
+  class={`select ${error ? 'select--error' : ''} ${className}`}
+>
+  <slot />
+</select>
+
+<style>
+.select {
+  width: 100%;
+  height: var(--height-input-md);
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--input);
+  background-color: transparent;
+  color: var(--foreground);
+  font-size: var(--text-base);
+  font-family: inherit;
+  line-height: var(--leading-normal);
+  box-shadow: var(--shadow-xs);
+  transition: color var(--duration-normal) var(--ease-in-out), box-shadow var(--duration-normal) var(--ease-in-out), border-color var(--duration-normal) var(--ease-in-out);
+  outline: none;
+  cursor: pointer;
+}
+
+.select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+}
+
+.select:disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.select--error {
+  border-color: var(--destructive);
+}
+
+.select--error:focus-visible {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 3px oklch(from var(--destructive) l c h / 0.2);
+}
+</style>

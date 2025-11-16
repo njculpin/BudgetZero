@@ -6,3 +6,4 @@ export * from "./products.types";
 export * from "./commerce.types";
 export * from "./jams.types";
 export * from "./system.types";
+export * from "./payouts.types";

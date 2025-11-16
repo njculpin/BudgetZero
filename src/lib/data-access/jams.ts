@@ -1,4 +1,12 @@
-import type { Jam, Product, JamProductReview } from "@/types";
+import type {
+  Jam,
+  Product,
+  JamProductReview,
+  JamCategory,
+  JamVote,
+  VotingPhase,
+  CategoryVotingResult,
+} from "@/types";
 import { serverClient } from "./client";
 import { generateHandle } from "./handles";
 
@@ -325,4 +333,251 @@ export const getJamProductRatings = async (
   }
 
   return ratingsMap;
+};
+
+/**
+ * Calculate the current voting phase for a jam
+ */
+export const calculateVotingPhase = (jam: Jam): VotingPhase => {
+  const now = new Date();
+  const startDate = new Date(jam.start_date);
+  const endDate = new Date(jam.end_date);
+  const votingEndDate = jam.voting_end_date
+    ? new Date(jam.voting_end_date)
+    : null;
+  const resultsRevealDate = jam.results_reveal_date
+    ? new Date(jam.results_reveal_date)
+    : null;
+
+  if (now < startDate) {
+    return "upcoming";
+  }
+
+  if (now >= startDate && now <= endDate) {
+    return "active";
+  }
+
+  if (votingEndDate && now > endDate && now <= votingEndDate) {
+    return "voting";
+  }
+
+  if (
+    resultsRevealDate &&
+    votingEndDate &&
+    now > votingEndDate &&
+    now < resultsRevealDate
+  ) {
+    return "results_pending";
+  }
+
+  return "completed";
+};
+
+/**
+ * Get all categories for a jam
+ */
+export const getJamCategories = async (
+  jamId: string
+): Promise<JamCategory[]> => {
+  const { data, error } = await serverClient
+    .from("jam_categories")
+    .select("*")
+    .eq("jam_id", jamId)
+    .eq("deleted", false)
+    .order("position");
+
+  if (error) {
+    console.error("Error fetching jam categories:", error);
+    return [];
+  }
+
+  return (data as JamCategory[]) || [];
+};
+
+/**
+ * Get all votes for a user in a jam
+ */
+export const getUserVotes = async (
+  jamId: string,
+  userId: string
+): Promise<JamVote[]> => {
+  const { data, error } = await serverClient
+    .from("jam_votes")
+    .select("*")
+    .eq("jam_id", jamId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error fetching user votes:", error);
+    return [];
+  }
+
+  return (data as JamVote[]) || [];
+};
+
+/**
+ * Check if a user has submitted votes for a jam
+ */
+export const hasUserVoted = async (
+  jamId: string,
+  userId: string
+): Promise<boolean> => {
+  const { data, error } = await serverClient
+    .from("jam_votes")
+    .select("id")
+    .eq("jam_id", jamId)
+    .eq("user_id", userId)
+    .not("submitted_at", "is", null)
+    .limit(1);
+
+  if (error) {
+    console.error("Error checking if user voted:", error);
+    return false;
+  }
+
+  return data !== null && data.length > 0;
+};
+
+/**
+ * Get voting results for a specific category
+ */
+export const getCategoryResults = async (
+  jamId: string,
+  categoryId: string
+): Promise<CategoryVotingResult | null> => {
+  const { data: categoryData, error: categoryError } = await serverClient
+    .from("jam_categories")
+    .select("*")
+    .eq("id", categoryId)
+    .eq("jam_id", jamId)
+    .single();
+
+  if (categoryError || !categoryData) {
+    console.error("Error fetching category:", categoryError);
+    return null;
+  }
+
+  const { data: votesData, error: votesError } = await serverClient
+    .from("jam_votes")
+    .select("product_id")
+    .eq("jam_id", jamId)
+    .eq("category_id", categoryId)
+    .not("submitted_at", "is", null);
+
+  if (votesError) {
+    console.error("Error fetching votes:", votesError);
+    return null;
+  }
+
+  const voteCounts = new Map<string, number>();
+  votesData?.forEach((vote) => {
+    const count = voteCounts.get(vote.product_id) || 0;
+    voteCounts.set(vote.product_id, count + 1);
+  });
+
+  const products = Array.from(voteCounts.entries())
+    .map(([productId, voteCount]) => ({
+      product_id: productId,
+      vote_count: voteCount,
+      rank: 0,
+    }))
+    .sort((a, b) => b.vote_count - a.vote_count);
+
+  products.forEach((product, index) => {
+    product.rank = index + 1;
+  });
+
+  return {
+    category: categoryData as JamCategory,
+    products,
+  };
+};
+
+/**
+ * Get voting results for all categories in a jam
+ */
+export const getAllCategoryResults = async (
+  jamId: string
+): Promise<CategoryVotingResult[]> => {
+  const categories = await getJamCategories(jamId);
+  const results = await Promise.all(
+    categories.map((category) => getCategoryResults(jamId, category.id))
+  );
+
+  return results.filter(
+    (result): result is CategoryVotingResult => result !== null
+  );
+};
+
+/**
+ * Create a new category for a jam
+ */
+export const createJamCategory = async (
+  jamId: string,
+  title: string,
+  description: string,
+  position?: number
+): Promise<JamCategory | null> => {
+  const { data, error } = await serverClient
+    .from("jam_categories")
+    .insert({
+      jam_id: jamId,
+      title,
+      description,
+      position: position ?? 0,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating jam category:", error);
+    return null;
+  }
+
+  return data as JamCategory;
+};
+
+/**
+ * Update a jam category
+ */
+export const updateJamCategory = async (
+  categoryId: string,
+  updates: {
+    title?: string;
+    description?: string;
+    position?: number;
+  }
+): Promise<JamCategory | null> => {
+  const { data, error } = await serverClient
+    .from("jam_categories")
+    .update(updates)
+    .eq("id", categoryId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating jam category:", error);
+    return null;
+  }
+
+  return data as JamCategory;
+};
+
+/**
+ * Delete a jam category (soft delete)
+ */
+export const deleteJamCategory = async (
+  categoryId: string
+): Promise<boolean> => {
+  const { error } = await serverClient
+    .from("jam_categories")
+    .update({ deleted: true, deleted_at: new Date().toISOString() })
+    .eq("id", categoryId);
+
+  if (error) {
+    console.error("Error deleting jam category:", error);
+    return false;
+  }
+
+  return true;
 };

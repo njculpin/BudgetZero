@@ -1,0 +1,78 @@
+---
+interface Props {
+  name: string;
+  id?: string;
+  value?: string;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  rows?: number;
+  error?: boolean;
+  className?: string;
+}
+
+const {
+  name,
+  id,
+  value,
+  placeholder,
+  required = false,
+  disabled = false,
+  rows = 4,
+  error = false,
+  className = ""
+} = Astro.props;
+---
+
+<textarea
+  name={name}
+  id={id || name}
+  value={value}
+  placeholder={placeholder}
+  required={required}
+  disabled={disabled}
+  rows={rows}
+  class={`textarea ${error ? 'textarea--error' : ''} ${className}`}
+></textarea>
+
+<style>
+.textarea {
+  min-width: 0;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--input);
+  background-color: transparent;
+  color: var(--foreground);
+  font-size: var(--text-base);
+  font-family: inherit;
+  line-height: var(--leading-normal);
+  box-shadow: var(--shadow-xs);
+  transition: color var(--duration-normal) var(--ease-in-out), box-shadow var(--duration-normal) var(--ease-in-out), border-color var(--duration-normal) var(--ease-in-out);
+  outline: none;
+  resize: vertical;
+}
+
+.textarea::placeholder {
+  color: var(--muted-foreground);
+}
+
+.textarea:focus-visible {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+}
+
+.textarea:disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.textarea--error {
+  border-color: var(--destructive);
+}
+
+.textarea--error:focus-visible {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 3px oklch(from var(--destructive) l c h / 0.2);
+}
+</style>

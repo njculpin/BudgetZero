@@ -4,6 +4,7 @@ import { createSale, createSaleItem, createSaleItemAsset } from "@/lib/data-acce
 import { getCartItems, clearCart } from "@/lib/data-access/cart";
 import { getProductById, getVariantById, getVariantPrices } from "@/lib/data-access/products";
 import { serverClient } from "@/lib/data-access/client";
+import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -90,6 +91,14 @@ export const POST: APIRoute = async ({ request }) => {
 
           console.log('Created sale:', sale.id);
 
+          // Collect items for email
+          const emailItems: Array<{
+            productTitle: string;
+            variantTitle: string;
+            quantity: number;
+            priceCents: number;
+          }> = [];
+
           // 2. Create SaleItems and link assets for each cart item
           for (const cartItem of cartItems) {
             // Get product and variant details
@@ -127,6 +136,14 @@ export const POST: APIRoute = async ({ request }) => {
 
             console.log('Created sale item:', saleItem.id);
 
+            // Add to email items
+            emailItems.push({
+              productTitle: product.title,
+              variantTitle: variant.title,
+              quantity: cartItem.quantity,
+              priceCents: price.unit_amount * cartItem.quantity,
+            });
+
             // 3. Get variant assets and link them to the sale item
             const { data: productAssets } = await serverClient
               .from('product_assets')
@@ -152,6 +169,20 @@ export const POST: APIRoute = async ({ request }) => {
           if (cleared) {
             console.log('Cart cleared:', cartId);
           }
+
+          // 5. Send purchase confirmation email
+          const origin = process.env.VERCEL_URL
+            ? `https://${process.env.VERCEL_URL}`
+            : 'http://localhost:4321';
+
+          await sendPurchaseConfirmation({
+            to: userEmail,
+            saleId: sale.id,
+            totalCents: session.amount_total,
+            currency: session.currency || 'usd',
+            items: emailItems,
+            purchaseUrl: `${origin}/purchases/${sale.id}`,
+          });
 
           console.log('Purchase fulfillment complete for sale:', sale.id);
 

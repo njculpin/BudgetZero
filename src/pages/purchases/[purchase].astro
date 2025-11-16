@@ -1,11 +1,405 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardContent from "@/components/CardContent.astro";
+import Badge from "@/components/Badge.astro";
+import { setSession } from "@/lib/auth";
+import { getSaleById, getSaleItems, getSaleItemAssets } from "@/lib/data-access/sales";
+import { getProductById, getVariantById } from "@/lib/data-access/products";
+import { getAssetById } from "@/lib/data-access/assets";
+
+const { purchase: saleId } = Astro.params;
+
+if (!saleId) {
+  return Astro.redirect("/dashboard");
+}
+
+// Check authentication
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect("/sign-in");
+}
+
+let session;
+try {
+  session = await setSession({
+    refresh_token: refreshToken.value,
+    access_token: accessToken.value,
+  });
+  if (session.error || !session.data.user) {
+    return Astro.redirect("/sign-in");
+  }
+} catch (error) {
+  return Astro.redirect("/sign-in");
+}
+
+const userId = session.data.user.id;
+
+// Get sale
+const sale = await getSaleById(saleId);
+
+if (!sale) {
+  return Astro.redirect("/dashboard");
+}
+
+// Verify ownership
+if (sale.user_id !== userId) {
+  return Astro.redirect("/dashboard");
+}
+
+// Get sale items
+const saleItems = await getSaleItems(saleId);
+
+// Fetch product, variant, and asset details for each sale item
+const itemsWithDetails = await Promise.all(
+  saleItems.map(async (item) => {
+    const product = await getProductById(item.product_id);
+    const variant = await getVariantById(item.variant_id);
+    const saleItemAssets = await getSaleItemAssets(item.id);
+
+    const assets = await Promise.all(
+      saleItemAssets.map(async (sia) => {
+        return await getAssetById(sia.asset_id);
+      })
+    );
+
+    return {
+      ...item,
+      product,
+      variant,
+      assets: assets.filter(a => a !== null),
+    };
+  })
+);
+
+const saleDate = new Date(sale.created_at);
+const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
 ---
 
-<Layout title="Jam - Game Loopers">
+<Layout title={`Purchase #${saleId.slice(0, 8)} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
-       <h1>Purchases</h1>
+      <div class="purchase-page">
+        {/* Header */}
+        <div class="purchase-header">
+          <div class="purchase-header__content">
+            <h1 class="purchase-header__title">Purchase Details</h1>
+            <p class="purchase-header__subtitle">
+              Order #{saleId.slice(0, 8)}...
+            </p>
+          </div>
+          <div class="purchase-header__status">
+            <Badge variant={sale.status === 'paid' ? 'success' : 'default'}>
+              {sale.status.toUpperCase()}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Order Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Order Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="order-info">
+              <div class="order-info__row">
+                <span class="order-info__label">Order Date:</span>
+                <span class="order-info__value">{saleDate.toLocaleDateString()}</span>
+              </div>
+              {completedDate && (
+                <div class="order-info__row">
+                  <span class="order-info__label">Completed:</span>
+                  <span class="order-info__value">{completedDate.toLocaleDateString()}</span>
+                </div>
+              )}
+              <div class="order-info__row">
+                <span class="order-info__label">Email:</span>
+                <span class="order-info__value">{sale.user_email}</span>
+              </div>
+              <div class="order-info__row">
+                <span class="order-info__label">Total:</span>
+                <span class="order-info__value">
+                  {sale.currency.toUpperCase()} {(sale.price_cents / 100).toFixed(2)}
+                </span>
+              </div>
+              <div class="order-info__row">
+                <span class="order-info__label">Payment ID:</span>
+                <span class="order-info__value order-info__value--mono">
+                  {sale.stripe_charge_id}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Purchased Items */}
+        {itemsWithDetails.map((item) => (
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {item.product?.title} - {item.variant?.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="purchase-item">
+                <div class="purchase-item__details">
+                  <p class="purchase-item__sku">SKU: {item.variant?.sku}</p>
+                  <p class="purchase-item__price">
+                    {item.currency.toUpperCase()} {(item.price_cents / 100).toFixed(2)}
+                    {item.quantity > 1 && ` × ${item.quantity}`}
+                  </p>
+                </div>
+
+                {/* Downloads */}
+                {item.assets && item.assets.length > 0 && (
+                  <div class="purchase-downloads">
+                    <h3 class="purchase-downloads__title">Downloads</h3>
+                    <div class="purchase-downloads__list">
+                      {item.assets.map((asset) => (
+                        <a
+                          href={`/assets/${asset.handle}`}
+                          class="download-item"
+                        >
+                          <div class="download-item__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                              <polyline points="7 10 12 15 17 10"></polyline>
+                              <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                          </div>
+                          <div class="download-item__content">
+                            <span class="download-item__title">{asset.title}</span>
+                            {asset.description && (
+                              <span class="download-item__description">
+                                {asset.description}
+                              </span>
+                            )}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* Back to Dashboard */}
+        <div class="purchase-actions">
+          <a href="/dashboard" class="purchase-actions__link">
+            ← Back to Dashboard
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </Layout>
+
+<style>
+/* ===== Purchase Page ===== */
+.purchase-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3xl);
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+/* ===== Purchase Header ===== */
+.purchase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--gap-lg);
+}
+
+.purchase-header__content {
+  flex: 1;
+}
+
+.purchase-header__title {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.purchase-header__subtitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.purchase-header__status {
+  flex-shrink: 0;
+}
+
+/* ===== Order Info ===== */
+.order-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.order-info__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.order-info__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.order-info__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+}
+
+.order-info__value {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.order-info__value--mono {
+  font-family: monospace;
+  font-size: var(--text-xs);
+  word-break: break-all;
+}
+
+/* ===== Purchase Item ===== */
+.purchase-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
+}
+
+.purchase-item__details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.purchase-item__sku {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  font-family: monospace;
+}
+
+.purchase-item__price {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+/* ===== Downloads ===== */
+.purchase-downloads {
+  padding-top: var(--spacing-2xl);
+  border-top: 1px solid var(--border);
+}
+
+.purchase-downloads__title {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.purchase-downloads__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.download-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  padding: var(--spacing-lg);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.download-item:hover {
+  background-color: var(--accent);
+  border-color: var(--primary);
+}
+
+.download-item__icon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.download-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+  flex: 1;
+}
+
+.download-item__title {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.download-item__description {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+/* ===== Purchase Actions ===== */
+.purchase-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--spacing-2xl);
+}
+
+.purchase-actions__link {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--duration-normal) var(--ease-in-out);
+}
+
+.purchase-actions__link:hover {
+  color: var(--foreground);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .purchase-header {
+    flex-direction: column;
+  }
+
+  .purchase-item__details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-sm);
+  }
+
+  .order-info__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-xs);
+  }
+}
+</style>

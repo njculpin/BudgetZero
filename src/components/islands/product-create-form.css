@@ -1,43 +1,7 @@
-/* ===== Card Styles ===== */
-.card {
-  display: flex;
-  flex-direction: column;
-  background-color: var(--card);
-  color: var(--card-foreground);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xs);
-}
-
+/* ===== Product Form ===== */
 .product-create-card {
   width: 100%;
 }
-
-.card-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-xs);
-  padding: var(--spacing-lg);
-}
-
-.card-title {
-  font-size: var(--text-xl);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1;
-  margin: 0;
-}
-
-.card-description {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-  margin: 0;
-}
-
-.card-content {
-  padding: 0 var(--spacing-lg) var(--spacing-lg);
-}
-
-/* ===== Product Form ===== */
 .product-form {
   display: flex;
   flex-direction: column;
@@ -188,53 +152,6 @@
 
 .product-form__actions a {
   text-decoration: none;
-}
-
-/* ===== Button Styles ===== */
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--gap-xs);
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s var(--ease-in-out);
-  white-space: nowrap;
-}
-
-.button:disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.button__text {
-  display: inline-block;
-}
-
-.button--primary {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-}
-
-.button--primary:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.button--ghost {
-  background-color: transparent;
-  color: var(--foreground);
-}
-
-.button--ghost:hover:not(:disabled) {
-  background-color: var(--muted);
-}
-
-.button--md {
-  height: 2.25rem;
-  padding: 0 1rem;
 }
 
 /* ===== Error Message ===== */
