@@ -53,3 +53,22 @@ export const getUser = async () => {
 export const setSession = async (params: { access_token: string; refresh_token: string }) => {
   return authClient.auth.setSession(params);
 };
+
+export interface ResetPasswordParams {
+  email: string;
+  redirectTo?: string;
+}
+
+export const resetPasswordForEmail = async ({ email, redirectTo }: ResetPasswordParams) => {
+  return authClient.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectTo || `${window.location.origin}/reset-password`,
+  });
+};
+
+export interface UpdatePasswordParams {
+  password: string;
+}
+
+export const updatePassword = async ({ password }: UpdatePasswordParams) => {
+  return authClient.auth.updateUser({ password });
+};

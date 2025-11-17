@@ -1,55 +1,21 @@
 import type { APIRoute } from 'astro';
-import { setSession } from '@/lib/auth';
 import { getUserById } from '@/lib/data-access/users';
 import { getPayoutById, updatePayoutStatus } from '@/lib/data-access/payouts';
 import { createTransfer } from '@/lib/payments';
+import { verifyAdmin, logAdminAction } from '@/lib/auth/admin';
 
-// TODO: Add proper admin authorization check
-// For now, this is a placeholder. In production, you should:
-// 1. Create an admin role in your database
-// 2. Check if the user has admin permissions
-// 3. Consider using a separate admin panel/route
+export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
+  // Verify admin authorization
+  const authResult = await verifyAdmin(cookies);
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  // Check authentication
-  const accessToken = cookies.get('sb-access-token');
-  const refreshToken = cookies.get('sb-refresh-token');
-
-  if (!accessToken || !refreshToken) {
-    return new Response(JSON.stringify({ error: 'Not authenticated' }), {
-      status: 401,
+  if (!authResult.authorized) {
+    return new Response(JSON.stringify({ error: authResult.error || 'Unauthorized' }), {
+      status: authResult.error === 'Not authenticated' || authResult.error === 'Invalid session' || authResult.error === 'Authentication failed' ? 401 : 403,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  let session;
-  try {
-    session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-
-    if (session.error || !session.data.user) {
-      return new Response(JSON.stringify({ error: 'Invalid session' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-  } catch (error) {
-    return new Response(JSON.stringify({ error: 'Authentication failed' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  // TODO: Check if user is admin
-  // const isAdmin = await checkIfUserIsAdmin(session.data.user.id);
-  // if (!isAdmin) {
-  //   return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-  //     status: 403,
-  //     headers: { 'Content-Type': 'application/json' },
-  //   });
-  // }
+  const adminUserId = authResult.userId!;
 
   try {
     // Get payout ID from request body
@@ -130,6 +96,22 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       // Update payout with transfer ID and mark as paid
       await updatePayoutStatus(payoutId, 'paid', transfer.id);
 
+      // Log admin action
+      await logAdminAction({
+        userId: adminUserId,
+        action: 'payout.execute',
+        resourceType: 'payout',
+        resourceId: payoutId,
+        details: {
+          transferId: transfer.id,
+          amountCents: payout.amount_cents,
+          currency: payout.currency,
+          recipientUserId: payout.user_id,
+        },
+        ipAddress: clientAddress,
+        userAgent: request.headers.get('user-agent') || undefined,
+      });
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -149,6 +131,22 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           : 'Transfer failed';
 
       await updatePayoutStatus(payoutId, 'failed', undefined, errorMessage);
+
+      // Log failed admin action
+      await logAdminAction({
+        userId: adminUserId,
+        action: 'payout.execute.failed',
+        resourceType: 'payout',
+        resourceId: payoutId,
+        details: {
+          error: errorMessage,
+          amountCents: payout.amount_cents,
+          currency: payout.currency,
+          recipientUserId: payout.user_id,
+        },
+        ipAddress: clientAddress,
+        userAgent: request.headers.get('user-agent') || undefined,
+      });
 
       console.error('Transfer error:', transferError);
 

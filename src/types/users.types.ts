@@ -13,6 +13,7 @@ export interface User extends BaseEntity {
   stripe_connect_details_submitted: boolean;
   stripe_connect_charges_enabled: boolean;
   stripe_connect_payouts_enabled: boolean;
+  role: 'user' | 'admin';
 }
 
 export interface UserTag extends BaseEntity {
@@ -30,4 +31,16 @@ export interface UserReview extends BaseEntity {
 export interface UserFollows extends BaseEntityWithoutDelete {
   follower_id: string;
   following_id: string;
+}
+
+export interface AuditLog {
+  id: string;
+  user_id: string;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  details: Record<string, unknown> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
 }

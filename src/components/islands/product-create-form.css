@@ -15,7 +15,7 @@
 }
 
 /* ===== Form Components ===== */
-.label {
+.product-form__label {
   display: inline-block;
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
@@ -25,7 +25,7 @@
   cursor: pointer;
 }
 
-.input {
+.product-form__input {
   min-width: 0;
   height: var(--height-input-md);
   padding: var(--spacing-xxs) var(--spacing-lg);
@@ -42,16 +42,16 @@
   outline: none;
 }
 
-.input::placeholder {
+.product-form__input::placeholder {
   color: var(--muted-foreground);
 }
 
-.input:focus-visible {
+.product-form__input:focus-visible {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
 }
 
-.input:disabled {
+.product-form__input:disabled {
   pointer-events: none;
   cursor: not-allowed;
   opacity: 0.5;

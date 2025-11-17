@@ -11,6 +11,48 @@
   gap: var(--gap-sm);
 }
 
+.edit-profile-form__label {
+  display: inline-block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  color: var(--foreground);
+  margin-bottom: var(--spacing-xs);
+  cursor: pointer;
+}
+
+.edit-profile-form__input {
+  min-width: 0;
+  height: var(--height-input-md);
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--input);
+  background-color: transparent;
+  color: var(--foreground);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  box-shadow: var(--shadow-xs);
+  transition: color var(--duration-normal) var(--ease-in-out),
+    box-shadow var(--duration-normal) var(--ease-in-out),
+    border-color var(--duration-normal) var(--ease-in-out);
+  outline: none;
+}
+
+.edit-profile-form__input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.edit-profile-form__input:focus-visible {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+}
+
+.edit-profile-form__input:disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .edit-profile-form__textarea {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-lg);
@@ -54,13 +96,13 @@
 }
 
 .edit-profile-form__status--success {
-  background-color: rgba(209, 250, 229, 0.9);
-  color: #065f46;
+  background-color: var(--success-bg);
+  color: var(--success-fg);
 }
 
 .edit-profile-form__status--pending {
-  background-color: rgba(254, 243, 199, 0.9);
-  color: #92400e;
+  background-color: var(--warning-bg);
+  color: var(--warning-fg);
 }
 
 @keyframes fadeIn {

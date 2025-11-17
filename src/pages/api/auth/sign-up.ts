@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { signUp } from "../../../lib/auth";
+import { sendEmail } from "@/lib/email";
 
 export const POST: APIRoute = async ({ request, redirect }) => {
   const formData = await request.formData();
@@ -42,6 +43,57 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  // Send welcome email
+  const origin = new URL(request.url).origin;
+  await sendEmail({
+    from: "Game Loopers <noreply@gameloopers.com>",
+    to: email,
+    subject: "Welcome to Game Loopers!",
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #333;">Welcome to Game Loopers!</h1>
+        <p style="color: #666; font-size: 16px; line-height: 1.5;">
+          Thanks for creating your account! You're now part of a growing community of tabletop game creators.
+        </p>
+
+        <h2 style="color: #333; font-size: 20px; margin-top: 30px;">Get Started</h2>
+        <ul style="color: #666; font-size: 16px; line-height: 1.8;">
+          <li><a href="${origin}/dashboard" style="color: #0070f3;">Complete your profile</a> - Add your bio, avatar, and connect your Stripe account</li>
+          <li><a href="${origin}/products" style="color: #0070f3;">Browse products</a> - Discover what other creators are building</li>
+          <li><a href="${origin}/jams" style="color: #0070f3;">Join a game jam</a> - Participate in community challenges</li>
+          <li><a href="${origin}/assets/create" style="color: #0070f3;">Upload your first asset</a> - Share your work with the community</li>
+        </ul>
+
+        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 30px 0;">
+          <h3 style="color: #333; font-size: 18px; margin-top: 0;">What is Game Loopers?</h3>
+          <p style="color: #666; font-size: 14px; line-height: 1.6; margin-bottom: 0;">
+            Game Loopers is a social commerce platform where tabletop game creators collaborate,
+            publish digital downloads, manage licensing, and distribute royalties. Whether you're
+            a designer, illustrator, 3D modeler, or printer - there's a place for you here.
+          </p>
+        </div>
+
+        <p style="color: #666; font-size: 16px; line-height: 1.5;">
+          <a href="${origin}/sign-in" style="display: inline-block; background-color: #0070f3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+            Sign In Now
+          </a>
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+        <p style="color: #999; font-size: 14px;">
+          Questions? Reply to this email and we'll be happy to help.
+        </p>
+        <p style="color: #999; font-size: 14px;">
+          Game Loopers - A social commerce platform for tabletop game creators
+        </p>
+      </div>
+    `,
+    text: `Welcome to Game Loopers!\n\nThanks for creating your account! You're now part of a growing community of tabletop game creators.\n\nGet Started:\n- Complete your profile at ${origin}/dashboard\n- Browse products at ${origin}/products\n- Join a game jam at ${origin}/jams\n- Upload your first asset at ${origin}/assets/create\n\nWhat is Game Loopers?\nGame Loopers is a social commerce platform where tabletop game creators collaborate, publish digital downloads, manage licensing, and distribute royalties.\n\nSign in now: ${origin}/sign-in\n\nQuestions? Reply to this email and we'll be happy to help.\n\nGame Loopers - A social commerce platform for tabletop game creators`,
+  }).catch((error) => {
+    // Log email error but don't fail registration
+    console.error('Failed to send welcome email:', error);
+  });
 
   return redirect("/sign-in");
 };

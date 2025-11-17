@@ -65,14 +65,14 @@ export default function SubscribeForm() {
           )}
 
           <div class="subscribe-form__field">
-            <label for="email" class="label">
+            <label for="email" class="subscribe-form__label">
               Email address
             </label>
             <input
               type="email"
               name="email"
               id="email"
-              class="input"
+              class="subscribe-form__input"
               value={email()}
               onInput={(e: InputEvent) =>
                 setEmail((e.currentTarget as HTMLInputElement).value)

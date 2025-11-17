@@ -161,14 +161,14 @@ export default function UserEditForm(props: UserEditFormProps) {
       </div>
 
       <div class="edit-profile-form__field">
-        <label for="handle" class="label">
+        <label for="handle" class="edit-profile-form__label">
           Handle
         </label>
         <input
           type="text"
           name="handle"
           id="handle"
-          class="input"
+          class="edit-profile-form__input"
           value={handle()}
           onInput={(e: InputEvent) => {
             setHandle((e.currentTarget as HTMLInputElement).value);
@@ -181,14 +181,14 @@ export default function UserEditForm(props: UserEditFormProps) {
       </div>
 
       <div class="edit-profile-form__field">
-        <label for="name" class="label">
+        <label for="name" class="edit-profile-form__label">
           Display Name
         </label>
         <input
           type="text"
           name="name"
           id="name"
-          class="input"
+          class="edit-profile-form__input"
           value={name()}
           onInput={(e: InputEvent) => {
             setName((e.currentTarget as HTMLInputElement).value);
@@ -200,7 +200,7 @@ export default function UserEditForm(props: UserEditFormProps) {
       </div>
 
       <div class="edit-profile-form__field">
-        <label for="bio" class="label">
+        <label for="bio" class="edit-profile-form__label">
           Bio
         </label>
         <textarea

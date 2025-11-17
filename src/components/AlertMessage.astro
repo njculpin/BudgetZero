@@ -19,23 +19,23 @@ const { variant, message } = Astro.props;
   }
 
   .alert--error {
-    background-color: oklch(from var(--color-error) l c h / 0.1);
-    border: var(--border-width-default) solid oklch(from var(--color-error) l c h / 0.3);
+    background-color: var(--error-bg);
+    border: var(--border-width-default) solid var(--error-border);
   }
 
   .alert--success {
-    background-color: oklch(from var(--color-success) l c h / 0.1);
-    border: var(--border-width-default) solid oklch(from var(--color-success) l c h / 0.3);
+    background-color: var(--success-bg);
+    border: var(--border-width-default) solid var(--success-border);
   }
 
   .alert--warning {
-    background-color: oklch(from var(--color-warning) l c h / 0.1);
-    border: var(--border-width-default) solid oklch(from var(--color-warning) l c h / 0.3);
+    background-color: var(--warning-bg);
+    border: var(--border-width-default) solid var(--warning-border);
   }
 
   .alert--info {
-    background-color: oklch(from var(--color-info) l c h / 0.1);
-    border: var(--border-width-default) solid oklch(from var(--color-info) l c h / 0.3);
+    background-color: var(--info-bg);
+    border: var(--border-width-default) solid var(--info-border);
   }
 
   .alert__message {
@@ -46,18 +46,18 @@ const { variant, message } = Astro.props;
   }
 
   .alert--error .alert__message {
-    color: var(--color-error);
+    color: var(--error-fg);
   }
 
   .alert--success .alert__message {
-    color: var(--color-success);
+    color: var(--success-fg);
   }
 
   .alert--warning .alert__message {
-    color: var(--color-warning);
+    color: var(--warning-fg);
   }
 
   .alert--info .alert__message {
-    color: var(--color-info);
+    color: var(--info-fg);
   }
 </style>

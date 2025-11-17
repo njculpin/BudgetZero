@@ -75,14 +75,14 @@ export default function ProductCreateForm() {
           )}
 
           <div class="product-form__field">
-            <label for="title" class="label">
+            <label for="title" class="product-form__label">
               Product Title *
             </label>
             <input
               type="text"
               name="title"
               id="title"
-              class="input"
+              class="product-form__input"
               value={title()}
               onInput={(e: InputEvent) =>
                 setTitle((e.currentTarget as HTMLInputElement).value)
@@ -97,7 +97,7 @@ export default function ProductCreateForm() {
           </div>
 
           <div class="product-form__field">
-            <label for="description" class="label">
+            <label for="description" class="product-form__label">
               Description
             </label>
             <textarea
@@ -119,7 +119,7 @@ export default function ProductCreateForm() {
           </div>
 
           <div class="product-form__field">
-            <label for="tags" class="label">
+            <label for="tags" class="product-form__label">
               Tags
             </label>
             <input
@@ -135,7 +135,7 @@ export default function ProductCreateForm() {
           </div>
 
           <div class="product-form__field">
-            <label for="status" class="label">
+            <label for="status" class="product-form__label">
               Status
             </label>
             <select
