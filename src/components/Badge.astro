@@ -1,6 +1,6 @@
 ---
 interface Props {
-  variant: 'draft' | 'published' | 'archived' | 'primary' | 'secondary' | 'muted';
+  variant: 'draft' | 'published' | 'archived' | 'primary' | 'secondary' | 'muted' | 'success' | 'warning' | 'info' | 'error';
   size?: 'sm' | 'md';
 }
 
@@ -30,10 +30,10 @@ const { variant, size = 'md' } = Astro.props;
   font-size: var(--text-xs);
 }
 
-/* TODO: Add --warning-bg and --warning-fg tokens to design system */
+/* Status Variants */
 .badge--draft {
-  background-color: oklch(0.95 0.05 85);
-  color: oklch(0.35 0.08 75);
+  background-color: var(--warning-bg);
+  color: var(--warning-fg);
 }
 
 .badge--published {
@@ -46,6 +46,28 @@ const { variant, size = 'md' } = Astro.props;
   color: var(--muted-foreground);
 }
 
+/* Semantic Variants */
+.badge--success {
+  background-color: var(--success-bg);
+  color: var(--success-fg);
+}
+
+.badge--warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-fg);
+}
+
+.badge--info {
+  background-color: var(--info-bg);
+  color: var(--info-fg);
+}
+
+.badge--error {
+  background-color: var(--error-bg);
+  color: var(--error-fg);
+}
+
+/* Theme Variants */
 .badge--primary {
   background-color: var(--primary);
   color: var(--primary-foreground);

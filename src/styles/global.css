@@ -55,6 +55,20 @@
   --color-info-foreground: oklch(0.985 0 0);
   --color-error: var(--destructive);
 
+  /* ===== Status Background/Foreground/Border Aliases ===== */
+  --success-bg: oklch(from var(--color-success) l c h / 0.1);
+  --success-fg: var(--color-success);
+  --success-border: oklch(from var(--color-success) l c h / 0.3);
+  --warning-bg: oklch(from var(--color-warning) l c h / 0.1);
+  --warning-fg: var(--color-warning);
+  --warning-border: oklch(from var(--color-warning) l c h / 0.3);
+  --info-bg: oklch(from var(--color-info) l c h / 0.1);
+  --info-fg: var(--color-info);
+  --info-border: oklch(from var(--color-info) l c h / 0.3);
+  --error-bg: oklch(from var(--destructive) l c h / 0.1);
+  --error-fg: var(--destructive);
+  --error-border: oklch(from var(--destructive) l c h / 0.3);
+
   /* ===== Interactive Colors ===== */
   --color-link: var(--primary);
   --color-link-hover: oklch(from var(--primary) calc(l * 0.85) c h);
