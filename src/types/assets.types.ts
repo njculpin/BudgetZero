@@ -45,11 +45,13 @@ export interface AssetTag extends BaseEntity {
   value: string;
 }
 
+export type RoyaltyType = 'fixed' | 'percentage';
+
 export interface AssetRoyalty extends BaseEntity {
   asset_id: string;
   user_id: string;
-  royalty_type: 'fixed';
-  royalty_value: number; // Flat rate in cents
+  royalty_type: RoyaltyType;
+  royalty_value: number; // Fixed: cents | Percentage: 0-100
 }
 
 export interface AssetLicense extends BaseEntity {

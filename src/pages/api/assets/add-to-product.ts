@@ -116,8 +116,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // TODO: Copy licensing from asset to product (when licensing table exists)
-    // TODO: Copy royalties from asset to product (when product royalties exist)
+    // NOTE: Royalty propagation is handled at sale time, not at linking time.
+    // When a sale is completed, the webhook automatically creates sale_royalty_transactions
+    // for each asset based on the asset_royalties configuration.
+    // This ensures royalties are always calculated with the current asset royalty settings.
+
+    // NOTE: Licensing propagation could be implemented as a helper function that
+    // aggregates all asset licenses for a product variant. This would allow
+    // displaying combined licensing requirements without duplicating data.
+    // Example: getVariantLicenses(variantId) -> aggregates licenses from all linked assets
 
     return new Response(
       JSON.stringify({

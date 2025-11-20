@@ -53,8 +53,13 @@
   gap: var(--gap-sm, 0.5rem);
 }
 
-.tag-input__input {
+.tag-input__autocomplete {
+  position: relative;
   flex: 1;
+}
+
+.tag-input__input {
+  width: 100%;
   padding: var(--spacing-lg, 0.75rem);
   font-size: var(--text-base, 1rem);
   border: 1px solid var(--border, #e5e7eb);
@@ -66,6 +71,62 @@
   outline: none;
   border-color: var(--primary, #0070f3);
   box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.tag-input__suggestions {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  background-color: var(--card, white);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: var(--radius-md, 0.375rem);
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+.tag-input__suggestion {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem);
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  font-family: inherit;
+}
+
+.tag-input__suggestion:hover,
+.tag-input__suggestion--selected {
+  background-color: var(--accent, #f3f4f6);
+}
+
+.tag-input__suggestion-value {
+  font-size: var(--text-base, 1rem);
+  color: var(--foreground, #1f2937);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.tag-input__suggestion-count {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--muted-foreground, #6b7280);
+  padding: var(--spacing-xs, 0.25rem) var(--spacing-md, 0.5rem);
+  background-color: var(--muted, #f9fafb);
+  border-radius: var(--radius-full, 9999px);
+}
+
+.tag-input__loading {
+  position: absolute;
+  top: 50%;
+  right: var(--spacing-lg, 1rem);
+  transform: translateY(-50%);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--muted-foreground, #6b7280);
 }
 
 .tag-input__add-button {

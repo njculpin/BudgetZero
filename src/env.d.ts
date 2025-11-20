@@ -10,3 +10,18 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare namespace App {
+  interface Locals {
+    user?: {
+      id: string;
+      email?: string;
+      [key: string]: unknown;
+    };
+    session?: {
+      access_token: string;
+      refresh_token: string;
+      [key: string]: unknown;
+    };
+  }
+}
