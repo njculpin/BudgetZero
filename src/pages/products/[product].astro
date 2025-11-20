@@ -17,7 +17,7 @@ import VariantAssetPicker from "@/components/islands/VariantAssetPicker";
 import ProductValueBreakdown from "@/components/islands/ProductValueBreakdown";
 import ProductCostBreakdown from "@/components/islands/ProductCostBreakdown";
 import VariantDeleteButton from "@/components/islands/VariantDeleteButton";
-import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getVariantAssets } from "@/lib/data-access/products";
+import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getVariantAssets, getProductContributors } from "@/lib/data-access/products";
 import { getAssetImages } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
@@ -88,6 +88,11 @@ if (accessToken && refreshToken) {
 }
 
 const isOwner = currentUser?.id === productData.user_id;
+
+// Get product contributors (users with royalties on attached assets)
+const productContributors = await getProductContributors(productData.id);
+const contributorIds = productContributors.map(c => c.id);
+const isContributor = currentUser ? contributorIds.includes(currentUser.id) || isOwner : false;
 
 if (productData.status !== 'published' && !isOwner) {
   return Astro.redirect('/404');
@@ -676,7 +681,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
           </Card>
         )}
 
-        {isEditMode && currentUser && (
+        {isContributor && currentUser && (
           <Card>
             <CardHeader>
               <CardTitle>Chat</CardTitle>

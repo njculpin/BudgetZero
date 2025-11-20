@@ -137,7 +137,7 @@ const isShopMode = !isContributor;
                 <CardTitle>About This Asset</CardTitle>
               </CardHeader>
               <CardContent>
-                {(isPreviewMode || isShopMode) && (
+                {!isEditMode && (
                   <p class="asset-about-text">{assetData.description}</p>
                 )}
                 {isEditMode && (
@@ -189,7 +189,7 @@ const isShopMode = !isContributor;
                     }))}
                   />
                   }
-                  {(isPreviewMode || isShopMode) && images.length > 0 &&
+                  {!isEditMode && images.length > 0 &&
                   <GalleryGrid images={images} cols={3}/>
                   }
                 </CardContent>
@@ -219,7 +219,7 @@ const isShopMode = !isContributor;
                     }))}
                   />
                   }
-                  {(isPreviewMode || isShopMode) && files.map((file) => (
+                  {!isEditMode && files.map((file) => (
                   <div class="file-item">
                     <div class="file-item__icon" aria-hidden="true">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
