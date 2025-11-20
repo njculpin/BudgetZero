@@ -5,14 +5,13 @@ import Button from "./Button.astro";
 interface Props {
   jam: Jam;
   isCreator: boolean;
-  isEditMode: boolean;
   creator: User | null;
   status: "upcoming" | "active" | "ended";
   startDate: Date;
   endDate: Date;
 }
 
-const { jam, isCreator, isEditMode, creator, status, startDate, endDate } =
+const { jam, isCreator, creator, status, startDate, endDate } =
   Astro.props;
 ---
 
@@ -23,27 +22,6 @@ const { jam, isCreator, isEditMode, creator, status, startDate, endDate } =
     : ""}
 >
   {jam.preview_image_url && <div class="jam-hero__overlay"></div>}
-
-  {
-    isCreator && (
-      <div class="jam-hero__mode-toggle">
-        <span
-          class={`mode-badge mode-badge--${isEditMode ? "edit" : "preview"}`}
-        >
-          {isEditMode ? "✏️ Edit Mode" : "👁️ Preview Mode"}
-        </span>
-        <a
-          href={`/jams/${jam.handle}${isEditMode ? "?mode=preview" : ""}`}
-          class="mode-toggle-link"
-          aria-label={`Switch to ${isEditMode ? "preview" : "edit"} mode`}
-        >
-          <Button variant="ghost" size="sm">
-            <span slot="text">Switch to {isEditMode ? "Preview" : "Edit"}</span>
-          </Button>
-        </a>
-      </div>
-    )
-  }
 
   <div class="jam-hero__content">
     <h1 class="jam-hero__title">{jam.title}</h1>

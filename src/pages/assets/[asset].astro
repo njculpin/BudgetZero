@@ -81,13 +81,10 @@ const curredUserId = `${currentUser?.id}`
 const isOwner = curredUserId === assetData.user_id;
 const totalRoyalty = royalties.reduce((sum, r) => sum + r.royalty_value, 0);
 
-// State Management: Three mutually exclusive states
+// State Management: Contributors see edit mode, non-contributors see shop mode
 const isContributor = contributorIds.includes(curredUserId)
-const mode = Astro.url.searchParams.get("mode") || (isContributor ? "edit" : "shop");
-
-const isEditMode = mode === "edit" && isContributor;
-const isPreviewMode = mode === "preview" && isContributor;
-const isShopMode = !isContributor || mode === "shop";
+const isEditMode = isContributor;
+const isShopMode = !isContributor;
 ---
 
 <Layout title={`${assetData.title} - Game Loopers`}>
@@ -114,25 +111,6 @@ const isShopMode = !isContributor || mode === "shop";
         style={heroImage ? `background-image: url('${heroImage}')` : ''}
       >
         {heroImage && <div class="asset-hero__overlay"></div>}
-
-        {isContributor && (
-          <div class="asset-hero__mode-toggle">
-            <span class={`mode-badge mode-badge--${isEditMode ? 'edit' : 'preview'}`}>
-              {isEditMode ? '✏️ Edit Mode' : '👁️ Preview Mode'}
-            </span>
-            <a
-              href={`/assets/${assetData.handle}${isEditMode ? '?mode=preview' : ''}`}
-              class="mode-toggle-link"
-              aria-label={`Switch to ${isEditMode ? 'preview' : 'edit'} mode`}
-            >
-              <Button variant="ghost" size="sm">
-                <span slot="text">
-                  Switch to {isEditMode ? 'Preview' : 'Edit'}
-                </span>
-              </Button>
-            </a>
-          </div>
-        )}
 
         <div class="asset-hero__content">
           <h1 class="asset-hero__title">{assetData.title}</h1>

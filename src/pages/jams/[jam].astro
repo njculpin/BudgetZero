@@ -23,6 +23,7 @@ import JamResults from "@/components/JamResults.astro";
 import JamHero from "@/components/JamHero.astro";
 import JamContentSection from "@/components/JamContentSection.astro";
 import AlertMessage from "@/components/AlertMessage.astro";
+import RatingStars from "@/components/RatingStars.astro";
 
 const { jam: jamHandle } = Astro.params;
 
@@ -107,9 +108,8 @@ const isEnded = nowTime > endTime;
 // Check if current user is the jam creator
 const isCreator = currentUser?.id === jam.user_id;
 
-// Mode management (defaults to edit for creators, preview for non-creators)
-const mode = Astro.url.searchParams.get("mode") || (isCreator ? "edit" : "preview");
-const isEditMode = mode === "edit" && isCreator;
+// Mode management - creators always in edit mode
+const isEditMode = isCreator;
 const isPreviewMode = !isEditMode;
 
 // Get error and success messages from query params
@@ -162,7 +162,6 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
       <JamHero
         jam={jam}
         isCreator={isCreator}
-        isEditMode={isEditMode}
         creator={creator}
         status={isUpcoming ? "upcoming" : isActive ? "active" : "ended"}
         startDate={startDate}
@@ -354,23 +353,23 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
       <!-- Submissions Section -->
       <Card>
         <CardContent>
+          {errorMessage && <AlertMessage variant="error" message={errorMessage} />}
+          {successMessage && <AlertMessage variant="success" message="Product submitted successfully!" />}
           <div class="jam-section">
             <div class="jam-section__header">
               <h2 class="jam-section__title">Submissions ({products.length})</h2>
               {currentUser && isActive && userProducts.length > 0 && (
                 <div class="submit-product">
-                  <form method="post" action="/api/jams/add-product" class="submit-product__form">
-                    <input type="hidden" name="jam_id" value={jam.id} />
-                    <select name="product_id" class="submit-product__select" required>
-                      <option value="">Select a product...</option>
-                      {userProducts.map((product) => (
-                        <option value={product.id}>{product.title}</option>
-                      ))}
-                    </select>
-                    <Button variant="primary" size="md">
-                      <span slot="text">Submit Product</span>
-                    </Button>
-                  </form>
+                  <p class="submit-product__message submit-product__message--info">
+                    💡 To submit a product, click on one of your products below:
+                  </p>
+                  <div class="submit-product__list">
+                    {userProducts.map((product) => (
+                      <a href={`/products/${product.handle}?jam=${jam.id}`} class="submit-product__link">
+                        {product.title}
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
               {currentUser && isActive && userProducts.length === 0 && (
@@ -402,11 +401,16 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
                   const rating = productRatings.get(product.id);
                   const coverImage = productImagesMap.get(product.id);
                   const imageUrl = coverImage || `https://placehold.co/600x400?text=${encodeURIComponent(product.title)}`;
+                  const productUrl = currentUser ? `/products/${product.handle}?jam=${jam.id}` : `/products/${product.handle}`;
+                  const showRank = rating && rating.reviewCount > 0 && (isVoting || isResultsPending || isCompleted);
                   return (
                     <div class="submission-card-wrapper">
-                      <a href={`/products/${product.handle}`} class="submission-card">
+                      <a href={productUrl} class="submission-card">
                         {index === 0 && isEnded && rating && rating.averageRating > 0 && (
-                          <div class="submission-card__badge">Winner</div>
+                          <div class="submission-card__badge submission-card__badge--winner">Winner</div>
+                        )}
+                        {showRank && (
+                          <div class="submission-card__rank">#{index + 1}</div>
                         )}
                         <div class="submission-card__image-wrapper">
                           <img
@@ -425,53 +429,16 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
                           )}
                           {rating && (
                             <div class="submission-card__rating">
-                              <span class="submission-card__stars">
-                                {'★'.repeat(Math.round(rating.averageRating))}{'☆'.repeat(5 - Math.round(rating.averageRating))}
-                              </span>
-                              <span class="submission-card__rating-text">
-                                {rating.averageRating.toFixed(1)} ({rating.reviewCount} {rating.reviewCount === 1 ? 'review' : 'reviews'})
-                              </span>
+                              <RatingStars
+                                rating={rating.averageRating}
+                                count={rating.reviewCount}
+                                showCount={true}
+                                size="sm"
+                              />
                             </div>
                           )}
                         </div>
                       </a>
-                      {currentUser && (
-                        <div class="submission-card__actions">
-                          <details class="review-form">
-                            <summary class="review-form__toggle">
-                              {rating ? 'Update Review' : 'Write Review'}
-                            </summary>
-                            <form method="post" action="/api/jams/add-review" class="review-form__form">
-                              <input type="hidden" name="jam_id" value={jam.id} />
-                              <input type="hidden" name="product_id" value={product.id} />
-                              <div class="review-form__field">
-                                <label class="review-form__label">Rating</label>
-                                <select name="rating" class="review-form__select" required>
-                                  <option value="">Select rating...</option>
-                                  <option value="5">5 - Excellent</option>
-                                  <option value="4">4 - Good</option>
-                                  <option value="3">3 - Average</option>
-                                  <option value="2">2 - Poor</option>
-                                  <option value="1">1 - Terrible</option>
-                                </select>
-                              </div>
-                              <div class="review-form__field">
-                                <label class="review-form__label">Review</label>
-                                <textarea
-                                  name="review_text"
-                                  class="review-form__textarea"
-                                  rows="3"
-                                  required
-                                  placeholder="Share your thoughts about this product..."
-                                ></textarea>
-                              </div>
-                              <Button variant="primary" size="sm">
-                                <span slot="text">Submit Review</span>
-                              </Button>
-                            </form>
-                          </details>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -556,6 +523,7 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
   }
 
   .submission-card {
+    position: relative;
     display: block;
     background-color: var(--card);
     border: 1px solid var(--border);
@@ -607,14 +575,35 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
     position: absolute;
     top: var(--spacing-lg);
     right: var(--spacing-lg);
-    background-color: #fbbf24;
-    color: #78350f;
     padding: var(--spacing-xs) var(--spacing-lg);
     border-radius: var(--radius-full);
     font-size: var(--text-xs);
     font-weight: var(--font-weight-bold);
     text-transform: uppercase;
     z-index: 2;
+  }
+
+  .submission-card__badge--winner {
+    background-color: #fbbf24;
+    color: #78350f;
+  }
+
+  .submission-card__rank {
+    position: absolute;
+    top: var(--spacing-lg);
+    left: var(--spacing-lg);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-bold);
+    z-index: 2;
+    box-shadow: var(--shadow-sm);
   }
 
   .submission-card__rating {
