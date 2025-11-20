@@ -5,6 +5,7 @@ import { getCartItems, clearCart } from "@/lib/data-access/cart";
 import { getProductById, getVariantById, getVariantPrices } from "@/lib/data-access/products";
 import { serverClient } from "@/lib/data-access/client";
 import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
+import { createRoyaltyTransactionsForSaleItemAsset } from "@/lib/data-access/royalties";
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -159,18 +160,30 @@ export const POST: APIRoute = async ({ request }) => {
 
                 if (saleItemAsset) {
                   console.log('Linked asset to sale item:', productAsset.asset_id);
+
+                  // 4. Create royalty transactions for this asset
+                  const royaltyTransactions = await createRoyaltyTransactionsForSaleItemAsset({
+                    saleId: sale.id,
+                    saleItemId: saleItem.id,
+                    saleItemAssetId: saleItemAsset.id,
+                    assetId: productAsset.asset_id,
+                    saleItemPriceCents: price.unit_amount * cartItem.quantity,
+                    currency: price.currency,
+                  });
+
+                  console.log(`Created ${royaltyTransactions.length} royalty transactions for asset ${productAsset.asset_id}`);
                 }
               }
             }
           }
 
-          // 4. Clear the cart
+          // 5. Clear the cart
           const cleared = await clearCart(cartId);
           if (cleared) {
             console.log('Cart cleared:', cartId);
           }
 
-          // 5. Send purchase confirmation email
+          // 6. Send purchase confirmation email
           const origin = process.env.VERCEL_URL
             ? `https://${process.env.VERCEL_URL}`
             : 'http://localhost:4321';

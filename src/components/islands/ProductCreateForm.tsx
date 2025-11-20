@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import TagInput from "./TagInput";
 import "./product-create-form.css";
 
 export default function ProductCreateForm() {
@@ -46,15 +47,8 @@ export default function ProductCreateForm() {
     }
   };
 
-  const handleTagsChange = (e: Event) => {
-    const value = (e.currentTarget as HTMLInputElement).value;
-    // TagInput component should provide JSON array string
-    try {
-      const parsedTags = JSON.parse(value) as string[];
-      setTags(parsedTags);
-    } catch {
-      // If not valid JSON, ignore
-    }
+  const handleTagsChange = (newTags: string[]) => {
+    setTags(newTags);
   };
 
   return (
@@ -122,10 +116,10 @@ export default function ProductCreateForm() {
             <label for="tags" class="product-form__label">
               Tags
             </label>
-            <input
-              type="hidden"
+            <TagInput
               name="tags"
-              id="tags"
+              placeholder="Add tags (e.g., strategy, family-friendly)"
+              initialTags={tags()}
               onChange={handleTagsChange}
             />
             <p class="product-form__help-text">
