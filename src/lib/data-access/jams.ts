@@ -189,6 +189,24 @@ export const getJamByHandle = async (handle: string): Promise<Jam | null> => {
 };
 
 /**
+ * Get a jam by ID
+ */
+export const getJamById = async (id: string): Promise<Jam | null> => {
+  const { data, error } = await serverClient
+    .from("jams")
+    .select("*")
+    .eq("id", id)
+    .eq("deleted", false)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as Jam;
+};
+
+/**
  * Get a random active jam
  * Returns null if no active jams exist
  */
@@ -285,13 +303,20 @@ export const getJamProducts = async (jamId: string): Promise<Product[]> => {
  * Get reviews for products in a jam
  */
 export const getJamProductReviews = async (
-  jamId: string
+  jamId: string,
+  productId?: string
 ): Promise<JamProductReview[]> => {
-  const { data, error } = await serverClient
+  let query = serverClient
     .from("jam_product_reviews")
     .select("*")
     .eq("jam_id", jamId)
     .eq("deleted", false);
+
+  if (productId) {
+    query = query.eq("product_id", productId);
+  }
+
+  const { data, error } = await query;
 
   if (error || !data) {
     return [];

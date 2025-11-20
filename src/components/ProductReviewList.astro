@@ -1,0 +1,179 @@
+---
+import type { JamProductReview, Jam, VotingPhase } from '@/types';
+import ProductReview from './ProductReview.astro';
+import { getUserById } from '@/lib/data-access/users';
+import { calculateVotingPhase } from '@/lib/data-access/jams';
+
+interface Props {
+  reviews: JamProductReview[];
+  jam: Jam;
+  jamHandle: string;
+  currentUserId?: string;
+}
+
+const { reviews, jam, jamHandle, currentUserId } = Astro.props;
+
+// Calculate voting phase to determine visibility
+const votingPhase = calculateVotingPhase(jam);
+const areReviewsVisible = ['voting', 'results_pending', 'completed'].includes(votingPhase);
+
+// Filter reviews based on visibility rules
+const visibleReviews = areReviewsVisible
+  ? reviews
+  : reviews.filter(r => r.user_id === currentUserId);
+
+// Fetch reviewer information for visible reviews
+const reviewersMap = new Map();
+for (const review of visibleReviews) {
+  const user = await getUserById(review.user_id);
+  if (user) {
+    reviewersMap.set(review.user_id, user);
+  }
+}
+
+// Sort reviews by date (newest first)
+const sortedReviews = [...visibleReviews].sort((a, b) =>
+  new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+);
+---
+
+<div class="review-list">
+  {!areReviewsVisible && reviews.length > 0 && (
+    <div class="review-list__hidden-notice">
+      <p class="review-list__hidden-text">
+        🔒 Reviews are currently private during the jam submission period.
+        {currentUserId && visibleReviews.length > 0 ? ' You can see your review below.' : ''}
+        All reviews will be revealed when voting begins on {new Date(jam.end_date).toLocaleDateString()}.
+      </p>
+    </div>
+  )}
+
+  {visibleReviews.length > 0 ? (
+    <>
+      <div class="review-list__header">
+        <h3 class="review-list__title">
+          Reviews from {jam.title}
+        </h3>
+        <span class="review-list__count">
+          {visibleReviews.length} {visibleReviews.length === 1 ? 'review' : 'reviews'}
+        </span>
+      </div>
+
+      <div class="review-list__items">
+        {sortedReviews.map((review) => {
+          const reviewer = reviewersMap.get(review.user_id);
+          if (!reviewer) return null;
+
+          return (
+            <ProductReview
+              review={review}
+              reviewer={reviewer}
+              jamHandle={jamHandle}
+            />
+          );
+        })}
+      </div>
+    </>
+  ) : (
+    <div class="review-list__empty">
+      <div class="review-list__empty-icon">💭</div>
+      <p class="review-list__empty-text">
+        {areReviewsVisible
+          ? 'No reviews yet. Be the first to review this product!'
+          : 'No reviews to display at this time.'}
+      </p>
+    </div>
+  )}
+</div>
+
+<style>
+/* Block */
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
+}
+
+/* Element: Hidden Notice */
+.review-list__hidden-notice {
+  padding: var(--spacing-xl);
+  background-color: var(--accent);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary);
+}
+
+.review-list__hidden-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  line-height: var(--leading-relaxed);
+}
+
+/* Element: Header */
+.review-list__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--gap-lg);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 2px solid var(--border);
+}
+
+.review-list__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.review-list__count {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+  padding: var(--spacing-xs) var(--spacing-lg);
+  background-color: var(--muted);
+  border-radius: var(--radius-full);
+}
+
+/* Element: Items Container */
+.review-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xl);
+}
+
+/* Element: Empty State */
+.review-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-lg);
+  padding: var(--spacing-5xl) var(--spacing-2xl);
+  text-align: center;
+}
+
+.review-list__empty-icon {
+  font-size: var(--text-5xl);
+}
+
+.review-list__empty-text {
+  margin: 0;
+  font-size: var(--text-lg);
+  color: var(--muted-foreground);
+  max-width: 40ch;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .review-list__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-md);
+  }
+
+  .review-list__title {
+    font-size: var(--text-xl);
+  }
+}
+</style>

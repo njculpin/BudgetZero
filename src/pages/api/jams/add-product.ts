@@ -32,10 +32,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const productId = formData.get("product_id") as string;
 
   if (!jamId || !productId) {
-    return new Response(JSON.stringify({ error: "Missing required fields" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return redirect("/jams?error=" + encodeURIComponent("Missing required fields"));
   }
 
   // Verify the product exists
@@ -47,35 +44,17 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     .single();
 
   if (productError || !product) {
-    return new Response(
-      JSON.stringify({ error: "Product not found" }),
-      {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return redirect("/jams?error=" + encodeURIComponent("Product not found"));
   }
 
   // Verify the user owns the product
   if (product.user_id !== userId) {
-    return new Response(
-      JSON.stringify({ error: "You don't own this product" }),
-      {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return redirect("/jams?error=" + encodeURIComponent("You don't own this product"));
   }
 
   // Verify the product is published
   if (product.status !== "published") {
-    return new Response(
-      JSON.stringify({ error: "Only published products can be submitted to jams" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return redirect("/jams?error=" + encodeURIComponent("Only published products can be submitted to jams"));
   }
 
   // Verify the jam exists and is active (based on dates)
@@ -87,10 +66,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     .single();
 
   if (jamError || !jam) {
-    return new Response(JSON.stringify({ error: "Jam not found" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
+    return redirect("/jams?error=" + encodeURIComponent("Jam not found"));
   }
 
   // Check if jam is active based on dates (not status field)
@@ -105,13 +81,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       ? `Submissions open on ${startDate.toLocaleDateString()}`
       : `Submissions closed on ${endDate.toLocaleDateString()}`;
 
-    return new Response(
-      JSON.stringify({ error: message }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return redirect(`/jams/${jam.handle}?error=${encodeURIComponent(message)}`);
   }
 
   // Check if product is already submitted
@@ -124,13 +94,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     .single();
 
   if (existing) {
-    return new Response(
-      JSON.stringify({ error: "Product already submitted to this jam" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return redirect(`/jams/${jam.handle}?error=${encodeURIComponent("This product has already been submitted to this jam")}`);
   }
 
   // Add product to jam
@@ -142,14 +106,8 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     });
 
   if (insertError) {
-    return new Response(
-      JSON.stringify({ error: "Failed to add product to jam" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return redirect(`/products/${product.handle}?jam=${jam.id}&error=${encodeURIComponent("Failed to add product to jam")}`);
   }
 
-  return redirect(`/jams/${jam.handle}`);
+  return redirect(`/products/${product.handle}?jam=${jam.id}&jam_success=${encodeURIComponent("Product submitted successfully!")}`);
 };

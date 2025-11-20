@@ -21,6 +21,9 @@ import { getProductByHandle, getProductTags, getProductVariants, getVariantPrice
 import { getAssetImages } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
+import { getJamById, getJamProductReviews } from "@/lib/data-access/jams";
+import { serverClient } from "@/lib/data-access/client";
+import AlertMessage from "@/components/AlertMessage.astro";
 import type { Asset } from "@/types";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
@@ -29,6 +32,7 @@ import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
 import CardFooter from "@/components/CardFooter.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
+import ProductReviewList from "@/components/ProductReviewList.astro";
 
 const { product } = Astro.params;
 
@@ -90,9 +94,65 @@ if (productData.status !== 'published' && !isOwner) {
 }
 
 // Check if user is in edit mode
+const isEditMode = isOwner;
+
+// Check for jam submission flow
 const urlParams = new URL(Astro.request.url).searchParams;
-const mode = urlParams.get('mode');
-const isEditMode = isOwner && mode !== 'preview';
+const jamId = urlParams.get('jam');
+let targetJam = null;
+let jamSubmissionError = null;
+let jamSubmissionSuccess = urlParams.get('jam_success');
+let reviewError = urlParams.get('error');
+let reviewSuccess = urlParams.get('review_success');
+let userReview = null;
+let isProductInJam = false;
+let allJamReviews = [];
+
+if (jamId) {
+  targetJam = await getJamById(jamId);
+
+  // Check if product is already in the jam
+  if (targetJam) {
+    const { data: existingSubmission } = await serverClient
+      .from("jam_products")
+      .select("*")
+      .eq("jam_id", jamId)
+      .eq("product_id", productData.id)
+      .eq("deleted", false)
+      .single();
+
+    isProductInJam = !!existingSubmission;
+  }
+
+  // Validate jam submission is possible
+  if (targetJam) {
+    const now = new Date();
+    const startDate = new Date(targetJam.start_date);
+    const endDate = new Date(targetJam.end_date);
+    const isActive = now >= startDate && now <= endDate;
+
+    if (isProductInJam && isOwner) {
+      jamSubmissionError = "This product has already been submitted to this jam";
+    } else if (!isActive) {
+      const isUpcoming = now < startDate;
+      jamSubmissionError = isUpcoming
+        ? `Submissions for this jam open on ${startDate.toLocaleDateString()}`
+        : `Submissions for this jam closed on ${endDate.toLocaleDateString()}`;
+    } else if (productData.status !== 'published') {
+      jamSubmissionError = "Only published products can be submitted to jams";
+    } else if (!isOwner) {
+      jamSubmissionError = "You must own this product to submit it to a jam";
+    }
+
+    // Get all reviews for this product in this jam
+    allJamReviews = await getJamProductReviews(jamId, productData.id);
+
+    // Get user's existing review if they're logged in and not the owner
+    if (currentUser && !isOwner) {
+      userReview = allJamReviews.find(r => r.user_id === currentUser.id);
+    }
+  }
+}
 
 // Get first variant with pricing for display
 const defaultVariant = variantsWithPrices.find(v => v.prices && v.prices.length > 0) || variantsWithPrices[0];
@@ -102,6 +162,159 @@ const defaultPrice = defaultVariant?.prices?.[0];
 <Layout title={`${productData.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
+      <!-- Jam Review Card - Top Priority (non-owners only) -->
+      {targetJam && currentUser && !isOwner && isProductInJam && (
+        <div class="jam-context-banner">
+          <div class="jam-context-banner__content">
+            <span class="jam-context-banner__emoji">🎮</span>
+            <div class="jam-context-banner__text">
+              <strong>Game Jam Review:</strong> You're reviewing this product for <strong>{targetJam.title}</strong>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {targetJam && currentUser && !isOwner && isProductInJam && (
+        <Card>
+          <CardHeader>
+            <div class="jam-submission__header">
+              <div>
+                <CardTitle>{userReview ? 'Update Your Review' : 'Write a Review'}</CardTitle>
+                <CardDescription>
+                  Share your feedback about <strong>{productData.title}</strong> as part of {targetJam.title}
+                </CardDescription>
+              </div>
+              <a href={`/jams/${targetJam.handle}`} class="jam-submission__back-link">
+                ← Back to Jam
+              </a>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {reviewSuccess && (
+              <AlertMessage
+                variant="success"
+                message={reviewSuccess}
+              />
+            )}
+            {reviewError && (
+              <AlertMessage
+                variant="error"
+                message={reviewError}
+              />
+            )}
+            <form method="post" action="/api/jams/add-review" class="jam-review-form">
+              <input type="hidden" name="jam_id" value={targetJam.id} />
+              <input type="hidden" name="product_id" value={productData.id} />
+
+              <div class="jam-review-form__field">
+                <label for="rating" class="jam-review-form__label">
+                  Rating *
+                </label>
+                <select
+                  name="rating"
+                  id="rating"
+                  class="jam-review-form__select"
+                  required
+                >
+                  <option value="">Select rating...</option>
+                  <option value="5" selected={userReview?.rating === 5}>★★★★★ Excellent</option>
+                  <option value="4" selected={userReview?.rating === 4}>★★★★ Very Good</option>
+                  <option value="3" selected={userReview?.rating === 3}>★★★ Good</option>
+                  <option value="2" selected={userReview?.rating === 2}>★★ Fair</option>
+                  <option value="1" selected={userReview?.rating === 1}>★ Poor</option>
+                </select>
+              </div>
+
+              <div class="jam-review-form__field">
+                <label for="review_text" class="jam-review-form__label">
+                  Review *
+                </label>
+                <textarea
+                  name="review_text"
+                  id="review_text"
+                  class="jam-review-form__textarea"
+                  rows={6}
+                  required
+                  placeholder="Share your thoughts about this product..."
+                >{userReview?.review_text || ''}</textarea>
+                <p class="jam-review-form__help-text">
+                  Be constructive and helpful to other participants
+                </p>
+              </div>
+
+              <div class="jam-review-form__actions">
+                <a href={`/jams/${targetJam.handle}`}>
+                  <Button variant="ghost" size="md">
+                    <span slot="text">Back to Jam</span>
+                  </Button>
+                </a>
+                <Button variant="primary" size="md">
+                  <span slot="text">{userReview ? 'Update Review' : 'Submit Review'}</span>
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      <!-- Jam Submission Card (for owners who haven't submitted yet) -->
+      {targetJam && isOwner && !isProductInJam && (
+        <Card>
+          <CardHeader>
+            <div class="jam-submission__header">
+              <div>
+                <CardTitle>Submit Product to {targetJam.title}</CardTitle>
+                <CardDescription>
+                  Review your product details and confirm submission to this game jam
+                </CardDescription>
+              </div>
+              <a href={`/jams/${targetJam.handle}`} class="jam-submission__back-link">
+                ← Back to Jam
+              </a>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {jamSubmissionSuccess && (
+              <AlertMessage
+                variant="success"
+                message={jamSubmissionSuccess}
+              />
+            )}
+            {jamSubmissionError ? (
+              <AlertMessage
+                variant="error"
+                message={jamSubmissionError}
+              />
+            ) : (
+              <div class="jam-submission__content">
+                <div class="jam-submission__info">
+                  <p class="jam-submission__text">
+                    You're about to submit <strong>{productData.title}</strong> to <strong>{targetJam.title}</strong>.
+                  </p>
+                  <p class="jam-submission__text">
+                    Jam ends: <strong>{new Date(targetJam.end_date).toLocaleDateString()}</strong>
+                  </p>
+                </div>
+                <form method="post" action="/api/jams/add-product" class="jam-submission__form">
+                  <input type="hidden" name="jam_id" value={targetJam.id} />
+                  <input type="hidden" name="product_id" value={productData.id} />
+                  <div class="jam-submission__actions">
+                    <a href={`/jams/${targetJam.handle}`}>
+                      <Button variant="ghost" size="md">
+                        <span slot="text">Cancel</span>
+                      </Button>
+                    </a>
+                    <Button variant="primary" size="md">
+                      <span slot="text">Submit Product to Jam</span>
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <!-- Breadcrumb Navigation -->
       <nav class="breadcrumb" aria-label="Breadcrumb">
         <ol class="breadcrumb__list">
@@ -123,19 +336,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
         style={coverImage ? `background-image: url('${coverImage}')` : ''}
       >
         {coverImage && <div class="product-hero__overlay"></div>}
-
-        {isOwner && (
-          <div class="product-hero__mode-toggle">
-            <span class={`mode-badge mode-badge--${isEditMode ? 'edit' : 'preview'}`}>
-              {isEditMode ? '✏️ Edit Mode' : '👁️ Preview Mode'}
-            </span>
-            <a href={`/products/${productData.handle}${isEditMode ? '?mode=preview' : ''}`}>
-              <Button variant="ghost" size="sm">
-                <span slot="text">Switch to {isEditMode ? 'Preview' : 'Edit'}</span>
-              </Button>
-            </a>
-          </div>
-        )}
 
         <div class="product-hero__content">
           <div class="product-hero__title-group">
@@ -411,6 +611,20 @@ const defaultPrice = defaultVariant?.prices?.[0];
             </CardFooter>
           )}
         </Card>
+
+        <!-- Reviews Section (Jam Context) -->
+        {!isEditMode && jamId && targetJam && isProductInJam && (
+          <Card>
+            <CardContent>
+              <ProductReviewList
+                reviews={allJamReviews}
+                jam={targetJam}
+                jamHandle={targetJam.handle}
+                currentUserId={currentUser?.id}
+              />
+            </CardContent>
+          </Card>
+        )}
         </div>
 
         <!-- Sidebar Column -->
@@ -1128,6 +1342,184 @@ const defaultPrice = defaultVariant?.prices?.[0];
   @media (max-width: 480px) {
     .variant-item__assets-list {
       grid-template-columns: 1fr;
+    }
+  }
+
+  /* ===== Jam Submission ===== */
+  .jam-submission__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--gap-xl);
+    width: 100%;
+  }
+
+  .jam-submission__back-link {
+    color: var(--muted-foreground);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    transition: color var(--duration-fast) var(--ease-in-out);
+  }
+
+  .jam-submission__back-link:hover {
+    color: var(--foreground);
+  }
+
+  .jam-submission__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xl);
+  }
+
+  .jam-submission__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    padding: var(--spacing-xl);
+    background-color: var(--accent);
+    border-radius: var(--radius-md);
+  }
+
+  .jam-submission__text {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  .jam-submission__form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .jam-submission__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--gap-md);
+  }
+
+  @media (max-width: 768px) {
+    .jam-submission__header {
+      flex-direction: column;
+      gap: var(--gap-md);
+    }
+
+    .jam-submission__actions {
+      flex-direction: column;
+    }
+
+    .jam-submission__actions a,
+    .jam-submission__actions button {
+      width: 100%;
+    }
+  }
+
+  /* ===== Jam Review Form ===== */
+  .jam-review-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xl);
+  }
+
+  .jam-review-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+  }
+
+  .jam-review-form__label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .jam-review-form__select,
+  .jam-review-form__textarea {
+    padding: var(--spacing-lg);
+    border: var(--border-width-default) solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-family: inherit;
+    background-color: var(--background);
+    color: var(--foreground);
+    transition: border-color var(--duration-fast) var(--ease-in-out);
+  }
+
+  .jam-review-form__select:focus,
+  .jam-review-form__textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 0, 112, 243), 0.1);
+  }
+
+  .jam-review-form__textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .jam-review-form__help-text {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .jam-review-form__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--gap-md);
+    padding-top: var(--spacing-md);
+  }
+
+  @media (max-width: 768px) {
+    .jam-review-form__actions {
+      flex-direction: column;
+    }
+
+    .jam-review-form__actions a,
+    .jam-review-form__actions button {
+      width: 100%;
+    }
+  }
+
+  /* ===== Jam Context Banner ===== */
+  .jam-context-banner {
+    padding: var(--spacing-xl) var(--spacing-2xl);
+    background: linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l * 0.9) c h) 100%);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-2xl);
+    border: var(--border-width-thick) solid var(--primary);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .jam-context-banner__content {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-lg);
+  }
+
+  .jam-context-banner__emoji {
+    font-size: var(--text-3xl);
+    flex-shrink: 0;
+  }
+
+  .jam-context-banner__text {
+    font-size: var(--text-lg);
+    color: var(--primary-foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  .jam-context-banner__text strong {
+    font-weight: var(--font-weight-bold);
+  }
+
+  @media (max-width: 768px) {
+    .jam-context-banner {
+      padding: var(--spacing-lg) var(--spacing-xl);
+    }
+
+    .jam-context-banner__text {
+      font-size: var(--text-base);
     }
   }
 </style>

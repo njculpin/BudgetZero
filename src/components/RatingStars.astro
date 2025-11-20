@@ -1,0 +1,117 @@
+---
+interface Props {
+  rating: number;          // 0-5, supports decimals
+  size?: 'sm' | 'md' | 'lg';
+  count?: number;          // optional review count
+  showCount?: boolean;
+  interactive?: boolean;   // future: allow star selection
+}
+
+const {
+  rating,
+  size = 'md',
+  count,
+  showCount = false,
+  interactive = false
+} = Astro.props;
+
+const fullStars = Math.floor(rating);
+const hasHalfStar = rating % 1 >= 0.5;
+const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+---
+
+<div class={`rating-stars rating-stars--${size} ${interactive ? 'rating-stars--interactive' : ''}`}>
+  <div class="rating-stars__display">
+    {Array.from({ length: fullStars }).map(() => (
+      <span class="rating-stars__star rating-stars__star--filled" aria-hidden="true">★</span>
+    ))}
+    {hasHalfStar && (
+      <span class="rating-stars__star rating-stars__star--half" aria-hidden="true">⯨</span>
+    )}
+    {Array.from({ length: emptyStars }).map(() => (
+      <span class="rating-stars__star rating-stars__star--empty" aria-hidden="true">☆</span>
+    ))}
+  </div>
+  {showCount && count !== undefined && (
+    <span class="rating-stars__count">
+      {rating.toFixed(1)} ({count} {count === 1 ? 'review' : 'reviews'})
+    </span>
+  )}
+  <span class="sr-only">{rating} out of 5 stars</span>
+</div>
+
+<style>
+/* Block */
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+/* Element: Star Display Container */
+.rating-stars__display {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xxs);
+}
+
+/* Element: Individual Star */
+.rating-stars__star {
+  line-height: 1;
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.rating-stars__star--filled {
+  color: #fbbf24;
+}
+
+.rating-stars__star--half {
+  color: #fbbf24;
+}
+
+.rating-stars__star--empty {
+  color: var(--muted);
+}
+
+/* Element: Count Text */
+.rating-stars__count {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+/* Modifier: Sizes */
+.rating-stars--sm .rating-stars__star {
+  font-size: var(--text-sm);
+}
+
+.rating-stars--md .rating-stars__star {
+  font-size: var(--text-base);
+}
+
+.rating-stars--lg .rating-stars__star {
+  font-size: var(--text-xl);
+}
+
+/* Modifier: Interactive (future use) */
+.rating-stars--interactive .rating-stars__star {
+  cursor: pointer;
+}
+
+.rating-stars--interactive .rating-stars__star:hover {
+  transform: scale(1.1);
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+</style>

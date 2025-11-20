@@ -1,13 +1,31 @@
 import type { APIRoute } from "astro";
-import { getUser } from "@/lib/auth";
+import { setSession } from "@/lib/auth";
 import { serverClient } from "@/lib/data-access/client";
 
-export const POST: APIRoute = async ({ request, redirect }) => {
-  const user = await getUser(request);
+export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+  // Check authentication
+  const accessToken = cookies.get('sb-access-token');
+  const refreshToken = cookies.get('sb-refresh-token');
 
-  if (!user) {
+  if (!accessToken || !refreshToken) {
     return redirect("/sign-in");
   }
+
+  let session;
+  try {
+    session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+
+    if (session.error || !session.data.user) {
+      return redirect("/sign-in");
+    }
+  } catch (error) {
+    return redirect("/sign-in");
+  }
+
+  const userId = session.data.user.id;
 
   const formData = await request.formData();
   const jamId = formData.get("jam_id") as string;
@@ -15,18 +33,21 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   const rating = parseInt(formData.get("rating") as string);
   const reviewText = formData.get("review_text") as string;
 
+  // Get product handle and owner for validation
+  const { data: product } = await serverClient
+    .from("products")
+    .select("handle, user_id")
+    .eq("id", productId)
+    .single();
+
+  const productHandle = product?.handle || "";
+
   if (!jamId || !productId || !rating || !reviewText) {
-    return new Response(JSON.stringify({ error: "Missing required fields" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return redirect(`/products/${productHandle}?jam=${jamId}&error=${encodeURIComponent("Missing required fields")}`);
   }
 
   if (rating < 1 || rating > 5) {
-    return new Response(JSON.stringify({ error: "Rating must be between 1 and 5" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return redirect(`/products/${productHandle}?jam=${jamId}&error=${encodeURIComponent("Rating must be between 1 and 5")}`);
   }
 
   // Verify the jam exists
@@ -38,10 +59,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     .single();
 
   if (jamError || !jam) {
-    return new Response(JSON.stringify({ error: "Jam not found" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
+    return redirect(`/products/${productHandle}?jam=${jamId}&error=${encodeURIComponent("Jam not found")}`);
   }
 
   // Verify product is submitted to this jam
@@ -54,13 +72,12 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     .single();
 
   if (!jamProduct) {
-    return new Response(
-      JSON.stringify({ error: "Product is not submitted to this jam" }),
-      {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return redirect(`/products/${productHandle}?jam=${jamId}&error=${encodeURIComponent("Product is not submitted to this jam")}`);
+  }
+
+  // Check if user owns the product (prevent self-reviews)
+  if (product && product.user_id === userId) {
+    return redirect(`/products/${productHandle}?jam=${jamId}&error=${encodeURIComponent("You cannot review your own product")}`);
   }
 
   // Check if user already reviewed this product in this jam
@@ -69,7 +86,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     .select("*")
     .eq("jam_id", jamId)
     .eq("product_id", productId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("deleted", false)
     .single();
 
@@ -84,14 +101,11 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       .eq("id", existing.id);
 
     if (updateError) {
-      return new Response(
-        JSON.stringify({ error: "Failed to update review" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      console.error("Error updating review:", updateError);
+      return redirect(`/products/${productHandle}?jam=${jamId}&error=${encodeURIComponent(`Failed to update review: ${updateError.message}`)}`);
     }
+
+    return redirect(`/products/${productHandle}?jam=${jamId}&review_success=${encodeURIComponent("Review updated successfully!")}`);
   } else {
     // Create new review
     const { error: insertError } = await serverClient
@@ -99,21 +113,16 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       .insert({
         jam_id: jamId,
         product_id: productId,
-        user_id: user.id,
+        user_id: userId,
         review_rating: rating,
         review_text: reviewText,
       });
 
     if (insertError) {
-      return new Response(
-        JSON.stringify({ error: "Failed to add review" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      console.error("Error inserting review:", insertError);
+      return redirect(`/products/${productHandle}?jam=${jamId}&error=${encodeURIComponent(`Failed to add review: ${insertError.message}`)}`);
     }
-  }
 
-  return redirect(`/jams/${jam.handle}`);
+    return redirect(`/products/${productHandle}?jam=${jamId}&review_success=${encodeURIComponent("Review submitted successfully!")}`);
+  }
 };

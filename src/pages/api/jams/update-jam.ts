@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
   if (!jamId || !title || !startDate || !endDate || !handle) {
     return redirect(
-      `/jams/${handle || ""}?mode=edit&error=${encodeURIComponent("Missing required fields")}`,
+      `/jams/${handle || ""}?error=${encodeURIComponent("Missing required fields")}`,
       302
     );
   }
@@ -51,14 +51,14 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
   if (!jam) {
     return redirect(
-      `/jams/${handle}?mode=edit&error=${encodeURIComponent("Jam not found")}`,
+      `/jams/${handle}?error=${encodeURIComponent("Jam not found")}`,
       302
     );
   }
 
   if (jam.user_id !== currentUser.id) {
     return redirect(
-      `/jams/${handle}?mode=edit&error=${encodeURIComponent("You do not have permission to edit this jam")}`,
+      `/jams/${handle}?error=${encodeURIComponent("You do not have permission to edit this jam")}`,
       302
     );
   }
@@ -76,7 +76,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
   if (!validation.valid) {
     return redirect(
-      `/jams/${handle}?mode=edit&error=${encodeURIComponent(validation.error || "Invalid dates")}`,
+      `/jams/${handle}?error=${encodeURIComponent(validation.error || "Invalid dates")}`,
       302
     );
   }
@@ -98,7 +98,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     // Validate file type
     if (!coverImageFile.type.startsWith("image/")) {
       return redirect(
-        `/jams/${handle}?mode=edit&error=${encodeURIComponent("Please select a valid image file")}`,
+        `/jams/${handle}?error=${encodeURIComponent("Please select a valid image file")}`,
         302
       );
     }
@@ -106,7 +106,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     // Validate file size (5MB max)
     if (coverImageFile.size > 5 * 1024 * 1024) {
       return redirect(
-        `/jams/${handle}?mode=edit&error=${encodeURIComponent("Image must be smaller than 5MB")}`,
+        `/jams/${handle}?error=${encodeURIComponent("Image must be smaller than 5MB")}`,
         302
       );
     }
@@ -143,10 +143,10 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
   if (!updatedJam) {
     return redirect(
-      `/jams/${handle}?mode=edit&error=${encodeURIComponent("Failed to update jam")}`,
+      `/jams/${handle}?error=${encodeURIComponent("Failed to update jam")}`,
       302
     );
   }
 
-  return redirect(`/jams/${handle}?mode=edit&success=true`, 302);
+  return redirect(`/jams/${handle}?success=true`, 302);
 };
