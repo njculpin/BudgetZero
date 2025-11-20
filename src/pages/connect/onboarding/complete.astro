@@ -96,9 +96,9 @@ try {
 
       const status = await response.json();
 
-      const loading = document.querySelector('.complete-loading');
-      const success = document.getElementById('complete-success');
-      const error = document.getElementById('complete-error');
+      const loading = document.querySelector('.complete-loading') as HTMLElement;
+      const success = document.getElementById('complete-success') as HTMLElement;
+      const error = document.getElementById('complete-error') as HTMLElement;
 
       if (loading) loading.style.display = 'none';
 
@@ -108,8 +108,8 @@ try {
         if (error) error.style.display = 'flex';
       }
     } catch (err) {
-      const loading = document.querySelector('.complete-loading');
-      const error = document.getElementById('complete-error');
+      const loading = document.querySelector('.complete-loading') as HTMLElement;
+      const error = document.getElementById('complete-error') as HTMLElement;
 
       if (loading) loading.style.display = 'none';
       if (error) error.style.display = 'flex';

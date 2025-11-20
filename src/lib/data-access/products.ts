@@ -1,5 +1,5 @@
 import { serverClient } from './client';
-import type { Product, ProductVariant, ProductVariantPrice, ProductTag, ProductStatus, Asset } from '@/types';
+import type { Product, ProductVariant, ProductVariantPrice, ProductTag, ProductStatus, Asset, User } from '@/types';
 
 export interface CreateProductParams {
   title: string;
@@ -942,4 +942,57 @@ export const getVariantRoyaltyTotal = async (variantId: string): Promise<number>
   }
 
   return total;
+};
+
+/**
+ * Get all contributors for a product
+ * Returns unique users who have royalties on any asset linked to any variant of the product
+ */
+export const getProductContributors = async (productId: string): Promise<User[]> => {
+  // Get all variants for the product
+  const variants = await getProductVariants(productId);
+
+  if (variants.length === 0) {
+    return [];
+  }
+
+  const variantIds = variants.map(v => v.id);
+
+  // Get all assets linked to these variants
+  const { data: productAssets, error: paError } = await serverClient
+    .from('product_assets')
+    .select('asset_id')
+    .in('variant_id', variantIds);
+
+  if (paError || !productAssets || productAssets.length === 0) {
+    return [];
+  }
+
+  const assetIds = [...new Set(productAssets.map(pa => pa.asset_id))];
+
+  // Get all royalties for these assets
+  const { data: royalties, error: royaltiesError } = await serverClient
+    .from('asset_royalties')
+    .select('user_id')
+    .in('asset_id', assetIds)
+    .eq('deleted', false);
+
+  if (royaltiesError || !royalties || royalties.length === 0) {
+    return [];
+  }
+
+  // Get unique user IDs
+  const userIds = [...new Set(royalties.map(r => r.user_id))];
+
+  // Fetch user data
+  const { data: users, error: usersError } = await serverClient
+    .from('users')
+    .select('*')
+    .in('id', userIds);
+
+  if (usersError || !users) {
+    return [];
+  }
+
+  return users as User[];
 };
