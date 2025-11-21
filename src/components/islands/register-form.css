@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: var(--spacing-2xl);
   background-color: var(--muted);
 }
 .auth-page__container {
@@ -16,7 +16,7 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--gap-xl);
 }
 .auth-form__field {
   display: flex;
@@ -40,7 +40,7 @@
 .auth-form__divider-text {
   position: relative;
   display: inline-block;
-  padding: 0 0.75rem;
+  padding: 0 var(--spacing-lg);
   background-color: var(--card);
   font-size: var(--text-sm);
   color: var(--muted-foreground);
@@ -91,7 +91,7 @@
 
 .auth-form__input:focus-visible {
   border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+  box-shadow: var(--focus-shadow);
 }
 
 .auth-form__input:disabled {

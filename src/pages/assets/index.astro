@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
+import BrowseCTA from "@/components/BrowseCTA.astro";
 import { getAssets, getAssetImages } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import PageHeader from "@/components/PageHeader.astro";
@@ -74,21 +75,7 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
       {!currentUser && (
         <Card>
           <CardContent>
-            <div class="browse-cta">
-              <p class="browse-cta__text">Sign in to create and sell your digital assets</p>
-              <div class="browse-cta__actions">
-                <a href="/sign-in" class="browse-cta__link">
-                  <button class="button button--primary button--md">
-                    <span class="button__text">Sign In</span>
-                  </button>
-                </a>
-                <a href="/sign-up" class="browse-cta__link">
-                  <button class="button button--ghost button--md">
-                    <span class="button__text">Sign Up</span>
-                  </button>
-                </a>
-              </div>
-            </div>
+            <BrowseCTA message="Sign in to create and sell your digital assets" />
           </CardContent>
         </Card>
       )}
@@ -179,33 +166,6 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 .page-header-action {
   text-decoration: none;
   flex-shrink: 0;
-}
-
-/* ===== Browse CTA ===== */
-.browse-cta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--gap-lg);
-  padding: var(--spacing-xl) 0;
-  text-align: center;
-}
-
-.browse-cta__text {
-  margin: 0;
-  font-size: var(--text-base);
-  color: var(--foreground);
-}
-
-.browse-cta__actions {
-  display: flex;
-  gap: var(--gap-md);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.browse-cta__link {
-  text-decoration: none;
 }
 
 /* ===== Assets Section ===== */
@@ -434,23 +394,6 @@ const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 
   .assets-grid {
     grid-template-columns: 1fr;
-  }
-
-  .browse-cta {
-    padding: var(--spacing-lg) 0;
-  }
-
-  .browse-cta__actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .browse-cta__link {
-    width: 100%;
-  }
-
-  .browse-cta__link button {
-    width: 100%;
   }
 }
 </style>

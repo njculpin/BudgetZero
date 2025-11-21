@@ -1,0 +1,67 @@
+---
+interface Props {
+  message: string;
+}
+
+const { message } = Astro.props;
+---
+
+<div class="browse-cta">
+  <p class="browse-cta__text">{message}</p>
+  <div class="browse-cta__actions">
+    <a href="/sign-in" class="browse-cta__link">
+      <button class="button button--primary button--md">
+        <span class="button__text">Sign In</span>
+      </button>
+    </a>
+    <a href="/sign-up" class="browse-cta__link">
+      <button class="button button--ghost button--md">
+        <span class="button__text">Sign Up</span>
+      </button>
+    </a>
+  </div>
+</div>
+
+<style>
+.browse-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-xl);
+  padding: var(--spacing-4xl) var(--spacing-2xl);
+  text-align: center;
+}
+
+.browse-cta__text {
+  font-size: var(--text-lg);
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.browse-cta__actions {
+  display: flex;
+  gap: var(--gap-lg);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.browse-cta__link {
+  text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .browse-cta__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .browse-cta__link {
+    width: 100%;
+  }
+
+  .browse-cta__link button {
+    width: 100%;
+  }
+}
+</style>
