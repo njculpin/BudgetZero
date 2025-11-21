@@ -450,7 +450,7 @@ const isShopMode = !isContributor;
                     initialTags={tags.map(t => t.value)}
                   />
                 }
-                {(isPreviewMode || isShopMode) && tags.length > 0 &&
+                {!isEditMode && tags.length > 0 &&
                   tags.map((tag) => (
                     <a href={`/assets?tag=${tag.value}`} class="asset-tags__link">
                       <Tag>{tag.value}</Tag>

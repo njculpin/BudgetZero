@@ -7,17 +7,27 @@ export interface ProductChatMessage {
   user_id: string;
   message: string;
   created_at: string;
+  user?: {
+    name: string | null;
+    handle: string;
+  };
 }
 
 /**
- * Get all chat messages for a product
+ * Get all chat messages for a product with user information
  */
 export const getProductChatMessages = async (
   productId: string
 ): Promise<ProductChatMessage[]> => {
   const { data, error } = await serverClient
     .from("product_chat_messages")
-    .select("*")
+    .select(`
+      *,
+      user:users!user_id (
+        name,
+        handle
+      )
+    `)
     .eq("product_id", productId)
     .order("created_at", { ascending: true });
 

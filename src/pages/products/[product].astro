@@ -24,7 +24,7 @@ import { setSession } from "@/lib/auth";
 import { getJamById, getJamProductReviews } from "@/lib/data-access/jams";
 import { serverClient } from "@/lib/data-access/client";
 import AlertMessage from "@/components/AlertMessage.astro";
-import type { Asset } from "@/types";
+import type { Asset, JamProductReview } from "@/types";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
@@ -109,9 +109,9 @@ let jamSubmissionError = null;
 let jamSubmissionSuccess = urlParams.get('jam_success');
 let reviewError = urlParams.get('error');
 let reviewSuccess = urlParams.get('review_success');
-let userReview = null;
+let userReview: JamProductReview | null = null;
 let isProductInJam = false;
-let allJamReviews = [];
+let allJamReviews: JamProductReview[] = [];
 
 if (jamId) {
   targetJam = await getJamById(jamId);
@@ -154,7 +154,7 @@ if (jamId) {
 
     // Get user's existing review if they're logged in and not the owner
     if (currentUser && !isOwner) {
-      userReview = allJamReviews.find(r => r.user_id === currentUser.id);
+      userReview = allJamReviews.find(r => r.user_id === currentUser.id) ?? null;
     }
   }
 }
@@ -690,7 +690,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
             <CardContent>
               <ProductChat
                 client:load
-                userId={currentUser.id}
+                userId={currentUser?.id}
                 productId={productData.id}
               />
             </CardContent>
