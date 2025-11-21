@@ -42,14 +42,14 @@ const { title = "Game Loopers" } = Astro.props;
 
 	.profile-footer__text {
 		margin: 0;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		color: var(--muted-foreground);
 	}
 
 	.profile-footer__link {
-		color: var(--color-primary, #0070f3);
+		color: var(--primary);
 		text-decoration: none;
-		font-weight: 500;
+		font-weight: var(--font-weight-medium);
 	}
 
 	.profile-footer__link:hover {

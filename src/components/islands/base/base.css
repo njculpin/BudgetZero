@@ -48,7 +48,7 @@
 .form-field__textarea:focus,
 .form-field__select:focus {
   border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+  box-shadow: var(--focus-shadow);
 }
 
 .form-field__input:disabled,
@@ -68,7 +68,7 @@
 .form-field__input--error:focus,
 .form-field__textarea--error:focus,
 .form-field__select--error:focus {
-  box-shadow: 0 0 0 3px oklch(from var(--destructive) l c h / 0.2);
+  box-shadow: 0 0 0 3px oklch(from var(--destructive) l c h / var(--focus-ring-opacity));
 }
 
 .form-field__textarea {
@@ -115,12 +115,12 @@
 .form-field__file-input:hover:not(:disabled) {
   border-color: var(--primary);
   background-color: oklch(from var(--primary) l c h / 0.1);
-  transform: translateY(-2px);
+  transform: var(--transform-hover-lift-strong);
   box-shadow: var(--shadow-md);
 }
 
 .form-field__file-input:active:not(:disabled) {
-  transform: translateY(0);
+  transform: var(--transform-active-press);
   box-shadow: var(--shadow-sm);
 }
 

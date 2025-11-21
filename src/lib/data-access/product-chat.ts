@@ -1,4 +1,3 @@
-import type { RealtimePostgresInsertPayload } from "@supabase/supabase-js";
 import { serverClient } from "./client";
 
 export interface ProductChatMessage {
@@ -63,48 +62,4 @@ export const createChatMessage = async (
   }
 
   return data as ProductChatMessage;
-};
-
-/**
- * Subscribe to realtime chat messages for a product
- * Returns a cleanup function to unsubscribe
- *
- * Note: This creates a client-side Supabase client for realtime subscriptions.
- * This is necessary because realtime requires a persistent connection.
- */
-export const subscribeToProductChat = async (
-  productId: string,
-  onMessage: (message: ProductChatMessage) => void
-): Promise<() => void> => {
-  // Dynamic import for client-side only
-  const { createClient } = await import("@supabase/supabase-js");
-  const url = import.meta.env.PUBLIC_SUPABASE_URL;
-  const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
-    throw new Error("Missing Supabase environment variables");
-  }
-
-  const realtimeClient = createClient(url, key);
-
-  const channel = realtimeClient
-    .channel(`realtime:product_chat_messages:${productId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "product_chat_messages",
-        filter: `product_id=eq.${productId}`,
-      },
-      (payload: RealtimePostgresInsertPayload<ProductChatMessage>) => {
-        onMessage(payload.new);
-      }
-    )
-    .subscribe();
-
-  // Return cleanup function
-  return () => {
-    realtimeClient.removeChannel(channel);
-  };
 };

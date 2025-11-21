@@ -34,7 +34,8 @@
       "Bash(supabase stop:*)",
       "Bash(lsof:*)",
       "Bash(git commit:*)",
-      "Bash(npx astro check:*)"
+      "Bash(npx astro check:*)",
+      "Bash(cut:*)"
     ],
     "deny": [],
     "ask": []

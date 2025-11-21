@@ -18,8 +18,8 @@
 }
 
 .jam-voting__success-icon {
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
   flex-shrink: 0;
 }
 

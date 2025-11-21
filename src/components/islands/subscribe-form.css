@@ -14,27 +14,28 @@
 }
 
 .subscribe-section h2 {
-  font-size: 1.4rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xxs);
 }
 
 .subscribe-section p {
-  font-size: 0.95rem;
-  color: var(--muted-foreground, hsl(0 0% 40%));
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
 }
 
 /* Form */
 .subscribe-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--gap-lg);
 }
 
 .subscribe-form__field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--gap-xs);
 }
 
 /* Label */
@@ -72,7 +73,7 @@
 
 .subscribe-form__input:focus-visible {
   border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+  box-shadow: var(--focus-shadow);
 }
 
 .subscribe-form__input:disabled {

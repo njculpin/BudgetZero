@@ -61,20 +61,20 @@ const { jam } = Astro.props;
         z-index: 1;
     }
     .jam__desc {
-        font-size: 1rem;
-        line-height: 1.5;
+        font-size: var(--text-base);
+        line-height: var(--leading-normal);
         color: var(--accent-foreground);
         position: relative;
         z-index: 1;
         flex: 1;
     }
     .jam__date {
-        font-size: 0.875rem;
+        font-size: var(--text-sm);
         color: var(--accent-foreground);
         opacity: 0.8;
         position: relative;
         z-index: 1;
-        margin-top: 1rem;
+        margin-top: var(--spacing-2xl);
     }
 
     /* Responsive: Reduce padding and font size on mobile */
@@ -88,7 +88,7 @@ const { jam } = Astro.props;
         }
 
         .jam__desc {
-            font-size: 0.9rem;
+            font-size: var(--text-sm);
         }
     }
 </style>
