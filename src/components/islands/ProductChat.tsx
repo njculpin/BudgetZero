@@ -1,6 +1,5 @@
 import { createSignal, onMount, onCleanup, For } from "solid-js";
 import {
-  getProductChatMessages,
   subscribeToProductChat,
   type ProductChatMessage,
 } from "@/lib/data-access/product-chat";
@@ -15,6 +14,8 @@ export default function ProductChat(props: ProductChatProps) {
   const [messages, setMessages] = createSignal<ProductChatMessage[]>([]);
   const [message, setMessage] = createSignal("");
   const [isLoading, setIsLoading] = createSignal(false);
+  const [isFetching, setIsFetching] = createSignal(true);
+  const [error, setError] = createSignal<string | null>(null);
   let unsubscribe: (() => void) | null = null;
 
   // Computed: whether the send button should be disabled
@@ -23,8 +24,25 @@ export default function ProductChat(props: ProductChatProps) {
   };
 
   const loadMessages = async () => {
-    const data = await getProductChatMessages(props.productId);
-    setMessages(data);
+    try {
+      setIsFetching(true);
+      setError(null);
+      const response = await fetch(`/api/products/chat/get-messages?productId=${props.productId}`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to load messages:", errorData);
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setMessages(data);
+    } catch (e) {
+      console.error("Failed to load messages:", e);
+      setError(e instanceof Error ? e.message : "Failed to load messages");
+    } finally {
+      setIsFetching(false);
+    }
   };
 
   const sendMessage = async () => {
@@ -72,25 +90,52 @@ export default function ProductChat(props: ProductChatProps) {
     }
   });
 
+  const getUserDisplay = (msg: ProductChatMessage) => {
+    if (msg.user_id === props.userId) return "You";
+    if (msg.user?.name) return msg.user.name;
+    if (msg.user?.handle) return `@${msg.user.handle}`;
+    return "Unknown User";
+  };
+
   return (
     <div class="product-chat">
-      <div class="product-chat__messages">
-        <For each={messages()}>
-          {(msg) => (
-            <div
-              class="product-chat__message"
-              classList={{
-                "product-chat__message--own": msg.user_id === props.userId,
-              }}
-            >
-              <span class="product-chat__message-author">
-                {msg.user_id === props.userId ? "You" : msg.user_id}
-              </span>
-              <p class="product-chat__message-text">{msg.message}</p>
-            </div>
-          )}
-        </For>
-      </div>
+      {error() && (
+        <div class="product-chat__error">
+          <p>{error()}</p>
+          <button onClick={loadMessages} class="product-chat__retry">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {isFetching() && messages().length === 0 ? (
+        <div class="product-chat__loading">
+          <div class="product-chat__spinner"></div>
+          <p>Loading messages...</p>
+        </div>
+      ) : messages().length === 0 ? (
+        <div class="product-chat__empty">
+          <p>No messages yet. Start the conversation!</p>
+        </div>
+      ) : (
+        <div class="product-chat__messages">
+          <For each={messages()}>
+            {(msg) => (
+              <div
+                class="product-chat__message"
+                classList={{
+                  "product-chat__message--own": msg.user_id === props.userId,
+                }}
+              >
+                <span class="product-chat__message-author">
+                  {getUserDisplay(msg)}
+                </span>
+                <p class="product-chat__message-text">{msg.message}</p>
+              </div>
+            )}
+          </For>
+        </div>
+      )}
 
       <form
         class="product-chat__form"
@@ -116,7 +161,7 @@ export default function ProductChat(props: ProductChatProps) {
           <button
             type="submit"
             class="product-chat__submit"
-            disabled={isDisabled()}
+            // disabled={isDisabled()}
             title={!props.userId ? "Sign in to send messages" : ""}
           >
             {isLoading() ? "Sending..." : "Send"}

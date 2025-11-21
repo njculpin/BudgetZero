@@ -44,10 +44,10 @@ const unAuthedLinks = [
 ];
 ---
 
-<nav class={`navigation`}>
+<nav class="navigation" role="navigation" aria-label="Main navigation">
   <div class="navigation__container">
     <a href="/" class="navigation__brand">
-      <span class="navigation__logo"><h3>Game Loopers</h3></span>
+      <span class="navigation__logo">Game Loopers</span>
     </a>
 
     {/* Mobile Navigation */}
@@ -60,42 +60,42 @@ const unAuthedLinks = [
     <div class="navigation__menu">
       <a href="/documents">
         <Button variant="ghost" size="sm">
-          <span slot="text"><p>Documents</p></span>
+          <span slot="text">Documents</span>
         </Button>
       </a>
       <a href="/assets">
         <Button variant="ghost" size="sm">
-          <span slot="text"><p>Assets</p></span>
+          <span slot="text">Assets</span>
         </Button>
       </a>
       <a href="/products">
         <Button variant="ghost" size="sm">
-          <span slot="text"><p>Products</p></span>
+          <span slot="text">Products</span>
         </Button>
       </a>
       <a href="/jams">
         <Button variant="ghost" size="sm">
-          <span slot="text"><p>Jams</p></span>
+          <span slot="text">Jams</span>
         </Button>
       </a>
       <a href="/purchases">
         <Button variant="ghost" size="sm">
-          <span slot="text"><p>Purchases</p></span>
+          <span slot="text">Purchases</span>
         </Button>
       </a>
       <a href="/connect/onboarding">
         <Button variant="ghost" size="sm">
-          <span slot="text"><p>Payouts</p></span>
+          <span slot="text">Payouts</span>
         </Button>
       </a>
       <a href="/users">
         <Button variant="ghost" size="sm">
-          <span slot="text"><p>Users</p></span>
+          <span slot="text">Users</span>
         </Button>
       </a>
       <a href="/tags">
         <Button variant="ghost" size="sm">
-          <span slot="text"><p>Tags</p></span>
+          <span slot="text">Tags</span>
         </Button>
       </a>
     </div>
@@ -106,12 +106,12 @@ const unAuthedLinks = [
         <>
           <a href="/dashboard">
             <Button variant="ghost" size="sm">
-              <span slot="text"><p>Dashboard</p></span>
+              <span slot="text">Dashboard</span>
             </Button>
           </a>
           <a href="/cart">
             <Button variant="ghost" size="sm">
-              <span slot="text"><p>Cart</p></span>
+              <span slot="text">Cart</span>
             </Button>
           </a>
           <form action="/api/auth/sign-out" method="post" class="navigation__signout-form">
@@ -154,7 +154,7 @@ const unAuthedLinks = [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0;
+  padding: var(--spacing-2xl) 0;
   gap: 2rem;
 }
 
@@ -175,8 +175,9 @@ const unAuthedLinks = [
 
 .navigation__logo {
   font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--primary);
-  margin-right: var(--spacing-lg)
+  margin-right: var(--spacing-lg);
 }
 
 /* ===== Menu ===== */
