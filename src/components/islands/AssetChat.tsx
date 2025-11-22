@@ -21,6 +21,16 @@ export default function AssetChat(props: AssetChatProps) {
     subscribeToChat: subscribeToAssetChat,
   });
 
+  const getInitials = (msg: AssetChatMessage): string => {
+    if (msg.user?.name) {
+      return msg.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+    if (msg.user?.handle) {
+      return msg.user.handle.slice(0, 2).toUpperCase();
+    }
+    return "?";
+  };
+
   return (
     <div class="asset-chat">
       {chat.error() && (
@@ -44,19 +54,40 @@ export default function AssetChat(props: AssetChatProps) {
       ) : (
         <div class="asset-chat__messages">
           <For each={chat.messages()}>
-            {(msg) => (
-              <div
-                class="asset-chat__message"
-                classList={{
-                  "asset-chat__message--own": msg.user_id === props.userId,
-                }}
-              >
-                <span class="asset-chat__message-author">
-                  {chat.getUserDisplay(msg)}
-                </span>
-                <p class="asset-chat__message-text">{msg.message}</p>
-              </div>
-            )}
+            {(msg) => {
+              const isOwn = msg.user_id === props.userId;
+              return (
+                <div
+                  class="asset-chat__message-row"
+                  classList={{ "asset-chat__message-row--own": isOwn }}
+                >
+                  {!isOwn && (
+                    <div class="asset-chat__avatar">
+                      {msg.user?.avatar_url ? (
+                        <img
+                          src={msg.user.avatar_url}
+                          alt={chat.getUserDisplay(msg)}
+                          class="asset-chat__avatar-img"
+                        />
+                      ) : (
+                        <span class="asset-chat__avatar-initials">
+                          {getInitials(msg)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div
+                    class="asset-chat__message"
+                    classList={{ "asset-chat__message--own": isOwn }}
+                  >
+                    <span class="asset-chat__message-author">
+                      {chat.getUserDisplay(msg)}
+                    </span>
+                    <p class="asset-chat__message-text">{msg.message}</p>
+                  </div>
+                </div>
+              );
+            }}
           </For>
         </div>
       )}

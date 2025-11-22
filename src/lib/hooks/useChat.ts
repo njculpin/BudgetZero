@@ -11,6 +11,7 @@ export interface BaseChatMessage {
   user?: {
     name?: string | null;
     handle?: string | null;
+    avatar_url?: string | null;
   } | null;
 }
 

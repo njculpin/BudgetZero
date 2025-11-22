@@ -9,6 +9,7 @@ export interface ProductChatMessage {
   user?: {
     name: string | null;
     handle: string;
+    avatar_url: string | null;
   };
 }
 
@@ -24,7 +25,8 @@ export const getProductChatMessages = async (
       *,
       user:users!user_id (
         name,
-        handle
+        handle,
+        avatar_url
       )
     `)
     .eq("product_id", productId)

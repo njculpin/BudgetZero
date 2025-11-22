@@ -21,6 +21,16 @@ export default function ProductChat(props: ProductChatProps) {
     subscribeToChat: subscribeToProductChat,
   });
 
+  const getInitials = (msg: ProductChatMessage): string => {
+    if (msg.user?.name) {
+      return msg.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+    if (msg.user?.handle) {
+      return msg.user.handle.slice(0, 2).toUpperCase();
+    }
+    return "?";
+  };
+
   return (
     <div class="product-chat">
       {chat.error() && (
@@ -44,19 +54,40 @@ export default function ProductChat(props: ProductChatProps) {
       ) : (
         <div class="product-chat__messages">
           <For each={chat.messages()}>
-            {(msg) => (
-              <div
-                class="product-chat__message"
-                classList={{
-                  "product-chat__message--own": msg.user_id === props.userId,
-                }}
-              >
-                <span class="product-chat__message-author">
-                  {chat.getUserDisplay(msg)}
-                </span>
-                <p class="product-chat__message-text">{msg.message}</p>
-              </div>
-            )}
+            {(msg) => {
+              const isOwn = msg.user_id === props.userId;
+              return (
+                <div
+                  class="product-chat__message-row"
+                  classList={{ "product-chat__message-row--own": isOwn }}
+                >
+                  {!isOwn && (
+                    <div class="product-chat__avatar">
+                      {msg.user?.avatar_url ? (
+                        <img
+                          src={msg.user.avatar_url}
+                          alt={chat.getUserDisplay(msg)}
+                          class="product-chat__avatar-img"
+                        />
+                      ) : (
+                        <span class="product-chat__avatar-initials">
+                          {getInitials(msg)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div
+                    class="product-chat__message"
+                    classList={{ "product-chat__message--own": isOwn }}
+                  >
+                    <span class="product-chat__message-author">
+                      {chat.getUserDisplay(msg)}
+                    </span>
+                    <p class="product-chat__message-text">{msg.message}</p>
+                  </div>
+                </div>
+              );
+            }}
           </For>
         </div>
       )}
