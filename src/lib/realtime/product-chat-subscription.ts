@@ -9,6 +9,7 @@ export interface ProductChatMessage {
   user?: {
     name: string | null;
     handle: string;
+    avatar_url: string | null;
   };
 }
 

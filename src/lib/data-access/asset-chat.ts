@@ -9,6 +9,7 @@ export interface AssetChatMessage {
   user?: {
     name: string | null;
     handle: string;
+    avatar_url: string | null;
   };
 }
 
@@ -24,7 +25,8 @@ export const getAssetChatMessages = async (
       *,
       user:users!user_id (
         name,
-        handle
+        handle,
+        avatar_url
       )
     `)
     .eq("asset_id", assetId)

@@ -1,4 +1,5 @@
-import { createSignal, Show } from "solid-js";
+import { Show } from "solid-js";
+import { useDeleteConfirm } from "@/lib/hooks/useDeleteConfirm";
 import { LoadingButton, ErrorMessage, ConfirmDialog } from "./base";
 import "./base/base.css";
 
@@ -9,62 +10,37 @@ export interface ProductDeleteButtonProps {
 }
 
 export default function ProductDeleteButton(props: ProductDeleteButtonProps) {
-  const [showConfirm, setShowConfirm] = createSignal(false);
-  const [isDeleting, setIsDeleting] = createSignal(false);
-  const [error, setError] = createSignal("");
-
-  const handleDelete = async () => {
-    setError("");
-    setIsDeleting(true);
-
-    try {
-      const response = await fetch("/api/products/delete-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: props.productId }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.error || "Failed to delete product");
-        setIsDeleting(false);
-        setShowConfirm(false);
-        return;
-      }
-
-      // Redirect after successful delete
-      window.location.href = props.redirectUrl;
-    } catch (err) {
-      setError("An unexpected error occurred");
-      setIsDeleting(false);
-      setShowConfirm(false);
-    }
-  };
+  const deleteAction = useDeleteConfirm({
+    entityId: props.productId,
+    entityParamName: "productId",
+    deleteEndpoint: "/api/products/delete-product",
+    redirectUrl: props.redirectUrl,
+  });
 
   return (
     <div class="product-delete-button">
-      <Show when={error()}>
-        <ErrorMessage message={error()} onDismiss={() => setError("")} />
+      <Show when={deleteAction.error()}>
+        <ErrorMessage message={deleteAction.error()} onDismiss={() => deleteAction.setError("")} />
       </Show>
 
       <LoadingButton
         variant="destructive"
         size="sm"
-        onClick={() => setShowConfirm(true)}
-        isLoading={isDeleting()}
+        onClick={deleteAction.openConfirm}
+        isLoading={deleteAction.isDeleting()}
         loadingText="Deleting..."
       >
         Delete
       </LoadingButton>
 
       <ConfirmDialog
-        isOpen={showConfirm()}
+        isOpen={deleteAction.showConfirm()}
         title="Delete Product"
         message={`Are you sure you want to delete "${props.productTitle}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
-        onConfirm={handleDelete}
-        onCancel={() => setShowConfirm(false)}
+        onConfirm={deleteAction.handleDelete}
+        onCancel={deleteAction.closeConfirm}
       />
     </div>
   );
