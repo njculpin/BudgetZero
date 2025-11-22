@@ -1,6 +1,10 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
-import { deleteDocument, getDocumentById } from "@/lib/data-access/documents";
+import {
+  updateDocumentContent,
+  canUserEditDocument,
+  type TipTapContent,
+} from "@/lib/data-access/documents";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const accessToken = cookies.get("sb-access-token");
@@ -36,43 +40,50 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const userId = session.data.user.id;
 
   try {
-    const formData = await request.formData();
-    const documentId = formData.get("documentId") as string;
+    const body = await request.json();
+    const { documentId, content } = body as {
+      documentId: string;
+      content: TipTapContent;
+    };
 
-    if (!documentId) {
-      return new Response(JSON.stringify({ error: "Document ID is required" }), {
+    if (!documentId || !content) {
+      return new Response(JSON.stringify({ error: "Missing documentId or content" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Verify ownership - only owner can delete
-    const document = await getDocumentById(documentId);
-    if (!document || document.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Not authorized to delete this document" }), {
+    // Check permission
+    const canEdit = await canUserEditDocument(documentId, userId);
+    if (!canEdit) {
+      return new Response(JSON.stringify({ error: "Not authorized to edit this document" }), {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const success = await deleteDocument(documentId);
+    // Update content
+    const success = await updateDocumentContent(documentId, content);
 
     if (!success) {
-      return new Response(JSON.stringify({ error: "Failed to delete document" }), {
+      return new Response(JSON.stringify({ error: "Failed to save content" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
-    console.error("Delete document error:", error);
+    console.error("Update content error:", error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to delete document",
+        error: error instanceof Error ? error.message : "Failed to save content",
       }),
       {
         status: 500,

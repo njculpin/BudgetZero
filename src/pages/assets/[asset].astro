@@ -21,6 +21,7 @@ import AssetBasicInfoForm from "@/components/islands/AssetBasicInfoForm";
 import AssetStatusEditor from "@/components/islands/AssetStatusEditor";
 import AssetProductPicker from "@/components/islands/AssetProductPicker";
 import AssetRoyaltyManager from "@/components/islands/AssetRoyaltyManager";
+import EditableBreadcrumb from "@/components/islands/EditableBreadcrumb";
 
 const { asset } = Astro.params;
 
@@ -91,19 +92,32 @@ const isShopMode = !isContributor;
   <div class="page">
     <div class="page__container">
       <!-- Breadcrumb Navigation -->
-      <nav class="breadcrumb" aria-label="Breadcrumb">
-        <ol class="breadcrumb__list">
-          <li class="breadcrumb__item">
-            <a href="/" class="breadcrumb__link">Home</a>
-          </li>
-          <li class="breadcrumb__item">
-            <a href="/assets" class="breadcrumb__link">Assets</a>
-          </li>
-          <li class="breadcrumb__item breadcrumb__item--current">
-            <span class="breadcrumb__current">{assetData.title}</span>
-          </li>
-        </ol>
-      </nav>
+      {isEditMode ? (
+        <EditableBreadcrumb
+          client:load
+          entityId={assetData.id}
+          entityType="asset"
+          currentTitle={assetData.title}
+          breadcrumbItems={[
+            { label: "Home", href: "/" },
+            { label: "Assets", href: "/assets" },
+          ]}
+        />
+      ) : (
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol class="breadcrumb__list">
+            <li class="breadcrumb__item">
+              <a href="/" class="breadcrumb__link">Home</a>
+            </li>
+            <li class="breadcrumb__item">
+              <a href="/assets" class="breadcrumb__link">Assets</a>
+            </li>
+            <li class="breadcrumb__item breadcrumb__item--current">
+              <span class="breadcrumb__current">{assetData.title}</span>
+            </li>
+          </ol>
+        </nav>
+      )}
 
       <!-- Hero Section -->
       <div

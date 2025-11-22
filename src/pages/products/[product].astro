@@ -33,6 +33,7 @@ import CardContent from "@/components/CardContent.astro";
 import CardFooter from "@/components/CardFooter.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
 import ProductReviewList from "@/components/ProductReviewList.astro";
+import EditableBreadcrumb from "@/components/islands/EditableBreadcrumb";
 
 const { product } = Astro.params;
 
@@ -321,19 +322,32 @@ const defaultPrice = defaultVariant?.prices?.[0];
       )}
 
       <!-- Breadcrumb Navigation -->
-      <nav class="breadcrumb" aria-label="Breadcrumb">
-        <ol class="breadcrumb__list">
-          <li class="breadcrumb__item">
-            <a href="/" class="breadcrumb__link">Home</a>
-          </li>
-          <li class="breadcrumb__item">
-            <a href="/products" class="breadcrumb__link">Products</a>
-          </li>
-          <li class="breadcrumb__item breadcrumb__item--current">
-            <span class="breadcrumb__current">{productData.title}</span>
-          </li>
-        </ol>
-      </nav>
+      {isEditMode ? (
+        <EditableBreadcrumb
+          client:load
+          entityId={productData.id}
+          entityType="product"
+          currentTitle={productData.title}
+          breadcrumbItems={[
+            { label: "Home", href: "/" },
+            { label: "Products", href: "/products" },
+          ]}
+        />
+      ) : (
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol class="breadcrumb__list">
+            <li class="breadcrumb__item">
+              <a href="/" class="breadcrumb__link">Home</a>
+            </li>
+            <li class="breadcrumb__item">
+              <a href="/products" class="breadcrumb__link">Products</a>
+            </li>
+            <li class="breadcrumb__item breadcrumb__item--current">
+              <span class="breadcrumb__current">{productData.title}</span>
+            </li>
+          </ol>
+        </nav>
+      )}
 
       <!-- Hero Section -->
       <div

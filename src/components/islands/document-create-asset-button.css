@@ -1,0 +1,89 @@
+/* Document Create Asset Button */
+.document-create-asset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.document-create-asset__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-sm);
+  width: 100%;
+  padding: var(--spacing-lg) var(--spacing-2xl);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.document-create-asset__btn:hover:not(:disabled) {
+  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.document-create-asset__btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.document-create-asset__btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.document-create-asset__btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.document-create-asset__icon {
+  flex-shrink: 0;
+}
+
+.document-create-asset__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: var(--radius-full);
+  animation: create-asset-spin 0.6s linear infinite;
+}
+
+@keyframes create-asset-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.document-create-asset__error {
+  margin: 0;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: oklch(from var(--destructive) l c h / 0.1);
+  border: 1px solid var(--destructive);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--destructive);
+}
+
+.document-create-asset__success {
+  margin: 0;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: oklch(from var(--success, #22c55e) l c h / 0.1);
+  border: 1px solid var(--success, #22c55e);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--success, #22c55e);
+}
+
+.document-create-asset__hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
