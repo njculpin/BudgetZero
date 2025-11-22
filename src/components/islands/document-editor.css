@@ -1,0 +1,331 @@
+/* Document Editor Component */
+.document-editor {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--duration-normal, 0.2s) var(--ease-in-out, ease-in-out);
+}
+
+/* Fullscreen Mode */
+.document-editor--fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  border-radius: 0;
+  border: none;
+}
+
+.document-editor--fullscreen .document-editor__content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--spacing-4xl);
+}
+
+.document-editor--fullscreen .document-editor__toolbar {
+  border-radius: 0;
+  padding: var(--spacing-md) var(--spacing-2xl);
+  justify-content: center;
+}
+
+.document-editor__fullscreen-btn {
+  margin-left: var(--spacing-md);
+}
+
+/* Toolbar */
+.document-editor__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.document-editor__toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-xs);
+}
+
+.document-editor__toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border);
+  margin: 0 var(--spacing-xs);
+}
+
+.document-editor__toolbar-spacer {
+  flex: 1;
+}
+
+.document-editor__toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.document-editor__toolbar-btn:hover {
+  background-color: var(--background);
+  color: var(--primary);
+}
+
+.document-editor__toolbar-btn:active {
+  transform: scale(0.95);
+}
+
+.document-editor__toolbar-btn code {
+  font-size: var(--text-xs);
+}
+
+/* Save Status */
+.document-editor__save-status {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+}
+
+.document-editor__saving {
+  color: var(--primary);
+}
+
+.document-editor__unsaved {
+  color: var(--warning, #f59e0b);
+}
+
+.document-editor__saved {
+  color: var(--success, #22c55e);
+}
+
+/* Presence Indicators */
+.document-editor__presence {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  margin-right: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
+  border-right: 1px solid var(--border);
+}
+
+.document-editor__presence-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -8px;
+  border: 2px solid var(--muted);
+  transition: transform var(--duration-fast) var(--ease-in-out);
+}
+
+.document-editor__presence-avatar:first-child {
+  margin-left: 0;
+}
+
+.document-editor__presence-avatar:hover {
+  transform: scale(1.1);
+  z-index: 1;
+}
+
+.document-editor__presence-avatar:nth-child(2) {
+  background-color: var(--accent, #10b981);
+}
+
+.document-editor__presence-avatar:nth-child(3) {
+  background-color: var(--warning, #f59e0b);
+}
+
+.document-editor__presence-avatar:nth-child(4) {
+  background-color: var(--destructive, #ef4444);
+}
+
+.document-editor__presence-count {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  margin-left: var(--spacing-sm);
+  white-space: nowrap;
+}
+
+/* Editor Content */
+.document-editor__content {
+  min-height: 500px;
+  padding: var(--spacing-3xl);
+  outline: none;
+}
+
+.document-editor__content--readonly {
+  background-color: var(--muted);
+}
+
+/* ProseMirror Styles */
+.document-editor__content .ProseMirror {
+  outline: none;
+  min-height: 400px;
+}
+
+.document-editor__content .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Typography within editor */
+.document-editor__content .ProseMirror h1 {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  margin: var(--spacing-3xl) 0 var(--spacing-xl);
+  line-height: var(--leading-tight);
+}
+
+.document-editor__content .ProseMirror h2 {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  margin: var(--spacing-2xl) 0 var(--spacing-lg);
+  line-height: var(--leading-tight);
+}
+
+.document-editor__content .ProseMirror h3 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  margin: var(--spacing-xl) 0 var(--spacing-md);
+  line-height: var(--leading-snug);
+}
+
+.document-editor__content .ProseMirror h4 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: var(--spacing-lg) 0 var(--spacing-sm);
+  line-height: var(--leading-snug);
+}
+
+.document-editor__content .ProseMirror p {
+  margin: var(--spacing-md) 0;
+  line-height: var(--leading-relaxed);
+}
+
+.document-editor__content .ProseMirror ul,
+.document-editor__content .ProseMirror ol {
+  margin: var(--spacing-md) 0;
+  padding-left: var(--spacing-3xl);
+}
+
+.document-editor__content .ProseMirror li {
+  margin: var(--spacing-xs) 0;
+}
+
+.document-editor__content .ProseMirror blockquote {
+  margin: var(--spacing-xl) 0;
+  padding: var(--spacing-lg) var(--spacing-2xl);
+  border-left: 4px solid var(--primary);
+  background-color: var(--muted);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+.document-editor__content .ProseMirror code {
+  background-color: var(--muted);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+}
+
+.document-editor__content .ProseMirror pre {
+  background-color: var(--muted);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin: var(--spacing-xl) 0;
+}
+
+.document-editor__content .ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.document-editor__content .ProseMirror hr {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: var(--spacing-2xl) 0;
+}
+
+.document-editor__content .ProseMirror a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.document-editor__content .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  margin: var(--spacing-xl) 0;
+}
+
+/* Table styles */
+.document-editor__content .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: var(--spacing-xl) 0;
+}
+
+.document-editor__content .ProseMirror th,
+.document-editor__content .ProseMirror td {
+  border: 1px solid var(--border);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  text-align: left;
+}
+
+.document-editor__content .ProseMirror th {
+  background-color: var(--muted);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Selection styles */
+.document-editor__content .ProseMirror ::selection {
+  background-color: oklch(from var(--primary) l c h / 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .document-editor__toolbar {
+    padding: var(--spacing-sm);
+  }
+
+  .document-editor__toolbar-divider {
+    display: none;
+  }
+
+  .document-editor__content {
+    padding: var(--spacing-xl);
+  }
+}

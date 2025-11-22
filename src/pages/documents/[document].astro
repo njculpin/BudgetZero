@@ -1,7 +1,460 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardContent from "@/components/CardContent.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import GalleryGrid from "@/components/GalleryGrid.astro";
+import { setSession } from "@/lib/auth";
+import {
+  getDocumentByHandle,
+  canUserViewDocument,
+  canUserEditDocument,
+  getDocumentCollaboratorUsers,
+  getDocumentContent,
+} from "@/lib/data-access/documents";
+import { getUserById } from "@/lib/data-access/users";
+import DocumentEditor from "@/components/islands/DocumentEditor";
+import DocumentDeleteButton from "@/components/islands/DocumentDeleteButton";
+import DocumentChat from "@/components/islands/DocumentChat";
+import EditableBreadcrumb from "@/components/islands/EditableBreadcrumb";
+import DocumentCreateAssetButton from "@/components/islands/DocumentCreateAssetButton";
+
+const { params, cookies } = Astro;
+const documentHandle = params.document;
+
+if (!documentHandle) {
+  return Astro.redirect("/documents");
+}
+
+// Check authentication
+let currentUser = null;
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch {}
+}
+
+// Fetch document
+const document = await getDocumentByHandle(documentHandle);
+
+if (!document) {
+  return Astro.redirect("/documents");
+}
+
+// Check permissions
+const canView = currentUser ? await canUserViewDocument(document.id, currentUser.id) : false;
+const canEdit = currentUser ? await canUserEditDocument(document.id, currentUser.id) : false;
+const isOwner = currentUser?.id === document.user_id;
+
+// Documents are private - redirect if user can't view
+if (!canView) {
+  return Astro.redirect("/documents");
+}
+
+// Get document content
+const content = await getDocumentContent(document.id);
+const contentJson = content ? JSON.stringify(content) : null;
+
+// Get owner info
+const owner = await getUserById(document.user_id);
+
+// Get current user details for presence
+const currentUserDetails = currentUser ? await getUserById(currentUser.id) : null;
+
+// Get collaborators
+const collaborators = await getDocumentCollaboratorUsers(document.id);
+const collaboratorImages = collaborators.map((user) => ({
+  url: user.avatar_url,
+  alt: user.name || user.handle,
+  href: `/users/${user.handle}`,
+}));
+
+// Format date helper
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 ---
 
-<Layout title="Document - Game Loopers">
+<Layout title={`${document.title} - Game Loopers`}>
+  <div class="page">
+    <div class="page__container">
+      <!-- Editable Breadcrumb Navigation -->
+      {canEdit ? (
+        <EditableBreadcrumb
+          client:load
+          entityId={document.id}
+          entityType="document"
+          currentTitle={document.title}
+          breadcrumbItems={[
+            { label: "Home", href: "/" },
+            { label: "Documents", href: "/documents" },
+          ]}
+        />
+      ) : (
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol class="breadcrumb__list">
+            <li class="breadcrumb__item">
+              <a href="/" class="breadcrumb__link">Home</a>
+            </li>
+            <li class="breadcrumb__item">
+              <a href="/documents" class="breadcrumb__link">Documents</a>
+            </li>
+            <li class="breadcrumb__item breadcrumb__item--current">
+              <span class="breadcrumb__current">{document.title}</span>
+            </li>
+          </ol>
+        </nav>
+      )}
 
+      <!-- Hero Section -->
+      <div class="document-hero">
+        <div class="document-hero__content">
+          <h1 class="document-hero__title">{document.title}</h1>
+          <div class="document-hero__meta">
+            <span class="document-hero__status">DRAFT</span>
+            {owner && (
+              <span class="document-hero__author">
+                by <a href={`/users/${owner.handle}`} class="document-hero__author-link">
+                  {owner.name || owner.handle}
+                </a>
+              </span>
+            )}
+          </div>
+          {document.description && (
+            <p class="document-hero__description">{document.description}</p>
+          )}
+        </div>
+      </div>
+
+      <div class="page-columns">
+        <!-- Main Content Column -->
+        <div class="page-columns__column">
+          <Card>
+            <CardHeader>
+              <CardTitle>Editor</CardTitle>
+              <CardDescription>
+                {canEdit
+                  ? "Write your document content below. Changes are auto-saved."
+                  : "View-only mode"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DocumentEditor
+                client:load
+                documentId={document.id}
+                initialContent={contentJson}
+                canEdit={canEdit}
+                userId={currentUser?.id}
+                userName={currentUserDetails?.name}
+                userHandle={currentUserDetails?.handle}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="page-columns__column">
+          <!-- Chat (only for collaborators) -->
+          {canView && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Chat</CardTitle>
+                <CardDescription>
+                  Discussion between document collaborators
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DocumentChat
+                  client:load
+                  userId={currentUser?.id}
+                  documentId={document.id}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          <!-- Contributors -->
+          <Card>
+            <CardHeader>
+              <CardTitle>Contributors</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GalleryGrid images={collaboratorImages} cols={5} borderRadius="circle" />
+              {isOwner && collaborators.length === 1 && (
+                <p class="contributors-hint">Only you can see and edit this document</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <!-- Document Information -->
+          <Card>
+            <CardHeader>
+              <CardTitle>Document Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl class="document-meta">
+                <div class="document-meta__item">
+                  <dt class="document-meta__label">Created</dt>
+                  <dd class="document-meta__value">{formatDate(document.created_at)}</dd>
+                </div>
+                <div class="document-meta__item">
+                  <dt class="document-meta__label">Last Updated</dt>
+                  <dd class="document-meta__value">{formatDate(document.updated_at)}</dd>
+                </div>
+                <div class="document-meta__item">
+                  <dt class="document-meta__label">Owner</dt>
+                  <dd class="document-meta__value">{owner?.name || owner?.handle || "Unknown"}</dd>
+                </div>
+                <div class="document-meta__item">
+                  <dt class="document-meta__label">Contributors</dt>
+                  <dd class="document-meta__value">{collaborators.length}</dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+
+          <!-- Actions (owner only) -->
+          {isOwner && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div class="document-actions">
+                  <DocumentCreateAssetButton
+                    client:load
+                    documentId={document.id}
+                    documentTitle={document.title}
+                  />
+                  <div class="document-actions__divider" />
+                  <DocumentDeleteButton
+                    client:load
+                    documentId={document.id}
+                    documentTitle={document.title}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
 </Layout>
+
+<style>
+/* ===== Breadcrumb Navigation ===== */
+.breadcrumb {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.breadcrumb__list {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+.breadcrumb__item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.breadcrumb__item:not(:last-child)::after {
+  content: "/";
+  color: var(--border);
+  margin-left: var(--gap-sm);
+}
+
+.breadcrumb__link {
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.breadcrumb__link:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
+.breadcrumb__link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.breadcrumb__current {
+  color: var(--foreground);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ===== Document Hero Section ===== */
+.document-hero {
+  position: relative;
+  background-color: var(--primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: var(--spacing-4xl);
+}
+
+.document-hero__content {
+  padding: var(--spacing-4xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.document-hero__title {
+  margin: 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-foreground);
+  line-height: var(--leading-tight);
+}
+
+.document-hero__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-lg);
+  flex-wrap: wrap;
+}
+
+.document-hero__status {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-lg);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: oklch(from var(--primary-foreground) l c h / 0.2);
+  color: var(--primary-foreground);
+}
+
+.document-hero__author {
+  font-size: var(--text-base);
+  color: oklch(from var(--primary-foreground) l c h / 0.9);
+}
+
+.document-hero__author-link {
+  color: var(--primary-foreground);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  border-bottom: 1px solid oklch(from var(--primary-foreground) l c h / 0.5);
+}
+
+.document-hero__author-link:hover {
+  border-bottom-color: var(--primary-foreground);
+}
+
+.document-hero__author-link:focus-visible {
+  outline: 2px solid var(--primary-foreground);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.document-hero__description {
+  margin: var(--spacing-md) 0 0;
+  font-size: var(--text-base);
+  color: oklch(from var(--primary-foreground) l c h / 0.85);
+  line-height: var(--leading-relaxed);
+  max-width: 600px;
+}
+
+/* ===== Document Meta Information ===== */
+.document-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.document-meta__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border);
+}
+
+.document-meta__item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.document-meta__label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.document-meta__value {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  margin: 0;
+}
+
+/* ===== Contributors Hint ===== */
+.contributors-hint {
+  margin: var(--spacing-lg) 0 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+/* ===== Document Actions ===== */
+.document-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.document-actions__divider {
+  height: 1px;
+  background-color: var(--border);
+  margin: var(--spacing-sm) 0;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .document-hero__content {
+    padding: var(--spacing-3xl) var(--spacing-2xl);
+  }
+
+  .document-hero__title {
+    font-size: var(--text-2xl);
+  }
+
+  .document-hero__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-sm);
+  }
+
+  .page-columns {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
