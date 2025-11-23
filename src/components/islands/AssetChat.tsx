@@ -99,12 +99,12 @@ export default function AssetChat(props: AssetChatProps) {
           chat.sendMessage();
         }}
       >
-        <label for="chat-input" class="asset-chat__label">
+        <label for="asset-chat-input" class="asset-chat__label">
           Send a message to asset contributors
         </label>
         <div class="asset-chat__input-wrapper">
           <input
-            id="chat-input"
+            id="asset-chat-input"
             type="text"
             class="asset-chat__input"
             value={chat.message()}

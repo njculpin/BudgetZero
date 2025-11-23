@@ -6,6 +6,7 @@ import PageHeader from "@/components/PageHeader.astro";
 import BrowseCTA from "@/components/BrowseCTA.astro";
 import { getAllProducts, getProductImages, getProductVariants, getVariantPrices } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
+import { getAllTags } from "@/lib/data-access/tags";
 import { setSession } from "@/lib/auth";
 import Button from "@/components/Button.astro";
 
@@ -73,6 +74,12 @@ const productsWithDetails = await Promise.all(
 const allProductOwnerIds = [...new Set(productsWithDetails.map(p => p.user_id))];
 const allProductOwners = await Promise.all(allProductOwnerIds.map(id => getUserById(id)));
 const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]));
+
+// Get popular tags for filtering (show top 10 product tags)
+const allTags = await getAllTags();
+const productTags = allTags
+  .filter(tag => tag.productCount > 0)
+  .slice(0, 10);
 ---
 
 <Layout title="Browse Products - Game Loopers">
@@ -91,6 +98,54 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
           </form>
         )}
       </div>
+
+      <!-- Search Form -->
+      <form method="get" action="/products" class="products-search">
+        <div class="products-search__wrapper">
+          <input
+            type="text"
+            name="search"
+            value={searchQuery}
+            placeholder="Search products..."
+            class="products-search__input"
+            aria-label="Search products"
+          />
+          <button type="submit" class="products-search__btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span class="products-search__btn-text">Search</span>
+          </button>
+        </div>
+        {(searchQuery || tagFilter) && (
+          <a href="/products" class="products-search__clear">Clear filters</a>
+        )}
+      </form>
+
+      <!-- Tag Filters -->
+      {productTags.length > 0 && (
+        <div class="products-tags">
+          <span class="products-tags__label">Filter by tag:</span>
+          <div class="products-tags__list">
+            {productTags.map((tag) => (
+              <a
+                href={tagFilter === tag.value
+                  ? `/products${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}`
+                  : `/products?tag=${encodeURIComponent(tag.value)}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`
+                }
+                class:list={[
+                  "products-tags__tag",
+                  { "products-tags__tag--active": tagFilter === tag.value }
+                ]}
+              >
+                {tag.value}
+                <span class="products-tags__count">({tag.productCount})</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!currentUser && (
         <Card>
@@ -187,6 +242,138 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
 .page-header-action {
   text-decoration: none;
   flex-shrink: 0;
+}
+
+/* ===== Search Form ===== */
+.products-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  margin-bottom: var(--spacing-3xl);
+}
+
+.products-search__wrapper {
+  display: flex;
+  gap: var(--gap-md);
+}
+
+.products-search__input {
+  flex: 1;
+  padding: var(--spacing-lg) var(--spacing-2xl);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: var(--text-base);
+  font-family: inherit;
+  transition: border-color var(--duration-fast) var(--ease-in-out);
+}
+
+.products-search__input:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+}
+
+.products-search__input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.products-search__btn {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--spacing-lg) var(--spacing-3xl);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.products-search__btn:hover {
+  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+}
+
+.products-search__btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.products-search__btn-text {
+  display: inline;
+}
+
+.products-search__clear {
+  align-self: flex-start;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.products-search__clear:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
+/* ===== Tag Filters ===== */
+.products-tags {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-md);
+  margin-bottom: var(--spacing-3xl);
+}
+
+.products-tags__label {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+  padding-top: var(--spacing-xs);
+}
+
+.products-tags__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+.products-tags__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  padding: var(--spacing-xs) var(--spacing-lg);
+  background-color: var(--muted);
+  color: var(--foreground);
+  border: var(--border-width-default) solid transparent;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.products-tags__tag:hover {
+  background-color: oklch(from var(--muted) calc(l * 0.95) c h);
+  border-color: var(--border);
+}
+
+.products-tags__tag--active {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.products-tags__tag--active:hover {
+  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  border-color: transparent;
+}
+
+.products-tags__count {
+  font-size: var(--text-xs);
+  opacity: 0.7;
 }
 
 /* ===== Products Section ===== */
@@ -333,6 +520,24 @@ const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]
   .page-header-with-action {
     flex-direction: column;
     gap: var(--gap-md);
+  }
+
+  .products-search__wrapper {
+    flex-direction: column;
+  }
+
+  .products-search__btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .products-tags {
+    flex-direction: column;
+    gap: var(--gap-sm);
+  }
+
+  .products-tags__label {
+    padding-top: 0;
   }
 
   .products-grid {

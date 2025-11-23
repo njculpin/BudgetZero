@@ -35,7 +35,8 @@
       "Bash(lsof:*)",
       "Bash(git commit:*)",
       "Bash(npx astro check:*)",
-      "Bash(cut:*)"
+      "Bash(cut:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

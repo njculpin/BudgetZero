@@ -8,6 +8,7 @@ import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import { setSession } from "@/lib/auth";
 import { getUserById } from "@/lib/data-access/users";
+import type { Payout } from "@/types/payouts.types";
 
 // Check authentication
 let currentUser = null;
@@ -224,7 +225,7 @@ if (!user) {
             </div>
           `;
         } else {
-          const payoutsHtml = data.payouts.map((payout: any) => {
+          const payoutsHtml = data.payouts.map((payout: Payout) => {
             const statusClass = `status-badge--${payout.status}`;
             const date = new Date(payout.requested_at).toLocaleDateString();
 

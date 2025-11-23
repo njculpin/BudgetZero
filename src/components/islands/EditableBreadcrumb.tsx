@@ -131,7 +131,7 @@ export default function EditableBreadcrumb(props: EditableBreadcrumbProps) {
             </a>
           </li>
         ))}
-        <li class="editable-breadcrumb__item editable-breadcrumb__item--current">
+        <li class="editable-breadcrumb__item editable-breadcrumb__item--current" aria-current="page">
           <Show
             when={isEditing()}
             fallback={
