@@ -1,11 +1,11 @@
 import type { APIRoute } from "astro";
 import { verifyWebhookSignature, type Stripe } from "@/lib/payments";
-import { createSale, createSaleItem, createSaleItemAsset } from "@/lib/data-access/sales";
+import { createSale, createSaleItem, createSaleItemAsset, getSaleByStripeChargeId, refundSale } from "@/lib/data-access/sales";
 import { getCartItems, clearCart } from "@/lib/data-access/cart";
 import { getProductById, getVariantById, getVariantPrices } from "@/lib/data-access/products";
 import { serverClient } from "@/lib/data-access/client";
 import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
-import { createRoyaltyTransactionsForSaleItemAsset } from "@/lib/data-access/royalties";
+import { createRoyaltyTransactionsForSaleItemAsset, markSaleRoyaltiesAsRefunded } from "@/lib/data-access/royalties";
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -218,6 +218,51 @@ export const POST: APIRoute = async ({ request }) => {
       case 'payment_intent.payment_failed': {
         console.log('Payment failed:', event.data.object.id);
         break;
+      }
+
+      case 'charge.refunded': {
+        const charge = event.data.object as Stripe.Charge;
+        console.log('Processing charge.refunded:', charge.id);
+
+        // Get the payment intent ID (used as stripe_charge_id in our sales)
+        const paymentIntentId = typeof charge.payment_intent === 'string'
+          ? charge.payment_intent
+          : charge.payment_intent?.id;
+
+        if (!paymentIntentId) {
+          console.error('No payment intent ID found on refunded charge');
+          return new Response('No payment intent', { status: 400 });
+        }
+
+        // Find the sale by stripe charge ID
+        const sale = await getSaleByStripeChargeId(paymentIntentId);
+
+        if (!sale) {
+          console.log('No sale found for payment intent:', paymentIntentId);
+          // This might be a charge we don't track - not an error
+          return new Response(
+            JSON.stringify({ received: true, message: 'No matching sale found' }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Determine refund reason
+        const refundReason = charge.refunds?.data?.[0]?.reason || 'Customer requested refund';
+
+        // Mark the sale as refunded
+        const saleRefunded = await refundSale(sale.id, refundReason);
+        if (saleRefunded) {
+          console.log('Sale marked as refunded:', sale.id);
+        }
+
+        // Mark all pending royalty transactions as refunded
+        const refundedCount = await markSaleRoyaltiesAsRefunded(sale.id);
+        console.log(`Marked ${refundedCount} royalty transactions as refunded for sale:`, sale.id);
+
+        return new Response(
+          JSON.stringify({ received: true, saleId: sale.id, royaltiesRefunded: refundedCount }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
       }
 
       default:

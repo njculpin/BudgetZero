@@ -99,12 +99,12 @@ export default function ProductChat(props: ProductChatProps) {
           chat.sendMessage();
         }}
       >
-        <label for="chat-input" class="product-chat__label">
+        <label for="product-chat-input" class="product-chat__label">
           Send a message to product collaborators
         </label>
         <div class="product-chat__input-wrapper">
           <input
-            id="chat-input"
+            id="product-chat-input"
             type="text"
             class="product-chat__input"
             value={chat.message()}

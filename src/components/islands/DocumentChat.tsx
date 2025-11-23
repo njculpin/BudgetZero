@@ -99,12 +99,12 @@ export default function DocumentChat(props: DocumentChatProps) {
           chat.sendMessage();
         }}
       >
-        <label for="chat-input" class="document-chat__label">
+        <label for="document-chat-input" class="document-chat__label">
           Send a message to document collaborators
         </label>
         <div class="document-chat__input-wrapper">
           <input
-            id="chat-input"
+            id="document-chat-input"
             type="text"
             class="document-chat__input"
             value={chat.message()}

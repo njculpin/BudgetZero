@@ -406,3 +406,28 @@ export async function createRoyaltyTransactionsForSaleItemAsset(params: {
 
   return createdTransactions;
 }
+
+/**
+ * Mark all royalty transactions for a sale as refunded
+ * This prevents payouts for refunded transactions
+ */
+export async function markSaleRoyaltiesAsRefunded(
+  saleId: string
+): Promise<number> {
+  const { data, error } = await serverClient
+    .from('sale_royalty_transactions')
+    .update({
+      status: 'refunded',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('sale_id', saleId)
+    .eq('status', 'ready_to_pay')
+    .select('id');
+
+  if (error) {
+    console.error('Error marking royalties as refunded:', error);
+    return 0;
+  }
+
+  return data?.length || 0;
+}
