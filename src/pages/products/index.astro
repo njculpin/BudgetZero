@@ -100,34 +100,34 @@ const productTags = allTags
       </div>
 
       <!-- Search Form -->
-      <form method="get" action="/products" class="products-search">
-        <div class="products-search__wrapper">
+      <form method="get" action="/products" class="browse-search">
+        <div class="browse-search__wrapper">
           <input
             type="text"
             name="search"
             value={searchQuery}
             placeholder="Search products..."
-            class="products-search__input"
+            class="browse-search__input"
             aria-label="Search products"
           />
-          <button type="submit" class="products-search__btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button type="submit" class="browse-search__btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <span class="products-search__btn-text">Search</span>
+            <span>Search</span>
           </button>
         </div>
         {(searchQuery || tagFilter) && (
-          <a href="/products" class="products-search__clear">Clear filters</a>
+          <a href="/products" class="browse-search__clear">Clear filters</a>
         )}
       </form>
 
       <!-- Tag Filters -->
       {productTags.length > 0 && (
-        <div class="products-tags">
-          <span class="products-tags__label">Filter by tag:</span>
-          <div class="products-tags__list">
+        <div class="browse-tags">
+          <span class="browse-tags__label">Filter by tag:</span>
+          <div class="browse-tags__list">
             {productTags.map((tag) => (
               <a
                 href={tagFilter === tag.value
@@ -135,12 +135,12 @@ const productTags = allTags
                   : `/products?tag=${encodeURIComponent(tag.value)}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`
                 }
                 class:list={[
-                  "products-tags__tag",
-                  { "products-tags__tag--active": tagFilter === tag.value }
+                  "browse-tags__tag",
+                  { "browse-tags__tag--active": tagFilter === tag.value }
                 ]}
               >
                 {tag.value}
-                <span class="products-tags__count">({tag.productCount})</span>
+                <span class="browse-tags__count">({tag.productCount})</span>
               </a>
             ))}
           </div>
@@ -157,37 +157,37 @@ const productTags = allTags
 
       <!-- All Products Section -->
       {productsWithDetails.length > 0 ? (
-        <section class="products-section">
-          <div class="products-grid">
+        <section class="browse-section">
+          <div class="browse-grid">
             {productsWithDetails.map((product) => {
               const owner = allOwnersMap.get(product.user_id);
               return (
-                <a href={`/products/${product.handle}`} class="product-card">
-                  <div class="product-card__content">
+                <a href={`/products/${product.handle}`} class="browse-card">
+                  <div class="browse-card__content">
                     <img
                       src={product.cover_image_url || 'https://placehold.co/600x600'}
                       alt={product.title}
-                      class="product-card__image"
+                      class="browse-card__image"
                       loading="lazy"
                     />
-                    <h3 class="product-card__title">{product.title}</h3>
+                    <h3 class="browse-card__title">{product.title}</h3>
                     {product.description && (
-                      <p class="product-card__description">
+                      <p class="browse-card__description">
                         {product.description.substring(0, 100)}{product.description.length > 100 ? '...' : ''}
                       </p>
                     )}
-                    <div class="product-card__meta">
-                      <span class="product-card__author">
+                    <div class="browse-card__meta">
+                      <span class="browse-card__author">
                         by {owner?.name || owner?.handle || 'Unknown'}
                       </span>
                     </div>
                     {product.lowestPrice !== null && (
-                      <div class="product-card__footer">
-                        <span class="product-card__price">
+                      <div class="browse-card__footer">
+                        <span class="browse-card__price">
                           From ${(product.lowestPrice / 100).toFixed(2)}
                         </span>
                         {product.variantCount > 1 && (
-                          <span class="product-card__variants">
+                          <span class="browse-card__variants">
                             {product.variantCount} variants
                           </span>
                         )}
@@ -202,12 +202,12 @@ const productTags = allTags
       ) : productsWithDetails.length === 0 && (
         <Card>
           <CardContent>
-            <div class="products-empty">
-              <p class="products-empty__text">
+            <div class="browse-empty">
+              <p class="browse-empty__text">
                 {searchQuery || tagFilter ? "No products found." : "No products available yet."}
               </p>
               {(searchQuery || tagFilter) && (
-                <a href="/products" class="products-empty__link">Clear filters</a>
+                <a href="/products" class="browse-empty__link">Clear filters</a>
               )}
             </div>
           </CardContent>
@@ -215,333 +215,17 @@ const productTags = allTags
       )}
 
       {productsWithDetails.length === limit && (
-        <div class="products-pagination">
+        <div class="browse-pagination">
           {page > 1 && (
             <a href={`/products?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
-               class="products-pagination__link">← Previous</a>
+               class="browse-pagination__link">← Previous</a>
           )}
-          <span class="products-pagination__current">Page {page}</span>
+          <span class="browse-pagination__current">Page {page}</span>
           <a href={`/products?page=${page + 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
-             class="products-pagination__link">Next →</a>
+             class="browse-pagination__link">Next →</a>
         </div>
       )}
     </div>
   </div>
 </Layout>
 
-<style>
-/* ===== Page Header ===== */
-.page-header-with-action {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--gap-xl);
-  margin-bottom: var(--spacing-2xl);
-}
-
-.page-header-action {
-  text-decoration: none;
-  flex-shrink: 0;
-}
-
-/* ===== Search Form ===== */
-.products-search {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
-  margin-bottom: var(--spacing-3xl);
-}
-
-.products-search__wrapper {
-  display: flex;
-  gap: var(--gap-md);
-}
-
-.products-search__input {
-  flex: 1;
-  padding: var(--spacing-lg) var(--spacing-2xl);
-  border: var(--border-width-default) solid var(--border);
-  border-radius: var(--radius-md);
-  background-color: var(--background);
-  color: var(--foreground);
-  font-size: var(--text-base);
-  font-family: inherit;
-  transition: border-color var(--duration-fast) var(--ease-in-out);
-}
-
-.products-search__input:focus {
-  outline: none;
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
-}
-
-.products-search__input::placeholder {
-  color: var(--muted-foreground);
-}
-
-.products-search__btn {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-sm);
-  padding: var(--spacing-lg) var(--spacing-3xl);
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-in-out);
-}
-
-.products-search__btn:hover {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
-}
-
-.products-search__btn:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.products-search__btn-text {
-  display: inline;
-}
-
-.products-search__clear {
-  align-self: flex-start;
-  color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  text-decoration: none;
-  transition: color var(--duration-fast) var(--ease-in-out);
-}
-
-.products-search__clear:hover {
-  color: var(--foreground);
-  text-decoration: underline;
-}
-
-/* ===== Tag Filters ===== */
-.products-tags {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--gap-md);
-  margin-bottom: var(--spacing-3xl);
-}
-
-.products-tags__label {
-  flex-shrink: 0;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--muted-foreground);
-  padding-top: var(--spacing-xs);
-}
-
-.products-tags__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gap-sm);
-}
-
-.products-tags__tag {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--gap-xs);
-  padding: var(--spacing-xs) var(--spacing-lg);
-  background-color: var(--muted);
-  color: var(--foreground);
-  border: var(--border-width-default) solid transparent;
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  text-decoration: none;
-  transition: all var(--duration-fast) var(--ease-in-out);
-}
-
-.products-tags__tag:hover {
-  background-color: oklch(from var(--muted) calc(l * 0.95) c h);
-  border-color: var(--border);
-}
-
-.products-tags__tag--active {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-}
-
-.products-tags__tag--active:hover {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
-  border-color: transparent;
-}
-
-.products-tags__count {
-  font-size: var(--text-xs);
-  opacity: 0.7;
-}
-
-/* ===== Products Section ===== */
-.products-section {
-  margin-bottom: var(--spacing-6xl);
-}
-
-.products-section__title {
-  margin: 0 0 var(--spacing-3xl) 0;
-  font-size: var(--text-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--foreground);
-  line-height: var(--leading-tight);
-}
-
-/* ===== Products Grid ===== */
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-  gap: var(--gap-xl);
-}
-
-.product-card {
-  display: block;
-  padding: var(--spacing-3xl);
-  background-color: var(--card);
-  border: var(--border-width-default) solid var(--border);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  transition: all var(--duration-normal) var(--ease-in-out);
-}
-
-.product-card:hover {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.product-card__image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-sm);
-}
-
-.product-card__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
-}
-
-.product-card__title {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
-
-.product-card__description {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-  line-height: var(--leading-normal);
-}
-
-.product-card__meta {
-  display: flex;
-  gap: var(--gap-sm);
-}
-
-.product-card__author {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-.product-card__footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: var(--spacing-md);
-  border-top: 1px solid var(--border);
-  margin-top: auto;
-}
-
-.product-card__price {
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--primary);
-}
-
-.product-card__variants {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-/* ===== Empty State ===== */
-.products-empty {
-  text-align: center;
-  padding: var(--spacing-5xl) var(--spacing-4xl);
-}
-
-.products-empty__text {
-  margin: 0 0 var(--spacing-2xl);
-  font-size: var(--text-base);
-  color: var(--muted-foreground);
-}
-
-.products-empty__link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-}
-
-/* ===== Pagination ===== */
-.products-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--gap-xl);
-  padding: var(--spacing-3xl) 0;
-}
-
-.products-pagination__link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-sm) var(--spacing-2xl);
-  border-radius: var(--radius-md);
-  transition: background-color var(--duration-normal) var(--ease-in-out);
-}
-
-.products-pagination__link:hover {
-  background-color: var(--muted);
-}
-
-.products-pagination__current {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .page-header-with-action {
-    flex-direction: column;
-    gap: var(--gap-md);
-  }
-
-  .products-search__wrapper {
-    flex-direction: column;
-  }
-
-  .products-search__btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .products-tags {
-    flex-direction: column;
-    gap: var(--gap-sm);
-  }
-
-  .products-tags__label {
-    padding-top: 0;
-  }
-
-  .products-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

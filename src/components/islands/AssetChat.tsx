@@ -52,7 +52,7 @@ export default function AssetChat(props: AssetChatProps) {
           <p>No messages yet. Start the conversation!</p>
         </div>
       ) : (
-        <div class="asset-chat__messages">
+        <div class="asset-chat__messages" aria-live="polite" aria-label="Chat messages">
           <For each={chat.messages()}>
             {(msg) => {
               const isOwn = msg.user_id === props.userId;

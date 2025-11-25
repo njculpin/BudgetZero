@@ -270,6 +270,7 @@ export const getAllProducts = async (
     .from('products')
     .select('*')
     .eq('deleted', false)
+    .eq('status', 'published')
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

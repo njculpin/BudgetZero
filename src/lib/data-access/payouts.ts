@@ -181,7 +181,7 @@ export async function getAvailablePayoutBalance(userId: string): Promise<{
     .from('sale_royalty_transactions')
     .select('id, calculated_cents')
     .eq('recipient_user_id', userId)
-    .eq('status', 'pending'); // Assuming 'pending' means not yet paid out
+    .eq('status', 'ready_to_pay'); // Royalties ready to be paid out
 
   if (error) {
     console.error('Error fetching available balance:', error);

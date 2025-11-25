@@ -80,34 +80,34 @@ const assetTags = allTags
       </div>
 
       <!-- Search Form -->
-      <form method="get" action="/assets" class="assets-search">
-        <div class="assets-search__wrapper">
+      <form method="get" action="/assets" class="browse-search">
+        <div class="browse-search__wrapper">
           <input
             type="text"
             name="search"
             value={searchQuery}
             placeholder="Search assets..."
-            class="assets-search__input"
+            class="browse-search__input"
             aria-label="Search assets"
           />
-          <button type="submit" class="assets-search__btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button type="submit" class="browse-search__btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <span class="assets-search__btn-text">Search</span>
+            <span>Search</span>
           </button>
         </div>
         {(searchQuery || tagFilter) && (
-          <a href="/assets" class="assets-search__clear">Clear filters</a>
+          <a href="/assets" class="browse-search__clear">Clear filters</a>
         )}
       </form>
 
       <!-- Tag Filters -->
       {assetTags.length > 0 && (
-        <div class="assets-tags">
-          <span class="assets-tags__label">Filter by tag:</span>
-          <div class="assets-tags__list">
+        <div class="browse-tags">
+          <span class="browse-tags__label">Filter by tag:</span>
+          <div class="browse-tags__list">
             {assetTags.map((tag) => (
               <a
                 href={tagFilter === tag.value
@@ -115,12 +115,12 @@ const assetTags = allTags
                   : `/assets?tag=${encodeURIComponent(tag.value)}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`
                 }
                 class:list={[
-                  "assets-tags__tag",
-                  { "assets-tags__tag--active": tagFilter === tag.value }
+                  "browse-tags__tag",
+                  { "browse-tags__tag--active": tagFilter === tag.value }
                 ]}
               >
                 {tag.value}
-                <span class="assets-tags__count">({tag.assetCount})</span>
+                <span class="browse-tags__count">({tag.assetCount})</span>
               </a>
             ))}
           </div>
@@ -136,28 +136,28 @@ const assetTags = allTags
       )}
 
       <!-- All Assets Section -->
-      <div class="assets-section">
+      <section class="browse-section">
         {assetsWithImages.length > 0 ? (
-          <div class="assets-grid">
+          <div class="browse-grid">
             {assetsWithImages.map((asset) => {
               const owner = ownersMap.get(asset.user_id);
               return (
-                <a href={`/assets/${asset.handle}`} class="asset-card">
-                  <div class="asset-card__content">
+                <a href={`/assets/${asset.handle}`} class="browse-card">
+                  <div class="browse-card__content">
                     <img
                       src={asset.cover_image_url || 'https://placehold.co/600x600'}
                       alt={asset.title}
-                      class="asset-card__image"
+                      class="browse-card__image"
                       loading="lazy"
                     />
-                    <h3 class="asset-card__title">{asset.title}</h3>
+                    <h3 class="browse-card__title">{asset.title}</h3>
                     {asset.description && (
-                      <p class="asset-card__description">
+                      <p class="browse-card__description">
                         {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
                       </p>
                     )}
-                    <div class="asset-card__meta">
-                      <span class="asset-card__author">
+                    <div class="browse-card__meta">
+                      <span class="browse-card__author">
                         by {owner?.name || owner?.handle || 'Unknown'}
                       </span>
                     </div>
@@ -169,36 +169,36 @@ const assetTags = allTags
         ) : (
           <Card>
             <CardContent>
-              <div class="assets-empty">
-                <p class="assets-empty__text">
+              <div class="browse-empty">
+                <p class="browse-empty__text">
                   {searchQuery || tagFilter
                     ? "No assets found matching your search criteria."
                     : "No assets available yet."}
                 </p>
                 {(searchQuery || tagFilter) && (
-                  <a href="/assets" class="assets-empty__link">Clear filters</a>
+                  <a href="/assets" class="browse-empty__link">Clear filters</a>
                 )}
               </div>
             </CardContent>
           </Card>
         )}
-      </div>
+      </section>
 
       <!-- Pagination -->
       {assetsWithImages.length === limit && (
-        <div class="assets-pagination">
+        <div class="browse-pagination">
           {page > 1 && (
             <a
               href={`/assets?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
-              class="assets-pagination__link"
+              class="browse-pagination__link"
             >
               ← Previous
             </a>
           )}
-          <span class="assets-pagination__current">Page {page}</span>
+          <span class="browse-pagination__current">Page {page}</span>
           <a
             href={`/assets?page=${page + 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
-            class="assets-pagination__link"
+            class="browse-pagination__link"
           >
             Next →
           </a>
@@ -208,393 +208,3 @@ const assetTags = allTags
   </div>
 </Layout>
 
-<style>
-/* ===== Page Header with Action ===== */
-.page-header-with-action {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--gap-xl);
-  margin-bottom: var(--spacing-2xl);
-}
-
-.page-header-action {
-  text-decoration: none;
-  flex-shrink: 0;
-}
-
-/* ===== Search Form ===== */
-.assets-search {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
-  margin-bottom: var(--spacing-3xl);
-}
-
-.assets-search__wrapper {
-  display: flex;
-  gap: var(--gap-md);
-}
-
-.assets-search__input {
-  flex: 1;
-  padding: var(--spacing-lg) var(--spacing-2xl);
-  border: var(--border-width-default) solid var(--border);
-  border-radius: var(--radius-md);
-  background-color: var(--background);
-  color: var(--foreground);
-  font-size: var(--text-base);
-  font-family: inherit;
-  transition: border-color var(--duration-fast) var(--ease-in-out);
-}
-
-.assets-search__input:focus {
-  outline: none;
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
-}
-
-.assets-search__input::placeholder {
-  color: var(--muted-foreground);
-}
-
-.assets-search__btn {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-sm);
-  padding: var(--spacing-lg) var(--spacing-3xl);
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-in-out);
-}
-
-.assets-search__btn:hover {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
-}
-
-.assets-search__btn:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.assets-search__clear {
-  align-self: flex-start;
-  color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  text-decoration: none;
-  transition: color var(--duration-fast) var(--ease-in-out);
-}
-
-.assets-search__clear:hover {
-  color: var(--foreground);
-  text-decoration: underline;
-}
-
-/* ===== Tag Filters ===== */
-.assets-tags {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--gap-md);
-  margin-bottom: var(--spacing-3xl);
-}
-
-.assets-tags__label {
-  flex-shrink: 0;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--muted-foreground);
-  padding-top: var(--spacing-xs);
-}
-
-.assets-tags__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gap-sm);
-}
-
-.assets-tags__tag {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--gap-xs);
-  padding: var(--spacing-xs) var(--spacing-lg);
-  background-color: var(--muted);
-  color: var(--foreground);
-  border: var(--border-width-default) solid transparent;
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  text-decoration: none;
-  transition: all var(--duration-fast) var(--ease-in-out);
-}
-
-.assets-tags__tag:hover {
-  background-color: oklch(from var(--muted) calc(l * 0.95) c h);
-  border-color: var(--border);
-}
-
-.assets-tags__tag--active {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-}
-
-.assets-tags__tag--active:hover {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
-  border-color: transparent;
-}
-
-.assets-tags__count {
-  font-size: var(--text-xs);
-  opacity: 0.7;
-}
-
-/* ===== Assets Section ===== */
-.assets-section {
-  margin-bottom: var(--spacing-6xl);
-}
-
-.assets-section__title {
-  font-size: var(--text-xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-  margin: 0 0 var(--spacing-2xl);
-}
-
-/* ===== Filters ===== */
-.assets-filters {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-xl);
-}
-
-.assets-filters__search {
-  width: 100%;
-}
-
-.assets-filters__label {
-  margin: 0 0 var(--spacing-sm);
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
-
-.assets-filters__tags {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-sm);
-}
-
-.assets-filters__tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gap-sm);
-}
-
-.assets-filters__tag-link {
-  text-decoration: none;
-}
-
-.assets-filters__tag-link--active {
-  font-weight: 600;
-}
-
-.assets-filters__no-tags {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-.assets-filters__active {
-  padding-top: var(--spacing-2xl);
-  border-top: 1px solid var(--border);
-}
-
-.assets-filters__active-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gap-sm);
-}
-
-.assets-filters__active-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--gap-sm);
-  padding: var(--spacing-xs) var(--spacing-lg);
-  background-color: var(--primary);
-  color: white;
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-.assets-filters__clear {
-  color: white;
-  text-decoration: none;
-  font-size: var(--text-lg);
-  line-height: 1;
-  cursor: pointer;
-}
-
-.assets-filters__clear:hover {
-  opacity: 0.8;
-}
-
-/* ===== Assets Grid ===== */
-.assets-grid {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-  gap: var(--gap-xl);
-}
-
-.asset-card {
-  display: block;
-  padding: var(--spacing-3xl);
-  background-color: var(--card);
-  border: var(--border-width-default) solid var(--border);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  transition: all var(--duration-normal) var(--ease-in-out);
-}
-
-.asset-card:hover {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.asset-card__image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-sm);
-}
-
-.asset-card__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
-}
-
-.asset-card__title {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
-
-.asset-card__description {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-  line-height: var(--leading-normal);
-}
-
-.asset-card__meta {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-sm);
-}
-
-.asset-card__author {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-.asset-card__stats {
-  display: flex;
-  gap: var(--gap-lg);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--border);
-}
-
-.asset-card__stat {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-/* ===== Empty State ===== */
-.assets-empty {
-  text-align: center;
-  padding: var(--spacing-5xl) var(--spacing-4xl);
-}
-
-.assets-empty__text {
-  margin: 0 0 var(--spacing-2xl);
-  font-size: var(--text-base);
-  color: var(--muted-foreground);
-}
-
-.assets-empty__link {
-  display: inline-block;
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-}
-
-.assets-empty__link:hover {
-  text-decoration: underline;
-}
-
-/* ===== Pagination ===== */
-.assets-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--gap-xl);
-  padding: var(--spacing-3xl) 0;
-}
-
-.assets-pagination__link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-sm) var(--spacing-2xl);
-  border-radius: var(--radius-md);
-  transition: background-color var(--duration-normal) var(--ease-in-out);
-}
-
-.assets-pagination__link:hover {
-  background-color: var(--muted);
-}
-
-.assets-pagination__current {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .page-header-with-action {
-    flex-direction: column;
-    gap: var(--gap-md);
-  }
-
-  .assets-search__wrapper {
-    flex-direction: column;
-  }
-
-  .assets-search__btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .assets-tags {
-    flex-direction: column;
-    gap: var(--gap-sm);
-  }
-
-  .assets-tags__label {
-    padding-top: 0;
-  }
-
-  .assets-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
