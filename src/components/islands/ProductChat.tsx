@@ -52,7 +52,7 @@ export default function ProductChat(props: ProductChatProps) {
           <p>No messages yet. Start the conversation!</p>
         </div>
       ) : (
-        <div class="product-chat__messages">
+        <div class="product-chat__messages" aria-live="polite" aria-label="Chat messages">
           <For each={chat.messages()}>
             {(msg) => {
               const isOwn = msg.user_id === props.userId;

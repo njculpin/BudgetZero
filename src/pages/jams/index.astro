@@ -85,8 +85,8 @@ const jamStatuses = new Map(allJams.map(jam => {
 
        <!-- All jams Section -->
       {allJams.length > 0 ? (
-        <section class="jams-section">
-          <div class="jams-grid">
+        <section class="browse-section">
+          <div class="browse-grid">
             {allJams.map((jam) => {
               const owner = allOwnersMap.get(jam.user_id);
               const startDate = new Date(jam.start_date);
@@ -94,28 +94,28 @@ const jamStatuses = new Map(allJams.map(jam => {
               const calculatedStatus = jamStatuses.get(jam.id) || 'upcoming';
 
               return (
-                <a href={`/jams/${jam.handle}`} class="jam-card">
-                  <div class="jam-card__content">
+                <a href={`/jams/${jam.handle}`} class="browse-card">
+                  <div class="browse-card__content">
                     <img
                       src={jam.preview_image_url || 'https://placehold.co/600x400?text=Jam'}
                       alt={jam.title}
-                      class="jam-card__image"
+                      class="browse-card__image"
                       loading="lazy"
                     />
-                    <h3 class="jam-card__title">{jam.title}</h3>
+                    <h3 class="browse-card__title">{jam.title}</h3>
                     {jam.description && (
-                      <p class="jam-card__description">
+                      <p class="browse-card__description">
                         {jam.description.substring(0, 100)}{jam.description.length > 100 ? '...' : ''}
                       </p>
                     )}
-                    <div class="jam-card__meta">
-                      <span class="jam-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
+                    <div class="browse-card__meta">
+                      <span class="browse-card__author">by {owner?.name || owner?.handle || 'Unknown'}</span>
                     </div>
-                    <div class="jam-card__footer">
-                      <span class={`jam-card__status jam-card__status--${calculatedStatus}`}>
+                    <div class="browse-card__footer">
+                      <span class={`jam-status jam-status--${calculatedStatus}`}>
                         {calculatedStatus.toUpperCase()}
                       </span>
-                      <span class="jam-card__dates">
+                      <span class="jam-dates">
                         {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
                       </span>
                     </div>
@@ -128,12 +128,12 @@ const jamStatuses = new Map(allJams.map(jam => {
       ) : allJams.length === 0 && (
         <Card>
           <CardContent>
-            <div class="jams-empty">
-              <p class="jams-empty__text">
+            <div class="browse-empty">
+              <p class="browse-empty__text">
                 {searchQuery || tagFilter ? "No jams found." : "No jams available yet."}
               </p>
               {(searchQuery || tagFilter) && (
-                <a href="/jams" class="jams-empty__link">Clear filters</a>
+                <a href="/jams" class="browse-empty__link">Clear filters</a>
               )}
             </div>
           </CardContent>
@@ -141,121 +141,23 @@ const jamStatuses = new Map(allJams.map(jam => {
       )}
 
       {allJams.length === limit && (
-        <div class="jams-pagination">
+        <div class="browse-pagination">
           {page > 1 && (
             <a href={`/jams?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
-               class="jams-pagination__link">← Previous</a>
+               class="browse-pagination__link">← Previous</a>
           )}
-          <span class="jams-pagination__current">Page {page}</span>
+          <span class="browse-pagination__current">Page {page}</span>
           <a href={`/jams?page=${page + 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
-             class="jams-pagination__link">Next →</a>
+             class="browse-pagination__link">Next →</a>
         </div>
       )}
-    </div>
-
     </div>
   </div>
 </Layout>
 
 <style>
-/* ===== Page Header ===== */
-.page-header-with-action {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--gap-xl);
-  margin-bottom: var(--spacing-2xl);
-}
-
-.page-header-action {
-  text-decoration: none;
-  flex-shrink: 0;
-}
-
-/* ===== jams Section ===== */
-.jams-section {
-  margin-bottom: var(--spacing-6xl);
-}
-
-.jams-section__title {
-  margin: 0 0 var(--spacing-3xl) 0;
-  font-size: var(--text-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--foreground);
-  line-height: var(--leading-tight);
-}
-
-/* ===== jams Grid ===== */
-.jams-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-  gap: var(--gap-xl);
-}
-
-.jam-card {
-  display: block;
-  padding: var(--spacing-3xl);
-  background-color: var(--card);
-  border: var(--border-width-default) solid var(--border);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  transition: all var(--duration-normal) var(--ease-in-out);
-}
-
-.jam-card:hover {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.jam-card__image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-sm);
-}
-
-.jam-card__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
-}
-
-.jam-card__title {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
-
-.jam-card__description {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-  line-height: var(--leading-normal);
-}
-
-.jam-card__meta {
-  display: flex;
-  gap: var(--gap-sm);
-}
-
-.jam-card__author {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-.jam-card__footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: var(--spacing-md);
-  border-top: 1px solid var(--border);
-  margin-top: auto;
-}
-
-.jam-card__status {
+/* ===== Jam-specific Status Badges ===== */
+.jam-status {
   font-size: var(--text-xs);
   font-weight: var(--font-weight-semibold);
   padding: var(--spacing-xs) var(--spacing-md);
@@ -264,80 +166,23 @@ const jamStatuses = new Map(allJams.map(jam => {
   letter-spacing: 0.025em;
 }
 
-.jam-card__status--upcoming {
+.jam-status--upcoming {
   background-color: rgba(254, 243, 199, 0.9);
   color: #92400e;
 }
 
-.jam-card__status--active {
+.jam-status--active {
   background-color: rgba(209, 250, 229, 0.9);
   color: #065f46;
 }
 
-.jam-card__status--ended {
+.jam-status--ended {
   background-color: rgba(229, 231, 235, 0.9);
   color: #374151;
 }
 
-.jam-card__dates {
+.jam-dates {
   font-size: var(--text-xs);
   color: var(--muted-foreground);
-}
-
-/* ===== Empty State ===== */
-.jams-empty {
-  text-align: center;
-  padding: var(--spacing-5xl) var(--spacing-4xl);
-}
-
-.jams-empty__text {
-  margin: 0 0 var(--spacing-2xl);
-  font-size: var(--text-base);
-  color: var(--muted-foreground);
-}
-
-.jams-empty__link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-}
-
-/* ===== Pagination ===== */
-.jams-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--gap-xl);
-  padding: var(--spacing-3xl) 0;
-}
-
-.jams-pagination__link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-sm) var(--spacing-2xl);
-  border-radius: var(--radius-md);
-  transition: background-color var(--duration-normal) var(--ease-in-out);
-}
-
-.jams-pagination__link:hover {
-  background-color: var(--muted);
-}
-
-.jams-pagination__current {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .page-header-with-action {
-    flex-direction: column;
-    gap: var(--gap-md);
-  }
-
-  .jams-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>
