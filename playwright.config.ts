@@ -14,6 +14,14 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4321',
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+  },
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixels: 100, // Allow minor anti-aliasing differences
+      threshold: 0.2, // 20% threshold
+    },
   },
 
   projects: [
