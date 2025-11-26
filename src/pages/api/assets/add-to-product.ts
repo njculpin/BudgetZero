@@ -55,7 +55,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const newProduct = await createProduct(currentUser.id, {
         title: newProductTitle,
         description: asset.description || "",
-        status: asset.status as "draft" | "published" | "archived",
+        status: "draft",
       });
 
       if (!newProduct) {

@@ -38,6 +38,21 @@
   gap: var(--gap-md);
 }
 
+.status-editor__info {
+  padding: var(--spacing-lg);
+  background-color: oklch(from var(--primary) l c h / 0.05);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.status-editor__info-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  line-height: var(--leading-relaxed);
+}
+
 .status-editor__button {
   width: 100%;
   padding: var(--spacing-lg);
@@ -95,13 +110,18 @@
 }
 
 .status-badge--draft {
-  background-color: oklch(from var(--primary) l c h / 0.1);
-  color: var(--primary);
+  background-color: oklch(96% 0.01 240 / 1);
+  color: oklch(45% 0.06 240 / 1);
 }
 
-.status-badge--published {
-  background-color: var(--success-bg);
-  color: var(--color-success);
+.status-badge--private {
+  background-color: oklch(92% 0.03 280 / 1);
+  color: oklch(40% 0.12 280 / 1);
+}
+
+.status-badge--public {
+  background-color: oklch(95% 0.03 145 / 1);
+  color: oklch(40% 0.15 145 / 1);
 }
 
 .status-badge--archived {

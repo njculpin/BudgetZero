@@ -6,6 +6,7 @@ import {
 } from "./base";
 import "./base/base.css";
 import "./variant-asset-picker.css";
+import "./asset-status-editor.css";
 
 export interface VariantAssetPickerProps {
   variantId: string;
@@ -16,6 +17,7 @@ interface Asset {
   id: string;
   title: string;
   handle: string;
+  status: "draft" | "private" | "public" | "archived";
   cover_image_url?: string;
   description?: string;
 }
@@ -34,6 +36,16 @@ export default function VariantAssetPicker(props: VariantAssetPickerProps) {
   onMount(() => {
     setMounted(true);
   });
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "draft": return "✏️ Draft";
+      case "private": return "🔒 Private";
+      case "public": return "🌐 Public";
+      case "archived": return "📦 Archived";
+      default: return status;
+    }
+  };
 
   // Fetch linked assets for this variant - only run on client after mount
   const [linkedAssets, { refetch: refetchLinkedAssets }] = createResource(
@@ -237,6 +249,9 @@ export default function VariantAssetPicker(props: VariantAssetPickerProps) {
                 <div class="asset-picker__item-info">
                   <h6 class="asset-picker__item-title">{asset.title}</h6>
                   <p class="asset-picker__item-handle">@{asset.handle}</p>
+                  <span class={`status-badge status-badge--${asset.status}`}>
+                    {getStatusLabel(asset.status)}
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -335,6 +350,9 @@ export default function VariantAssetPicker(props: VariantAssetPickerProps) {
                       <div class="asset-picker__option-info">
                         <h6 class="asset-picker__option-title">{asset.title}</h6>
                         <p class="asset-picker__option-handle">@{asset.handle}</p>
+                        <span class={`status-badge status-badge--${asset.status}`}>
+                          {getStatusLabel(asset.status)}
+                        </span>
                       </div>
                       <div class="asset-picker__option-check">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">

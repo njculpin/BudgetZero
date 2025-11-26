@@ -9,7 +9,7 @@ import "./base/base.css";
 
 export interface AssetStatusFormProps {
   assetId: string;
-  initialStatus: "draft" | "published" | "archived";
+  initialStatus: "draft" | "private" | "public" | "archived";
 }
 
 export default function AssetStatusForm(props: AssetStatusFormProps) {
@@ -64,15 +64,16 @@ export default function AssetStatusForm(props: AssetStatusFormProps) {
         name="status"
         value={status()}
         onChange={(e) =>
-          setStatus(e.currentTarget.value as "draft" | "published" | "archived")
+          setStatus(e.currentTarget.value as "draft" | "private" | "public" | "archived")
         }
         options={[
-          { value: "draft", label: "Draft - Not visible to others" },
-          { value: "published", label: "Published - Visible in marketplace" },
-          { value: "archived", label: "Archived - Hidden from marketplace" },
+          { value: "draft", label: "✏️ Draft - Work in progress" },
+          { value: "private", label: "🔒 Private - Exclusive to your products" },
+          { value: "public", label: "🌐 Public - Available in marketplace" },
+          { value: "archived", label: "📦 Archived - Hidden from all lists" },
         ]}
         disabled={isLoading()}
-        helpText="Draft assets are only visible to you. Published assets appear in the marketplace."
+        helpText="Draft assets are only visible to you. Private assets can only be used in your products. Public assets are available to everyone in the marketplace."
       />
 
       <div class="asset-form__actions">
