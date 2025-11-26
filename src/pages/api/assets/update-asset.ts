@@ -18,7 +18,7 @@ const updateAssetSchema = z.object({
   assetId: z.string().uuid(),
   title: z.string().min(1).max(200),
   description: z.string().optional(),
-  status: z.enum(["draft", "published", "archived"]).optional(),
+  status: z.enum(["draft", "private", "public", "archived"]).optional(),
   tags: z.array(z.string()).optional(),
 });
 
@@ -84,8 +84,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Validate publish requirements
-    if (status === "published") {
+    // Validate publish requirements for private and public statuses
+    if (status === "private" || status === "public") {
       const existingImages = await getAssetImages(assetId);
       const existingFiles = await getAssetFiles(assetId);
 

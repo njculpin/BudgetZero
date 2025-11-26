@@ -140,7 +140,7 @@ export const getAssetByHandle = async (
  */
 export const getUserAssets = async (
   userId: string,
-  status?: AssetStatus
+  status?: AssetStatus | AssetStatus[]
 ): Promise<Asset[]> => {
   let query = serverClient
     .from("assets")
@@ -150,7 +150,11 @@ export const getUserAssets = async (
     .order("created_at", { ascending: false });
 
   if (status) {
-    query = query.eq("status", status);
+    if (Array.isArray(status)) {
+      query = query.in("status", status);
+    } else {
+      query = query.eq("status", status);
+    }
   }
 
   const { data, error } = await query;
@@ -620,10 +624,10 @@ export const deleteAssetTag = async (tagId: string): Promise<boolean> => {
 };
 
 /**
- * Get published assets
- * Returns only assets with status 'published'
+ * Get public assets (marketplace)
+ * Returns only assets with status 'public' that are visible to all users
  */
-export const getPublishedAssets = async (
+export const getPublicAssets = async (
   searchTerm?: string,
   limit: number = 20,
   offset: number = 0
@@ -631,6 +635,9 @@ export const getPublishedAssets = async (
   let query = serverClient
     .from("assets")
     .select("*")
+    .eq("status", "public")
+    .eq("deleted", false)
+    .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   // Add search filter if provided
@@ -643,11 +650,35 @@ export const getPublishedAssets = async (
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error fetching published assets:", error);
+    console.error("Error fetching public assets:", error);
     return [];
   }
 
   return data as Asset[];
+};
+
+/**
+ * Legacy alias for backward compatibility
+ * @deprecated Use getPublicAssets instead
+ */
+export const getPublishedAssets = getPublicAssets;
+
+/**
+ * Get assets by status for the current user
+ * Convenience wrapper around getUserAssets for common status queries
+ *
+ * @example
+ * // Get all draft assets
+ * const drafts = await getAssetsByStatus(userId, 'draft');
+ *
+ * // Get all ready-to-use assets (private or public)
+ * const readyAssets = await getAssetsByStatus(userId, ['private', 'public']);
+ */
+export const getAssetsByStatus = async (
+  userId: string,
+  status: AssetStatus | AssetStatus[]
+): Promise<Asset[]> => {
+  return getUserAssets(userId, status);
 };
 
 /**
@@ -750,7 +781,7 @@ export const getAssetsByTag = async (tag: string): Promise<Asset[]> => {
     .eq('value', tag)
     .eq('deleted', false)
     .eq('assets.deleted', false)
-    .eq('assets.status', 'published');
+    .eq('assets.status', 'public');
 
   if (error) {
     console.error('Error fetching assets by tag:', error);

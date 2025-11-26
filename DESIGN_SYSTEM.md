@@ -1,7 +1,7 @@
 # Game Loopers Design System
 
-**Version**: 1.0
-**Last Updated**: 2024-11-24
+**Version**: 1.1
+**Last Updated**: 2025-11-25
 **Framework**: Astro 5.15 + SolidJS Islands
 
 ---
@@ -9,13 +9,14 @@
 ## Table of Contents
 
 1. [Design Principles](#design-principles)
-2. [Color System](#color-system)
-3. [Typography](#typography)
-4. [Spacing & Layout](#spacing--layout)
-5. [Components](#components)
-6. [BEM CSS Methodology](#bem-css-methodology)
-7. [Accessibility Standards](#accessibility-standards)
-8. [Responsive Design](#responsive-design)
+2. [Business Rules](#business-rules)
+3. [Color System](#color-system)
+4. [Typography](#typography)
+5. [Spacing & Layout](#spacing--layout)
+6. [Components](#components)
+7. [BEM CSS Methodology](#bem-css-methodology)
+8. [Accessibility Standards](#accessibility-standards)
+9. [Responsive Design](#responsive-design)
 
 ---
 
@@ -40,6 +41,98 @@
 - WCAG 2.1 Level AA compliance minimum
 - Keyboard navigation for all interactive elements
 - Screen reader support built into components
+
+---
+
+## Business Rules
+
+### Asset & Product Status System
+
+Game Loopers implements different status systems for **products** (3-state) and **assets** (4-state):
+
+#### Product Status (3-State)
+
+| Status | Description | Visibility |
+|--------|-------------|------------|
+| `draft` | Work in progress | Owner only |
+| `published` | Ready for sale | Public |
+| `archived` | Removed from listings | Owner only |
+
+#### Asset Status (4-State)
+
+| Status | Description | Visibility | Use Case |
+|--------|-------------|------------|----------|
+| `draft` | Work in progress, not ready | Owner only | Assets being created/edited |
+| `private` | Ready for use in MY products only | Owner only | Exclusive assets for owner's products |
+| `public` | Can be used in ANY user's products | Everyone | Marketplace assets with royalties |
+| `archived` | Removed from listings, recoverable | Owner only | Deprecated assets |
+
+#### Asset Visibility & RLS Policies
+
+**Private Assets** (`status='private'`):
+- Only visible to the asset owner
+- Can be linked to owner's products
+- Cannot be discovered or used by other users
+- Default status after publishing from draft (safer default)
+
+**Public Assets** (`status='public'`):
+- Visible to all users in asset marketplace
+- Can be linked to ANY user's products
+- Creator earns royalties when used in other products
+- Requires clear monetization model (royalty splits)
+
+#### Product Publishing Validation
+
+**Critical Rule**: Products can only be published if ALL linked assets have `status='private'` OR `status='public'`.
+
+This validation is enforced at the database level via the `validate_product_asset_status_trigger` trigger.
+
+**Why this matters**:
+- Prevents customers from purchasing products with unavailable downloads (draft/archived assets)
+- Ensures data integrity across the product-asset relationship
+- Forces creators to complete all asset preparation before going live
+- Allows both exclusive (private) and collaborative (public) workflows
+
+**Implementation Details**:
+```sql
+-- Database trigger validates on product status update
+CREATE TRIGGER validate_product_asset_status_trigger
+  BEFORE UPDATE ON products
+  FOR EACH ROW
+  EXECUTE FUNCTION validate_product_asset_status();
+
+-- Validation logic
+WHERE a.status NOT IN ('private', 'public')  -- Rejects draft and archived
+```
+
+**Error Handling**:
+When attempting to publish a product with draft or archived assets, the database will throw:
+```
+Cannot publish product: one or more linked assets are not ready.
+Assets must have status = 'private' or 'public' (not draft or archived) before publishing the product.
+```
+
+**UI Implications**:
+- Product edit forms should show asset status with clear indicators:
+  - 🔒 Private (exclusive to you)
+  - 🌐 Public (marketplace, earns royalties)
+  - ✏️ Draft (not ready)
+  - 📦 Archived (removed)
+- Publish button should be disabled if any assets are draft/archived
+- Clear messaging should guide creators to set assets to private or public
+- Asset creation defaults to 'draft', requires explicit publish action
+
+**Edge Cases Handled**:
+- ✅ Soft-deleted assets are ignored in validation
+- ✅ Soft-deleted variants are ignored in validation
+- ✅ Empty products (no assets) can be published
+- ✅ Status can be changed from published → draft without validation
+- ✅ Other product fields can be updated while assets are draft
+- ✅ Asset status changes after product publish don't unpublish the product
+- ✅ Mix of private and public assets is allowed in same product
+
+**Testing Coverage**:
+See `/src/lib/data-access/__tests__/products.test.ts` → `P0 SECURITY: Asset Status Validation on Product Publish (4-State System)` (14 tests)
 
 ---
 
@@ -688,7 +781,20 @@ Defined in `/src/styles/global.css` (as of 2024-11-24):
 
 ## Migration Notes
 
-### Recent Changes (2024-11-24)
+### Recent Changes (2025-11-25)
+
+1. **Asset Status System (4-State)**:
+   - Implemented 4-state asset status system: `draft`, `private`, `public`, `archived`
+   - **Private assets**: Exclusive to owner's products (default after publishing from draft)
+   - **Public assets**: Visible in marketplace, usable by all users (with royalties)
+   - Added database validation: Products can only be published if assets are `private` OR `public` (not draft/archived)
+   - Database trigger: `validate_product_asset_status_trigger` enforces asset readiness before product publish
+   - RLS policies updated: Only `public` assets viewable by everyone; `private` assets owner-only
+   - Migration file: `20251125_add_asset_status_validation.sql` (includes data migration: `published` → `private`)
+   - P0 security tests: 14 comprehensive tests covering all edge cases and both private/public scenarios
+   - **Business Rule**: Creators must set assets to private or public before publishing products (prevents customers from purchasing products with unavailable downloads)
+
+### Previous Changes (2024-11-24)
 
 1. **DRY CSS Refactor**: Consolidated ~855 lines of duplicate CSS from browse pages into shared `.browse-*` classes in `global.css`
 

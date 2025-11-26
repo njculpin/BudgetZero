@@ -518,4 +518,286 @@ describe('Product Data Access Layer', () => {
       expect(tabletopTags.length).toBe(1); // Only one tag
     });
   });
+
+  describe('P0 SECURITY: Asset Status Validation on Product Publish (4-State System)', () => {
+    let assetValidationProductId: string;
+    let assetValidationVariantId: string;
+    let privateAssetId: string;
+    let publicAssetId: string;
+    let draftAssetId: string;
+    let archivedAssetId: string;
+
+    beforeEach(async () => {
+      // Create test product
+      const product = await createProduct(testUserId, {
+        title: 'Asset Status Validation Test Product',
+        status: 'draft',
+      });
+      if (!product) throw new Error('Failed to create test product');
+      assetValidationProductId = product.id;
+
+      // Create test variant
+      const variant = await createVariant(assetValidationProductId, {
+        title: 'Test Variant',
+        sku: `ASSET-VALIDATION-${Date.now()}`,
+      });
+      if (!variant) throw new Error('Failed to create test variant');
+      assetValidationVariantId = variant.id;
+
+      // Create private asset
+      const { data: privateAsset } = await supabase
+        .from('assets')
+        .insert({
+          user_id: testUserId,
+          handle: `private-asset-${Date.now()}`,
+          title: 'Private Asset',
+          status: 'private',
+        })
+        .select()
+        .single();
+      if (!privateAsset) throw new Error('Failed to create private asset');
+      privateAssetId = privateAsset.id;
+
+      // Create public asset
+      const { data: publicAsset } = await supabase
+        .from('assets')
+        .insert({
+          user_id: testUserId,
+          handle: `public-asset-${Date.now()}`,
+          title: 'Public Asset',
+          status: 'public',
+        })
+        .select()
+        .single();
+      if (!publicAsset) throw new Error('Failed to create public asset');
+      publicAssetId = publicAsset.id;
+
+      // Create draft asset
+      const { data: draftAsset } = await supabase
+        .from('assets')
+        .insert({
+          user_id: testUserId,
+          handle: `draft-asset-${Date.now()}`,
+          title: 'Draft Asset',
+          status: 'draft',
+        })
+        .select()
+        .single();
+      if (!draftAsset) throw new Error('Failed to create draft asset');
+      draftAssetId = draftAsset.id;
+
+      // Create archived asset
+      const { data: archivedAsset } = await supabase
+        .from('assets')
+        .insert({
+          user_id: testUserId,
+          handle: `archived-asset-${Date.now()}`,
+          title: 'Archived Asset',
+          status: 'archived',
+        })
+        .select()
+        .single();
+      if (!archivedAsset) throw new Error('Failed to create archived asset');
+      archivedAssetId = archivedAsset.id;
+    });
+
+    it('should allow publishing product with private assets', async () => {
+      // Link private asset to variant
+      await linkAssetToVariant(assetValidationVariantId, privateAssetId);
+
+      // Should succeed
+      const updatedProduct = await updateProduct(assetValidationProductId, {
+        status: 'published',
+      });
+
+      expect(updatedProduct?.status).toBe('published');
+    });
+
+    it('should allow publishing product with public assets', async () => {
+      // Link public asset to variant
+      await linkAssetToVariant(assetValidationVariantId, publicAssetId);
+
+      // Should succeed
+      const updatedProduct = await updateProduct(assetValidationProductId, {
+        status: 'published',
+      });
+
+      expect(updatedProduct?.status).toBe('published');
+    });
+
+    it('should allow publishing product with mix of private and public assets', async () => {
+      // Link both private and public assets
+      await linkAssetToVariant(assetValidationVariantId, privateAssetId);
+      await linkAssetToVariant(assetValidationVariantId, publicAssetId);
+
+      // Should succeed
+      const updatedProduct = await updateProduct(assetValidationProductId, {
+        status: 'published',
+      });
+
+      expect(updatedProduct?.status).toBe('published');
+    });
+
+    it('should prevent publishing product with draft assets', async () => {
+      // Link draft asset to variant
+      await linkAssetToVariant(assetValidationVariantId, draftAssetId);
+
+      // Should throw error
+      await expect(
+        updateProduct(assetValidationProductId, { status: 'published' })
+      ).rejects.toThrow(/Cannot publish product.*not ready/i);
+
+      // Verify product remains draft
+      const product = await getProductById(assetValidationProductId);
+      expect(product?.status).toBe('draft');
+    });
+
+    it('should prevent publishing product with archived assets', async () => {
+      // Link archived asset to variant
+      await linkAssetToVariant(assetValidationVariantId, archivedAssetId);
+
+      // Should throw error
+      await expect(
+        updateProduct(assetValidationProductId, { status: 'published' })
+      ).rejects.toThrow(/Cannot publish product.*not ready/i);
+
+      // Verify product remains draft
+      const product = await getProductById(assetValidationProductId);
+      expect(product?.status).toBe('draft');
+    });
+
+    it('should prevent publishing product with mix of private and draft assets', async () => {
+      // Link both private and draft assets
+      await linkAssetToVariant(assetValidationVariantId, privateAssetId);
+      await linkAssetToVariant(assetValidationVariantId, draftAssetId);
+
+      // Should throw error due to draft asset
+      await expect(
+        updateProduct(assetValidationProductId, { status: 'published' })
+      ).rejects.toThrow(/Cannot publish product.*not ready/i);
+
+      // Verify product remains draft
+      const product = await getProductById(assetValidationProductId);
+      expect(product?.status).toBe('draft');
+    });
+
+    it('should prevent publishing product with mix of public and archived assets', async () => {
+      // Link both public and archived assets
+      await linkAssetToVariant(assetValidationVariantId, publicAssetId);
+      await linkAssetToVariant(assetValidationVariantId, archivedAssetId);
+
+      // Should throw error due to archived asset
+      await expect(
+        updateProduct(assetValidationProductId, { status: 'published' })
+      ).rejects.toThrow(/Cannot publish product.*not ready/i);
+
+      // Verify product remains draft
+      const product = await getProductById(assetValidationProductId);
+      expect(product?.status).toBe('draft');
+    });
+
+    it('should allow product to remain published if asset status changes after publish', async () => {
+      // Link private asset
+      await linkAssetToVariant(assetValidationVariantId, privateAssetId);
+
+      // Publish product
+      await updateProduct(assetValidationProductId, { status: 'published' });
+
+      // Change asset to draft (this is allowed - no trigger on asset updates)
+      await supabase
+        .from('assets')
+        .update({ status: 'draft' })
+        .eq('id', privateAssetId);
+
+      // Product should still be published
+      const product = await getProductById(assetValidationProductId);
+      expect(product?.status).toBe('published');
+
+      // But attempting to publish again should fail
+      await updateProduct(assetValidationProductId, { status: 'draft' });
+      await expect(
+        updateProduct(assetValidationProductId, { status: 'published' })
+      ).rejects.toThrow(/Cannot publish product.*not ready/i);
+    });
+
+    it('should allow updating other product fields when product contains draft assets', async () => {
+      // Link draft asset
+      await linkAssetToVariant(assetValidationVariantId, draftAssetId);
+
+      // Updating title should work (not changing status)
+      const updatedProduct = await updateProduct(assetValidationProductId, {
+        title: 'Updated Title',
+      });
+
+      expect(updatedProduct?.title).toBe('Updated Title');
+      expect(updatedProduct?.status).toBe('draft');
+    });
+
+    it('should validate across multiple variants in same product', async () => {
+      // Create second variant
+      const variant2 = await createVariant(assetValidationProductId, {
+        title: 'Test Variant 2',
+        sku: `ASSET-VALIDATION-2-${Date.now()}`,
+      });
+      if (!variant2) throw new Error('Failed to create second variant');
+
+      // Link private asset to first variant
+      await linkAssetToVariant(assetValidationVariantId, privateAssetId);
+
+      // Link draft asset to second variant
+      await linkAssetToVariant(variant2.id, draftAssetId);
+
+      // Should fail due to draft asset in variant 2
+      await expect(
+        updateProduct(assetValidationProductId, { status: 'published' })
+      ).rejects.toThrow(/Cannot publish product.*not ready/i);
+    });
+
+    it('should allow publishing product with no assets', async () => {
+      // Don't link any assets
+
+      // Should succeed (empty product is allowed)
+      const updatedProduct = await updateProduct(assetValidationProductId, {
+        status: 'published',
+      });
+
+      expect(updatedProduct?.status).toBe('published');
+    });
+
+    it('should ignore soft-deleted assets in validation', async () => {
+      // Link draft asset
+      await linkAssetToVariant(assetValidationVariantId, draftAssetId);
+
+      // Soft delete the draft asset
+      await supabase
+        .from('assets')
+        .update({ deleted: true, deleted_at: new Date().toISOString() })
+        .eq('id', draftAssetId);
+
+      // Should succeed because deleted assets are ignored
+      const updatedProduct = await updateProduct(assetValidationProductId, {
+        status: 'published',
+      });
+
+      expect(updatedProduct?.status).toBe('published');
+    });
+
+    it('should ignore soft-deleted variants in validation', async () => {
+      // Link draft asset to variant
+      await linkAssetToVariant(assetValidationVariantId, draftAssetId);
+
+      // Soft delete the variant
+      await supabase
+        .from('product_variants')
+        .update({ deleted: true, deleted_at: new Date().toISOString() })
+        .eq('id', assetValidationVariantId);
+
+      // Should succeed because deleted variants are ignored
+      const updatedProduct = await updateProduct(assetValidationProductId, {
+        status: 'published',
+      });
+
+      expect(updatedProduct?.status).toBe('published');
+    });
+  });
 });

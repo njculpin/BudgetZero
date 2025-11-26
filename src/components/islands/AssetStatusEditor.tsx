@@ -8,7 +8,7 @@ import "./asset-status-editor.css";
 
 export interface AssetStatusEditorProps {
   assetId: string;
-  currentStatus: "draft" | "published" | "archived";
+  currentStatus: "draft" | "private" | "public" | "archived";
   hasImages: boolean;
   hasFiles: boolean;
 }
@@ -21,9 +21,9 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
 
   const canPublish = () => props.hasImages && props.hasFiles;
 
-  const handleStatusChange = async (newStatus: "draft" | "published" | "archived") => {
-    // Validate publish requirements
-    if (newStatus === "published" && !canPublish()) {
+  const handleStatusChange = async (newStatus: "draft" | "private" | "public" | "archived") => {
+    // Validate publish requirements for private and public statuses
+    if ((newStatus === "private" || newStatus === "public") && !canPublish()) {
       setError("Cannot publish asset without at least one image and one file");
       return;
     }
@@ -66,11 +66,13 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
   const getStatusLabel = (s: string) => {
     switch (s) {
       case "draft":
-        return "Draft";
-      case "published":
-        return "Published";
+        return "✏️ Draft";
+      case "private":
+        return "🔒 Private";
+      case "public":
+        return "🌐 Public";
       case "archived":
-        return "Archived";
+        return "📦 Archived";
       default:
         return s;
     }
@@ -79,11 +81,13 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
   const getStatusDescription = (s: string) => {
     switch (s) {
       case "draft":
-        return "Only visible to contributors";
-      case "published":
-        return "Visible to everyone";
+        return "Work in progress - only visible to you";
+      case "private":
+        return "Ready for your products - exclusive to you";
+      case "public":
+        return "Available in marketplace - anyone can use (you earn royalties)";
       case "archived":
-        return "Hidden from public view";
+        return "Hidden from all lists - can be recovered";
       default:
         return "";
     }
@@ -120,7 +124,7 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
           }}
         >
           <div class="status-editor__button-content">
-            <span class="status-badge status-badge--draft">Draft</span>
+            <span class="status-badge status-badge--draft">✏️ Draft</span>
             <span class="status-editor__button-description">
               Work in progress
             </span>
@@ -129,18 +133,36 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
 
         <button
           type="button"
-          onClick={() => handleStatusChange("published")}
-          disabled={status() === "published" || isLoading() || !canPublish()}
+          onClick={() => handleStatusChange("private")}
+          disabled={status() === "private" || isLoading() || !canPublish()}
           class="status-editor__button"
           classList={{
-            "status-editor__button--active": status() === "published",
+            "status-editor__button--active": status() === "private",
           }}
           title={!canPublish() ? "Requires at least one image and one file" : ""}
         >
           <div class="status-editor__button-content">
-            <span class="status-badge status-badge--published">Published</span>
+            <span class="status-badge status-badge--private">🔒 Private</span>
             <span class="status-editor__button-description">
-              {!canPublish() ? "⚠️ Requires images & files" : "Make public"}
+              {!canPublish() ? "⚠️ Requires images & files" : "Exclusive to you"}
+            </span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleStatusChange("public")}
+          disabled={status() === "public" || isLoading() || !canPublish()}
+          class="status-editor__button"
+          classList={{
+            "status-editor__button--active": status() === "public",
+          }}
+          title={!canPublish() ? "Requires at least one image and one file" : ""}
+        >
+          <div class="status-editor__button-content">
+            <span class="status-badge status-badge--public">🌐 Public</span>
+            <span class="status-editor__button-description">
+              {!canPublish() ? "⚠️ Requires images & files" : "Available to all (earn royalties)"}
             </span>
           </div>
         </button>
@@ -155,9 +177,9 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
           }}
         >
           <div class="status-editor__button-content">
-            <span class="status-badge status-badge--archived">Archived</span>
+            <span class="status-badge status-badge--archived">📦 Archived</span>
             <span class="status-editor__button-description">
-              Hide from public
+              Remove from lists
             </span>
           </div>
         </button>

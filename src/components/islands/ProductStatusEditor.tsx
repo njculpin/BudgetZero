@@ -109,6 +109,13 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
       <div class="status-editor__actions">
         <h4 class="status-editor__label">Change Status</h4>
 
+        <div class="status-editor__info">
+          <p class="status-editor__info-text">
+            💡 To publish, all linked assets must be <strong>Private</strong> (🔒) or <strong>Public</strong> (🌐).
+            Draft or archived assets will prevent publishing.
+          </p>
+        </div>
+
         <button
           type="button"
           onClick={() => handleStatusChange("draft")}

@@ -47,7 +47,7 @@ describe('Asset Chat Data Access Layer', () => {
         handle: 'test-asset-for-chat',
         title: 'Test Asset for Chat',
         description: 'Test asset',
-        status: 'published',
+        status: 'private',
       })
       .select()
       .single();
@@ -175,7 +175,7 @@ describe('Asset Chat Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'asset-no-chat',
           title: 'Asset Without Chat',
-          status: 'published',
+          status: 'private',
         })
         .select()
         .single();
@@ -191,7 +191,7 @@ describe('Asset Chat Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'asset-isolation-test',
           title: 'Asset Isolation Test',
-          status: 'published',
+          status: 'private',
         })
         .select()
         .single();

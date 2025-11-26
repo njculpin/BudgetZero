@@ -16,7 +16,7 @@ export interface AssetEditFormProps {
   initialData: {
     title: string;
     description: string | null;
-    status: "draft" | "published" | "archived";
+    status: "draft" | "private" | "public" | "archived";
     tags: string[];
     existingFiles: Array<{
       id: string;
@@ -241,12 +241,13 @@ export default function AssetEditForm(props: AssetEditFormProps) {
         name="status"
         value={status()}
         onChange={(e: Event) =>
-          setStatus((e.currentTarget as HTMLSelectElement).value as "draft" | "published" | "archived")
+          setStatus((e.currentTarget as HTMLSelectElement).value as "draft" | "private" | "public" | "archived")
         }
         options={[
-          { value: "draft", label: "Draft" },
-          { value: "published", label: "Published" },
-          { value: "archived", label: "Archived" },
+          { value: "draft", label: "✏️ Draft" },
+          { value: "private", label: "🔒 Private" },
+          { value: "public", label: "🌐 Public" },
+          { value: "archived", label: "📦 Archived" },
         ]}
         disabled={isLoading()}
       />

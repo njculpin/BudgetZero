@@ -216,6 +216,10 @@ export const updateProduct = async (
 
   if (error) {
     console.error('Error updating product:', error);
+    // Throw database validation errors (like asset status validation)
+    if (error.message) {
+      throw new Error(error.message);
+    }
     return null;
   }
 
@@ -259,6 +263,7 @@ export const deleteProduct = async (
 
 /**
  * Get published products with optional filters
+ * Only returns products with status='published' (public browsing)
  */
 export const getAllProducts = async (
   searchQuery?: string,
@@ -269,8 +274,8 @@ export const getAllProducts = async (
   let query = serverClient
     .from('products')
     .select('*')
-    .eq('deleted', false)
     .eq('status', 'published')
+    .eq('deleted', false)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

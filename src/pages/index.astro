@@ -8,7 +8,7 @@ import HomeJamsSection from "@/components/HomeJamsSection.astro";
 import { getUsersByDateJoined } from "@/lib/data-access/users";
 import type { User } from "@/types";
 import { getAllProducts, getProductImages } from "@/lib/data-access/products";
-import { getPublishedAssets, getAssetImages } from "@/lib/data-access/assets";
+import { getPublicAssets, getAssetImages } from "@/lib/data-access/assets";
 import { getActiveJam } from "@/lib/data-access/jams";
 
 
@@ -39,6 +39,7 @@ const features: {
 ];
 
 const productData = await getAllProducts()
+console.log('productData',productData)
 const products:{url: string; alt?: string, href: string}[] = await Promise.all(
   productData.slice(0,10).map(async (product) => {
     const images = await getProductImages(product.id);
@@ -46,7 +47,6 @@ const products:{url: string; alt?: string, href: string}[] = await Promise.all(
       ? images.sort((a, b) => a.position - b.position)[0]
       : null;
     const imageUrl = coverImage?.file_url || 'https://placehold.co/600x600';
-
     return {
       url: imageUrl,
       alt: product.title,
@@ -55,7 +55,7 @@ const products:{url: string; alt?: string, href: string}[] = await Promise.all(
   })
 )
 
-const assetData = await getPublishedAssets()
+const assetData = await getPublicAssets()
 const assets:{url: string; alt?: string, href: string}[] = await Promise.all(
   assetData.slice(0,10).map(async (asset) => {
     const images = await getAssetImages(asset.id);

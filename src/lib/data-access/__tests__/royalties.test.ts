@@ -79,7 +79,7 @@ describe('Royalty Data Access Layer', () => {
         handle: 'test-asset-royalty',
         title: 'Test Asset for Royalties',
         description: 'Test asset',
-        status: 'published',
+        status: 'private',
       })
       .select()
       .single();
@@ -178,7 +178,7 @@ describe('Royalty Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'asset-no-royalties',
           title: 'Asset Without Royalties',
-          status: 'published',
+          status: 'private',
         })
         .select()
         .single();

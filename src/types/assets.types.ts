@@ -1,6 +1,6 @@
 import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
 
-export type AssetStatus = 'draft' | 'published' | 'archived';
+export type AssetStatus = 'draft' | 'private' | 'public' | 'archived';
 
 export interface Asset extends BaseEntity {
   handle: string;
