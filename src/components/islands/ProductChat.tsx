@@ -68,6 +68,7 @@ export default function ProductChat(props: ProductChatProps) {
                           src={msg.user.avatar_url}
                           alt={chat.getUserDisplay(msg)}
                           class="product-chat__avatar-img"
+                          loading="lazy"
                         />
                       ) : (
                         <span class="product-chat__avatar-initials">

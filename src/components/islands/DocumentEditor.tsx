@@ -56,6 +56,7 @@ export default function DocumentEditor(props: DocumentEditorProps) {
       const response = await fetch("/api/documents/update-content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Explicitly include cookies
         body: JSON.stringify({
           documentId: props.documentId,
           content,
@@ -66,7 +67,12 @@ export default function DocumentEditor(props: DocumentEditorProps) {
         setLastSaved(new Date());
         setHasUnsavedChanges(false);
       } else {
-        console.error("Failed to save document");
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("Failed to save document:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
       }
     } catch (error) {
       console.error("Error saving document:", error);

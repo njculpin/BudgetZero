@@ -703,7 +703,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
             </CardHeader>
             <CardContent>
               <ProductChat
-                client:load
+                client:visible
                 userId={currentUser?.id}
                 productId={productData.id}
               />

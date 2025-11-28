@@ -24,7 +24,14 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
   const handleStatusChange = async (newStatus: "draft" | "private" | "public" | "archived") => {
     // Validate publish requirements for private and public statuses
     if ((newStatus === "private" || newStatus === "public") && !canPublish()) {
-      setError("Cannot publish asset without at least one image and one file");
+      // Provide specific, actionable error messages
+      if (!props.hasImages && !props.hasFiles) {
+        setError("Cannot publish: Please scroll up to upload at least one cover image and one asset file before changing status.");
+      } else if (!props.hasImages) {
+        setError("Cannot publish: Please scroll up to upload at least one cover image before changing status.");
+      } else if (!props.hasFiles) {
+        setError("Cannot publish: Please scroll up to upload at least one asset file before changing status.");
+      }
       return;
     }
 
@@ -44,7 +51,18 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to update status");
+
+        // Show detailed error message with affected products if available
+        if (data.affectedProducts && data.affectedProducts.length > 0) {
+          const productList = data.affectedProducts
+            .map((p: { title: string }) => `"${p.title}"`)
+            .join(", ");
+          setError(
+            `${data.error}\n\nAffected products: ${productList}\n\nPlease contact the product owners or keep this asset public.`
+          );
+        } else {
+          setError(data.error || "Failed to update status. Please try again.");
+        }
         setIsLoading(false);
         return;
       }
@@ -81,13 +99,13 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
   const getStatusDescription = (s: string) => {
     switch (s) {
       case "draft":
-        return "Work in progress - only visible to you";
+        return "Work in progress - only visible to you. Not usable in products yet.";
       case "private":
-        return "Ready for your products - exclusive to you";
+        return "Ready for YOUR products only. Others cannot see or use this asset. No royalties (you're using your own work).";
       case "public":
-        return "Available in marketplace - anyone can use (you earn royalties)";
+        return "Available in marketplace for ANYONE to use in their products. You earn royalties when others use this asset.";
       case "archived":
-        return "Hidden from all lists - can be recovered";
+        return "Hidden from all lists - can be recovered. Not usable in any products.";
       default:
         return "";
     }
@@ -126,7 +144,7 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
           <div class="status-editor__button-content">
             <span class="status-badge status-badge--draft">✏️ Draft</span>
             <span class="status-editor__button-description">
-              Work in progress
+              Work in progress (not usable)
             </span>
           </div>
         </button>
@@ -144,7 +162,7 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
           <div class="status-editor__button-content">
             <span class="status-badge status-badge--private">🔒 Private</span>
             <span class="status-editor__button-description">
-              {!canPublish() ? "⚠️ Requires images & files" : "Exclusive to you"}
+              {!canPublish() ? "⚠️ Requires images & files" : "For YOUR products (no royalties)"}
             </span>
           </div>
         </button>
@@ -162,7 +180,7 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
           <div class="status-editor__button-content">
             <span class="status-badge status-badge--public">🌐 Public</span>
             <span class="status-editor__button-description">
-              {!canPublish() ? "⚠️ Requires images & files" : "Available to all (earn royalties)"}
+              {!canPublish() ? "⚠️ Requires images & files" : "Marketplace (EARN royalties)"}
             </span>
           </div>
         </button>
@@ -179,7 +197,7 @@ export default function AssetStatusEditor(props: AssetStatusEditorProps) {
           <div class="status-editor__button-content">
             <span class="status-badge status-badge--archived">📦 Archived</span>
             <span class="status-editor__button-description">
-              Remove from lists
+              Hidden (not usable)
             </span>
           </div>
         </button>

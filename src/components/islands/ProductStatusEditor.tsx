@@ -78,11 +78,11 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
   const getStatusDescription = (s: string) => {
     switch (s) {
       case "draft":
-        return "Only visible to you";
+        return "Only visible to you. Not available for purchase.";
       case "published":
-        return "Visible to everyone";
+        return "Visible in marketplace. Available for purchase by anyone.";
       case "archived":
-        return "Hidden from public view";
+        return "Hidden from marketplace. Not available for purchase.";
       default:
         return "";
     }
@@ -128,7 +128,7 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
           <div class="status-editor__button-content">
             <span class="status-badge status-badge--draft">Draft</span>
             <span class="status-editor__button-description">
-              Work in progress
+              Work in progress (not for sale)
             </span>
           </div>
         </button>
@@ -146,7 +146,7 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
           <div class="status-editor__button-content">
             <span class="status-badge status-badge--published">Published</span>
             <span class="status-editor__button-description">
-              {!canPublish() ? "⚠️ Requires variants" : "Make public"}
+              {!canPublish() ? "⚠️ Requires variants" : "List for sale"}
             </span>
           </div>
         </button>
@@ -163,7 +163,7 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
           <div class="status-editor__button-content">
             <span class="status-badge status-badge--archived">Archived</span>
             <span class="status-editor__button-description">
-              Hide from public
+              Remove from sale
             </span>
           </div>
         </button>

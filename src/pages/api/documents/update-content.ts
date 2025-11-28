@@ -11,6 +11,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const refreshToken = cookies.get("sb-refresh-token");
 
   if (!accessToken || !refreshToken) {
+    console.error("Missing auth cookies in update-content:", {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+      allCookies: Object.keys(cookies.getAll()),
+    });
     return new Response(JSON.stringify({ error: "Not authenticated" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },

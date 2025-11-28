@@ -5,6 +5,7 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
+const WEB_URL = 'http://localhost:4321'
 const SUPABASE_API_URL = 'http://127.0.0.1:54321';
 const EMAIL_CLIENT_URL = 'http://127.0.0.1:54324';
 
@@ -54,6 +55,29 @@ async function openEmailClient() {
   }
 }
 
+async function openWebClient() {
+  console.log('📧 Opening email client...');
+
+  const platform = process.platform;
+  let command;
+
+  if (platform === 'win32') {
+    command = `start ${WEB_URL}`;
+  } else if (platform === 'darwin') {
+    command = `open ${WEB_URL}`;
+  } else {
+    command = `xdg-open ${WEB_URL}`;
+  }
+
+  try {
+    await execAsync(command);
+    console.log('✅ Web client opened');
+  } catch (error) {
+    console.warn('⚠️  Could not open web client automatically');
+    console.log(`   Open manually: ${WEB_URL}`);
+  }
+}
+
 async function startAstro() {
   console.log('🌟 Starting Astro dev server...\n');
 
@@ -61,6 +85,8 @@ async function startAstro() {
     stdio: 'inherit',
     shell: true,
   });
+
+  await openWebClient()
 
   astro.on('close', (code) => {
     console.log(`\n👋 Astro dev server stopped with code ${code}`);

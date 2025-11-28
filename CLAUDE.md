@@ -4,7 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Game Loopers is a social commerce platform for tabletop game creators (designers, 3D modelers, illustrators, printers) to collaborate, publish digital downloads, manage licensing, and distribute royalties. Think of it as a marketplace where contributors can assemble game products, attach assets with royalty splits, and customers purchase complete game packages.
+Game Loopers is a social commerce platform for tabletop game creators (designers, 3D modelers, illustrators) to collaborate, publish digital downloads, manage licensing, and distribute royalties. Think of it as a marketplace where contributors can assemble game products, attach assets with royalty splits, and customers purchase complete game packages.
+
+**Key Documentation:**
+- `/ROADMAP.md` - Product roadmap, phasing strategy, and success metrics
+- `/PERSONAS.md` - Detailed user personas (current + future)
+- `/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
+- `/CLAUDE.md` - This file (development guidelines)
+
+**Current Status:** ~60% complete toward MVP launch (see ROADMAP.md for details)
 
 ## Development Commands
 
@@ -212,15 +220,19 @@ export default function SignInForm() {
 
 ## User Personas
 
-**Contributors** (sell and collaborate):
-- Game Designers: Create products, hire collaborators
-- Illustrators: Sell art, license work, earn royalties
-- 3D Modelers: Sell STLs/OBJs, license models
-- 3D Printers: Fulfill print orders for buyers
+**See `/PERSONAS.md` for comprehensive persona documentation.**
 
-**Consumers** (buy):
-- Game buyers who want to support creators
-- Can follow creators, purchase games, download assets
+**Current Personas (MVP - Digital Marketplace):**
+- **Game Designers:** Create products, hire collaborators, earn from sales
+- **Illustrators:** Sell art assets, license work, earn royalties when used in products
+- **3D Modelers:** Sell STL files, license models, earn royalties when used in products
+- **Consumers:** Purchase complete game packages, download assets, support creators
+
+**Future Personas (Phase 3 - Physical Services):**
+- **Printers:** Provide 3D printing services to turn STL files into physical miniatures (DEFERRED until Month 7+)
+- **Painters:** Provide miniature painting services for printed models (DEFERRED until Month 7+)
+
+**Note:** Physical service personas are documented but implementation is deferred until after digital marketplace achieves product-market fit. See `/ROADMAP.md` for phasing strategy.
 
 ## Session Management
 

@@ -3,7 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
 import BrowseCTA from "@/components/BrowseCTA.astro";
-import { getAssets, getAssetImages } from "@/lib/data-access/assets";
+import { getAssets, getAssetImages, getAssetFiles } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
 import { getAllTags } from "@/lib/data-access/tags";
 import PageHeader from "@/components/PageHeader.astro";
@@ -41,19 +41,21 @@ const offset = (page - 1) * limit;
 const tagArray = tagFilter ? [tagFilter] : undefined;
 const allAssets = await getAssets(searchQuery, tagArray, limit, offset);
 
-// Fetch first image for each asset to use as thumbnail
-const assetsWithImages = await Promise.all(
+// Fetch first image and files for each asset
+const assetsWithDetails = await Promise.all(
   allAssets.map(async (asset) => {
     const images = await getAssetImages(asset.id);
+    const files = await getAssetFiles(asset.id);
     return {
       ...asset,
-      cover_image_url: images[0]?.file_url || null
+      cover_image_url: images[0]?.file_url || null,
+      files: files
     };
   })
 );
 
 // Fetch asset owners (batch fetch to avoid N+1 queries)
-const ownerIds = [...new Set(assetsWithImages.map(a => a.user_id))];
+const ownerIds = [...new Set(assetsWithDetails.map(a => a.user_id))];
 const owners = await Promise.all(ownerIds.map(id => getUserById(id)));
 const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
 
@@ -137,9 +139,9 @@ const assetTags = allTags
 
       <!-- All Assets Section -->
       <section class="browse-section">
-        {assetsWithImages.length > 0 ? (
+        {assetsWithDetails.length > 0 ? (
           <div class="browse-grid">
-            {assetsWithImages.map((asset) => {
+            {assetsWithDetails.map((asset) => {
               const owner = ownersMap.get(asset.user_id);
               return (
                 <a href={`/assets/${asset.handle}`} class="browse-card">
@@ -155,6 +157,30 @@ const assetTags = allTags
                       <p class="browse-card__description">
                         {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
                       </p>
+                    )}
+                    {asset.files && asset.files.length > 0 && (
+                      <div class="browse-card__files">
+                        <span class="browse-card__files-label">Includes:</span>
+                        <ul class="browse-card__files-list">
+                          {asset.files.slice(0, 3).map((file) => {
+                            // Extract file extension from mime_type or title
+                            const extension = file.mime_type.split('/')[1]?.toUpperCase() ||
+                                            file.title.split('.').pop()?.toUpperCase() ||
+                                            'FILE';
+                            return (
+                              <li class="browse-card__file-item">
+                                <span class="browse-card__file-type">{extension}</span>
+                                <span class="browse-card__file-name">{file.title}</span>
+                              </li>
+                            );
+                          })}
+                          {asset.files.length > 3 && (
+                            <li class="browse-card__file-item browse-card__file-item--more">
+                              +{asset.files.length - 3} more file{asset.files.length - 3 > 1 ? 's' : ''}
+                            </li>
+                          )}
+                        </ul>
+                      </div>
                     )}
                     <div class="browse-card__meta">
                       <span class="browse-card__author">
@@ -185,7 +211,7 @@ const assetTags = allTags
       </section>
 
       <!-- Pagination -->
-      {assetsWithImages.length === limit && (
+      {assetsWithDetails.length === limit && (
         <div class="browse-pagination">
           {page > 1 && (
             <a

@@ -1,10 +1,11 @@
 ---
 import type { JamProductReview } from '@/types';
 import RatingStars from './RatingStars.astro';
+import Avatar from './Avatar.astro';
 
 interface Props {
   review: JamProductReview;
-  reviewer: { name?: string; handle: string };
+  reviewer: { name?: string; handle: string; avatar_url?: string };
   jamHandle?: string;
   featured?: boolean;
 }
@@ -22,9 +23,11 @@ const formattedDate = reviewDate.toLocaleDateString('en-US', {
 <article class={`product-review ${featured ? 'product-review--featured' : ''}`}>
   <div class="product-review__header">
     <div class="product-review__author">
-      <div class="product-review__author-avatar">
-        {reviewer.name ? reviewer.name[0].toUpperCase() : reviewer.handle[0].toUpperCase()}
-      </div>
+      <Avatar
+        src={reviewer.avatar_url}
+        alt={reviewer.name || reviewer.handle}
+        size="sm"
+      />
       <div class="product-review__author-info">
         <h4 class="product-review__author-name">
           {reviewer.name || reviewer.handle}
@@ -96,19 +99,7 @@ const formattedDate = reviewDate.toLocaleDateString('en-US', {
   gap: var(--gap-md);
 }
 
-.product-review__author-avatar {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: var(--radius-full);
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-bold);
-  flex-shrink: 0;
-}
+/* Avatar styles now handled by Avatar.astro component */
 
 .product-review__author-info {
   display: flex;
@@ -189,10 +180,6 @@ const formattedDate = reviewDate.toLocaleDateString('en-US', {
     gap: var(--gap-md);
   }
 
-  .product-review__author-avatar {
-    width: 2rem;
-    height: 2rem;
-    font-size: var(--text-sm);
-  }
+  /* Avatar sizes now handled by Avatar.astro component */
 }
 </style>

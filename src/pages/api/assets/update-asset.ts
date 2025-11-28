@@ -11,8 +11,10 @@ import {
   getAssetFiles,
   getAssetImages,
 } from "@/lib/data-access/assets";
+import { canChangeAssetStatus } from "@/lib/data-access/asset-validation";
 import { serverClient } from "@/lib/data-access/client";
 import { uploadFile, generateFilePath } from "@/lib/storage";
+import type { AssetStatus } from "@/types";
 
 const updateAssetSchema = z.object({
   assetId: z.string().uuid(),
@@ -82,6 +84,29 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
+    }
+
+    // Validate status downgrade (prevent breaking other users' products)
+    if (status && status !== asset.status) {
+      const validation = await canChangeAssetStatus(
+        assetId,
+        asset.status as AssetStatus,
+        status as AssetStatus,
+        userId
+      );
+
+      if (!validation.allowed) {
+        return new Response(
+          JSON.stringify({
+            error: validation.reason,
+            affectedProducts: validation.affectedProducts,
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     // Validate publish requirements for private and public statuses
