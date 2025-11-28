@@ -155,7 +155,7 @@ const formatDate = (dateStr: string) => {
             </CardHeader>
             <CardContent>
               <DocumentEditor
-                client:load
+                client:idle
                 documentId={document.id}
                 initialContent={contentJson}
                 canEdit={canEdit}
@@ -180,7 +180,7 @@ const formatDate = (dateStr: string) => {
               </CardHeader>
               <CardContent>
                 <DocumentChat
-                  client:load
+                  client:visible
                   userId={currentUser?.id}
                   documentId={document.id}
                 />

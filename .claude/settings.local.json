@@ -36,7 +36,15 @@
       "Bash(git commit:*)",
       "Bash(npx astro check:*)",
       "Bash(cut:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(supabase test:*)",
+      "Bash(curl:*)",
+      "Bash(if [ -f .env ])",
+      "Bash(then grep \"STRIPE\" .env)",
+      "Bash(else echo \".env file not found\")",
+      "Bash(if [ -f .env.example ])",
+      "Bash(then cat .env.example)",
+      "Bash(else echo \".env.example not found\")"
     ],
     "deny": [],
     "ask": []

@@ -68,6 +68,7 @@ export default function AssetChat(props: AssetChatProps) {
                           src={msg.user.avatar_url}
                           alt={chat.getUserDisplay(msg)}
                           class="asset-chat__avatar-img"
+                          loading="lazy"
                         />
                       ) : (
                         <span class="asset-chat__avatar-initials">

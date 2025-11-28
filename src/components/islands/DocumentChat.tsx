@@ -68,6 +68,7 @@ export default function DocumentChat(props: DocumentChatProps) {
                           src={msg.user.avatar_url}
                           alt={chat.getUserDisplay(msg)}
                           class="document-chat__avatar-img"
+                          loading="lazy"
                         />
                       ) : (
                         <span class="document-chat__avatar-initials">
