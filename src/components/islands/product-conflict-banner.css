@@ -5,9 +5,9 @@
   align-items: flex-start;
   gap: var(--gap-lg);
   padding: var(--spacing-lg);
-  background-color: oklch(98% 0.02 60 / 1);
-  border: 2px solid oklch(80% 0.08 60 / 1);
-  border-left: 4px solid oklch(60% 0.15 60 / 1);
+  background-color: var(--conflict-bg);
+  border: 2px solid var(--conflict-border);
+  border-left: 4px solid var(--conflict-border-emphasis);
   border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-3xl);
 }
