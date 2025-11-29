@@ -11,6 +11,9 @@ export interface Product extends BaseEntity {
   status: ProductStatus;
   view_count: number;
   published_at: string | null;
+  needs_attention: boolean;
+  attention_reason: string | null;
+  attention_since: string | null;
 }
 
 export interface ProductCollaborator extends BaseEntity {

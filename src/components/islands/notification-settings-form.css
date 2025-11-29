@@ -1,0 +1,100 @@
+@import "./base/base.css";
+
+.notification-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-3xl);
+}
+
+.notification-settings-form__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.notification-settings-form__section-title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.notification-settings-form__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.notification-settings-form__checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  font-weight: var(--font-weight-medium);
+}
+
+.notification-settings-form__checkbox input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.notification-settings-form__help {
+  margin: 0;
+  padding-left: calc(1.125rem + var(--gap-sm));
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  line-height: var(--leading-normal);
+}
+
+.notification-settings-form__success {
+  padding: var(--spacing-md);
+  background-color: var(--success-bg);
+  color: var(--success-fg);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.notification-settings-form__error {
+  padding: var(--spacing-md);
+  background-color: var(--destructive-bg);
+  color: var(--destructive-fg);
+  border: 1px solid var(--destructive);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.notification-settings-form__submit {
+  align-self: flex-start;
+  padding: var(--spacing-sm) var(--spacing-xl);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--primary-foreground);
+  background-color: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.notification-settings-form__submit:hover {
+  background-color: var(--primary-hover);
+}
+
+.notification-settings-form__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.notification-settings-form__submit:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

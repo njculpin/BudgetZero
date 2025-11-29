@@ -1,0 +1,111 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardContent from "@/components/CardContent.astro";
+import PageHeader from "@/components/PageHeader.astro";
+import { setSession } from "@/lib/auth";
+import { getNotificationSettings } from "@/lib/data-access/notifications";
+import NotificationSettingsForm from "@/components/islands/NotificationSettingsForm";
+
+const { cookies, redirect } = Astro;
+
+// Check authentication
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return redirect("/sign-in");
+}
+
+const session = await setSession({
+  refresh_token: refreshToken.value,
+  access_token: accessToken.value,
+});
+
+if (!session || session.error || !session.data.user) {
+  return redirect("/sign-in");
+}
+
+const currentUser = session.data.user;
+
+// Fetch notification settings
+const notificationSettings = await getNotificationSettings(currentUser.id);
+---
+
+<Layout title="Notification Settings - Game Loopers">
+  <div class="page">
+    <div class="page__container page__container--narrow">
+      <PageHeader
+        title="Notification Settings"
+        description="Manage how you receive notifications from Game Loopers"
+      />
+
+      <Card>
+        <CardHeader>
+          <h2>Email Notifications</h2>
+          <p>Choose which notifications you want to receive via email</p>
+        </CardHeader>
+        <CardContent>
+          <NotificationSettingsForm
+            client:load
+            userId={currentUser.id}
+            settings={notificationSettings}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2>Notification Preferences</h2>
+        </CardHeader>
+        <CardContent>
+          <div class="settings-info">
+            <p class="settings-info__text">
+              <strong>Asset Changes:</strong> Notifies you when assets used in your products are updated
+            </p>
+            <p class="settings-info__text">
+              <strong>Product Conflicts:</strong> Alerts when asset changes cause pricing conflicts with your products
+            </p>
+            <p class="settings-info__text">
+              <strong>Sales:</strong> Notifies you when someone purchases your products
+            </p>
+            <p class="settings-info__text">
+              <strong>Royalty Payments:</strong> Alerts when you receive royalty payments from sales
+            </p>
+            <p class="settings-info__text">
+              <strong>Document Shares:</strong> Notifies you when someone shares a document with you
+            </p>
+            <p class="settings-info__text">
+              <strong>Jam Updates:</strong> Alerts for game jam submissions, reviews, and announcements
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</Layout>
+
+<style>
+.page__container--narrow {
+  max-width: 48rem;
+}
+
+.settings-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.settings-info__text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-normal);
+}
+
+.settings-info__text strong {
+  color: var(--foreground);
+  font-weight: var(--font-weight-semibold);
+}
+</style>
