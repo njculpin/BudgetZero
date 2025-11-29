@@ -77,7 +77,7 @@ export default function ProductConflictBanner(
             {resolving() ? "Resolving..." : "Mark as Resolved"}
           </button>
           <a
-            href={`/products/edit/${props.productHandle}`}
+            href={`/products/${props.productHandle}`}
             class="product-conflict-banner__button product-conflict-banner__button--secondary"
           >
             Edit Product

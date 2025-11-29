@@ -68,11 +68,21 @@
   --error-bg: oklch(from var(--destructive) l c h / 0.1);
   --error-fg: var(--destructive);
   --error-border: oklch(from var(--destructive) l c h / 0.3);
+  --destructive-bg: oklch(from var(--destructive) l c h / 0.1);
+  --destructive-fg: var(--destructive);
 
   /* ===== Interactive Colors ===== */
+  --primary-hover: oklch(from var(--primary) calc(l * 0.9) c h);
   --color-link: var(--primary);
   --color-link-hover: oklch(from var(--primary) calc(l * 0.85) c h);
   --color-link-visited: oklch(from var(--primary) calc(l * 0.75) c h);
+
+  /* ===== Notification Colors ===== */
+  --unread-bg: oklch(96% 0.01 240 / 1);
+  --conflict-bg: oklch(98% 0.02 60 / 1);
+  --conflict-border: oklch(80% 0.08 60 / 1);
+  --conflict-border-emphasis: oklch(60% 0.15 60 / 1);
+  --conflict-fg: oklch(40% 0.12 60 / 1);
 
   /* ===== Overlay Colors ===== */
   --overlay-light: oklch(0 0 0 / 0.1);
