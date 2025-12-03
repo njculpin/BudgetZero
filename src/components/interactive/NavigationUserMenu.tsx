@@ -8,9 +8,20 @@ export interface NavigationUserMenuLink {
   isSignOut?: boolean;
 }
 
+export interface ProductSummary {
+  id: string;
+  handle: string;
+  title: string;
+  status: 'draft' | 'published' | 'archived';
+  updated_at: string;
+  thumbnail_url: string | null;
+}
+
 export interface NavigationUserMenuProps {
   userHandle: string;
   links: NavigationUserMenuLink[];
+  recentProducts?: ProductSummary[];
+  totalProductCount?: number;
 }
 
 export default function NavigationUserMenu(props: NavigationUserMenuProps) {
@@ -23,6 +34,32 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
 
   const closeMenu = () => {
     setIsOpen(false);
+  };
+
+  // Format relative time (e.g., "2 days ago")
+  const formatRelativeTime = (dateString: string): string => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    const years = Math.floor(months / 12);
+    return `${years}y ago`;
+  };
+
+  // Get status badge text
+  const getStatusBadge = (status: string): string | null => {
+    if (status === 'draft') return 'Draft';
+    if (status === 'archived') return 'Archived';
+    return null; // Don't show badge for published
   };
 
   // Close menu when clicking outside
@@ -82,6 +119,111 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
 
       <Show when={isOpen()}>
         <div class="nav-user-menu__dropdown" role="menu">
+          {/* Create Project Button */}
+          <a
+            href="/products/new"
+            class="nav-user-menu__create-button"
+            role="menuitem"
+            onClick={closeMenu}
+          >
+            <svg
+              class="nav-user-menu__create-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Create Project
+          </a>
+
+          {/* Projects Section */}
+          <Show
+            when={props.recentProducts && props.recentProducts.length > 0}
+            fallback={
+              <div class="nav-user-menu__empty-state">
+                <svg
+                  class="nav-user-menu__empty-icon"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <p class="nav-user-menu__empty-title">No projects yet</p>
+                <p class="nav-user-menu__empty-text">Create your first game to start selling</p>
+              </div>
+            }
+          >
+            <div class="nav-user-menu__projects">
+              <For each={props.recentProducts}>
+                {(product) => (
+                  <a
+                    href={`/products/${product.handle}`}
+                    class="nav-user-menu__project-item"
+                    role="menuitem"
+                    onClick={closeMenu}
+                  >
+                    <div class="nav-user-menu__project-thumbnail">
+                      <Show
+                        when={product.thumbnail_url}
+                        fallback={
+                          <div class="nav-user-menu__project-placeholder">
+                            {product.title.charAt(0).toUpperCase()}
+                          </div>
+                        }
+                      >
+                        <img src={product.thumbnail_url!} alt={product.title} />
+                      </Show>
+                    </div>
+                    <div class="nav-user-menu__project-content">
+                      <div class="nav-user-menu__project-header">
+                        <span class="nav-user-menu__project-title">{product.title}</span>
+                        <Show when={getStatusBadge(product.status)}>
+                          <span class={`nav-user-menu__project-badge nav-user-menu__project-badge--${product.status}`}>
+                            {getStatusBadge(product.status)}
+                          </span>
+                        </Show>
+                      </div>
+                      <span class="nav-user-menu__project-meta">
+                        Updated {formatRelativeTime(product.updated_at)}
+                      </span>
+                    </div>
+                  </a>
+                )}
+              </For>
+            </div>
+
+            {/* View All Link (only show if 5+ products) */}
+            <Show when={props.totalProductCount && props.totalProductCount >= 5}>
+              <a
+                href="/products"
+                class="nav-user-menu__view-all"
+                role="menuitem"
+                onClick={closeMenu}
+              >
+                View all {props.totalProductCount} projects →
+              </a>
+            </Show>
+          </Show>
+
+          <div class="nav-user-menu__divider" role="separator"></div>
+
+          {/* Regular Menu Links */}
           <For each={props.links}>
             {(link) => (
               <>

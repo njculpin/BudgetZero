@@ -14,6 +14,7 @@ export { default as VariantCard } from './VariantCard';
 export { default as VariantCreateForm } from './VariantCreateForm';
 export { default as VariantDeleteButton } from './VariantDeleteButton';
 export { default as VariantAssetPicker } from './VariantAssetPicker';
+export { default as AssetSearchModal } from './AssetSearchModal';
 export { default as ProductPriceManager } from './ProductPriceManager';
 export { default as ProductValueBreakdown } from './ProductValueBreakdown';
 export { default as ProductCostBreakdown } from './ProductCostBreakdown';

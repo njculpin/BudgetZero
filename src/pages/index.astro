@@ -1,47 +1,15 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import HomeSubscribeSection from "@/components/home/HomeSubscribeSection.astro";
-import HomeHeroSection from "@/components/home/HomeHeroSection.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
-import HomeFeaturesSection from "@/components/home/HomeFeaturesSection.astro";
 import HomeJamsSection from "@/components/home/HomeJamsSection.astro";
-import { getUsersByDateJoined } from "@/lib/data-access/users";
-import type { User } from "@/types";
+import Button from "@/components/Button.astro";
 import { getAllProducts, getProductImages } from "@/lib/data-access/products";
-import { getPublicAssets, getAssetImages } from "@/lib/data-access/assets";
 import { getActiveJam } from "@/lib/data-access/jams";
 
-
-const features: {
-  title: string;
-  description: string;
-}[] = [
-  {
-    title: 'Asset Licensing',
-    description: 'License your assets for usage on Game Loopers or define your own terms for use anywhere.'
-  },
-  {
-    title: 'Asset Royalties',
-    description: 'A royalty network allows payments to be issued whenever your assets are used and purchased across Game Loopers.',
-  },
-  {
-    title: 'Asset Creation',
-    description: 'Upload 3D sculpture, illustrations, and documents or Create your own right here on Game Loopers.',
-  },
-  {
-    title: 'Product Listings',
-    description: 'Game Loopers is a full storefront which allows you to share or embed your profile, or organically find creations',
-  },
-  {
-    title: 'Community',
-    description: 'Create and get organized with community members, share product listings and royalties between each other.',
-  },
-];
-
 const productData = await getAllProducts()
-console.log('productData',productData)
 const products:{url: string; alt?: string, href: string}[] = await Promise.all(
-  productData.slice(0,10).map(async (product) => {
+  productData.slice(0,20).map(async (product) => {
     const images = await getProductImages(product.id);
     const coverImage = images.length > 0
       ? images.sort((a, b) => a.position - b.position)[0]
@@ -55,46 +23,155 @@ const products:{url: string; alt?: string, href: string}[] = await Promise.all(
   })
 )
 
-const assetData = await getPublicAssets()
-const assets:{url: string; alt?: string, href: string}[] = await Promise.all(
-  assetData.slice(0,10).map(async (asset) => {
-    const images = await getAssetImages(asset.id);
-    const coverImage = images.length > 0
-      ? images.sort((a, b) => a.position - b.position)[0]
-      : null;
-    const firstImage = coverImage?.file_url || 'https://placehold.co/600x600';
-
-    return {
-      url: firstImage,
-      alt: asset.title,
-      href: `/assets/${asset.handle}`
-    };
-  })
-)
-
-const userData: User[] = await getUsersByDateJoined()
-const profiles:{url: string; alt?: string, href: string}[] = userData.map(user => ({
-  url: user.avatar_url || 'https://placehold.co/600x600',
-  alt: user.handle,
-  href: `/users/${user.handle}`
-}))
-
 const activeJam = await getActiveJam()
 
 ---
 
-<Layout title="Game Loopers">
+<Layout title="Game Loopers - Discover Tabletop Games">
   <div class="page">
     <div class="page__container">
       <div class="page-columns__column">
+
+      <!-- Hero Section -->
+      <div class="home-hero">
+        <div class="home-hero__content">
+          <h1 class="home-hero__title">Discover Amazing Tabletop Games</h1>
+          <p class="home-hero__subtitle">
+            Explore unique tabletop games created by talented designers, illustrators, and modelers from around the world.
+          </p>
+          <div class="home-hero__actions">
+            <a href="/products">
+              <Button variant="primary" size="lg">
+                <span slot="text">Browse Products</span>
+              </Button>
+            </a>
+            <a href="/create">
+              <Button variant="outline" size="lg">
+                <span slot="text">Start Creating</span>
+              </Button>
+            </a>
+          </div>
+        </div>
+        <div class="home-hero__image">
+          <img src="https://placehold.co/600x600" alt="Tabletop game showcase" />
+        </div>
+      </div>
+
+      <!-- Active Jam Banner -->
       {activeJam && <HomeJamsSection jam={activeJam} />}
-      <HomeHeroSection/>
-      <GalleryGrid images={products} cols={5} />
-      <HomeFeaturesSection features={features}/>
-      <GalleryGrid images={assets} cols={5}/>
-      <GalleryGrid images={profiles} cols={9} borderRadius="circle"/>
+
+      <!-- Products Section -->
+      <section class="home-section">
+        <div class="home-section__header">
+          <h2 class="home-section__title">New Launches</h2>
+          <a href="/products" class="home-section__link">View all products →</a>
+        </div>
+        <GalleryGrid images={products} cols={5} />
+      </section>
+
+      <!-- Newsletter -->
       <HomeSubscribeSection/>
+
       </div>
     </div>
   </div>
 </Layout>
+
+<style>
+  .home-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    gap: var(--spacing-3xl);
+    margin-bottom: var(--spacing-5xl);
+  }
+
+  .home-hero__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--muted);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-3xl);
+  }
+
+  .home-hero__title {
+    font-size: var(--text-5xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-2xl);
+    line-height: var(--leading-tight);
+  }
+
+  .home-hero__subtitle {
+    font-size: var(--text-xl);
+    color: var(--muted-foreground);
+    margin-bottom: var(--spacing-4xl);
+    line-height: var(--leading-relaxed);
+  }
+
+  .home-hero__actions {
+    display: flex;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+  }
+
+  .home-hero__image {
+    display: flex;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  .home-hero__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .home-section {
+    margin-bottom: var(--spacing-5xl);
+  }
+
+  .home-section__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-3xl);
+  }
+
+  .home-section__title {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .home-section__link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+    transition: opacity var(--duration-fast) var(--ease-in-out);
+  }
+
+  .home-section__link:hover {
+    opacity: 0.8;
+  }
+
+  @media (max-width: 768px) {
+    .home-hero {
+      grid-template-columns: 1fr;
+    }
+
+    .home-hero__title {
+      font-size: var(--text-4xl);
+    }
+
+    .home-hero__image img {
+      height: 400px;
+    }
+
+    .home-section__header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-lg);
+    }
+  }
+</style>
