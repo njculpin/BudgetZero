@@ -179,7 +179,7 @@
 - [ ] Prepare for public launch
 
 **Success Metrics:**
-- 20+ creators with published products
+- 20+ creators with public products
 - 100+ registered users
 - 10+ successful transactions
 - $500+ GMV (Gross Merchandise Value)
@@ -225,7 +225,7 @@
 
 **Success Metrics:**
 - 30% of products use multi-creator royalty splits
-- 50+ documents published as PDF assets
+- 50+ documents public as PDF assets
 - 200+ creator-to-creator follows
 - 15% increase in repeat collaboration
 
@@ -419,7 +419,7 @@
 ## Success Metrics Dashboard
 
 ### Phase 1 (MVP - Month 1)
-- [ ] 20 creators with published products
+- [ ] 20 creators with public products
 - [ ] 100 registered users
 - [ ] 10 successful transactions
 - [ ] $500 GMV

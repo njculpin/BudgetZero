@@ -57,7 +57,7 @@ describe('Royalty Data Access Layer', () => {
     // Create a test product and variant
     const product = await createProduct(testUser1Id, {
       title: 'Test Product for Royalties',
-      status: 'published',
+      status: 'public',
     });
 
     if (!product) throw new Error('Failed to create test product');
@@ -278,7 +278,7 @@ describe('Royalty Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'asset-no-cost',
           title: 'Asset No Cost',
-          status: 'published',
+          status: 'public',
         })
         .select()
         .single();
@@ -294,7 +294,7 @@ describe('Royalty Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'asset-deletion-test',
           title: 'Asset Deletion Test',
-          status: 'published',
+          status: 'public',
         })
         .select()
         .single();
@@ -404,7 +404,7 @@ describe('Royalty Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'percent-asset',
           title: 'Percentage Asset',
-          status: 'published',
+          status: 'public',
         })
         .select()
         .single();
@@ -473,7 +473,7 @@ describe('Royalty Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'zero-asset',
           title: 'Zero Asset',
-          status: 'published',
+          status: 'public',
         })
         .select()
         .single();
@@ -538,7 +538,7 @@ describe('Royalty Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'empty-royalty-asset',
           title: 'Empty Royalty Asset',
-          status: 'published',
+          status: 'public',
         })
         .select()
         .single();

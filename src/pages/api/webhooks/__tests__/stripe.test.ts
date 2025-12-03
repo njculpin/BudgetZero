@@ -52,7 +52,7 @@ describe('Stripe Webhook Handler', () => {
       .insert({
         user_id: creatorUserId,
         title: 'Webhook Test Product',
-        status: 'published',
+        status: 'public',
         handle: `webhook-test-${Date.now()}`,
       })
       .select()
@@ -87,7 +87,7 @@ describe('Stripe Webhook Handler', () => {
       .insert({
         user_id: creatorUserId,
         title: 'Webhook Test Asset',
-        status: 'published',
+        status: 'public',
         handle: `webhook-asset-${Date.now()}`,
         file_type: 'pdf',
       })

@@ -42,7 +42,7 @@ describe('Cart Data Access Layer', () => {
     // Create a test product and variant
     const product = await createProduct(testUserId, {
       title: 'Test Product for Cart',
-      status: 'published',
+      status: 'public',
     });
 
     if (!product) throw new Error('Failed to create test product');

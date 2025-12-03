@@ -15,11 +15,11 @@ import {
   getDocumentContent,
 } from "@/lib/data-access/documents";
 import { getUserById } from "@/lib/data-access/users";
-import DocumentEditor from "@/components/islands/DocumentEditor";
-import DocumentDeleteButton from "@/components/islands/DocumentDeleteButton";
-import DocumentChat from "@/components/islands/DocumentChat";
-import EditableBreadcrumb from "@/components/islands/EditableBreadcrumb";
-import DocumentCreateAssetButton from "@/components/islands/DocumentCreateAssetButton";
+import DocumentEditor from "@/components/documents/DocumentEditor";
+import DocumentDeleteButton from "@/components/documents/DocumentDeleteButton";
+import DocumentChat from "@/components/documents/DocumentChat";
+import EditableBreadcrumb from "@/components/interactive/EditableBreadcrumb";
+import DocumentCreateAssetButton from "@/components/documents/DocumentCreateAssetButton";
 
 const { params, cookies } = Astro;
 const documentHandle = params.document;

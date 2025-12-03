@@ -8,22 +8,22 @@ import { getUserById } from "@/lib/data-access/users";
 import { getAssetRoyalties } from "@/lib/data-access/royalties";
 import { setSession } from "@/lib/auth";
 import CardTitle from "@/components/CardTitle.astro";
-import AssetChat from "@/components/islands/AssetChat";
+import AssetChat from "@/components/assets/AssetChat";
 import Card from "@/components/Card.astro";
 import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardFooter from "@/components/CardFooter.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
-import AssetTagsForm from "@/components/islands/AssetTagsForm";
-import AssetFileForm from "@/components/islands/AssetFileForm";
-import AssetImagesForm from "@/components/islands/AssetImagesForm";
-import AssetBasicInfoForm from "@/components/islands/AssetBasicInfoForm";
-import AssetStatusEditor from "@/components/islands/AssetStatusEditor";
-import AssetStatusRequirements from "@/components/islands/AssetStatusRequirements";
-import AssetProductPicker from "@/components/islands/AssetProductPicker";
-import AssetRoyaltyManager from "@/components/islands/AssetRoyaltyManager";
-import EditableBreadcrumb from "@/components/islands/EditableBreadcrumb";
+import AssetTagsForm from "@/components/assets/AssetTagsForm";
+import AssetFileForm from "@/components/assets/AssetFileForm";
+import AssetImagesForm from "@/components/assets/AssetImagesForm";
+import AssetBasicInfoForm from "@/components/assets/AssetBasicInfoForm";
+import AssetStatusEditor from "@/components/assets/AssetStatusEditor";
+import AssetStatusRequirements from "@/components/assets/AssetStatusRequirements";
+import AssetProductPicker from "@/components/assets/AssetProductPicker";
+import AssetRoyaltyManager from "@/components/assets/AssetRoyaltyManager";
+import EditableBreadcrumb from "@/components/interactive/EditableBreadcrumb";
 
 const { asset } = Astro.params;
 
@@ -949,7 +949,7 @@ const isShopMode = !isContributor;
     letter-spacing: 0.05em;
   }
 
-  .asset-status-badge--published {
+  .asset-status-badge--public {
     background-color: var(--success-bg);
     color: var(--success-fg);
   }

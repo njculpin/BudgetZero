@@ -226,7 +226,7 @@ export const getActiveJam = async (): Promise<Jam | null> => {
 };
 
 /**
- * Get published products with optional filters
+ * Get public products with optional filters
  */
 export const getAllJams = async (
   searchQuery?: string,

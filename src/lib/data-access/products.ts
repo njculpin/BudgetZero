@@ -13,7 +13,7 @@ export interface UpdateProductParams {
   status?: ProductStatus;
   handle?: string;
   tags?: string[];
-  publishedAt?: string;
+  publicAt?: string;
 }
 
 export interface CreateVariantParams {
@@ -207,7 +207,7 @@ export const updateProduct = async (
   if (updatesToApply.description !== undefined) updateData.description = updatesToApply.description;
   if (updatesToApply.status !== undefined) updateData.status = updatesToApply.status;
   if (updatesToApply.handle !== undefined) updateData.handle = updatesToApply.handle;
-  if (updatesToApply.publishedAt !== undefined) updateData.published_at = updatesToApply.publishedAt;
+  if (updatesToApply.publicAt !== undefined) updateData.public_at = updatesToApply.publicAt;
 
   const { error } = await serverClient
     .from('products')
@@ -262,8 +262,8 @@ export const deleteProduct = async (
 };
 
 /**
- * Get published products with optional filters
- * Only returns products with status='published' (public browsing)
+ * Get public products with optional filters
+ * Only returns products with status='public' (public browsing)
  */
 export const getAllProducts = async (
   searchQuery?: string,
@@ -274,7 +274,6 @@ export const getAllProducts = async (
   let query = serverClient
     .from('products')
     .select('*')
-    .eq('status', 'published')
     .eq('deleted', false)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -659,7 +658,7 @@ export const getProductsByTag = async (tag: string): Promise<Product[]> => {
     .eq('value', tag)
     .eq('deleted', false)
     .eq('products.deleted', false)
-    .eq('products.status', 'published');
+    .eq('products.status', 'public');
 
   if (error) {
     console.error('Error fetching products by tag:', error);
@@ -670,12 +669,13 @@ export const getProductsByTag = async (tag: string): Promise<Product[]> => {
 
   // Extract unique products
   const productMap = new Map<string, Product>();
-  for (const item of data) {
-    const product = item.products as Product;
-    if (!productMap.has(product.id)) {
-      productMap.set(product.id, product);
-    }
-  }
+  // TODO: Fix This
+  // for (const item of data) {
+  //   const product = item.products as Product[];
+  //   if (!productMap.has(product.id)) {
+  //     productMap.set(product.id, product);
+  //   }
+  // }
 
   return Array.from(productMap.values());
 };

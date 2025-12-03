@@ -123,6 +123,58 @@ Components use BEM (Block Element Modifier) naming convention. Reference example
 
 Use CSS custom properties for theming: `var(--color-primary, #0070f3)`
 
+## Component Organization
+
+Components are organized to **mirror the pages directory structure**, making it immediately clear where each component is used. Generic/shared components that are used across multiple pages live in the root of `components/`.
+
+**Structure:**
+```
+src/components/
+├── Button.astro, Card.astro, etc.  # Generic UI components (used everywhere)
+├── base/                            # Generic base form components (Astro)
+│   ├── FormField.astro, Input.astro, TextArea.astro, Select.astro
+│   └── index.ts
+├── interactive/                     # Generic interactive components (SolidJS)
+│   ├── FormField.tsx, LoadingButton.tsx, TagInput.tsx, etc.
+│   └── index.ts
+├── products/                        # /products/*.astro
+│   ├── ProductEditForm.tsx, ProductVariantManager.tsx, etc.
+│   └── index.ts
+├── assets/                          # /assets/*.astro
+│   ├── AssetEditForm.tsx, AssetRoyaltyManager.tsx, etc.
+│   └── index.ts
+├── documents/                       # /documents/*.astro
+├── users/                           # /users/*.astro
+├── cart/                            # /cart.astro
+├── checkout/                        # /checkout/*.astro
+├── jams/                            # /jams/*.astro
+├── dashboard/                       # /dashboard.astro
+├── settings/                        # /settings/*.astro
+├── home/                            # /index.astro (landing page)
+├── auth/                            # /sign-in.astro, /sign-up.astro
+├── shared/                          # Components used across multiple page types
+└── notifications/                   # Notification system (used in layout/header)
+```
+
+**Import Examples:**
+```tsx
+// Generic components (root)
+import Button from '@/components/Button.astro';
+import { FormField, Input } from '@/components/base';
+import { LoadingButton, TagInput } from '@/components/interactive';
+
+// Page-specific components
+import { ProductEditForm, ProductVariantManager } from '@/components/products';
+import { AssetEditForm, AssetRoyaltyManager } from '@/components/assets';
+import { NotificationCenter } from '@/components/notifications';
+```
+
+**Key Principles:**
+- **Mirror pages/** - Component directories match page routes
+- **Generic components in root** - Button, Card, Breadcrumb, etc. used everywhere
+- **Co-located CSS** - CSS files next to component files
+- **Barrel exports** - index.ts in each directory for clean imports
+
 ## Routing & Pages
 
 Astro file-based routing in `/src/pages/`:
@@ -173,7 +225,7 @@ Most entities have `deleted` boolean and `deleted_at` timestamp. Never hard-dele
 
 ## SolidJS Island Pattern
 
-Interactive components go in `/src/components/islands/` (not yet created). Use Signals for reactive state:
+Interactive components are organized by domain (e.g., `/src/components/products/`, `/src/components/assets/`) or in `/src/components/interactive/` for generic reusable components. Use Signals for reactive state:
 
 ```tsx
 // Example: SignInForm.tsx

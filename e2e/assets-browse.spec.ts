@@ -11,19 +11,19 @@ test.describe('Asset Browse and Search', () => {
       title: 'Game Board Design',
       description: 'A beautiful game board design for tabletop games',
       tags: ['board-game', 'design'],
-      status: 'published' as const,
+      status: 'public' as const,
     },
     {
       title: '3D Miniature STL',
       description: '3D printable miniature files in STL format',
       tags: ['3d-model', 'miniature'],
-      status: 'published' as const,
+      status: 'public' as const,
     },
     {
       title: 'Rulebook Template',
       description: 'Professional rulebook template for board games',
       tags: ['template', 'rulebook'],
-      status: 'published' as const,
+      status: 'public' as const,
     },
     {
       title: 'Draft Asset',
@@ -82,16 +82,16 @@ test.describe('Asset Browse and Search', () => {
     // Should show the assets grid
     await expect(page.locator('.assets-grid')).toBeVisible();
 
-    // Should show at least 3 published assets (draft should not be visible)
+    // Should show at least 3 public assets (draft should not be visible)
     const assetCards = page.locator('.asset-card');
     const count = await assetCards.count();
     expect(count).toBeGreaterThanOrEqual(3);
   });
 
-  test('should only show published assets to non-owners', async ({ page }) => {
+  test('should only show public assets to non-owners', async ({ page }) => {
     await page.goto('/assets');
 
-    // Should show published assets
+    // Should show public assets
     await expect(page.locator('text=Game Board Design')).toBeVisible();
     await expect(page.locator('text=3D Miniature STL')).toBeVisible();
     await expect(page.locator('text=Rulebook Template')).toBeVisible();
@@ -165,7 +165,7 @@ test.describe('Asset Browse and Search', () => {
     // Should redirect to unfiltered page
     await page.waitForURL('/assets', { timeout: 10000 });
 
-    // Should show all published assets again
+    // Should show all public assets again
     const assetCards = page.locator('.asset-card');
     const count = await assetCards.count();
     expect(count).toBeGreaterThanOrEqual(3);
@@ -291,11 +291,11 @@ test.describe('Asset Browse and Search', () => {
     await page.goto('/assets');
 
     // Owner should see all assets including drafts when viewing their profile
-    // But on the public browse page, only published assets are shown
+    // But on the public browse page, only public assets are shown
     const assetCards = page.locator('.asset-card');
     const count = await assetCards.count();
 
-    // Should show at least the 3 published assets
+    // Should show at least the 3 public assets
     expect(count).toBeGreaterThanOrEqual(3);
   });
 });

@@ -3,7 +3,7 @@
 -- Similar to how asset chat works
 
 -- Drop existing permissive chat message policies
-DROP POLICY IF EXISTS "Chat messages visible for published products" ON product_chat_messages;
+DROP POLICY IF EXISTS "Chat messages visible for public products" ON product_chat_messages;
 DROP POLICY IF EXISTS "Authenticated users can post chat messages" ON product_chat_messages;
 
 -- Create new policies that restrict to contributors only

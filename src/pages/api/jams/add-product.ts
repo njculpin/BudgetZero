@@ -52,9 +52,9 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     return redirect("/jams?error=" + encodeURIComponent("You don't own this product"));
   }
 
-  // Verify the product is published
-  if (product.status !== "published") {
-    return redirect("/jams?error=" + encodeURIComponent("Only published products can be submitted to jams"));
+  // Verify the product is public
+  if (product.status !== "public") {
+    return redirect("/jams?error=" + encodeURIComponent("Only public products can be submitted to jams"));
   }
 
   // Verify the jam exists and is active (based on dates)

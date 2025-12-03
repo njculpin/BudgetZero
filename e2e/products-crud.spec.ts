@@ -37,7 +37,7 @@ test.describe('Product CRUD Operations', () => {
     await page.goto('/assets/new');
     await page.fill('input[name="title"]', 'Test Asset for Product');
     await page.fill('textarea[name="description"]', 'This asset will be linked to a product');
-    await page.selectOption('select[name="status"]', 'published');
+    await page.selectOption('select[name="status"]', 'public');
     await page.click('form button[type="submit"]:has-text("Create Asset")');
     await page.waitForURL(/\/assets\/.*/, { timeout: 10000 });
 
@@ -69,7 +69,7 @@ test.describe('Product CRUD Operations', () => {
     await tagInput.press('Enter');
 
     // Select status
-    await page.selectOption('select[name="status"]', 'published');
+    await page.selectOption('select[name="status"]', 'public');
 
     // Submit the form
     await page.click('form button[type="submit"]:has-text("Create Product")');
@@ -102,7 +102,7 @@ test.describe('Product CRUD Operations', () => {
     await expect(page.locator('text=' + TEST_PRODUCT_TITLE)).toBeVisible();
     await expect(page.locator('text=' + TEST_PRODUCT_DESCRIPTION)).toBeVisible();
     await expect(page.locator('text=' + TEST_PRODUCT_TAG)).toBeVisible();
-    await expect(page.locator('text=published')).toBeVisible();
+    await expect(page.locator('text=public')).toBeVisible();
 
     // Verify owner can see Edit and Delete buttons
     await expect(page.locator('button:has-text("Edit")')).toBeVisible();
@@ -392,7 +392,7 @@ test.describe('Product CRUD Operations', () => {
     await page.goto('/products/new');
     await page.fill('input[name="title"]', 'Protected Product');
     await page.fill('textarea[name="description"]', 'This product should not be editable by others');
-    await page.selectOption('select[name="status"]', 'published');
+    await page.selectOption('select[name="status"]', 'public');
     await page.click('form button[type="submit"]:has-text("Create Product")');
     await page.waitForURL(/\/products\/.*/, { timeout: 10000 });
 

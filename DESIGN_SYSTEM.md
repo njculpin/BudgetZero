@@ -55,7 +55,7 @@ Game Loopers implements different status systems for **products** (3-state) and 
 | Status | Description | Visibility |
 |--------|-------------|------------|
 | `draft` | Work in progress | Owner only |
-| `published` | Ready for sale | Public |
+| `public` | Ready for sale | Public |
 | `archived` | Removed from listings | Owner only |
 
 #### Asset Status (4-State)
@@ -83,7 +83,7 @@ Game Loopers implements different status systems for **products** (3-state) and 
 
 #### Product Publishing Validation
 
-**Critical Rule**: Products can only be published if ALL linked assets have `status='private'` OR `status='public'`.
+**Critical Rule**: Products can only be public if ALL linked assets have `status='private'` OR `status='public'`.
 
 This validation is enforced at the database level via the `validate_product_asset_status_trigger` trigger.
 
@@ -125,8 +125,8 @@ Assets must have status = 'private' or 'public' (not draft or archived) before p
 **Edge Cases Handled**:
 - ✅ Soft-deleted assets are ignored in validation
 - ✅ Soft-deleted variants are ignored in validation
-- ✅ Empty products (no assets) can be published
-- ✅ Status can be changed from published → draft without validation
+- ✅ Empty products (no assets) can be public
+- ✅ Status can be changed from public → draft without validation
 - ✅ Other product fields can be updated while assets are draft
 - ✅ Asset status changes after product publish don't unpublish the product
 - ✅ Mix of private and public assets is allowed in same product
@@ -787,10 +787,10 @@ Defined in `/src/styles/global.css` (as of 2024-11-24):
    - Implemented 4-state asset status system: `draft`, `private`, `public`, `archived`
    - **Private assets**: Exclusive to owner's products (default after publishing from draft)
    - **Public assets**: Visible in marketplace, usable by all users (with royalties)
-   - Added database validation: Products can only be published if assets are `private` OR `public` (not draft/archived)
+   - Added database validation: Products can only be public if assets are `private` OR `public` (not draft/archived)
    - Database trigger: `validate_product_asset_status_trigger` enforces asset readiness before product publish
    - RLS policies updated: Only `public` assets viewable by everyone; `private` assets owner-only
-   - Migration file: `20251125_add_asset_status_validation.sql` (includes data migration: `published` → `private`)
+   - Migration file: `20251125_add_asset_status_validation.sql` (includes data migration: `public` → `private`)
    - P0 security tests: 14 comprehensive tests covering all edge cases and both private/public scenarios
    - **Business Rule**: Creators must set assets to private or public before publishing products (prevents customers from purchasing products with unavailable downloads)
 
@@ -804,7 +804,7 @@ Defined in `/src/styles/global.css` (as of 2024-11-24):
    - Fixed invalid HTML (button inside anchor) in BrowseCTA
 
 3. **Security Fixes**:
-   - Product status filter: Only `status='published'` products visible publicly
+   - Product status filter: Only `status='public'` products visible publicly
    - Payout balance query: Correctly filters `status='ready_to_pay'` royalties
 
 ---

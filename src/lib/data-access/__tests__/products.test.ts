@@ -65,14 +65,14 @@ describe('Product Data Access Layer', () => {
       const product = await createProduct(testUserId, {
         title: 'Test Product for E2E',
         description: 'This is a test product',
-        status: 'published',
+        status: 'public',
       });
 
       expect(product).toBeDefined();
       expect(product?.user_id).toBe(testUserId);
       expect(product?.title).toBe('Test Product for E2E');
       expect(product?.description).toBe('This is a test product');
-      expect(product?.status).toBe('published');
+      expect(product?.status).toBe('public');
       expect(product?.handle).toBe('test-product-for-e2e');
       expect(product?.deleted).toBe(false);
 
@@ -103,12 +103,12 @@ describe('Product Data Access Layer', () => {
     it('should handle duplicate handles by appending counter', async () => {
       const product1 = await createProduct(testUserId, {
         title: 'Unique Title Test',
-        status: 'published',
+        status: 'public',
       });
 
       const product2 = await createProduct(testUserId, {
         title: 'Unique Title Test',
-        status: 'published',
+        status: 'public',
       });
 
       expect(product1?.handle).toBe('unique-title-test');
@@ -141,7 +141,7 @@ describe('Product Data Access Layer', () => {
     it('should not return deleted products', async () => {
       const tempProduct = await createProduct(testUserId, {
         title: 'To Be Deleted',
-        status: 'published',
+        status: 'public',
       });
 
       expect(tempProduct).toBeDefined();
@@ -174,7 +174,7 @@ describe('Product Data Access Layer', () => {
     it('should not return deleted products', async () => {
       const tempProduct = await createProduct(testUserId, {
         title: 'Handle Deletion Test',
-        status: 'published',
+        status: 'public',
       });
 
       const handle = tempProduct!.handle;
@@ -190,15 +190,15 @@ describe('Product Data Access Layer', () => {
   });
 
   describe('P0 SECURITY: getAllProducts - Status Filtering', () => {
-    it('should only return published products', async () => {
+    it('should only return public products', async () => {
       const products = await getAllProducts();
 
       expect(products).toBeDefined();
       expect(Array.isArray(products)).toBe(true);
 
-      // Verify all returned products are published
-      const allPublished = products.every(p => p.status === 'published');
-      expect(allPublished).toBe(true);
+      // Verify all returned products are public
+      const allpublic = products.every(p => p.status === 'public');
+      expect(allpublic).toBe(true);
 
       // Verify draft product is NOT included
       const hasDraft = products.some(p => p.id === draftProductId);
@@ -212,11 +212,11 @@ describe('Product Data Access Layer', () => {
       expect(hasDraft).toBe(false);
     });
 
-    it('should not return products with status other than published', async () => {
+    it('should not return products with status other than public', async () => {
       // Create products with various statuses
       const archivedProduct = await createProduct(testUserId, {
         title: 'Archived Product',
-        status: 'archived' as 'published',
+        status: 'archived' as 'public',
       });
 
       const products = await getAllProducts();
@@ -233,12 +233,12 @@ describe('Product Data Access Layer', () => {
       await createProductTag(draftProductId, 'security-test');
     });
 
-    it('should only return published products when filtering by tag', async () => {
+    it('should only return public products when filtering by tag', async () => {
       const products = await getProductsByTag('security-test');
 
-      // Should include published product
-      const hasPublished = products.some(p => p.id === testProductId);
-      expect(hasPublished).toBe(true);
+      // Should include public product
+      const haspublic = products.some(p => p.id === testProductId);
+      expect(haspublic).toBe(true);
 
       // Should NOT include draft product
       const hasDraft = products.some(p => p.id === draftProductId);
@@ -272,20 +272,20 @@ describe('Product Data Access Layer', () => {
 
       expect(updatedProduct?.status).toBe('draft');
 
-      // Restore to published for other tests
-      await updateProduct(testProductId, { status: 'published' });
+      // Restore to public for other tests
+      await updateProduct(testProductId, { status: 'public' });
     });
 
     it('should handle handle collision when updating title', async () => {
       // Create a product with a specific handle
       const product1 = await createProduct(testUserId, {
         title: 'Collision Test 1',
-        status: 'published',
+        status: 'public',
       });
 
       const product2 = await createProduct(testUserId, {
         title: 'Different Title',
-        status: 'published',
+        status: 'public',
       });
 
       // Try to update product2 to have the same title as product1
@@ -301,12 +301,12 @@ describe('Product Data Access Layer', () => {
     it('should throw error if custom handle is taken', async () => {
       const product1 = await createProduct(testUserId, {
         title: 'Product A',
-        status: 'published',
+        status: 'public',
       });
 
       const product2 = await createProduct(testUserId, {
         title: 'Product B',
-        status: 'published',
+        status: 'public',
       });
 
       await expect(
@@ -331,7 +331,7 @@ describe('Product Data Access Layer', () => {
     it('should soft delete a product', async () => {
       const tempProduct = await createProduct(testUserId, {
         title: 'To Delete',
-        status: 'published',
+        status: 'public',
       });
 
       const result = await deleteProduct(tempProduct!.id);
@@ -366,20 +366,20 @@ describe('Product Data Access Layer', () => {
       expect(allOwnedByUser).toBe(true);
     });
 
-    it('should include both published and draft products for owner', async () => {
+    it('should include both public and draft products for owner', async () => {
       const products = await getUserProducts(testUserId);
 
-      const hasPublished = products.some(p => p.id === testProductId);
+      const haspublic = products.some(p => p.id === testProductId);
       const hasDraft = products.some(p => p.id === draftProductId);
 
-      expect(hasPublished).toBe(true);
+      expect(haspublic).toBe(true);
       expect(hasDraft).toBe(true);
     });
 
     it('should not include deleted products', async () => {
       const tempProduct = await createProduct(testUserId, {
         title: 'User Products Delete Test',
-        status: 'published',
+        status: 'public',
       });
 
       await deleteProduct(tempProduct!.id);
@@ -607,10 +607,10 @@ describe('Product Data Access Layer', () => {
 
       // Should succeed
       const updatedProduct = await updateProduct(assetValidationProductId, {
-        status: 'published',
+        status: 'public',
       });
 
-      expect(updatedProduct?.status).toBe('published');
+      expect(updatedProduct?.status).toBe('public');
     });
 
     it('should allow publishing product with public assets', async () => {
@@ -619,10 +619,10 @@ describe('Product Data Access Layer', () => {
 
       // Should succeed
       const updatedProduct = await updateProduct(assetValidationProductId, {
-        status: 'published',
+        status: 'public',
       });
 
-      expect(updatedProduct?.status).toBe('published');
+      expect(updatedProduct?.status).toBe('public');
     });
 
     it('should allow publishing product with mix of private and public assets', async () => {
@@ -632,10 +632,10 @@ describe('Product Data Access Layer', () => {
 
       // Should succeed
       const updatedProduct = await updateProduct(assetValidationProductId, {
-        status: 'published',
+        status: 'public',
       });
 
-      expect(updatedProduct?.status).toBe('published');
+      expect(updatedProduct?.status).toBe('public');
     });
 
     it('should prevent publishing product with draft assets', async () => {
@@ -644,7 +644,7 @@ describe('Product Data Access Layer', () => {
 
       // Should throw error
       await expect(
-        updateProduct(assetValidationProductId, { status: 'published' })
+        updateProduct(assetValidationProductId, { status: 'public' })
       ).rejects.toThrow(/Cannot publish product.*not ready/i);
 
       // Verify product remains draft
@@ -658,7 +658,7 @@ describe('Product Data Access Layer', () => {
 
       // Should throw error
       await expect(
-        updateProduct(assetValidationProductId, { status: 'published' })
+        updateProduct(assetValidationProductId, { status: 'public' })
       ).rejects.toThrow(/Cannot publish product.*not ready/i);
 
       // Verify product remains draft
@@ -673,7 +673,7 @@ describe('Product Data Access Layer', () => {
 
       // Should throw error due to draft asset
       await expect(
-        updateProduct(assetValidationProductId, { status: 'published' })
+        updateProduct(assetValidationProductId, { status: 'public' })
       ).rejects.toThrow(/Cannot publish product.*not ready/i);
 
       // Verify product remains draft
@@ -688,7 +688,7 @@ describe('Product Data Access Layer', () => {
 
       // Should throw error due to archived asset
       await expect(
-        updateProduct(assetValidationProductId, { status: 'published' })
+        updateProduct(assetValidationProductId, { status: 'public' })
       ).rejects.toThrow(/Cannot publish product.*not ready/i);
 
       // Verify product remains draft
@@ -696,12 +696,12 @@ describe('Product Data Access Layer', () => {
       expect(product?.status).toBe('draft');
     });
 
-    it('should allow product to remain published if asset status changes after publish', async () => {
+    it('should allow product to remain public if asset status changes after publish', async () => {
       // Link private asset
       await linkAssetToVariant(assetValidationVariantId, privateAssetId);
 
       // Publish product
-      await updateProduct(assetValidationProductId, { status: 'published' });
+      await updateProduct(assetValidationProductId, { status: 'public' });
 
       // Change asset to draft (this is allowed - no trigger on asset updates)
       await supabase
@@ -709,14 +709,14 @@ describe('Product Data Access Layer', () => {
         .update({ status: 'draft' })
         .eq('id', privateAssetId);
 
-      // Product should still be published
+      // Product should still be public
       const product = await getProductById(assetValidationProductId);
-      expect(product?.status).toBe('published');
+      expect(product?.status).toBe('public');
 
       // But attempting to publish again should fail
       await updateProduct(assetValidationProductId, { status: 'draft' });
       await expect(
-        updateProduct(assetValidationProductId, { status: 'published' })
+        updateProduct(assetValidationProductId, { status: 'public' })
       ).rejects.toThrow(/Cannot publish product.*not ready/i);
     });
 
@@ -749,7 +749,7 @@ describe('Product Data Access Layer', () => {
 
       // Should fail due to draft asset in variant 2
       await expect(
-        updateProduct(assetValidationProductId, { status: 'published' })
+        updateProduct(assetValidationProductId, { status: 'public' })
       ).rejects.toThrow(/Cannot publish product.*not ready/i);
     });
 
@@ -758,10 +758,10 @@ describe('Product Data Access Layer', () => {
 
       // Should succeed (empty product is allowed)
       const updatedProduct = await updateProduct(assetValidationProductId, {
-        status: 'published',
+        status: 'public',
       });
 
-      expect(updatedProduct?.status).toBe('published');
+      expect(updatedProduct?.status).toBe('public');
     });
 
     it('should ignore soft-deleted assets in validation', async () => {
@@ -776,10 +776,10 @@ describe('Product Data Access Layer', () => {
 
       // Should succeed because deleted assets are ignored
       const updatedProduct = await updateProduct(assetValidationProductId, {
-        status: 'published',
+        status: 'public',
       });
 
-      expect(updatedProduct?.status).toBe('published');
+      expect(updatedProduct?.status).toBe('public');
     });
 
     it('should ignore soft-deleted variants in validation', async () => {
@@ -794,10 +794,10 @@ describe('Product Data Access Layer', () => {
 
       // Should succeed because deleted variants are ignored
       const updatedProduct = await updateProduct(assetValidationProductId, {
-        status: 'published',
+        status: 'public',
       });
 
-      expect(updatedProduct?.status).toBe('published');
+      expect(updatedProduct?.status).toBe('public');
     });
   });
 });

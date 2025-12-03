@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS public.assets (
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     description TEXT,
-    status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
+    status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'public', 'archived')),
     download_count INTEGER DEFAULT 0 NOT NULL,
     total_size_bytes BIGINT DEFAULT 0 NOT NULL,
     file_count INTEGER DEFAULT 0 NOT NULL,
@@ -55,11 +55,11 @@ ALTER TABLE public.asset_files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.asset_images ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for assets table
--- Anyone can view published, non-deleted assets
-CREATE POLICY "Published assets are viewable by everyone"
+-- Anyone can view public, non-deleted assets
+CREATE POLICY "public assets are viewable by everyone"
     ON public.assets
     FOR SELECT
-    USING (status = 'published' AND deleted = false);
+    USING (status = 'public' AND deleted = false);
 
 -- Owners can view their own assets (all statuses)
 CREATE POLICY "Users can view own assets"
@@ -86,8 +86,8 @@ CREATE POLICY "Users can delete own assets"
     USING (auth.uid() = user_id);
 
 -- RLS Policies for asset_files table
--- Anyone can view files for published assets
-CREATE POLICY "Asset files are viewable for published assets"
+-- Anyone can view files for public assets
+CREATE POLICY "Asset files are viewable for public assets"
     ON public.asset_files
     FOR SELECT
     USING (
@@ -95,7 +95,7 @@ CREATE POLICY "Asset files are viewable for published assets"
         EXISTS (
             SELECT 1 FROM public.assets
             WHERE assets.id = asset_files.asset_id
-            AND assets.status = 'published'
+            AND assets.status = 'public'
             AND assets.deleted = false
         )
     );
@@ -149,7 +149,7 @@ CREATE POLICY "Users can delete own asset files"
     );
 
 -- RLS Policies for asset_images table (same pattern as asset_files)
-CREATE POLICY "Asset images are viewable for published assets"
+CREATE POLICY "Asset images are viewable for public assets"
     ON public.asset_images
     FOR SELECT
     USING (
@@ -157,7 +157,7 @@ CREATE POLICY "Asset images are viewable for published assets"
         EXISTS (
             SELECT 1 FROM public.assets
             WHERE assets.id = asset_images.asset_id
-            AND assets.status = 'published'
+            AND assets.status = 'public'
             AND assets.deleted = false
         )
     );
@@ -247,7 +247,7 @@ CREATE POLICY "Users can upload files to their own assets"
         auth.uid()::text = (storage.foldername(name))[1]
     );
 
-CREATE POLICY "Anyone can view files for published assets"
+CREATE POLICY "Anyone can view files for public assets"
     ON storage.objects
     FOR SELECT
     USING (bucket_id = 'asset-files');

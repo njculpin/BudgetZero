@@ -1,0 +1,43 @@
+---
+import Card from "@/components/Card.astro";
+import CardContent from "@/components/CardContent.astro";
+
+interface Props {
+  title: string;
+  content?: string | null;
+}
+
+const { title, content } = Astro.props;
+---
+
+{content && (
+  <Card>
+    <CardContent>
+      <div class="jam-section">
+        <h2 class="jam-section__title">{title}</h2>
+        <p class="jam-section__text">{content}</p>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+<style>
+  .jam-section {
+    padding: var(--spacing-lg) 0;
+  }
+
+  .jam-section__title {
+    margin: 0 0 var(--spacing-2xl) 0;
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+  }
+
+  .jam-section__text {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--foreground);
+    line-height: var(--leading-relaxed);
+    white-space: pre-wrap;
+  }
+</style>

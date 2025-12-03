@@ -124,7 +124,7 @@ When an asset's `royalty_fixed_total` changes, the system automatically:
 **System Response:**
 - New total asset cost: $45 (still under $50)
 - **Action**: Creates warning notification
-- **Product Status**: Remains published
+- **Product Status**: Remains public
 - **Notification**: "Asset 'Fantasy Map Pack' price changed from $10 to $25. Please review your product pricing."
 
 **If Price Increased to $30:**
@@ -368,7 +368,7 @@ Isolated functions for notification database operations:
 1. **Asset Price Change (No Conflict)**
    - [ ] Update asset price within product budget
    - [ ] Verify notification created
-   - [ ] Verify product stays published
+   - [ ] Verify product stays public
    - [ ] Check `needs_attention = true`
 
 2. **Asset Price Change (Conflict)**

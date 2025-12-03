@@ -5,10 +5,8 @@ import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
-import Button from "@/components/Button.astro";
 import { setSession } from "@/lib/auth";
 import { getUserById } from "@/lib/data-access/users";
-import type { Payout } from "@/types/payouts.types";
 
 // Check authentication
 let currentUser = null;
@@ -177,6 +175,8 @@ if (!user) {
 </Layout>
 
 <script>
+import type { Payout } from "@/types";
+
   let availableBalanceCents = 0;
 
   async function loadData() {

@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS public.products (
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
-  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'public', 'archived')),
   view_count INTEGER NOT NULL DEFAULT 0,
-  published_at TIMESTAMPTZ,
+  public_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted BOOLEAN NOT NULL DEFAULT FALSE,
@@ -364,12 +364,12 @@ CREATE TRIGGER set_updated_at_product_chat_message_attachments
 -- ============================================
 
 -- Function to validate product publish based on asset status
--- Products can only be published if assets are 'private' OR 'public' (not draft/archived)
+-- Products can only be public if assets are 'private' OR 'public' (not draft/archived)
 CREATE OR REPLACE FUNCTION validate_product_asset_status()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Only validate when status is changing to 'published'
-  IF NEW.status = 'published' AND (OLD.status IS NULL OR OLD.status != 'published') THEN
+  -- Only validate when status is changing to 'public'
+  IF NEW.status = 'public' AND (OLD.status IS NULL OR OLD.status != 'public') THEN
     -- Check if product has any assets that are NOT private or public
     IF EXISTS (
       SELECT 1
@@ -390,7 +390,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION validate_product_asset_status() IS
-  'Validates that a product can only be published if all linked assets have status = ''private'' or ''public''. This ensures customers cannot purchase products with draft or archived assets. Private assets are exclusive to the owner, while public assets can be used in other users'' products.';
+  'Validates that a product can only be public if all linked assets have status = ''private'' or ''public''. This ensures customers cannot purchase products with draft or archived assets. Private assets are exclusive to the owner, while public assets can be used in other users'' products.';
 
 -- Create trigger on products table
 CREATE TRIGGER validate_product_asset_status_trigger
@@ -417,9 +417,9 @@ ALTER TABLE public.product_chat_message_reactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.product_chat_message_attachments ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for products
-CREATE POLICY "Published products are viewable by everyone"
+CREATE POLICY "public products are viewable by everyone"
   ON public.products FOR SELECT
-  USING (status = 'published' AND deleted = FALSE);
+  USING (status = 'public' AND deleted = FALSE);
 
 CREATE POLICY "Users can view own products"
   ON public.products FOR SELECT
@@ -444,7 +444,7 @@ CREATE POLICY "Product variants visible via product"
     EXISTS (
       SELECT 1 FROM public.products
       WHERE products.id = product_variants.product_id
-      AND (products.status = 'published' OR products.user_id = auth.uid())
+      AND (products.status = 'public' OR products.user_id = auth.uid())
       AND products.deleted = FALSE
     )
   );
@@ -467,7 +467,7 @@ CREATE POLICY "Prices visible via variant"
       SELECT 1 FROM public.product_variants pv
       JOIN public.products p ON p.id = pv.product_id
       WHERE pv.id = product_variant_prices.variant_id
-      AND (p.status = 'published' OR p.user_id = auth.uid())
+      AND (p.status = 'public' OR p.user_id = auth.uid())
       AND p.deleted = FALSE
     )
   );
@@ -492,7 +492,7 @@ CREATE POLICY "Price breaks visible via variant"
       JOIN public.product_variants pv ON pv.id = pvp.variant_id
       JOIN public.products p ON p.id = pv.product_id
       WHERE pvp.id = product_price_breaks.price_id
-      AND (p.status = 'published' OR p.user_id = auth.uid())
+      AND (p.status = 'public' OR p.user_id = auth.uid())
       AND p.deleted = FALSE
     )
   );
@@ -517,7 +517,7 @@ CREATE POLICY "Product assets visible via variant"
       SELECT 1 FROM public.product_variants pv
       JOIN public.products p ON p.id = pv.product_id
       WHERE pv.id = product_assets.variant_id
-      AND (p.status = 'published' OR p.user_id = auth.uid())
+      AND (p.status = 'public' OR p.user_id = auth.uid())
       AND p.deleted = FALSE
     )
   );
@@ -540,7 +540,7 @@ CREATE POLICY "Product tags visible via product"
     EXISTS (
       SELECT 1 FROM public.products
       WHERE products.id = product_tags.product_id
-      AND (products.status = 'published' OR products.user_id = auth.uid())
+      AND (products.status = 'public' OR products.user_id = auth.uid())
       AND products.deleted = FALSE
     )
   );
@@ -562,7 +562,7 @@ CREATE POLICY "Product images visible via product"
     EXISTS (
       SELECT 1 FROM public.products
       WHERE products.id = product_images.product_id
-      AND (products.status = 'published' OR products.user_id = auth.uid())
+      AND (products.status = 'public' OR products.user_id = auth.uid())
       AND products.deleted = FALSE
     )
   );
@@ -584,7 +584,7 @@ CREATE POLICY "Variant images visible via product"
     EXISTS (
       SELECT 1 FROM public.products
       WHERE products.id = product_variant_images.product_id
-      AND (products.status = 'published' OR products.user_id = auth.uid())
+      AND (products.status = 'public' OR products.user_id = auth.uid())
       AND products.deleted = FALSE
     )
   );
@@ -622,25 +622,25 @@ CREATE POLICY "Product owners can manage collaborators"
   );
 
 -- RLS Policies for product_reviews
-CREATE POLICY "Reviews visible for published products"
+CREATE POLICY "Reviews visible for public products"
   ON public.product_reviews FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM public.products
       WHERE products.id = product_reviews.product_id
-      AND products.status = 'published'
+      AND products.status = 'public'
       AND products.deleted = FALSE
       AND product_reviews.deleted = FALSE
     )
   );
 
-CREATE POLICY "Users can create reviews for published products"
+CREATE POLICY "Users can create reviews for public products"
   ON public.product_reviews FOR INSERT
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.products
       WHERE products.id = product_id
-      AND products.status = 'published'
+      AND products.status = 'public'
       AND products.deleted = FALSE
     )
     AND auth.uid() = user_id

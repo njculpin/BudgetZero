@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS public.activity_feed (
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   entity_type TEXT NOT NULL CHECK (entity_type IN ('user', 'asset', 'document', 'product', 'sale', 'jam')),
   entity_id UUID NOT NULL,
-  action_type TEXT NOT NULL CHECK (action_type IN ('created', 'updated', 'deleted', 'published', 'purchased', 'reviewed')),
+  action_type TEXT NOT NULL CHECK (action_type IN ('created', 'updated', 'deleted', 'public', 'purchased', 'reviewed')),
   snapshot JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -339,7 +339,7 @@ WITH CHECK (
     auth.uid()::text = (storage.foldername(name))[1]
 );
 
-CREATE POLICY "Anyone can view files for published assets"
+CREATE POLICY "Anyone can view files for public assets"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'asset-files');

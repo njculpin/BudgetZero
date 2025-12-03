@@ -1,6 +1,6 @@
 import type { BaseEntity } from "./common.types";
 
-export type ProductStatus = "draft" | "published" | "archived";
+export type ProductStatus = "draft" | "private" | "public" | "archived";
 export type ProductCollaboratorRole = "owner" | "editor" | "viewer";
 
 export interface Product extends BaseEntity {
@@ -10,7 +10,7 @@ export interface Product extends BaseEntity {
   description: string;
   status: ProductStatus;
   view_count: number;
-  published_at: string | null;
+  public_at: string | null;
   needs_attention: boolean;
   attention_reason: string | null;
   attention_since: string | null;

@@ -5,9 +5,9 @@ import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
-import UserEditForm from "@/components/islands/UserEditForm";
+import UserEditForm from "@/components/users/UserEditForm";
 import CardFooter from "@/components/CardFooter.astro";
-import DashboardContentFilter from "@/components/islands/DashboardContentFilter";
+import DashboardContentFilter from "@/components/dashboard/DashboardContentFilter";
 
 import { getUserById } from "@/lib/data-access/users";
 import { getUserProducts, getProductImages } from "@/lib/data-access/products";
@@ -512,7 +512,7 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
   color: #92400e;
 }
 
-.dashboard__content-status--published {
+.dashboard__content-status--public {
   background-color: rgba(209, 250, 229, 0.9);
   color: #065f46;
 }

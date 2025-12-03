@@ -4,19 +4,8 @@ import Badge from "@/components/Badge.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import AddToCartButton from "@/components/islands/AddToCartButton";
-import ProductBasicInfoForm from "@/components/islands/ProductBasicInfoForm";
-import ProductStatusEditor from "@/components/islands/ProductStatusEditor";
-import ProductTagsForm from "@/components/islands/ProductTagsForm";
-import ProductImagesForm from "@/components/islands/ProductImagesForm";
-import ProductChat from "@/components/islands/ProductChat";
-import ProductVariantManager from "@/components/islands/ProductVariantManager";
-import ProductVariantEditor from "@/components/islands/ProductVariantEditor";
-import ProductPriceManager from "@/components/islands/ProductPriceManager";
-import VariantAssetPicker from "@/components/islands/VariantAssetPicker";
-import ProductValueBreakdown from "@/components/islands/ProductValueBreakdown";
-import ProductCostBreakdown from "@/components/islands/ProductCostBreakdown";
-import VariantDeleteButton from "@/components/islands/VariantDeleteButton";
+import { AddToCartButton } from "@/components/cart";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductChat, ProductVariantManager, ProductVariantEditor, ProductPriceManager, VariantAssetPicker, ProductValueBreakdown, ProductCostBreakdown, VariantDeleteButton } from "@/components/products";
 import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getVariantAssets, getProductContributors } from "@/lib/data-access/products";
 import { getAssetImages } from "@/lib/data-access/assets";
 import { getUserById } from "@/lib/data-access/users";
@@ -32,8 +21,8 @@ import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
 import CardFooter from "@/components/CardFooter.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
-import ProductReviewList from "@/components/ProductReviewList.astro";
-import EditableBreadcrumb from "@/components/islands/EditableBreadcrumb";
+import ProductReviewList from "@/components/products/ProductReviewList.astro";
+import { EditableBreadcrumb } from "@/components/interactive";
 
 const { product } = Astro.params;
 
@@ -95,7 +84,7 @@ const productContributors = await getProductContributors(productData.id);
 const contributorIds = productContributors.map(c => c.id);
 const isContributor = currentUser ? contributorIds.includes(currentUser.id) || isOwner : false;
 
-if (productData.status !== 'published' && !isOwner) {
+if (productData.status !== 'public' && !isOwner) {
   return Astro.redirect('/404');
 }
 
@@ -144,8 +133,8 @@ if (jamId) {
       jamSubmissionError = isUpcoming
         ? `Submissions for this jam open on ${startDate.toLocaleDateString()}`
         : `Submissions for this jam closed on ${endDate.toLocaleDateString()}`;
-    } else if (productData.status !== 'published') {
-      jamSubmissionError = "Only published products can be submitted to jams";
+    } else if (productData.status !== 'public') {
+      jamSubmissionError = "Only public products can be submitted to jams";
     } else if (!isOwner) {
       jamSubmissionError = "You must own this product to submit it to a jam";
     }
@@ -366,7 +355,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
                 </a>
               </span>
               <span class="product-hero__divider">•</span>
-              <Badge variant={productData.status as 'draft' | 'published' | 'archived'} size="sm">
+              <Badge variant={productData.status as 'draft' | 'public' | 'archived'} size="sm">
                 {productData.status}
               </Badge>
             </div>

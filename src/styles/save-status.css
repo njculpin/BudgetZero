@@ -1,0 +1,60 @@
+/* ===================================================
+   Save Status Indicator - Consolidated Styles
+   Used by auto-save forms across the application
+   =================================================== */
+
+/* Container for save status indicators */
+.asset-form__save-status,
+.product-form__save-status,
+.document-form__save-status,
+.variant-editor__save-status {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-md);
+  min-height: 24px;
+}
+
+/* Base save status indicator */
+.save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  font-size: var(--text-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-md);
+}
+
+/* Saving state - WCAG AA compliant */
+.save-status--saving {
+  color: oklch(0.35 0 0); /* Darker gray for better contrast */
+  background-color: var(--muted);
+}
+
+/* Saved state - WCAG AA compliant */
+.save-status--saved {
+  color: oklch(0.38 0.15 145); /* Darker green for 4.5:1 contrast */
+  background-color: var(--success-bg);
+}
+
+/* Error state - WCAG AA compliant */
+.save-status--error {
+  color: oklch(0.35 0.245 27.325); /* Darker red for 4.5:1 contrast */
+  background-color: var(--error-bg);
+}
+
+/* Spinner animation for saving state */
+.save-status__spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: save-status-spin 0.6s linear infinite;
+}
+
+@keyframes save-status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

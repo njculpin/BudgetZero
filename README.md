@@ -138,7 +138,7 @@ Assets {
     user_id: uuid ref to Users
     title: string
     description: string
-    status: 'draft' | 'published' | 'archived'
+    status: 'draft' | 'public' | 'archived'
     current_version: number
     download_count: number
     total_size_bytes: number
@@ -155,7 +155,7 @@ AssetVersions {
     version_number: number
     title: string
     description: string
-    status: 'draft' | 'published' | 'archived'
+    status: 'draft' | 'public' | 'archived'
     files_snapshot: jsonb
     images_snapshot: jsonb
     created_by: uuid ref to Users
@@ -309,10 +309,10 @@ Products {
     title: string
     user_id: uuid ref to Users // owner
     description: string
-    status: 'draft' | 'published'
+    status: 'draft' | 'public'
     current_version: number
     view_count: number
-    published_at: timestamp
+    public_at: timestamp
     created_at: timestamp
     updated_at: timestamp
     deleted: boolean
@@ -325,7 +325,7 @@ ProductVersions {
     version_number: number
     title: string
     description: string
-    status: 'draft' | 'published'
+    status: 'draft' | 'public'
     variants_snapshot: jsonb
     assets_snapshot: jsonb
     created_by: uuid ref to Users
@@ -669,7 +669,7 @@ ActivityFeed {
     user_id: uuid ref to Users // who performed the action
     entity_type: 'user' | 'asset' | 'document' | 'product' | 'sale' | 'jam'
     entity_id: uuid
-    action_type: 'created' | 'updated' | 'deleted' | 'published' | 'purchased' | 'reviewed'
+    action_type: 'created' | 'updated' | 'deleted' | 'public' | 'purchased' | 'reviewed'
     snapshot: jsonb
     created_at: timestamp
 }
@@ -746,7 +746,7 @@ LogEvents {
 "/users/[handle]/feed" - allows viewing user activity on a particular user account
 
 "/documents" - allows a user to view and search for their own documents and those they are collaborating on.
-"/documents/[handle]" - allows a user to manage details about their own documents. Documents are never public, they are published as a PDF asset.
+"/documents/[handle]" - allows a user to manage details about their own documents. Documents are never public, they are public as a PDF asset.
 "/documents/[handle]/feed" - allows viewing document activity on a particular document
 
 "/assets" - allows a user to view and search for assets and those they are collaborating on.
