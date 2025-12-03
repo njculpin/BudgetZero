@@ -5,11 +5,14 @@ import NavigationDropdown from "@/components/interactive/NavigationDropdown";
 import NavigationUserMenu from "@/components/interactive/NavigationUserMenu";
 import { setSession } from '@/lib/auth';
 import { getUserById } from '@/lib/data-access/users';
+import { getRecentProducts, getUserProducts, type ProductSummary } from '@/lib/data-access/products';
 
 // Check authentication via cookies
 let isAuthenticated = false;
 let userId: string | null = null;
 let userHandle = '';
+let recentProducts: ProductSummary[] = [];
+let totalProductCount = 0;
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -29,6 +32,11 @@ if (accessToken && refreshToken) {
       if (user) {
         userHandle = user.handle;
       }
+
+      // Fetch recent products for navigation dropdown
+      recentProducts = await getRecentProducts(userId, 5);
+      const allProducts = await getUserProducts(userId);
+      totalProductCount = allProducts.length;
     }
   } catch (error) {
     // User not authenticated
@@ -39,10 +47,6 @@ if (accessToken && refreshToken) {
 const userMenuLinks = [
   { href: `/users/${userHandle}`, label: "Profile" },
   { isDivider: true, label: "" },
-  { href: "/products", label: "My Products" },
-  { href: "/assets", label: "My Assets" },
-  { href: "/documents", label: "My Documents" },
-  { isDivider: true, label: "" },
   { href: "/purchases", label: "Purchases" },
   { href: "/connect/onboarding", label: "Payouts" },
   { isDivider: true, label: "" },
@@ -50,14 +54,12 @@ const userMenuLinks = [
   { isSignOut: true, label: "Sign out" },
 ];
 
-// Mobile navigation links
+// Mobile navigation links (removed My Assets and My Documents)
 const authedLinks = [
   { href: "/products", label: "Products" },
   { href: "/jams", label: "Jams" },
   { href: "/cart", label: "Cart" },
   { href: `/users/${userHandle}`, label: "Profile" },
-  { href: "/assets", label: "My Assets" },
-  { href: "/documents", label: "My Documents" },
   { href: "/purchases", label: "Purchases" },
   { href: "/connect/onboarding", label: "Payouts" },
   { href: "/settings", label: "Settings" },
@@ -95,7 +97,13 @@ const unAuthedLinks = [
               <span slot="text">Cart</span>
             </Button>
           </a>
-          <NavigationUserMenu client:load userHandle={userHandle} links={userMenuLinks} />
+          <NavigationUserMenu
+            client:load
+            userHandle={userHandle}
+            links={userMenuLinks}
+            recentProducts={recentProducts}
+            totalProductCount={totalProductCount}
+          />
         </>
       ) : (
         <>

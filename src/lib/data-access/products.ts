@@ -323,6 +323,52 @@ export const getUserProducts = async (userId: string): Promise<Product[]> => {
   return data as Product[];
 };
 
+/**
+ * Get user's recent products for navigation dropdown
+ * Returns most recent products ordered by updated_at
+ */
+export interface ProductSummary {
+  id: string;
+  handle: string;
+  title: string;
+  status: ProductStatus;
+  updated_at: string;
+  thumbnail_url: string | null;
+}
+
+export const getRecentProducts = async (
+  userId: string,
+  limit: number = 5
+): Promise<ProductSummary[]> => {
+  const { data, error } = await serverClient
+    .from('products')
+    .select('id, handle, title, status, updated_at')
+    .eq('user_id', userId)
+    .eq('deleted', false)
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching recent products:', error);
+    return [];
+  }
+
+  // Fetch first image for each product
+  const productsWithThumbnails = await Promise.all(
+    (data || []).map(async (product) => {
+      const images = await getProductImages(product.id);
+      const thumbnailUrl = images.length > 0 ? images[0].file_url : null;
+
+      return {
+        ...product,
+        thumbnail_url: thumbnailUrl,
+      } as ProductSummary;
+    })
+  );
+
+  return productsWithThumbnails;
+};
+
 // ===== Product Variants =====
 
 /**
