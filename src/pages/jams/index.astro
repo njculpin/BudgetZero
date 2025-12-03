@@ -8,6 +8,8 @@ import { getAllJams } from "@/lib/data-access/jams";
 import { getUserById } from "@/lib/data-access/users";
 import Layout from "@/layouts/Layout.astro";
 import { setSession } from "@/lib/auth";
+import EmptyState from "@/components/EmptyState.astro";
+import { FormSubmitButton } from "@/components/interactive";
 
 const { url } = Astro;
 const searchParams = url.searchParams;
@@ -67,11 +69,15 @@ const jamStatuses = new Map(allJams.map(jam => {
           description="Discover jams from the community"
         />
         {currentUser && (
-          <form method="post" action="/api/jams/create-jam">
-            <Button variant="primary" size="lg">
-              <span slot="text">Create Jam</span>
-            </Button>
-          </form>
+          <FormSubmitButton
+            client:load
+            action="/api/jams/create-jam"
+            method="post"
+            variant="primary"
+            size="lg"
+          >
+            Create Jam
+          </FormSubmitButton>
         )}
       </div>
 
@@ -128,14 +134,23 @@ const jamStatuses = new Map(allJams.map(jam => {
       ) : allJams.length === 0 && (
         <Card>
           <CardContent>
-            <div class="browse-empty">
-              <p class="browse-empty__text">
-                {searchQuery || tagFilter ? "No jams found." : "No jams available yet."}
-              </p>
-              {(searchQuery || tagFilter) && (
-                <a href="/jams" class="browse-empty__link">Clear filters</a>
-              )}
-            </div>
+            {searchQuery || tagFilter ? (
+              <EmptyState
+                icon="search"
+                title="No jams found"
+                description="Try adjusting your search or clearing filters to see more results."
+                actionText="Clear filters"
+                actionHref="/jams"
+              />
+            ) : (
+              <EmptyState
+                icon="jams"
+                title="No jams yet"
+                description="Be the first to create a game jam and bring the community together."
+                actionText={currentUser ? "Create Jam" : "Sign in to create"}
+                actionHref={currentUser ? "/api/jams/create-jam" : "/sign-in"}
+              />
+            )}
           </CardContent>
         </Card>
       )}

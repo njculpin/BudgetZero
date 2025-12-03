@@ -23,6 +23,7 @@ import CardFooter from "@/components/CardFooter.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
 import ProductReviewList from "@/components/products/ProductReviewList.astro";
 import { EditableBreadcrumb } from "@/components/interactive";
+import Breadcrumb from "@/components/Breadcrumb.astro";
 
 const { product } = Astro.params;
 
@@ -323,19 +324,13 @@ const defaultPrice = defaultVariant?.prices?.[0];
           ]}
         />
       ) : (
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <ol class="breadcrumb__list">
-            <li class="breadcrumb__item">
-              <a href="/" class="breadcrumb__link">Home</a>
-            </li>
-            <li class="breadcrumb__item">
-              <a href="/products" class="breadcrumb__link">Products</a>
-            </li>
-            <li class="breadcrumb__item breadcrumb__item--current" aria-current="page">
-              <span class="breadcrumb__current">{productData.title}</span>
-            </li>
-          </ol>
-        </nav>
+        <Breadcrumb
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Products", href: "/products" },
+          ]}
+          currentPage={productData.title}
+        />
       )}
 
       <!-- Hero Section -->

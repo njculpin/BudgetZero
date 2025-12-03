@@ -7,6 +7,7 @@ import CardContent from "@/components/CardContent.astro";
 import { getUserByHandle } from "@/lib/data-access/users";
 import { getUserProducts, getProductImages } from "@/lib/data-access/products";
 import { setSession } from "@/lib/auth";
+import Breadcrumb from "@/components/Breadcrumb.astro";
 
 const { user } = Astro.params;
 
@@ -81,6 +82,15 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
 >
   <div class="page">
     <div class="page__container">
+      <!-- Breadcrumb Navigation -->
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Creators", href: "/users" },
+        ]}
+        currentPage={profileUser.name || profileUser.handle}
+      />
+
       <div class="page-columns__column">
 
       <!-- Public Profile Card -->

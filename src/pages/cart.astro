@@ -8,6 +8,8 @@ import Button from "@/components/Button.astro";
 import CartItemRow from "@/components/cart/CartItemRow";
 import CheckoutButton from "@/components/checkout/CheckoutButton";
 import { setSession } from "@/lib/auth";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import EmptyState from "@/components/EmptyState.astro";
 import { getOrCreateCart, getCartItems } from "@/lib/data-access/cart";
 import { getProductById, getVariantById, getVariantPrices } from "@/lib/data-access/products";
 
@@ -78,6 +80,14 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
 <Layout title="Shopping Cart - Game Loopers">
   <div class="page">
     <div class="page__container">
+      <!-- Breadcrumb Navigation -->
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+        ]}
+        currentPage="Shopping Cart"
+      />
+
       <div class="page__header">
         <h1 class="page__title">Shopping Cart</h1>
       </div>
@@ -148,14 +158,13 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
       ) : (
         <Card>
           <CardContent>
-            <div class="cart-empty">
-              <p class="cart-empty__text">Your cart is empty</p>
-              <a href="/products">
-                <Button variant="primary" size="md">
-                  <span slot="text">Browse Products</span>
-                </Button>
-              </a>
-            </div>
+            <EmptyState
+              icon="cart"
+              title="Your cart is empty"
+              description="Start shopping and add products to your cart to see them here."
+              actionText="Browse Products"
+              actionHref="/products"
+            />
           </CardContent>
         </Card>
       )}

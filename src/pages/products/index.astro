@@ -9,6 +9,8 @@ import { getUserById } from "@/lib/data-access/users";
 import { getAllTags } from "@/lib/data-access/tags";
 import { setSession } from "@/lib/auth";
 import Button from "@/components/Button.astro";
+import EmptyState from "@/components/EmptyState.astro";
+import { FormSubmitButton } from "@/components/interactive";
 
 const { url, cookies } = Astro;
 const searchParams = url.searchParams;
@@ -92,11 +94,15 @@ const productTags = allTags
           description="Discover tabletop games from the community"
         />
         {currentUser && (
-          <form method="post" action="/api/products/create-product">
-              <Button variant="primary" size="lg">
-                  <span slot="text">Create Product</span>
-              </Button>
-          </form>
+          <FormSubmitButton
+            client:load
+            action="/api/products/create-product"
+            method="post"
+            variant="primary"
+            size="lg"
+          >
+            Create Product
+          </FormSubmitButton>
         )}
       </div>
 
@@ -203,14 +209,23 @@ const productTags = allTags
       ) : productsWithDetails.length === 0 && (
         <Card>
           <CardContent>
-            <div class="browse-empty">
-              <p class="browse-empty__text">
-                {searchQuery || tagFilter ? "No products found." : "No products available yet."}
-              </p>
-              {(searchQuery || tagFilter) && (
-                <a href="/products" class="browse-empty__link">Clear filters</a>
-              )}
-            </div>
+            {searchQuery || tagFilter ? (
+              <EmptyState
+                icon="search"
+                title="No products found"
+                description="Try adjusting your search or clearing filters to see more results."
+                actionText="Clear filters"
+                actionHref="/products"
+              />
+            ) : (
+              <EmptyState
+                icon="products"
+                title="No products yet"
+                description="Be the first to create a product and share it with the community."
+                actionText={currentUser ? "Create Product" : "Sign in to create"}
+                actionHref={currentUser ? "/api/products/create-product" : "/sign-in"}
+              />
+            )}
           </CardContent>
         </Card>
       )}

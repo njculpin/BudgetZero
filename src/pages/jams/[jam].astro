@@ -24,6 +24,7 @@ import JamHero from "@/components/jams/JamHero.astro";
 import JamContentSection from "@/components/jams/JamContentSection.astro";
 import AlertMessage from "@/components/AlertMessage.astro";
 import RatingStars from "@/components/RatingStars.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
 
 const { jam: jamHandle } = Astro.params;
 
@@ -157,6 +158,15 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
 <Layout title={`${jam.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
+      <!-- Breadcrumb Navigation -->
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Jams", href: "/jams" },
+        ]}
+        currentPage={jam.title}
+      />
+
       <div class="page-columns__column">
       <!-- Hero Section -->
       <JamHero

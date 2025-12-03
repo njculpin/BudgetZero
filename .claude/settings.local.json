@@ -44,7 +44,9 @@
       "Bash(else echo \".env file not found\")",
       "Bash(if [ -f .env.example ])",
       "Bash(then cat .env.example)",
-      "Bash(else echo \".env.example not found\")"
+      "Bash(else echo \".env.example not found\")",
+      "Bash(rm:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []
