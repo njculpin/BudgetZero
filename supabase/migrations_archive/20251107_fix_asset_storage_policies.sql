@@ -3,7 +3,7 @@
 
 -- Drop existing asset-files policies
 DROP POLICY IF EXISTS "Users can upload files to their own assets" ON storage.objects;
-DROP POLICY IF EXISTS "Anyone can view files for published assets" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can view files for public assets" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update their own asset files" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own asset files" ON storage.objects;
 
@@ -22,7 +22,7 @@ WITH CHECK (
     auth.uid()::text = (storage.foldername(name))[1]
 );
 
-CREATE POLICY "Anyone can view files for published assets"
+CREATE POLICY "Anyone can view files for public assets"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'asset-files');

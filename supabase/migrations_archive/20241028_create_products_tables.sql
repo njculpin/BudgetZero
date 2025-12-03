@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS products (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
-  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'public', 'archived')),
   cover_image_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -90,9 +90,9 @@ ALTER TABLE product_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_tags ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for products
-CREATE POLICY "Published products are viewable by everyone"
+CREATE POLICY "public products are viewable by everyone"
   ON products FOR SELECT
-  USING (status = 'published' AND deleted = FALSE);
+  USING (status = 'public' AND deleted = FALSE);
 
 CREATE POLICY "Users can view own products"
   ON products FOR SELECT
@@ -117,7 +117,7 @@ CREATE POLICY "Product variants visible via product"
     EXISTS (
       SELECT 1 FROM products
       WHERE products.id = product_variants.product_id
-      AND (products.status = 'published' OR products.user_id = auth.uid())
+      AND (products.status = 'public' OR products.user_id = auth.uid())
       AND products.deleted = FALSE
     )
   );
@@ -140,7 +140,7 @@ CREATE POLICY "Prices visible via variant"
       SELECT 1 FROM product_variants pv
       JOIN products p ON p.id = pv.product_id
       WHERE pv.id = product_variant_prices.variant_id
-      AND (p.status = 'published' OR p.user_id = auth.uid())
+      AND (p.status = 'public' OR p.user_id = auth.uid())
       AND p.deleted = FALSE
     )
   );
@@ -164,7 +164,7 @@ CREATE POLICY "Product assets visible via variant"
       SELECT 1 FROM product_variants pv
       JOIN products p ON p.id = pv.product_id
       WHERE pv.id = product_assets.variant_id
-      AND (p.status = 'published' OR p.user_id = auth.uid())
+      AND (p.status = 'public' OR p.user_id = auth.uid())
       AND p.deleted = FALSE
     )
   );
@@ -187,7 +187,7 @@ CREATE POLICY "Product tags visible via product"
     EXISTS (
       SELECT 1 FROM products
       WHERE products.id = product_tags.product_id
-      AND (products.status = 'published' OR products.user_id = auth.uid())
+      AND (products.status = 'public' OR products.user_id = auth.uid())
       AND products.deleted = FALSE
     )
   );

@@ -16,7 +16,7 @@
 5. Achieve first $500 in GMV (Gross Merchandise Value)
 
 **Success Metrics:**
-- 20+ creators with published products
+- 20+ creators with public products
 - 100+ registered users
 - 10+ successful transactions
 - $500+ GMV
@@ -339,7 +339,7 @@ npm run test:e2e
 
 **Commerce Metrics:**
 - Products created: ___
-- Assets published: ___
+- Assets public: ___
 - Transactions completed: ___
 - Total GMV: $___
 - Average order value: $___
@@ -453,7 +453,7 @@ npm run test:e2e
 - [x] 50+ transactions
 - [x] $500+ GMV
 - [x] 4+ NPS from creators
-- [x] 25+ products published
+- [x] 25+ products public
 
 **Exceptional Success:**
 - [x] 100+ transactions

@@ -15,7 +15,7 @@ export type NotificationActionType =
   | 'general';
 
 export type ActivityEntityType = 'user' | 'asset' | 'document' | 'product' | 'sale' | 'jam';
-export type ActivityActionType = 'created' | 'updated' | 'deleted' | 'published' | 'purchased' | 'reviewed';
+export type ActivityActionType = 'created' | 'updated' | 'deleted' | 'public' | 'purchased' | 'reviewed';
 export type VerificationTokenType = 'email_verification' | 'password_reset';
 export type AssetChangeType = 'price' | 'files' | 'royalties' | 'status' | 'metadata';
 

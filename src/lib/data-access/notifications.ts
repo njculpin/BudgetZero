@@ -5,7 +5,7 @@
  * Isolated from direct Supabase SDK usage - all queries go through this layer.
  */
 
-import { createClient } from "../database/client";
+import { serverClient } from "./client";
 import type { Notification, NotificationSettings } from "@/types";
 
 /**
@@ -16,7 +16,7 @@ export async function getNotifications(
   limit: number = 50,
   offset: number = 0
 ): Promise<Notification[]> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { data, error } = await client
     .from("notifications")
@@ -40,7 +40,7 @@ export async function getNotifications(
 export async function getUnreadNotifications(
   userId: string
 ): Promise<Notification[]> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { data, error } = await client
     .from("notifications")
@@ -64,7 +64,7 @@ export async function getUnreadNotifications(
 export async function getUnreadNotificationCount(
   userId: string
 ): Promise<number> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { count, error } = await client
     .from("notifications")
@@ -87,7 +87,7 @@ export async function getUnreadNotificationCount(
 export async function getNotificationById(
   id: string
 ): Promise<Notification | null> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { data, error } = await client
     .from("notifications")
@@ -108,7 +108,7 @@ export async function getNotificationById(
  * Mark a notification as read
  */
 export async function markNotificationAsRead(id: string): Promise<boolean> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { error } = await client
     .from("notifications")
@@ -132,7 +132,7 @@ export async function markNotificationAsRead(id: string): Promise<boolean> {
 export async function markAllNotificationsAsRead(
   userId: string
 ): Promise<boolean> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { error } = await client
     .from("notifications")
@@ -155,7 +155,7 @@ export async function markAllNotificationsAsRead(
  * Soft delete a notification
  */
 export async function deleteNotification(id: string): Promise<boolean> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { error } = await client
     .from("notifications")
@@ -179,7 +179,7 @@ export async function deleteNotification(id: string): Promise<boolean> {
 export async function getNotificationSettings(
   userId: string
 ): Promise<NotificationSettings | null> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { data, error } = await client
     .from("notification_settings")
@@ -205,7 +205,7 @@ export async function getNotificationSettings(
 async function createDefaultNotificationSettings(
   userId: string
 ): Promise<NotificationSettings | null> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { data, error } = await client
     .from("notification_settings")
@@ -230,7 +230,7 @@ export async function updateNotificationSettings(
   userId: string,
   settings: Partial<Omit<NotificationSettings, "id" | "user_id" | "created_at" | "updated_at">>
 ): Promise<NotificationSettings | null> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { data, error } = await client
     .from("notification_settings")
@@ -254,7 +254,7 @@ export async function resolveProductConflict(
   productId: string,
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { data, error } = await client.rpc("resolve_product_conflict", {
     p_product_id: productId,
@@ -281,7 +281,7 @@ export async function getProductsNeedingAttention(
   attention_reason: string;
   attention_since: string;
 }>> {
-  const client = await createClient();
+  const client = serverClient;
 
   const { data, error } = await client
     .from("products")

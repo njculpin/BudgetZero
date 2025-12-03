@@ -207,7 +207,7 @@ CREATE POLICY "Product images visible via product"
     EXISTS (
       SELECT 1 FROM products
       WHERE products.id = product_images.product_id
-      AND (products.status = 'published' OR products.user_id = auth.uid())
+      AND (products.status = 'public' OR products.user_id = auth.uid())
       AND products.deleted = FALSE
     )
   );
@@ -251,7 +251,7 @@ CREATE POLICY "Variant images visible via product"
     EXISTS (
       SELECT 1 FROM products
       WHERE products.id = product_variant_images.product_id
-      AND (products.status = 'published' OR products.user_id = auth.uid())
+      AND (products.status = 'public' OR products.user_id = auth.uid())
       AND products.deleted = FALSE
     )
   );
@@ -275,7 +275,7 @@ CREATE POLICY "Price breaks visible via variant"
       JOIN product_variants pv ON pv.id = pvp.variant_id
       JOIN products p ON p.id = pv.product_id
       WHERE pvp.id = product_price_breaks.price_id
-      AND (p.status = 'published' OR p.user_id = auth.uid())
+      AND (p.status = 'public' OR p.user_id = auth.uid())
       AND p.deleted = FALSE
     )
   );
@@ -293,25 +293,25 @@ CREATE POLICY "Product owners can manage price breaks"
   );
 
 -- RLS Policies for product_reviews
-CREATE POLICY "Reviews visible for published products"
+CREATE POLICY "Reviews visible for public products"
   ON product_reviews FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM products
       WHERE products.id = product_reviews.product_id
-      AND products.status = 'published'
+      AND products.status = 'public'
       AND products.deleted = FALSE
       AND product_reviews.deleted = FALSE
     )
   );
 
-CREATE POLICY "Users can create reviews for published products"
+CREATE POLICY "Users can create reviews for public products"
   ON product_reviews FOR INSERT
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM products
       WHERE products.id = product_id
-      AND products.status = 'published'
+      AND products.status = 'public'
       AND products.deleted = FALSE
     )
     AND auth.uid() = user_id
@@ -326,13 +326,13 @@ CREATE POLICY "Users can delete own reviews"
   USING (auth.uid() = user_id);
 
 -- RLS Policies for product_chat_messages
-CREATE POLICY "Chat messages visible for published products"
+CREATE POLICY "Chat messages visible for public products"
   ON product_chat_messages FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM products
       WHERE products.id = product_chat_messages.product_id
-      AND products.status = 'published'
+      AND products.status = 'public'
       AND products.deleted = FALSE
     )
   );
@@ -343,7 +343,7 @@ CREATE POLICY "Authenticated users can post chat messages"
     EXISTS (
       SELECT 1 FROM products
       WHERE products.id = product_id
-      AND products.status = 'published'
+      AND products.status = 'public'
       AND products.deleted = FALSE
     )
     AND auth.uid() = user_id
@@ -365,7 +365,7 @@ CREATE POLICY "Reactions visible with messages"
       SELECT 1 FROM product_chat_messages pcm
       JOIN products p ON p.id = pcm.product_id
       WHERE pcm.id = product_chat_message_reactions.message_id
-      AND p.status = 'published'
+      AND p.status = 'public'
       AND p.deleted = FALSE
     )
   );
@@ -382,7 +382,7 @@ CREATE POLICY "Attachments visible with messages"
       SELECT 1 FROM product_chat_messages pcm
       JOIN products p ON p.id = pcm.product_id
       WHERE pcm.id = product_chat_message_attachments.message_id
-      AND p.status = 'published'
+      AND p.status = 'public'
       AND p.deleted = FALSE
     )
   );

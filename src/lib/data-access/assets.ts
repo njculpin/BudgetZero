@@ -168,7 +168,7 @@ export const getUserAssets = async (
 };
 
 /**
- * Get all published assets with optional search and tag filtering
+ * Get all public assets with optional search and tag filtering
  * @param searchQuery - Search in title and description
  * @param tags - Filter by tag values
  * @param limit - Maximum number of results (default: 50)
@@ -195,7 +195,7 @@ export const getAssets = async (
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error fetching published assets:", error);
+    console.error("Error fetching public assets:", error);
     return [];
   }
 
@@ -661,7 +661,7 @@ export const getPublicAssets = async (
  * Legacy alias for backward compatibility
  * @deprecated Use getPublicAssets instead
  */
-export const getPublishedAssets = getPublicAssets;
+export const getpublicAssets = getPublicAssets;
 
 /**
  * Get assets by status for the current user
@@ -682,7 +682,7 @@ export const getAssetsByStatus = async (
 };
 
 /**
- * Get popular tags across all published assets
+ * Get popular tags across all public assets
  * Returns tags sorted by usage count (descending)
  * @param limit - Maximum number of tags to return (default: 20)
  */

@@ -2,7 +2,7 @@
 -- This migration updates RLS policies to ensure only asset collaborators can view and post chat messages
 
 -- Drop existing chat message policies
-DROP POLICY IF EXISTS "Chat messages visible for published assets" ON asset_chat_messages;
+DROP POLICY IF EXISTS "Chat messages visible for public assets" ON asset_chat_messages;
 DROP POLICY IF EXISTS "Authenticated users can post chat messages" ON asset_chat_messages;
 
 -- Create new policies that restrict to collaborators only

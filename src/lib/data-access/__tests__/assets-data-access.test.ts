@@ -218,9 +218,9 @@ describe('Asset Data Access Functions - 4-State Status System', () => {
     });
 
     it('should filter by array of statuses', async () => {
-      const publishedAssets = await getUserAssets(TEST_USER_ID, ['private', 'public']);
+      const publicAssets = await getUserAssets(TEST_USER_ID, ['private', 'public']);
 
-      publishedAssets.forEach(asset => {
+      publicAssets.forEach(asset => {
         expect(['private', 'public']).toContain(asset.status);
         expect(asset.user_id).toBe(TEST_USER_ID);
       });

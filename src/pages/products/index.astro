@@ -3,7 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
 import PageHeader from "@/components/PageHeader.astro";
-import BrowseCTA from "@/components/BrowseCTA.astro";
+import BrowseCTA from "@/components/home/BrowseCTA.astro";
 import { getAllProducts, getProductImages, getProductVariants, getVariantPrices } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { getAllTags } from "@/lib/data-access/tags";
@@ -42,6 +42,7 @@ const offset = (page - 1) * limit;
 
 const tagArray = tagFilter ? [tagFilter] : undefined;
 const allProducts = await getAllProducts(searchQuery, tagArray, limit, offset);
+console.log(allProducts)
 
 // Fetch images and prices for each product
 const productsWithDetails = await Promise.all(
@@ -87,7 +88,7 @@ const productTags = allTags
     <div class="page__container">
       <div class="page-header-with-action">
         <PageHeader
-          title="Browse Products"
+          title="Products"
           description="Discover tabletop games from the community"
         />
         {currentUser && (

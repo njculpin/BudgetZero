@@ -14,7 +14,7 @@ ALTER TABLE product_variants DROP COLUMN IF EXISTS sort_order;
 
 -- Update products table to add missing fields from TypeScript Product type
 ALTER TABLE products ADD COLUMN IF NOT EXISTS view_count INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE products ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS public_at TIMESTAMPTZ;
 
 -- Remove cover_image_url as it's not in TypeScript types
 ALTER TABLE products DROP COLUMN IF EXISTS cover_image_url;

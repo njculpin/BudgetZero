@@ -3,7 +3,7 @@ import Button from "@/components/Button.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
 import PageHeader from "@/components/PageHeader.astro";
-import BrowseCTA from "@/components/BrowseCTA.astro";
+import BrowseCTA from "@/components/home/BrowseCTA.astro";
 import { getAllJams } from "@/lib/data-access/jams";
 import { getUserById } from "@/lib/data-access/users";
 import Layout from "@/layouts/Layout.astro";
@@ -63,7 +63,7 @@ const jamStatuses = new Map(allJams.map(jam => {
     <div class="page__container">
       <div class="page-header-with-action">
         <PageHeader
-          title="Browse Jams"
+          title="Jams"
           description="Discover jams from the community"
         />
         {currentUser && (

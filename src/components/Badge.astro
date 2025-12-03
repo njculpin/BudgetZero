@@ -1,6 +1,6 @@
 ---
 interface Props {
-  variant: 'draft' | 'private' | 'public' | 'published' | 'archived' | 'primary' | 'secondary' | 'muted' | 'success' | 'warning' | 'info' | 'error';
+  variant: 'draft' | 'private' | 'public' | 'public' | 'archived' | 'primary' | 'secondary' | 'muted' | 'success' | 'warning' | 'info' | 'error';
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -51,7 +51,7 @@ const { variant, size = 'md' } = Astro.props;
   color: var(--success-fg);
 }
 
-.badge--published {
+.badge--public {
   background-color: var(--success-bg);
   color: var(--success-fg);
 }

@@ -140,6 +140,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Update basic asset info - only include fields that are provided
+    // todo: Typescript
     const updateData = {};
     if (title) {
       updateData.title = title;

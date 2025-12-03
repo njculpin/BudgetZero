@@ -6,7 +6,7 @@ import { z } from "zod";
 const createProductSchema = z.object({
   title: z.string().min(1).max(200).default("Untitled Product"),
   description: z.string().optional(),
-  status: z.enum(["draft", "published", "archived"]).default("draft"),
+  status: z.enum(["draft", "public", "archived"]).default("draft"),
   tags: z.array(z.string()).optional(),
 });
 

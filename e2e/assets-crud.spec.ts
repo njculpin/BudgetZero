@@ -45,7 +45,7 @@ test.describe('Asset CRUD Operations', () => {
     await tagInput.press('Enter');
 
     // Select status
-    await page.selectOption('select[name="status"]', 'published');
+    await page.selectOption('select[name="status"]', 'public');
 
     // Submit the form
     await page.click('form button[type="submit"]:has-text("Create Asset")');
@@ -78,7 +78,7 @@ test.describe('Asset CRUD Operations', () => {
     await expect(page.locator('text=' + TEST_ASSET_TITLE)).toBeVisible();
     await expect(page.locator('text=' + TEST_ASSET_DESCRIPTION)).toBeVisible();
     await expect(page.locator('text=' + TEST_ASSET_TAG)).toBeVisible();
-    await expect(page.locator('text=published')).toBeVisible();
+    await expect(page.locator('text=public')).toBeVisible();
 
     // Verify owner can see Edit and Delete buttons
     await expect(page.locator('button:has-text("Edit")')).toBeVisible();
@@ -207,7 +207,7 @@ test.describe('Asset CRUD Operations', () => {
     await page.goto('/assets/new');
     await page.fill('input[name="title"]', 'Protected Asset');
     await page.fill('textarea[name="description"]', 'This asset should not be editable by others');
-    await page.selectOption('select[name="status"]', 'published');
+    await page.selectOption('select[name="status"]', 'public');
     await page.click('form button[type="submit"]:has-text("Create Asset")');
     await page.waitForURL(/\/assets\/.*/, { timeout: 10000 });
 

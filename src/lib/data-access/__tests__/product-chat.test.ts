@@ -43,7 +43,7 @@ describe('Product Chat Data Access Layer', () => {
     // Create a test product
     const product = await createProduct(testUser1Id, {
       title: 'Test Product for Chat',
-      status: 'published',
+      status: 'public',
     });
 
     if (!product) throw new Error('Failed to create test product');
@@ -162,7 +162,7 @@ describe('Product Chat Data Access Layer', () => {
     it('should return empty array for product with no messages', async () => {
       const product2 = await createProduct(testUser1Id, {
         title: 'Product Without Chat',
-        status: 'published',
+        status: 'public',
       });
 
       const messages = await getProductChatMessages(product2!.id);
@@ -196,7 +196,7 @@ describe('Product Chat Data Access Layer', () => {
       // Create a new product for this test
       const product = await createProduct(testUser1Id, {
         title: 'Product for Conversation Test',
-        status: 'published',
+        status: 'public',
       });
 
       // User 1 starts conversation
@@ -248,7 +248,7 @@ describe('Product Chat Data Access Layer', () => {
     it('should handle multiple messages efficiently', async () => {
       const product = await createProduct(testUser1Id, {
         title: 'Product for Volume Test',
-        status: 'published',
+        status: 'public',
       });
 
       // Create 10 messages

@@ -218,7 +218,7 @@ describe('Asset Chat Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'asset-licensing-discussion',
           title: 'Asset for Licensing Discussion',
-          status: 'published',
+          status: 'public',
         })
         .select()
         .single();
@@ -286,7 +286,7 @@ describe('Asset Chat Data Access Layer', () => {
           user_id: testUser1Id,
           handle: 'asset-collaboration-test',
           title: 'Asset for Collaboration',
-          status: 'published',
+          status: 'public',
         })
         .select()
         .single();

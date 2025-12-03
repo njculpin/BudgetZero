@@ -74,7 +74,7 @@ test.describe('Complete Purchase Flow', () => {
         user_id: creatorUserId,
         title: 'Test Game for Purchase Flow',
         description: 'E2E test product',
-        status: 'published',
+        status: 'public',
         handle: `test-game-purchase-${Date.now()}`,
       })
       .select()
@@ -123,7 +123,7 @@ test.describe('Complete Purchase Flow', () => {
         user_id: creatorUserId,
         title: 'Test Asset with Royalty',
         description: 'Asset for purchase test',
-        status: 'published',
+        status: 'public',
         handle: `test-asset-purchase-${Date.now()}`,
         file_type: 'pdf',
       })

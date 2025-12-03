@@ -18,10 +18,10 @@ import { getUserById } from "@/lib/data-access/users";
 import { getProductImages } from "@/lib/data-access/products";
 import { setSession } from "@/lib/auth";
 import { serverClient } from "@/lib/data-access/client";
-import JamVoting from "@/components/islands/JamVoting";
-import JamResults from "@/components/JamResults.astro";
-import JamHero from "@/components/JamHero.astro";
-import JamContentSection from "@/components/JamContentSection.astro";
+import JamVoting from "@/components/jams/JamVoting";
+import JamResults from "@/components/jams/JamResults.astro";
+import JamHero from "@/components/jams/JamHero.astro";
+import JamContentSection from "@/components/jams/JamContentSection.astro";
 import AlertMessage from "@/components/AlertMessage.astro";
 import RatingStars from "@/components/RatingStars.astro";
 
@@ -85,7 +85,7 @@ if (currentUser) {
     .select("*")
     .eq("user_id", currentUser.id)
     .eq("deleted", false)
-    .eq("status", "published");
+    .eq("status", "public");
 
   if (userProductsData) {
     userProducts = userProductsData;
@@ -374,7 +374,7 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
               )}
               {currentUser && isActive && userProducts.length === 0 && (
                 <p class="submit-product__message">
-                  You don't have any published products to submit.
+                  You don't have any public products to submit.
                 </p>
               )}
               {currentUser && isUpcoming && (

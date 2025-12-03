@@ -25,7 +25,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Jam participation for visibility
 
 **Success Metrics:**
-- Products published
+- Products public
 - Total sales revenue
 - Collaborator count
 - Community engagement (reviews, jam entries)
@@ -54,7 +54,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Portfolio showcase on profile
 
 **Success Metrics:**
-- Assets published (public status)
+- Assets public (public status)
 - Total downloads
 - Royalty earnings from product sales
 - Products using their assets
@@ -390,7 +390,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ## Success Metrics by Persona
 
 ### Game Designer
-- Products published: Target 3-5 per active designer
+- Products public: Target 3-5 per active designer
 - Average product price: $15-25
 - Products using community assets: 60%+ (not just own assets)
 - Jam participation rate: 40% of designers

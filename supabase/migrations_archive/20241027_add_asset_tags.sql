@@ -26,15 +26,15 @@ ALTER TABLE public.asset_tags ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
 
--- Anyone can view tags for published assets
-CREATE POLICY "Tags for published assets are viewable by everyone"
+-- Anyone can view tags for public assets
+CREATE POLICY "Tags for public assets are viewable by everyone"
     ON public.asset_tags FOR SELECT
     USING (
         deleted = false 
         AND EXISTS (
             SELECT 1 FROM public.assets 
             WHERE id = asset_tags.asset_id 
-            AND status = 'published' 
+            AND status = 'public' 
             AND deleted = false
         )
     );

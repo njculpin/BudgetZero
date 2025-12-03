@@ -1,0 +1,19 @@
+// Product components barrel export
+export { default as ProductEditForm } from './ProductEditForm';
+export { default as ProductCreateForm } from './ProductCreateForm';
+export { default as ProductBasicInfoForm } from './ProductBasicInfoForm';
+export { default as ProductTagsForm } from './ProductTagsForm';
+export { default as ProductImagesForm } from './ProductImagesForm';
+export { default as ProductStatusEditor } from './ProductStatusEditor';
+export { default as ProductDeleteButton } from './ProductDeleteButton';
+export { default as ProductChat } from './ProductChat';
+export { default as ProductConflictBanner } from './ProductConflictBanner';
+export { default as ProductVariantManager } from './ProductVariantManager';
+export { default as ProductVariantEditor } from './ProductVariantEditor';
+export { default as VariantCard } from './VariantCard';
+export { default as VariantCreateForm } from './VariantCreateForm';
+export { default as VariantDeleteButton } from './VariantDeleteButton';
+export { default as VariantAssetPicker } from './VariantAssetPicker';
+export { default as ProductPriceManager } from './ProductPriceManager';
+export { default as ProductValueBreakdown } from './ProductValueBreakdown';
+export { default as ProductCostBreakdown } from './ProductCostBreakdown';

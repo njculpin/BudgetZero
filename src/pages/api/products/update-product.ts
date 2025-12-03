@@ -8,13 +8,13 @@ const updateProductSchema = z.object({
   productId: z.string().uuid(),
   title: z.string().min(1).max(200).optional(),
   description: z.string().optional(),
-  status: z.enum(["draft", "published", "archived"]).optional(),
+  status: z.enum(["draft", "public", "archived"]).optional(),
   handle: z.string().optional(),
   tags: z.array(z.string()).optional(),
 });
 
 /**
- * Check if a product can be published by verifying all linked assets are published
+ * Check if a product can be public by verifying all linked assets are public
  */
 async function validatePublishStatus(productId: string): Promise<{ valid: boolean; error?: string }> {
   const variants = await getProductVariants(productId);
@@ -23,10 +23,10 @@ async function validatePublishStatus(productId: string): Promise<{ valid: boolea
     const assets = await getVariantAssets(variant.id);
 
     for (const asset of assets) {
-      if (asset.status !== 'published') {
+      if (asset.status !== 'public') {
         return {
           valid: false,
-          error: `Cannot publish product: Asset "${asset.title}" in variant "${variant.title}" must be published first`
+          error: `Cannot publish product: Asset "${asset.title}" in variant "${variant.title}" must be public first`
         };
       }
     }
@@ -90,7 +90,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     }
 
     // Validate publish status if trying to publish
-    if (validatedData.status === 'published') {
+    if (validatedData.status === 'public') {
       const validation = await validatePublishStatus(validatedData.productId);
       if (!validation.valid) {
         return new Response(JSON.stringify({ error: validation.error }), {
@@ -249,7 +249,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Validate publish status if trying to publish
-    if (status === 'published') {
+    if (status === 'public') {
       const validation = await validatePublishStatus(productId);
       if (!validation.valid) {
         return new Response(JSON.stringify({ error: validation.error }), {
@@ -263,7 +263,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const updateData: {
       title?: string;
       description?: string;
-      status?: "draft" | "published" | "archived";
+      status?: "draft" | "private" | "public" | "archived";
       tags?: string[];
     } = {};
 
@@ -274,7 +274,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       updateData.description = description;
     }
     if (status) {
-      updateData.status = status as "draft" | "published" | "archived";
+      updateData.status = status as "draft" | "public" | "archived";
     }
     if (tagsJson) {
       updateData.tags = JSON.parse(tagsJson);

@@ -162,13 +162,13 @@ CREATE POLICY "Asset owners can manage collaborators"
   );
 
 -- RLS Policies for asset_licenses
-CREATE POLICY "Licenses visible for published assets"
+CREATE POLICY "Licenses visible for public assets"
   ON asset_licenses FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM assets
       WHERE assets.id = asset_licenses.asset_id
-      AND (assets.status = 'published' OR assets.user_id = auth.uid())
+      AND (assets.status = 'public' OR assets.user_id = auth.uid())
       AND assets.deleted = FALSE
     )
   );
@@ -184,13 +184,13 @@ CREATE POLICY "Asset owners can manage licenses"
   );
 
 -- RLS Policies for asset_chat_messages
-CREATE POLICY "Chat messages visible for published assets"
+CREATE POLICY "Chat messages visible for public assets"
   ON asset_chat_messages FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM assets
       WHERE assets.id = asset_chat_messages.asset_id
-      AND assets.status = 'published'
+      AND assets.status = 'public'
       AND assets.deleted = FALSE
     )
   );
@@ -201,7 +201,7 @@ CREATE POLICY "Authenticated users can post chat messages"
     EXISTS (
       SELECT 1 FROM assets
       WHERE assets.id = asset_id
-      AND assets.status = 'published'
+      AND assets.status = 'public'
       AND assets.deleted = FALSE
     )
     AND auth.uid() = user_id
@@ -223,7 +223,7 @@ CREATE POLICY "Reactions visible with messages"
       SELECT 1 FROM asset_chat_messages acm
       JOIN assets a ON a.id = acm.asset_id
       WHERE acm.id = asset_chat_message_reactions.message_id
-      AND a.status = 'published'
+      AND a.status = 'public'
       AND a.deleted = FALSE
     )
   );
@@ -240,7 +240,7 @@ CREATE POLICY "Attachments visible with messages"
       SELECT 1 FROM asset_chat_messages acm
       JOIN assets a ON a.id = acm.asset_id
       WHERE acm.id = asset_chat_message_attachments.message_id
-      AND a.status = 'published'
+      AND a.status = 'public'
       AND a.deleted = FALSE
     )
   );

@@ -4,7 +4,6 @@ import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
-import Button from "@/components/Button.astro";
 import { getUserByHandle } from "@/lib/data-access/users";
 import { getUserProducts, getProductImages } from "@/lib/data-access/products";
 import { setSession } from "@/lib/auth";
@@ -41,11 +40,11 @@ if (accessToken && refreshToken) {
   }
 }
 
-// Fetch user's products (published only for public profile)
+// Fetch user's products (public only for public profile)
 const userProducts = await getUserProducts(profileUser.id);
 
-// Filter for published only
-const publishedProducts = userProducts.filter(product => product.status === 'published');
+// Filter for public only
+const publicProducts = userProducts.filter(product => product.status === 'public');
 
 // Create product content array with images
 type ContentItem = {
@@ -57,7 +56,7 @@ type ContentItem = {
 };
 
 const contentItems: ContentItem[] = await Promise.all(
-  publishedProducts.map(async (product) => {
+  publicProducts.map(async (product) => {
     const images = await getProductImages(product.id);
     const coverImage = images.length > 0
       ? images.sort((a, b) => a.position - b.position)[0]
@@ -113,8 +112,8 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
               <!-- Profile Stats -->
               <div class="profile-stats">
                 <div class="profile-stat">
-                  <span class="profile-stat__value">{publishedProducts.length}</span>
-                  <span class="profile-stat__label">{publishedProducts.length === 1 ? 'Product' : 'Products'}</span>
+                  <span class="profile-stat__value">{publicProducts.length}</span>
+                  <span class="profile-stat__label">{publicProducts.length === 1 ? 'Product' : 'Products'}</span>
                 </div>
                 <div class="profile-stat">
                   <span class="profile-stat__value">
@@ -162,7 +161,7 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
                 <polyline points="21 15 16 10 5 21"/>
               </svg>
               <p class="profile-empty__text">
-                {profileUser.name || profileUser.handle} hasn't published any products yet.
+                {profileUser.name || profileUser.handle} hasn't public any products yet.
               </p>
             </div>
           </CardContent>
