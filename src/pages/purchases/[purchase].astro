@@ -7,6 +7,7 @@ import CardContent from "@/components/CardContent.astro";
 import Badge from "@/components/Badge.astro";
 import { setSession } from "@/lib/auth";
 import { getSaleById, getSaleItems, getSaleItemAssets } from "@/lib/data-access/sales";
+import Breadcrumb from "@/components/Breadcrumb.astro";
 import { getProductById, getVariantById } from "@/lib/data-access/products";
 import { getAssetById } from "@/lib/data-access/assets";
 
@@ -83,6 +84,15 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
 <Layout title={`Purchase #${saleId.slice(0, 8)} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
+      <!-- Breadcrumb Navigation -->
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "My Purchases", href: "/purchases" },
+        ]}
+        currentPage={`Order #${saleId.slice(0, 8)}`}
+      />
+
       <div class="purchase-page">
         {/* Header */}
         <div class="purchase-header">

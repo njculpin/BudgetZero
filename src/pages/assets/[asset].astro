@@ -24,6 +24,7 @@ import AssetStatusRequirements from "@/components/assets/AssetStatusRequirements
 import AssetProductPicker from "@/components/assets/AssetProductPicker";
 import AssetRoyaltyManager from "@/components/assets/AssetRoyaltyManager";
 import EditableBreadcrumb from "@/components/interactive/EditableBreadcrumb";
+import Breadcrumb from "@/components/Breadcrumb.astro";
 
 const { asset } = Astro.params;
 
@@ -106,19 +107,13 @@ const isShopMode = !isContributor;
           ]}
         />
       ) : (
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <ol class="breadcrumb__list">
-            <li class="breadcrumb__item">
-              <a href="/" class="breadcrumb__link">Home</a>
-            </li>
-            <li class="breadcrumb__item">
-              <a href="/assets" class="breadcrumb__link">Assets</a>
-            </li>
-            <li class="breadcrumb__item breadcrumb__item--current" aria-current="page">
-              <span class="breadcrumb__current">{assetData.title}</span>
-            </li>
-          </ol>
-        </nav>
+        <Breadcrumb
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Assets", href: "/assets" },
+          ]}
+          currentPage={assetData.title}
+        />
       )}
 
       <!-- Hero Section -->

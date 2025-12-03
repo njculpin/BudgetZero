@@ -1,10 +1,16 @@
 ---
 import Button from "./Button.astro";
 import NavigationMobile from "@/components/interactive/NavigationMobile";
+import NavigationDropdown from "@/components/interactive/NavigationDropdown";
+import NavigationUserMenu from "@/components/interactive/NavigationUserMenu";
 import { setSession } from '@/lib/auth';
+import { getUserById } from '@/lib/data-access/users';
 
 // Check authentication via cookies
 let isAuthenticated = false;
+let userId: string | null = null;
+let userHandle = '';
+
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
 
@@ -16,31 +22,51 @@ if (accessToken && refreshToken) {
     });
     if (!session.error && session.data.user) {
       isAuthenticated = true;
+      userId = session.data.user.id;
+
+      // Fetch user to get handle
+      const user = await getUserById(userId);
+      if (user) {
+        userHandle = user.handle;
+      }
     }
   } catch (error) {
     // User not authenticated
   }
 }
 
-const authedLinks = [
-  { href: "/documents", label: "Documents" },
-  { href: "/assets", label: "Assets" },
-  { href: "/products", label: "Products" },
-  { href: "/jams", label: "Jams" },
+// Kickstarter-style navigation structure
+const userMenuLinks = [
+  { href: `/users/${userHandle}`, label: "Profile" },
+  { isDivider: true, label: "" },
+  { href: "/products", label: "My Products" },
+  { href: "/assets", label: "My Assets" },
+  { href: "/documents", label: "My Documents" },
+  { isDivider: true, label: "" },
   { href: "/purchases", label: "Purchases" },
   { href: "/connect/onboarding", label: "Payouts" },
-  { href: "/users", label: "Users" },
-  { href: "/tags", label: "Tags" },
-  { href: "/about", label: "About" },
+  { isDivider: true, label: "" },
+  { href: "/settings", label: "Settings" },
+  { isSignOut: true, label: "Sign out" },
+];
+
+// Mobile navigation links
+const authedLinks = [
+  { href: "/products", label: "Products" },
+  { href: "/jams", label: "Jams" },
   { href: "/cart", label: "Cart" },
-  { href: "/terms", label: "Terms" },
-  { href: "/privacy", label: "Privacy" },
+  { href: `/users/${userHandle}`, label: "Profile" },
+  { href: "/assets", label: "My Assets" },
+  { href: "/documents", label: "My Documents" },
+  { href: "/purchases", label: "Purchases" },
+  { href: "/connect/onboarding", label: "Payouts" },
+  { href: "/settings", label: "Settings" },
 ];
 
 const unAuthedLinks = [
+  { href: "/products", label: "Products" },
+  { href: "/jams", label: "Jams" },
   { href: "/about", label: "About" },
-  { href: "/terms", label: "Terms" },
-  { href: "/privacy", label: "Privacy" },
 ];
 ---
 
@@ -55,70 +81,21 @@ const unAuthedLinks = [
       <NavigationMobile client:load isAuthenticated={isAuthenticated} links={isAuthenticated ? authedLinks : unAuthedLinks} />
     </div>
 
-    {
-    isAuthenticated && 
+    {/* Main Navigation Links */}
     <div class="navigation__menu">
-      <a href="/documents">
-        <Button variant="ghost" size="sm">
-          <span slot="text">Documents</span>
-        </Button>
-      </a>
-      <a href="/assets">
-        <Button variant="ghost" size="sm">
-          <span slot="text">Assets</span>
-        </Button>
-      </a>
-      <a href="/products">
-        <Button variant="ghost" size="sm">
-          <span slot="text">Products</span>
-        </Button>
-      </a>
-      <a href="/jams">
-        <Button variant="ghost" size="sm">
-          <span slot="text">Jams</span>
-        </Button>
-      </a>
-      <a href="/purchases">
-        <Button variant="ghost" size="sm">
-          <span slot="text">Purchases</span>
-        </Button>
-      </a>
-      <a href="/connect/onboarding">
-        <Button variant="ghost" size="sm">
-          <span slot="text">Payouts</span>
-        </Button>
-      </a>
-      <a href="/users">
-        <Button variant="ghost" size="sm">
-          <span slot="text">Users</span>
-        </Button>
-      </a>
-      <a href="/tags">
-        <Button variant="ghost" size="sm">
-          <span slot="text">Tags</span>
-        </Button>
-      </a>
+      <a href="/products" class="navigation__link">Products</a>
+      <a href="/jams" class="navigation__link">Jams</a>
     </div>
-    }
 
     <div class="navigation__actions">
       {isAuthenticated ? (
         <>
-          <a href="/dashboard">
-            <Button variant="ghost" size="sm">
-              <span slot="text">Dashboard</span>
-            </Button>
-          </a>
           <a href="/cart">
             <Button variant="ghost" size="sm">
               <span slot="text">Cart</span>
             </Button>
           </a>
-          <form action="/api/auth/sign-out" method="post" class="navigation__signout-form">
-            <Button type="submit" variant="outline" size="sm">
-              <span slot="text">Sign out</span>
-            </Button>
-          </form>
+          <NavigationUserMenu client:load userHandle={userHandle} links={userMenuLinks} />
         </>
       ) : (
         <>

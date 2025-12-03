@@ -8,6 +8,8 @@ import Button from "@/components/Button.astro";
 import UserEditForm from "@/components/users/UserEditForm";
 import CardFooter from "@/components/CardFooter.astro";
 import DashboardContentFilter from "@/components/dashboard/DashboardContentFilter";
+import FirstTimeUserOnboarding from "@/components/dashboard/FirstTimeUserOnboarding";
+import { FormSubmitButton } from "@/components/interactive";
 
 import { getUserById } from "@/lib/data-access/users";
 import { getUserProducts, getProductImages } from "@/lib/data-access/products";
@@ -88,6 +90,11 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
 ---
 
 <Layout title="Dashboard - Game Loopers">
+  {/* Show onboarding for users with no content */}
+  {contentItems.length === 0 && (
+    <FirstTimeUserOnboarding client:load />
+  )}
+
   <main class="page">
     <div class="page__container">
       <div class="dashboard">
@@ -96,26 +103,42 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
           <!-- Left Column: Actions (1/4) -->
           <aside class="dashboard__actions-sidebar">
             <nav class="dashboard__actions-list">
-              <form method="post" action="/api/documents/create-document">
-                <Button variant="outline" size="md">
-                  <span slot="text">Create Document</span>
-                </Button>
-              </form>
-              <form method="post" action="/api/assets/create-asset">
-                <Button variant="outline" size="md">
-                  <span slot="text">Create Asset</span>
-                </Button>
-              </form>
-              <form method="post" action="/api/products/create-product">
-                <Button variant="outline" size="md">
-                  <span slot="text">Create Product</span>
-                </Button>
-              </form>
-              <form method="post" action="/api/jams/create-jam">
-                <Button variant="outline" size="md">
-                  <span slot="text">Create Jam</span>
-                </Button>
-              </form>
+              <FormSubmitButton
+                client:load
+                action="/api/documents/create-document"
+                method="post"
+                variant="outline"
+                size="md"
+              >
+                Create Document
+              </FormSubmitButton>
+              <FormSubmitButton
+                client:load
+                action="/api/assets/create-asset"
+                method="post"
+                variant="outline"
+                size="md"
+              >
+                Create Asset
+              </FormSubmitButton>
+              <FormSubmitButton
+                client:load
+                action="/api/products/create-product"
+                method="post"
+                variant="outline"
+                size="md"
+              >
+                Create Product
+              </FormSubmitButton>
+              <FormSubmitButton
+                client:load
+                action="/api/jams/create-jam"
+                method="post"
+                variant="outline"
+                size="md"
+              >
+                Create Jam
+              </FormSubmitButton>
             </nav>
           </aside>
 

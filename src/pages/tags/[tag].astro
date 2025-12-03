@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
 import { getProductsByTag, getProductImages } from "@/lib/data-access/products";
 import { getAssetsByTag, getAssetImages } from "@/lib/data-access/assets";
 
@@ -56,6 +57,15 @@ const totalCount = productsWithImages.length + assetsWithImages.length;
 <Layout title={`${decodedTag} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
+      <!-- Breadcrumb Navigation -->
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Tags", href: "/tags" },
+        ]}
+        currentPage={decodedTag}
+      />
+
       <div class="tags-page">
         <!-- Header -->
         <div class="tags-header">

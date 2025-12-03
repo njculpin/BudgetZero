@@ -5,7 +5,9 @@ import CardContent from "@/components/CardContent.astro";
 import BrowseCTA from "@/components/home/BrowseCTA.astro";
 import Button from "@/components/Button.astro";
 import PageHeader from "@/components/PageHeader.astro";
+import EmptyState from "@/components/EmptyState.astro";
 import { setSession } from "@/lib/auth";
+import { FormSubmitButton } from "@/components/interactive";
 import { getUserDocuments } from "@/lib/data-access/documents";
 import { getUserById } from "@/lib/data-access/users";
 
@@ -56,11 +58,15 @@ const formatDate = (dateStr: string) => {
       <div class="page-header-with-action">
         <PageHeader title="Documents" description="Collaborative game design documents - rulebooks, reference cards, and more"/>
         {currentUser && (
-          <form method="post" action="/api/documents/create-document">
-            <Button variant="primary" size="lg">
-              <span slot="text">New Document</span>
-            </Button>
-          </form>
+          <FormSubmitButton
+            client:load
+            action="/api/documents/create-document"
+            method="post"
+            variant="primary"
+            size="lg"
+          >
+            New Document
+          </FormSubmitButton>
         )}
       </div>
 
@@ -75,26 +81,13 @@ const formatDate = (dateStr: string) => {
       {currentUser && documents.length === 0 && (
         <Card>
           <CardContent>
-            <div class="documents-empty">
-              <div class="documents-empty__icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-              </div>
-              <h3 class="documents-empty__title">No documents yet</h3>
-              <p class="documents-empty__text">
-                Create your first document to start collaborating on rulebooks, reference cards, and more.
-              </p>
-              <form method="post" action="/api/documents/create-document" class="documents-empty__action">
-                <Button variant="primary" size="lg">
-                  <span slot="text">Create Your First Document</span>
-                </Button>
-              </form>
-            </div>
+            <EmptyState
+              icon="documents"
+              title="No documents yet"
+              description="Create your first document to start collaborating on rulebooks, reference cards, and more."
+              actionText="Create Your First Document"
+              actionHref="/api/documents/create-document"
+            />
           </CardContent>
         </Card>
       )}
