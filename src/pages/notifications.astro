@@ -1,0 +1,450 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardContent from "@/components/CardContent.astro";
+import PageHeader from "@/components/PageHeader.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Button from "@/components/Button.astro";
+import { setSession } from "@/lib/auth";
+import { getNotifications } from "@/lib/data-access/notifications";
+
+// Check authentication
+let currentUser = null;
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {
+    // User not authenticated
+  }
+}
+
+// Redirect to sign-in if not authenticated
+if (!currentUser) {
+  return Astro.redirect('/sign-in');
+}
+
+// Fetch notifications
+const notifications = await getNotifications(currentUser.id);
+
+// Helper function to get entity URL from notification
+function getEntityUrl(notification: typeof notifications[0]): string | null {
+  if (!notification.entity_type || !notification.snapshot) {
+    return null;
+  }
+
+  // Extract handle from snapshot
+  const snapshot = notification.snapshot as Record<string, unknown>;
+  const handle = snapshot.handle as string | undefined;
+
+  if (!handle) {
+    return null;
+  }
+
+  // Build URL based on entity type
+  switch (notification.entity_type) {
+    case 'product':
+      return `/products/${handle}`;
+    case 'asset':
+      return `/assets/${handle}`;
+    case 'document':
+      return `/documents/${handle}`;
+    case 'sale':
+      return `/purchases`; // Sales don't have individual pages, show purchases list
+    default:
+      return null;
+  }
+}
+
+// Helper function to format relative time
+function formatRelativeTime(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  const years = Math.floor(months / 12);
+  return `${years}y ago`;
+}
+
+// Helper function to get notification icon
+function getNotificationIcon(actionType: string): string {
+  switch (actionType) {
+    case 'sale_completed':
+      return 'shopping-cart';
+    case 'royalty_payment_received':
+      return 'dollar-sign';
+    case 'asset_price_changed':
+    case 'asset_files_changed':
+    case 'asset_royalties_changed':
+      return 'file';
+    case 'product_needs_review':
+    case 'product_price_conflict':
+      return 'alert-circle';
+    case 'document_shared':
+      return 'file-text';
+    case 'jam_submission_approved':
+      return 'award';
+    default:
+      return 'bell';
+  }
+}
+
+// Helper function to get notification color class
+function getNotificationColorClass(actionType: string): string {
+  switch (actionType) {
+    case 'sale_completed':
+    case 'royalty_payment_received':
+      return 'notification--success';
+    case 'product_needs_review':
+    case 'product_price_conflict':
+      return 'notification--warning';
+    case 'asset_price_changed':
+    case 'asset_files_changed':
+    case 'asset_royalties_changed':
+      return 'notification--info';
+    default:
+      return 'notification--default';
+  }
+}
+---
+
+<Layout title="Notifications - Game Loopers">
+  <div class="page">
+    <div class="page__container">
+      <!-- Breadcrumb Navigation -->
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+        ]}
+        currentPage="Notifications"
+      />
+
+      <!-- Page Header -->
+      <div class="page-header-with-action">
+        <PageHeader
+          title="Notifications"
+          description="Stay updated with your activity and important events"
+        />
+        {notifications.some(n => !n.read) && (
+          <form action="/api/notifications/mark-all-read" method="post">
+            <button type="submit" class="mark-read-button">
+              Mark all as read
+            </button>
+          </form>
+        )}
+      </div>
+
+      <!-- Notifications List -->
+      {notifications.length > 0 ? (
+        <div class="notifications-list">
+          {notifications.map((notification) => (
+            <Card className={`notification-card ${!notification.read ? 'notification-card--unread' : ''}`}>
+              <CardContent>
+                <div class="notification">
+                  <div class={`notification__icon ${getNotificationColorClass(notification.action_type)}`}>
+                    {getNotificationIcon(notification.action_type) === 'shopping-cart' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                      </svg>
+                    )}
+                    {getNotificationIcon(notification.action_type) === 'dollar-sign' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                      </svg>
+                    )}
+                    {getNotificationIcon(notification.action_type) === 'file' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                        <polyline points="13 2 13 9 20 9"></polyline>
+                      </svg>
+                    )}
+                    {getNotificationIcon(notification.action_type) === 'alert-circle' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                      </svg>
+                    )}
+                    {getNotificationIcon(notification.action_type) === 'file-text' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                    )}
+                    {getNotificationIcon(notification.action_type) === 'award' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="8" r="7"></circle>
+                        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                      </svg>
+                    )}
+                    {getNotificationIcon(notification.action_type) === 'bell' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                      </svg>
+                    )}
+                  </div>
+                  <div class="notification__content">
+                    <div class="notification__header">
+                      <h3 class="notification__title">{notification.title}</h3>
+                      <span class="notification__time">{formatRelativeTime(notification.created_at)}</span>
+                    </div>
+                    <p class="notification__message">{notification.message}</p>
+                    {getEntityUrl(notification) && (
+                      <div class="notification__actions">
+                        <a
+                          href={getEntityUrl(notification)!}
+                          class="notification__link"
+                        >
+                          View {notification.entity_type} →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  {!notification.read && (
+                    <div class="notification__unread-indicator" title="Unread"></div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent>
+            <div class="notifications-empty">
+              <svg class="notifications-empty__icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <h3 class="notifications-empty__title">No notifications yet</h3>
+              <p class="notifications-empty__text">
+                When you receive notifications about your activity, they'll appear here.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<style>
+/* ===== Mark Read Button ===== */
+.mark-read-button {
+  height: var(--button-height-md);
+  padding: 0 var(--button-padding-x-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  background-color: transparent;
+  border: var(--border-width-default) solid var(--border);
+  color: var(--foreground);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+  white-space: nowrap;
+}
+
+.mark-read-button:hover {
+  background-color: var(--muted);
+  border-color: var(--border-strong);
+}
+
+.mark-read-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ===== Notifications List ===== */
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.notification-card {
+  transition: box-shadow 0.2s var(--ease-in-out);
+}
+
+.notification-card--unread {
+  background-color: oklch(from var(--primary) l c h / 0.02);
+  border-left: 3px solid var(--primary);
+}
+
+.notification {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: flex-start;
+  position: relative;
+}
+
+.notification__icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+}
+
+.notification__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.notification--success .notification__icon {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.notification--warning .notification__icon {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.notification--info .notification__icon {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.notification--default .notification__icon {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.notification__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xs);
+}
+
+.notification__title {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  margin: 0;
+}
+
+.notification__time {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.notification__message {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.notification__actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.notification__link {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--primary);
+  text-decoration: none;
+  transition: opacity 0.2s var(--ease-in-out);
+}
+
+.notification__link:hover {
+  opacity: 0.8;
+}
+
+.notification__unread-indicator {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary);
+  margin-top: var(--spacing-xs);
+}
+
+/* ===== Empty State ===== */
+.notifications-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-6xl) var(--spacing-4xl);
+  text-align: center;
+}
+
+.notifications-empty__icon {
+  color: var(--muted-foreground);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.notifications-empty__title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.notifications-empty__text {
+  color: var(--muted-foreground);
+  font-size: var(--text-base);
+  max-width: 32rem;
+  margin: 0;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .notification {
+    gap: var(--spacing-md);
+  }
+
+  .notification__icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .notification__header {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .notification__time {
+    align-self: flex-start;
+  }
+}
+</style>

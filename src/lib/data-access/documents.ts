@@ -492,3 +492,36 @@ export const canUserViewDocument = async (
 
   return !!data;
 };
+
+/**
+ * Document summary for navigation dropdown
+ */
+export interface DocumentSummary {
+  id: string;
+  handle: string;
+  title: string;
+  updated_at: string;
+}
+
+/**
+ * Get recent documents for a user (for navigation dropdown)
+ */
+export const getRecentDocuments = async (
+  userId: string,
+  limit: number = 5
+): Promise<DocumentSummary[]> => {
+  const { data, error } = await serverClient
+    .from("documents")
+    .select("id, handle, title, updated_at")
+    .eq("user_id", userId)
+    .eq("deleted", false)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Error fetching recent documents:", error);
+    return [];
+  }
+
+  return (data || []) as DocumentSummary[];
+};

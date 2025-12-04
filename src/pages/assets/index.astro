@@ -150,49 +150,48 @@ const assetTags = allTags
             {assetsWithDetails.map((asset) => {
               const owner = ownersMap.get(asset.user_id);
               return (
-                <a href={`/assets/${asset.handle}`} class="browse-card">
-                  <div class="browse-card__content">
+                <a href={`/assets/${asset.handle}`} class="product-card">
+                  <div class="product-card__image">
                     <img
                       src={asset.cover_image_url || 'https://placehold.co/600x600'}
                       alt={asset.title}
-                      class="browse-card__image"
                       loading="lazy"
                     />
-                    <h3 class="browse-card__title">{asset.title}</h3>
+                  </div>
+                  <div class="product-card__content">
+                    <h3 class="product-card__title">{asset.title}</h3>
+                    <p class="product-card__creator">
+                      by {owner?.name || owner?.handle || 'Unknown'}
+                    </p>
                     {asset.description && (
-                      <p class="browse-card__description">
-                        {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
+                      <p class="product-card__description">
+                        {asset.description}
                       </p>
                     )}
                     {asset.files && asset.files.length > 0 && (
-                      <div class="browse-card__files">
-                        <span class="browse-card__files-label">Includes:</span>
-                        <ul class="browse-card__files-list">
+                      <div class="product-card__files">
+                        <span class="product-card__files-label">Includes:</span>
+                        <ul class="product-card__files-list">
                           {asset.files.slice(0, 3).map((file) => {
                             // Extract file extension from mime_type or title
                             const extension = file.mime_type.split('/')[1]?.toUpperCase() ||
                                             file.title.split('.').pop()?.toUpperCase() ||
                                             'FILE';
                             return (
-                              <li class="browse-card__file-item">
-                                <span class="browse-card__file-type">{extension}</span>
-                                <span class="browse-card__file-name">{file.title}</span>
+                              <li class="product-card__file-item">
+                                <span class="product-card__file-type">{extension}</span>
+                                <span class="product-card__file-name">{file.title}</span>
                               </li>
                             );
                           })}
                           {asset.files.length > 3 && (
-                            <li class="browse-card__file-item browse-card__file-item--more">
+                            <li class="product-card__file-item product-card__file-item--more">
                               +{asset.files.length - 3} more file{asset.files.length - 3 > 1 ? 's' : ''}
                             </li>
                           )}
                         </ul>
                       </div>
                     )}
-                    <div class="browse-card__meta">
-                      <span class="browse-card__author">
-                        by {owner?.name || owner?.handle || 'Unknown'}
-                      </span>
-                    </div>
                   </div>
                 </a>
               );
