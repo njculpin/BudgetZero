@@ -18,6 +18,11 @@ export interface AssetRoyaltyManagerProps {
     royalty_value: number;
   }>;
   totalRoyalty: number;
+  contributors: Array<{
+    id: string;
+    name: string | null;
+    handle: string;
+  }>;
 }
 
 export default function AssetRoyaltyManager(props: AssetRoyaltyManagerProps) {
@@ -27,6 +32,17 @@ export default function AssetRoyaltyManager(props: AssetRoyaltyManagerProps) {
   const [deletingRoyaltyId, setDeletingRoyaltyId] = createSignal<string | null>(null);
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal("");
+
+  // Add new royalty state
+  const [isAddingNew, setIsAddingNew] = createSignal(false);
+  const [newUserId, setNewUserId] = createSignal("");
+  const [newRoyaltyValue, setNewRoyaltyValue] = createSignal("");
+
+  // Filter out contributors who already have royalties
+  const availableContributors = () => {
+    const existingUserIds = props.existingRoyalties.map(r => r.user_id);
+    return props.contributors.filter(c => !existingUserIds.includes(c.id));
+  };
 
   const handleEdit = (royaltyId: string, currentValue: number) => {
     setEditingRoyaltyId(royaltyId);
@@ -103,6 +119,52 @@ export default function AssetRoyaltyManager(props: AssetRoyaltyManagerProps) {
       setError("An unexpected error occurred");
       setDeletingRoyaltyId(null);
     }
+  };
+
+  const handleAddNew = async () => {
+    if (!newUserId().trim() || !newRoyaltyValue().trim()) {
+      setError("Please select a contributor and enter royalty amount");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const royaltyValue = Math.round(parseFloat(newRoyaltyValue()) * 100);
+
+      const response = await fetch("/api/assets/royalties/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assetId: props.assetId,
+          contributorUserId: newUserId(),
+          royaltyValue: royaltyValue,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || "Failed to add royalty");
+        setIsLoading(false);
+        return;
+      }
+
+      setSuccess("Royalty added! Refreshing...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      setError("An unexpected error occurred");
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelAdd = () => {
+    setIsAddingNew(false);
+    setNewUserId("");
+    setNewRoyaltyValue("");
   };
 
   return (
@@ -206,6 +268,89 @@ export default function AssetRoyaltyManager(props: AssetRoyaltyManagerProps) {
               </div>
             )}
           </For>
+        </div>
+      </Show>
+
+      {/* Add New Royalty Section */}
+      <Show when={availableContributors().length > 0}>
+        <div class="royalty-manager__add-section">
+          <Show
+            when={!isAddingNew()}
+            fallback={
+              <div class="royalty-add-form">
+                <h4 class="royalty-add-form__title">Add Royalty Split</h4>
+                <div class="royalty-add-form__fields">
+                  <div class="form-field">
+                    <label class="form-field__label" for="contributor-select">
+                      Contributor <span class="form-field__required">*</span>
+                    </label>
+                    <select
+                      id="contributor-select"
+                      class="form-field__select"
+                      value={newUserId()}
+                      onChange={(e) => setNewUserId(e.currentTarget.value)}
+                      disabled={isLoading()}
+                      required
+                    >
+                      <option value="">Select contributor...</option>
+                      <For each={availableContributors()}>
+                        {(contributor) => (
+                          <option value={contributor.id}>
+                            {contributor.name || `@${contributor.handle}`} (@{contributor.handle})
+                          </option>
+                        )}
+                      </For>
+                    </select>
+                  </div>
+                  <FormField
+                    label="Amount ($)"
+                    name="royalty-amount"
+                    type="number"
+                    value={newRoyaltyValue()}
+                    onInput={(e) => setNewRoyaltyValue(e.currentTarget.value)}
+                    placeholder="0.00"
+                    required
+                    disabled={isLoading()}
+                    step="0.01"
+                    min="0"
+                  />
+                </div>
+                <div class="royalty-add-form__actions">
+                  <LoadingButton
+                    type="button"
+                    onClick={handleAddNew}
+                    isLoading={isLoading()}
+                    loadingText="Adding..."
+                    variant="primary"
+                    size="sm"
+                  >
+                    Add Royalty
+                  </LoadingButton>
+                  <button
+                    type="button"
+                    onClick={handleCancelAdd}
+                    class="royalty-add-form__cancel"
+                    disabled={isLoading()}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            }
+          >
+            <button
+              type="button"
+              onClick={() => setIsAddingNew(true)}
+              class="royalty-manager__add-button"
+              disabled={isLoading()}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Royalty Split
+            </button>
+          </Show>
         </div>
       </Show>
 

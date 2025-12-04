@@ -169,32 +169,31 @@ const productTags = allTags
             {productsWithDetails.map((product) => {
               const owner = allOwnersMap.get(product.user_id);
               return (
-                <a href={`/products/${product.handle}`} class="browse-card">
-                  <div class="browse-card__content">
+                <a href={`/products/${product.handle}`} class="product-card">
+                  <div class="product-card__image">
                     <img
                       src={product.cover_image_url || 'https://placehold.co/600x600'}
                       alt={product.title}
-                      class="browse-card__image"
                       loading="lazy"
                     />
-                    <h3 class="browse-card__title">{product.title}</h3>
+                  </div>
+                  <div class="product-card__content">
+                    <h3 class="product-card__title">{product.title}</h3>
+                    <p class="product-card__creator">
+                      by {owner?.name || owner?.handle || 'Unknown'}
+                    </p>
                     {product.description && (
-                      <p class="browse-card__description">
-                        {product.description.substring(0, 100)}{product.description.length > 100 ? '...' : ''}
+                      <p class="product-card__description">
+                        {product.description}
                       </p>
                     )}
-                    <div class="browse-card__meta">
-                      <span class="browse-card__author">
-                        by {owner?.name || owner?.handle || 'Unknown'}
-                      </span>
-                    </div>
                     {product.lowestPrice !== null && (
-                      <div class="browse-card__footer">
-                        <span class="browse-card__price">
+                      <div class="product-card__footer">
+                        <span class="product-card__price">
                           From ${(product.lowestPrice / 100).toFixed(2)}
                         </span>
                         {product.variantCount > 1 && (
-                          <span class="browse-card__variants">
+                          <span class="product-card__variants">
                             {product.variantCount} variants
                           </span>
                         )}

@@ -85,10 +85,10 @@ const curredUserId = `${currentUser?.id}`
 const isOwner = curredUserId === assetData.user_id;
 const totalRoyalty = royalties.reduce((sum, r) => sum + r.royalty_value, 0);
 
-// State Management: Contributors see edit mode, non-contributors see shop mode
+// State Management: Owners and contributors see edit mode, others see shop mode
 const isContributor = contributorIds.includes(curredUserId)
-const isEditMode = isContributor;
-const isShopMode = !isContributor;
+const isEditMode = isOwner || isContributor;
+const isShopMode = !isEditMode;
 ---
 
 <Layout title={`${assetData.title} - Game Loopers`}>
@@ -288,6 +288,11 @@ const isShopMode = !isContributor;
                     royalty_value: r.royalty_value,
                   }))}
                   totalRoyalty={totalRoyalty}
+                  contributors={contributorData.map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    handle: c.handle,
+                  }))}
                 />
               ) : (
                 <div class="royalties-section">
