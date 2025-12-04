@@ -47,6 +47,7 @@ if (accessToken && refreshToken) {
 const userMenuLinks = [
   { href: `/users/${userHandle}`, label: "Profile" },
   { isDivider: true, label: "" },
+  { href: "/documents", label: "My Documents" },
   { href: "/purchases", label: "Purchases" },
   { href: "/connect/onboarding", label: "Payouts" },
   { isDivider: true, label: "" },
@@ -54,12 +55,13 @@ const userMenuLinks = [
   { isSignOut: true, label: "Sign out" },
 ];
 
-// Mobile navigation links (removed My Assets and My Documents)
+// Mobile navigation links
 const authedLinks = [
   { href: "/products", label: "Products" },
   { href: "/jams", label: "Jams" },
   { href: "/cart", label: "Cart" },
   { href: `/users/${userHandle}`, label: "Profile" },
+  { href: "/documents", label: "My Documents" },
   { href: "/purchases", label: "Purchases" },
   { href: "/connect/onboarding", label: "Payouts" },
   { href: "/settings", label: "Settings" },

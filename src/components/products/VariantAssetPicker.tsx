@@ -185,30 +185,32 @@ export default function VariantAssetPicker(props: VariantAssetPickerProps) {
           <For each={linkedAssets()}>
             {(asset: Asset) => (
               <div class="asset-picker__item">
-                <div class="asset-picker__item-image-container">
-                  {asset.cover_image_url ? (
-                    <img
-                      src={asset.cover_image_url}
-                      alt={asset.title}
-                      class="asset-picker__item-image"
-                    />
-                  ) : (
-                    <div class="asset-picker__item-image-placeholder">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <polyline points="21 15 16 10 5 21"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div class="asset-picker__item-info">
-                  <h6 class="asset-picker__item-title">{asset.title}</h6>
-                  <p class="asset-picker__item-handle">@{asset.handle}</p>
-                  <span class={`status-badge status-badge--${asset.status}`}>
-                    {getStatusLabel(asset.status)}
-                  </span>
-                </div>
+                <a href={`/assets/${asset.handle}`} class="asset-picker__item-link">
+                  <div class="asset-picker__item-image-container">
+                    {asset.cover_image_url ? (
+                      <img
+                        src={asset.cover_image_url}
+                        alt={asset.title}
+                        class="asset-picker__item-image"
+                      />
+                    ) : (
+                      <div class="asset-picker__item-image-placeholder">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                          <circle cx="8.5" cy="8.5" r="1.5"/>
+                          <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div class="asset-picker__item-info">
+                    <h6 class="asset-picker__item-title">{asset.title}</h6>
+                    <p class="asset-picker__item-handle">@{asset.handle}</p>
+                    <span class={`status-badge status-badge--${asset.status}`}>
+                      {getStatusLabel(asset.status)}
+                    </span>
+                  </div>
+                </a>
                 <button
                   type="button"
                   onClick={() => handleUnlinkAsset(asset.id)}

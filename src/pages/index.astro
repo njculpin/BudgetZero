@@ -1,76 +1,209 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import HomeSubscribeSection from "@/components/home/HomeSubscribeSection.astro";
-import GalleryGrid from "@/components/GalleryGrid.astro";
-import HomeJamsSection from "@/components/home/HomeJamsSection.astro";
 import Button from "@/components/Button.astro";
+import Badge from "@/components/Badge.astro";
 import { getAllProducts, getProductImages } from "@/lib/data-access/products";
 import { getActiveJam } from "@/lib/data-access/jams";
+import { getUserById } from "@/lib/data-access/users";
 
-const productData = await getAllProducts()
-const products:{url: string; alt?: string, href: string}[] = await Promise.all(
-  productData.slice(0,20).map(async (product) => {
+// Fetch products with full details
+const allProducts = await getAllProducts();
+
+// Get featured products (top 3)
+const featuredProducts = await Promise.all(
+  allProducts.slice(0, 3).map(async (product) => {
     const images = await getProductImages(product.id);
     const coverImage = images.length > 0
       ? images.sort((a, b) => a.position - b.position)[0]
       : null;
-    const imageUrl = coverImage?.file_url || 'https://placehold.co/600x600';
+    const owner = await getUserById(product.user_id);
+
     return {
-      url: imageUrl,
-      alt: product.title,
-      href: `/products/${product.handle}`
+      ...product,
+      imageUrl: coverImage?.file_url || 'https://placehold.co/1200x600?text=Featured+Product',
+      ownerName: owner?.name || owner?.handle || 'Creator',
+      ownerHandle: owner?.handle || ''
     };
   })
-)
+);
 
-const activeJam = await getActiveJam()
+// Get product cards for sections (with enhanced data)
+const getProductCards = async (products: typeof allProducts) => {
+  return await Promise.all(
+    products.map(async (product) => {
+      const images = await getProductImages(product.id);
+      const coverImage = images.length > 0
+        ? images.sort((a, b) => a.position - b.position)[0]
+        : null;
+      const owner = await getUserById(product.user_id);
 
+      return {
+        id: product.id,
+        handle: product.handle,
+        title: product.title,
+        description: product.description?.slice(0, 100) + '...' || '',
+        imageUrl: coverImage?.file_url || 'https://placehold.co/600x400?text=' + encodeURIComponent(product.title),
+        ownerName: owner?.name || owner?.handle || 'Creator',
+        ownerHandle: owner?.handle || '',
+        status: product.status,
+        createdAt: product.created_at
+      };
+    })
+  );
+};
+
+const newLaunches = await getProductCards(allProducts.slice(3, 15));
+const trending = await getProductCards(allProducts.slice(15, 27));
+
+const activeJam = await getActiveJam();
+
+// Categories for navigation
+const categories = [
+  { name: "All", slug: "all" },
+  { name: "RPGs", slug: "rpg" },
+  { name: "Board Games", slug: "board-games" },
+  { name: "Card Games", slug: "card-games" },
+  { name: "Miniatures", slug: "miniatures" },
+  { name: "Accessories", slug: "accessories" },
+  { name: "Digital", slug: "digital" },
+];
 ---
 
-<Layout title="Game Loopers - Discover Tabletop Games">
-  <div class="page">
-    <div class="page__container">
-      <div class="page-columns__column">
+<Layout title="Game Loopers - Bring Creative Projects to Life">
+  <div class="home-wrapper">
+    <!-- Featured Hero Carousel -->
+    <section class="hero">
+      <div class="hero__carousel">
+        {featuredProducts.map((product, index) => (
+          <a href={`/products/${product.handle}`} class={`hero__slide ${index === 0 ? 'hero__slide--active' : ''}`}>
+            <div class="hero__slide-image">
+              <img src={product.imageUrl} alt={product.title} />
+              <div class="hero__slide-overlay"></div>
+            </div>
+            <div class="hero__slide-content">
+              <div class="hero__slide-meta">
+                <Badge variant="primary" size="sm">{product.status}</Badge>
+                <span class="hero__slide-creator">by {product.ownerName}</span>
+              </div>
+              <h2 class="hero__slide-title">{product.title}</h2>
+              <p class="hero__slide-description">{product.description?.slice(0, 150) || 'Discover this amazing tabletop game project'}</p>
+            </div>
+          </a>
+        ))}
+      </div>
 
-      <!-- Hero Section -->
-      <div class="home-hero">
-        <div class="home-hero__content">
-          <h1 class="home-hero__title">Discover Amazing Tabletop Games</h1>
-          <p class="home-hero__subtitle">
-            Explore unique tabletop games created by talented designers, illustrators, and modelers from around the world.
+      <!-- Carousel Navigation -->
+      <div class="hero__nav">
+        {featuredProducts.map((_, index) => (
+          <button class={`hero__nav-dot ${index === 0 ? 'hero__nav-dot--active' : ''}`} aria-label={`Go to slide ${index + 1}`}></button>
+        ))}
+      </div>
+    </section>
+
+    <!-- Category Navigation -->
+    <nav class="categories" aria-label="Product categories">
+      <div class="categories__inner">
+        <div class="categories__scroll">
+          {categories.map((category) => (
+            <a
+              href={category.slug === 'all' ? '/products' : `/products?category=${category.slug}`}
+              class={`categories__item ${category.slug === 'all' ? 'categories__item--active' : ''}`}
+            >
+              {category.name}
+            </a>
+          ))}
+        </div>
+      </div>
+    </nav>
+
+    <div class="page">
+      <div class="page__container">
+
+      <!-- Active Jam Banner -->
+      {activeJam && (
+        <a href={`/jams/${activeJam.handle}`} class="jam-banner">
+          <div class="jam-banner__icon">🎮</div>
+          <div class="jam-banner__content">
+            <h3 class="jam-banner__title">{activeJam.title}</h3>
+            <p class="jam-banner__description">Join the game jam • Submit your project</p>
+          </div>
+          <div class="jam-banner__cta">
+            View Jam →
+          </div>
+        </a>
+      )}
+
+      <!-- New Launches Section -->
+      <section class="section">
+        <div class="section__header">
+          <h2 class="section__title">New Launches</h2>
+          <a href="/products?sort=newest" class="section__link">See more</a>
+        </div>
+        <div class="product-grid">
+          {newLaunches.map((product) => (
+            <a href={`/products/${product.handle}`} class="product-card">
+              <div class="product-card__image">
+                <img src={product.imageUrl} alt={product.title} />
+              </div>
+              <div class="product-card__content">
+                <h3 class="product-card__title">{product.title}</h3>
+                <p class="product-card__creator">by {product.ownerName}</p>
+                <p class="product-card__description">{product.description}</p>
+                <div class="product-card__meta">
+                  <Badge variant={product.status as any} size="sm">{product.status}</Badge>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <!-- Trending Section -->
+      <section class="section">
+        <div class="section__header">
+          <h2 class="section__title">Trending Now</h2>
+          <a href="/products?sort=popular" class="section__link">See more</a>
+        </div>
+        <div class="product-grid">
+          {trending.map((product) => (
+            <a href={`/products/${product.handle}`} class="product-card">
+              <div class="product-card__image">
+                <img src={product.imageUrl} alt={product.title} />
+              </div>
+              <div class="product-card__content">
+                <h3 class="product-card__title">{product.title}</h3>
+                <p class="product-card__creator">by {product.ownerName}</p>
+                <p class="product-card__description">{product.description}</p>
+                <div class="product-card__meta">
+                  <Badge variant={product.status as any} size="sm">{product.status}</Badge>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section class="cta-section">
+        <div class="cta-section__content">
+          <h2 class="cta-section__title">Ready to bring your game to life?</h2>
+          <p class="cta-section__description">
+            Join thousands of creators sharing their tabletop game projects with the community
           </p>
-          <div class="home-hero__actions">
-            <a href="/products">
+          <div class="cta-section__actions">
+            <a href="/sign-up">
               <Button variant="primary" size="lg">
-                <span slot="text">Browse Products</span>
+                <span slot="text">Start Creating</span>
               </Button>
             </a>
-            <a href="/create">
+            <a href="/products">
               <Button variant="outline" size="lg">
-                <span slot="text">Start Creating</span>
+                <span slot="text">Explore Products</span>
               </Button>
             </a>
           </div>
         </div>
-        <div class="home-hero__image">
-          <img src="https://placehold.co/600x600" alt="Tabletop game showcase" />
-        </div>
-      </div>
-
-      <!-- Active Jam Banner -->
-      {activeJam && <HomeJamsSection jam={activeJam} />}
-
-      <!-- Products Section -->
-      <section class="home-section">
-        <div class="home-section__header">
-          <h2 class="home-section__title">New Launches</h2>
-          <a href="/products" class="home-section__link">View all products →</a>
-        </div>
-        <GalleryGrid images={products} cols={5} />
       </section>
-
-      <!-- Newsletter -->
-      <HomeSubscribeSection/>
 
       </div>
     </div>
@@ -78,100 +211,464 @@ const activeJam = await getActiveJam()
 </Layout>
 
 <style>
-  .home-hero {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: stretch;
-    gap: var(--spacing-3xl);
-    margin-bottom: var(--spacing-5xl);
+  /* ===== Home Wrapper ===== */
+  .home-wrapper {
+    width: 100%;
   }
 
-  .home-hero__content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    background: var(--muted);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-3xl);
-  }
-
-  .home-hero__title {
-    font-size: var(--text-5xl);
-    font-weight: var(--font-weight-bold);
-    margin-bottom: var(--spacing-2xl);
-    line-height: var(--leading-tight);
-  }
-
-  .home-hero__subtitle {
-    font-size: var(--text-xl);
-    color: var(--muted-foreground);
-    margin-bottom: var(--spacing-4xl);
-    line-height: var(--leading-relaxed);
-  }
-
-  .home-hero__actions {
-    display: flex;
-    gap: var(--spacing-lg);
-    flex-wrap: wrap;
-  }
-
-  .home-hero__image {
-    display: flex;
+  /* ===== Featured Hero ===== */
+  .hero {
+    position: relative;
+    width: 100%;
+    height: 600px;
     overflow: hidden;
-    border-radius: var(--radius-lg);
   }
 
-  .home-hero__image img {
+  .hero__carousel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero__slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.6s var(--ease-in-out);
+    pointer-events: none;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .hero__slide--active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .hero__slide-image {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero__slide-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
 
-  .home-section {
-    margin-bottom: var(--spacing-5xl);
+  .hero__slide-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
   }
 
-  .home-section__header {
+  .hero__slide-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--spacing-5xl);
+    color: white;
+    max-width: 800px;
+  }
+
+  .hero__slide-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .hero__slide-creator {
+    font-size: var(--text-sm);
+    opacity: 0.9;
+  }
+
+  .hero__slide-title {
+    font-size: var(--text-5xl);
+    font-weight: var(--font-weight-bold);
+    margin: 0 0 var(--spacing-md) 0;
+    line-height: var(--leading-tight);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .hero__slide-description {
+    font-size: var(--text-xl);
+    opacity: 0.95;
+    margin: 0;
+    line-height: var(--leading-relaxed);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .hero__nav {
+    position: absolute;
+    bottom: var(--spacing-2xl);
+    right: var(--spacing-2xl);
+    display: flex;
+    gap: var(--spacing-sm);
+    z-index: 10;
+  }
+
+  .hero__nav-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-in-out);
+  }
+
+  .hero__nav-dot:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .hero__nav-dot--active {
+    background-color: white;
+    width: 32px;
+    border-radius: 6px;
+  }
+
+  /* ===== Category Navigation ===== */
+  .categories {
+    position: sticky;
+    top: 80px;
+    background-color: var(--background);
+    z-index: 50;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--spacing-4xl);
+  }
+
+  .categories__inner {
+    max-width: var(--container-7xl);
+    margin: 0 auto;
+    padding: var(--spacing-lg) var(--spacing-2xl);
+  }
+
+  .categories__scroll {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .categories__scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .categories__item {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-xl);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--muted-foreground);
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s var(--ease-in-out);
+  }
+
+  .categories__item:hover {
+    color: var(--foreground);
+    background-color: var(--muted);
+  }
+
+  .categories__item--active {
+    color: var(--primary-foreground);
+    background-color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  /* ===== Jam Banner ===== */
+  .jam-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl);
+    padding: var(--spacing-2xl);
+    margin-bottom: var(--spacing-5xl);
+    background: linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l * 0.9) c h) 100%);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--primary-foreground);
+    transition: transform 0.2s var(--ease-in-out);
+  }
+
+  .jam-banner:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .jam-banner__icon {
+    font-size: var(--text-4xl);
+    flex-shrink: 0;
+  }
+
+  .jam-banner__content {
+    flex: 1;
+  }
+
+  .jam-banner__title {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .jam-banner__description {
+    margin: 0;
+    opacity: 0.9;
+  }
+
+  .jam-banner__cta {
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+  }
+
+  /* ===== Sections ===== */
+  .section {
+    margin-bottom: var(--spacing-6xl);
+  }
+
+  .section__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-3xl);
   }
 
-  .home-section__title {
+  .section__title {
     font-size: var(--text-3xl);
     font-weight: var(--font-weight-bold);
+    margin: 0;
   }
 
-  .home-section__link {
+  .section__link {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
     color: var(--primary);
     text-decoration: none;
-    font-weight: var(--font-weight-medium);
-    transition: opacity var(--duration-fast) var(--ease-in-out);
+    transition: opacity 0.2s var(--ease-in-out);
   }
 
-  .home-section__link:hover {
+  .section__link:hover {
     opacity: 0.8;
   }
 
+  /* ===== Product Grid ===== */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-3xl);
+  }
+
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: transform 0.2s var(--ease-in-out), box-shadow 0.2s var(--ease-in-out);
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .product-card__image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background-color: var(--muted);
+  }
+
+  .product-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s var(--ease-in-out);
+  }
+
+  .product-card:hover .product-card__image img {
+    transform: scale(1.05);
+  }
+
+  .product-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg) 0;
+  }
+
+  .product-card__title {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-snug);
+    color: var(--foreground);
+  }
+
+  .product-card__creator {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .product-card__description {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .product-card__meta {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-xs);
+  }
+
+  /* ===== CTA Section ===== */
+  .cta-section {
+    margin: var(--spacing-6xl) 0;
+    padding: var(--spacing-6xl) var(--spacing-3xl);
+    background: linear-gradient(
+      135deg,
+      var(--muted) 0%,
+      oklch(from var(--muted) calc(l * 0.98) c h) 100%
+    );
+    border-radius: var(--radius-2xl);
+    text-align: center;
+  }
+
+  .cta-section__content {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .cta-section__title {
+    font-size: var(--text-4xl);
+    font-weight: var(--font-weight-bold);
+    margin: 0 0 var(--spacing-lg) 0;
+  }
+
+  .cta-section__description {
+    font-size: var(--text-xl);
+    color: var(--muted-foreground);
+    margin: 0 0 var(--spacing-4xl) 0;
+    line-height: var(--leading-relaxed);
+  }
+
+  .cta-section__actions {
+    display: flex;
+    gap: var(--spacing-lg);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 1024px) {
+    .product-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: var(--spacing-2xl);
+    }
+  }
+
   @media (max-width: 768px) {
-    .home-hero {
-      grid-template-columns: 1fr;
+    .hero {
+      height: 500px;
     }
 
-    .home-hero__title {
-      font-size: var(--text-4xl);
+    .hero__slide-content {
+      padding: var(--spacing-3xl) var(--spacing-2xl);
     }
 
-    .home-hero__image img {
+    .hero__slide-title {
+      font-size: var(--text-3xl);
+    }
+
+    .hero__slide-description {
+      font-size: var(--text-base);
+    }
+
+    .categories {
+      top: 60px;
+    }
+
+    .categories__inner {
+      padding: var(--spacing-md) var(--spacing-lg);
+    }
+
+    .jam-banner {
+      flex-direction: column;
+      text-align: center;
+      gap: var(--spacing-lg);
+    }
+
+    .section__header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+    }
+
+    .product-grid {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: var(--spacing-xl);
+    }
+
+    .cta-section {
+      padding: var(--spacing-4xl) var(--spacing-2xl);
+    }
+
+    .cta-section__title {
+      font-size: var(--text-3xl);
+    }
+
+    .cta-section__description {
+      font-size: var(--text-lg);
+    }
+
+    .cta-section__actions {
+      flex-direction: column;
+    }
+
+    .cta-section__actions a {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero {
       height: 400px;
     }
 
-    .home-section__header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--spacing-lg);
+    .hero__slide-title {
+      font-size: var(--text-2xl);
+    }
+
+    .product-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>
