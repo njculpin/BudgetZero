@@ -302,13 +302,15 @@
 }
 
 .nav-user-menu__project-badge--draft {
-  background-color: #fbbf24;
-  color: #78350f;
+  background-color: var(--warning-bg);
+  color: var(--warning-fg);
+  border: var(--border-width-thin) solid var(--warning-border);
 }
 
 .nav-user-menu__project-badge--archived {
   background-color: var(--muted);
   color: var(--muted-foreground);
+  border: var(--border-width-thin) solid var(--border);
 }
 
 .nav-user-menu__project-meta {

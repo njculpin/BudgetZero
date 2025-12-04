@@ -7,7 +7,7 @@ import type { APIRoute } from "astro";
 import { getSession } from "@/lib/auth";
 import { markNotificationAsRead, getNotificationById } from "@/lib/data-access/notifications";
 
-export const POST: APIRoute = async ({ params, cookies }) => {
+export const POST: APIRoute = async ({ params, cookies, redirect }) => {
   const { id } = params;
 
   if (!id) {
@@ -59,11 +59,6 @@ export const POST: APIRoute = async ({ params, cookies }) => {
     });
   }
 
-  return new Response(
-    JSON.stringify({ success: true }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+  // Redirect back to notifications page
+  return redirect("/notifications");
 };

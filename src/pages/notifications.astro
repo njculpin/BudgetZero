@@ -162,33 +162,33 @@ function getNotificationColorClass(actionType: string): string {
                 <div class="notification">
                   <div class={`notification__icon ${getNotificationColorClass(notification.action_type)}`}>
                     {getNotificationIcon(notification.action_type) === 'shopping-cart' && (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                       </svg>
                     )}
                     {getNotificationIcon(notification.action_type) === 'dollar-sign' && (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <line x1="12" y1="1" x2="12" y2="23"></line>
                         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                       </svg>
                     )}
                     {getNotificationIcon(notification.action_type) === 'file' && (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                         <polyline points="13 2 13 9 20 9"></polyline>
                       </svg>
                     )}
                     {getNotificationIcon(notification.action_type) === 'alert-circle' && (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="8" x2="12" y2="12"></line>
                         <line x1="12" y1="16" x2="12.01" y2="16"></line>
                       </svg>
                     )}
                     {getNotificationIcon(notification.action_type) === 'file-text' && (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
                         <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -197,13 +197,13 @@ function getNotificationColorClass(actionType: string): string {
                       </svg>
                     )}
                     {getNotificationIcon(notification.action_type) === 'award' && (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <circle cx="12" cy="8" r="7"></circle>
                         <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
                       </svg>
                     )}
                     {getNotificationIcon(notification.action_type) === 'bell' && (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                       </svg>
@@ -217,17 +217,35 @@ function getNotificationColorClass(actionType: string): string {
                     <p class="notification__message">{notification.message}</p>
                     {getEntityUrl(notification) && (
                       <div class="notification__actions">
-                        <a
-                          href={getEntityUrl(notification)!}
-                          class="notification__link"
-                        >
-                          View {notification.entity_type} →
-                        </a>
+                        {!notification.read ? (
+                          <form action={`/api/notifications/${notification.id}/read-and-view`} method="post" class="notification__view-form">
+                            <input type="hidden" name="entityUrl" value={getEntityUrl(notification)!} />
+                            <button type="submit" class="notification__link">
+                              View {notification.entity_type} →
+                            </button>
+                          </form>
+                        ) : (
+                          <a
+                            href={getEntityUrl(notification)!}
+                            class="notification__link"
+                          >
+                            View {notification.entity_type} →
+                          </a>
+                        )}
                       </div>
                     )}
                   </div>
                   {!notification.read && (
-                    <div class="notification__unread-indicator" title="Unread"></div>
+                    <>
+                      <form action={`/api/notifications/${notification.id}/read`} method="post" class="notification__mark-read-form">
+                        <button type="submit" class="notification__mark-read-button" title="Mark as read" aria-label="Mark as read">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </button>
+                      </form>
+                      <div class="notification__unread-indicator" title="Unread"></div>
+                    </>
                   )}
                 </div>
               </CardContent>
@@ -238,7 +256,7 @@ function getNotificationColorClass(actionType: string): string {
         <Card>
           <CardContent>
             <div class="notifications-empty">
-              <svg class="notifications-empty__icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg class="notifications-empty__icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
               </svg>
@@ -319,18 +337,18 @@ function getNotificationColorClass(actionType: string): string {
 }
 
 .notification--success .notification__icon {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  background-color: var(--success-bg);
+  color: var(--success-fg);
 }
 
 .notification--warning .notification__icon {
-  background-color: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
+  background-color: var(--warning-bg);
+  color: var(--warning-fg);
 }
 
 .notification--info .notification__icon {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background-color: var(--info-bg);
+  color: var(--info-fg);
 }
 
 .notification--default .notification__icon {
@@ -376,16 +394,61 @@ function getNotificationColorClass(actionType: string): string {
   gap: var(--spacing-md);
 }
 
+.notification__view-form {
+  margin: 0;
+}
+
 .notification__link {
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
   color: var(--primary);
   text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   transition: opacity 0.2s var(--ease-in-out);
 }
 
 .notification__link:hover {
   opacity: 0.8;
+}
+
+.notification__link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.notification__mark-read-form {
+  margin: 0;
+}
+
+.notification__mark-read-button {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: transparent;
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.notification__mark-read-button:hover {
+  background-color: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success-fg);
+}
+
+.notification__mark-read-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .notification__unread-indicator {
@@ -395,6 +458,7 @@ function getNotificationColorClass(actionType: string): string {
   border-radius: var(--radius-full);
   background-color: var(--primary);
   margin-top: var(--spacing-xs);
+  margin-left: var(--spacing-xs);
 }
 
 /* ===== Empty State ===== */

@@ -39,12 +39,12 @@ if (accessToken && refreshToken) {
       }
 
       // Fetch recent products for navigation dropdown
-      recentProducts = await getRecentProducts(userId, 5);
+      recentProducts = await getRecentProducts(userId, 3);
       const allProducts = await getUserProducts(userId);
       totalProductCount = allProducts.length;
 
       // Fetch recent documents for navigation dropdown
-      recentDocuments = await getRecentDocuments(userId, 3);
+      recentDocuments = await getRecentDocuments(userId, 2);
       const allDocuments = await getUserDocuments(userId);
       totalDocumentCount = allDocuments.length;
 
@@ -413,9 +413,15 @@ const unAuthedLinks = [
   background-color: var(--accent);
 }
 
-/* Hide actions on mobile (shown in drawer) */
+/* Show only notifications on mobile (other actions shown in drawer) */
 @media (max-width: 767px) {
   .navigation__actions {
+    display: flex;
+    gap: var(--gap-xs);
+  }
+
+  /* Hide everything except notifications bell */
+  .navigation__actions > *:not(.navigation__notifications) {
     display: none;
   }
 }
@@ -460,8 +466,8 @@ const unAuthedLinks = [
   padding: 0 var(--spacing-xs);
   font-size: var(--text-xs);
   font-weight: var(--font-weight-bold);
-  color: white;
-  background-color: #ef4444;
+  color: var(--destructive-foreground);
+  background-color: var(--destructive);
   border-radius: var(--radius-full);
   border: 2px solid var(--background);
 }
