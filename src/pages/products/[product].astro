@@ -24,6 +24,7 @@ import GalleryGrid from "@/components/GalleryGrid.astro";
 import ProductReviewList from "@/components/products/ProductReviewList.astro";
 import { EditableBreadcrumb } from "@/components/interactive";
 import Breadcrumb from "@/components/Breadcrumb.astro";
+import Avatar from "@/components/users/Avatar.astro";
 
 const { product } = Astro.params;
 
@@ -158,7 +159,7 @@ const defaultPrice = defaultVariant?.prices?.[0];
 <Layout title={`${productData.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
-      <!-- Jam Review Card - Top Priority (non-owners only) -->
+      <!-- Jam Context Banner (minimal, at top) -->
       {targetJam && currentUser && !isOwner && isProductInJam && (
         <div class="jam-context-banner">
           <div class="jam-context-banner__content">
@@ -168,147 +169,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
             </div>
           </div>
         </div>
-      )}
-
-      {targetJam && currentUser && !isOwner && isProductInJam && (
-        <Card>
-          <CardHeader>
-            <div class="jam-submission__header">
-              <div>
-                <CardTitle>{userReview ? 'Update Your Review' : 'Write a Review'}</CardTitle>
-                <CardDescription>
-                  Share your feedback about <strong>{productData.title}</strong> as part of {targetJam.title}
-                </CardDescription>
-              </div>
-              <a href={`/jams/${targetJam.handle}`} class="jam-submission__back-link">
-                ← Back to Jam
-              </a>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {reviewSuccess && (
-              <AlertMessage
-                variant="success"
-                message={reviewSuccess}
-              />
-            )}
-            {reviewError && (
-              <AlertMessage
-                variant="error"
-                message={reviewError}
-              />
-            )}
-            <form method="post" action="/api/jams/add-review" class="jam-review-form">
-              <input type="hidden" name="jam_id" value={targetJam.id} />
-              <input type="hidden" name="product_id" value={productData.id} />
-
-              <div class="jam-review-form__field">
-                <label for="rating" class="jam-review-form__label">
-                  Rating *
-                </label>
-                <select
-                  name="rating"
-                  id="rating"
-                  class="jam-review-form__select"
-                  required
-                >
-                  <option value="">Select rating...</option>
-                  <option value="5" selected={userReview?.review_rating === 5}>★★★★★ Excellent</option>
-                  <option value="4" selected={userReview?.review_rating === 4}>★★★★ Very Good</option>
-                  <option value="3" selected={userReview?.review_rating === 3}>★★★ Good</option>
-                  <option value="2" selected={userReview?.review_rating === 2}>★★ Fair</option>
-                  <option value="1" selected={userReview?.review_rating === 1}>★ Poor</option>
-                </select>
-              </div>
-
-              <div class="jam-review-form__field">
-                <label for="review_text" class="jam-review-form__label">
-                  Review *
-                </label>
-                <textarea
-                  name="review_text"
-                  id="review_text"
-                  class="jam-review-form__textarea"
-                  rows={6}
-                  required
-                  placeholder="Share your thoughts about this product..."
-                >{userReview?.review_text || ''}</textarea>
-                <p class="jam-review-form__help-text">
-                  Be constructive and helpful to other participants
-                </p>
-              </div>
-
-              <div class="jam-review-form__actions">
-                <a href={`/jams/${targetJam.handle}`}>
-                  <Button variant="ghost" size="md">
-                    <span slot="text">Back to Jam</span>
-                  </Button>
-                </a>
-                <Button variant="primary" size="md">
-                  <span slot="text">{userReview ? 'Update Review' : 'Submit Review'}</span>
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <!-- Jam Submission Card (for owners who haven't submitted yet) -->
-      {targetJam && isOwner && !isProductInJam && (
-        <Card>
-          <CardHeader>
-            <div class="jam-submission__header">
-              <div>
-                <CardTitle>Submit Product to {targetJam.title}</CardTitle>
-                <CardDescription>
-                  Review your product details and confirm submission to this game jam
-                </CardDescription>
-              </div>
-              <a href={`/jams/${targetJam.handle}`} class="jam-submission__back-link">
-                ← Back to Jam
-              </a>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {jamSubmissionSuccess && (
-              <AlertMessage
-                variant="success"
-                message={jamSubmissionSuccess}
-              />
-            )}
-            {jamSubmissionError ? (
-              <AlertMessage
-                variant="error"
-                message={jamSubmissionError}
-              />
-            ) : (
-              <div class="jam-submission__content">
-                <div class="jam-submission__info">
-                  <p class="jam-submission__text">
-                    You're about to submit <strong>{productData.title}</strong> to <strong>{targetJam.title}</strong>.
-                  </p>
-                  <p class="jam-submission__text">
-                    Jam ends: <strong>{new Date(targetJam.end_date).toLocaleDateString()}</strong>
-                  </p>
-                </div>
-                <form method="post" action="/api/jams/add-product" class="jam-submission__form">
-                  <input type="hidden" name="jam_id" value={targetJam.id} />
-                  <input type="hidden" name="product_id" value={productData.id} />
-                  <div class="jam-submission__actions">
-                    <a href={`/jams/${targetJam.handle}`}>
-                      <Button variant="ghost" size="md">
-                        <span slot="text">Cancel</span>
-                      </Button>
-                    </a>
-                    <Button variant="primary" size="md">
-                      <span slot="text">Submit Product to Jam</span>
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       )}
 
       <!-- Breadcrumb Navigation -->
@@ -353,6 +213,14 @@ const defaultPrice = defaultVariant?.prices?.[0];
               <Badge variant={productData.status as 'draft' | 'public' | 'archived'} size="sm">
                 {productData.status}
               </Badge>
+              {isOwner && (
+                <>
+                  <span class="product-hero__divider">•</span>
+                  <Badge variant="primary" size="sm">
+                    Owner • Changes auto-save
+                  </Badge>
+                </>
+              )}
             </div>
           </div>
 
@@ -735,12 +603,16 @@ const defaultPrice = defaultVariant?.prices?.[0];
           <CardHeader>
             <CardTitle>Creator</CardTitle>
             <CardDescription>
-              <div class="creator-card__avatar">
-                {owner?.name ? owner.name[0].toUpperCase() : owner?.handle[0].toUpperCase()}
-              </div>
-              <div class="creator-card__info">
-                <h3 class="creator-card__name">{owner?.name || owner?.handle}</h3>
-                <p class="creator-card__handle">@{owner?.handle}</p>
+              <div class="creator-card__header">
+                <Avatar
+                  src={owner?.avatar_url}
+                  alt={owner?.name || owner?.handle || 'Creator'}
+                  size="lg"
+                />
+                <div class="creator-card__info">
+                  <h3 class="creator-card__name">{owner?.name || owner?.handle}</h3>
+                  <p class="creator-card__handle">@{owner?.handle}</p>
+                </div>
               </div>
             </CardDescription>
           </CardHeader>
@@ -755,6 +627,98 @@ const defaultPrice = defaultVariant?.prices?.[0];
               </a>
           </CardFooter>
         </Card>
+
+        <!-- Jam Review Form (for non-owners reviewing product in jam) -->
+        {targetJam && currentUser && !isOwner && isProductInJam && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{userReview ? 'Update Your Review' : 'Write a Review'}</CardTitle>
+              <CardDescription>
+                Share your thoughts on this product for <strong>{targetJam.title}</strong>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form method="POST" action="/api/jams/add-review" class="jam-review-form">
+                <input type="hidden" name="jam_id" value={targetJam.id} />
+                <input type="hidden" name="product_id" value={productData.id} />
+
+                <div class="jam-review-form__field">
+                  <label for="rating" class="jam-review-form__label">Rating</label>
+                  <select
+                    id="rating"
+                    name="rating"
+                    class="jam-review-form__select"
+                    required
+                  >
+                    <option value="">Select a rating</option>
+                    <option value="5" selected={userReview?.review_rating === 5}>⭐⭐⭐⭐⭐ Exceptional</option>
+                    <option value="4" selected={userReview?.review_rating === 4}>⭐⭐⭐⭐ Great</option>
+                    <option value="3" selected={userReview?.review_rating === 3}>⭐⭐⭐ Good</option>
+                    <option value="2" selected={userReview?.review_rating === 2}>⭐⭐ Fair</option>
+                    <option value="1" selected={userReview?.review_rating === 1}>⭐ Needs Improvement</option>
+                  </select>
+                </div>
+
+                <div class="jam-review-form__field">
+                  <label for="review_text" class="jam-review-form__label">Your Review</label>
+                  <textarea
+                    id="review_text"
+                    name="review_text"
+                    class="jam-review-form__textarea"
+                    rows="6"
+                    placeholder="What did you think about this product? How well does it fit the jam theme?"
+                    required
+                  >{userReview?.review_text || ''}</textarea>
+                </div>
+
+                <Button type="submit" variant="primary" size="md">
+                  <span slot="text">{userReview ? 'Update Review' : 'Submit Review'}</span>
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        <!-- Jam Submission Form (for owners submitting product to jam) -->
+        {targetJam && isOwner && !isProductInJam && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Submit to {targetJam.title}</CardTitle>
+              <CardDescription>
+                Submit this product to compete in the game jam
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {productData.status !== 'public' && (
+                <div class="jam-submit-warning">
+                  <svg class="jam-submit-warning__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 6V10M10 14H10.01M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <p class="jam-submit-warning__text">
+                    Your product must be published before you can submit it to a jam.
+                    Change the status to "Public" first.
+                  </p>
+                </div>
+              )}
+
+              {productData.status === 'public' && (
+                <form method="POST" action="/api/jams/add-product" class="jam-submit-form">
+                  <input type="hidden" name="jam_id" value={targetJam.id} />
+                  <input type="hidden" name="product_id" value={productData.id} />
+
+                  <p class="jam-submit-form__description">
+                    By submitting this product, you agree to participate in <strong>{targetJam.title}</strong>
+                    and allow community members to review and rate your work.
+                  </p>
+
+                  <Button type="submit" variant="primary" size="md">
+                    <span slot="text">Submit to Jam</span>
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+        )}
         </div>
       </div>
     </div>
@@ -1264,18 +1228,10 @@ const defaultPrice = defaultVariant?.prices?.[0];
   }
 
   /* ===== Creator Card ===== */
-  .creator-card__avatar {
-    width: 3rem;
-    height: 3rem;
-    border-radius: var(--radius-full);
-    background-color: var(--primary);
-    color: var(--primary-foreground);
+  .creator-card__header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-bold);
-    margin-bottom: var(--spacing-md);
+    gap: var(--gap-md);
   }
 
   .creator-card__info {
@@ -1524,5 +1480,42 @@ const defaultPrice = defaultVariant?.prices?.[0];
     .jam-context-banner__text {
       font-size: var(--text-base);
     }
+  }
+
+  /* ===== Jam Submit Form ===== */
+  .jam-submit-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xl);
+  }
+
+  .jam-submit-form__description {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  .jam-submit-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-md);
+    padding: var(--spacing-xl);
+    background-color: oklch(from var(--warning, #f59e0b) l c h / 0.1);
+    border: var(--border-width-default) solid var(--warning, #f59e0b);
+    border-radius: var(--radius-md);
+  }
+
+  .jam-submit-warning__icon {
+    flex-shrink: 0;
+    color: var(--warning, #f59e0b);
+    margin-top: 2px;
+  }
+
+  .jam-submit-warning__text {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--foreground);
+    line-height: var(--leading-relaxed);
   }
 </style>

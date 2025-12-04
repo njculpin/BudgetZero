@@ -84,6 +84,20 @@
   box-shadow: var(--shadow-sm);
 }
 
+.asset-picker__item-link {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.asset-picker__item-link:hover .asset-picker__item-title {
+  color: var(--primary);
+}
+
 /* Asset Image */
 .asset-picker__item-image-container {
   width: 3rem;

@@ -1,4 +1,4 @@
-import { createSignal, Show, For } from "solid-js";
+import { createSignal, Show, For, onMount, onCleanup, createEffect } from "solid-js";
 import type { Asset } from "@/types";
 import "./asset-search-modal.css";
 
@@ -10,7 +10,7 @@ export interface AssetSearchModalProps {
 }
 
 export default function AssetSearchModal(props: AssetSearchModalProps) {
-  const [activeTab, setActiveTab] = createSignal<'search' | 'upload'>('search');
+  const [activeTab, setActiveTab] = createSignal<'search' | 'upload' | 'document'>('search');
   const [searchQuery, setSearchQuery] = createSignal('');
   const [assets, setAssets] = createSignal<Asset[]>([]);
   const [loading, setLoading] = createSignal(false);
@@ -21,6 +21,9 @@ export default function AssetSearchModal(props: AssetSearchModalProps) {
   const [uploadTitle, setUploadTitle] = createSignal('');
   const [uploadDescription, setUploadDescription] = createSignal('');
   const [uploading, setUploading] = createSignal(false);
+
+  // Modal ref for focus trap
+  let modalRef: HTMLDivElement | undefined;
 
   // Fetch user's assets
   const fetchAssets = async () => {
@@ -158,24 +161,91 @@ export default function AssetSearchModal(props: AssetSearchModalProps) {
   // Effect to trigger fetch on open
   handleOpen();
 
-  // Close modal on Escape
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      props.onClose();
-    }
-  };
+  // Focus trap implementation
+  createEffect(() => {
+    if (!props.isOpen || !modalRef) return;
 
-  if (typeof window !== 'undefined') {
-    window.addEventListener('keydown', handleKeyDown);
-  }
+    // Get all focusable elements within the modal
+    const getFocusableElements = (): HTMLElement[] => {
+      if (!modalRef) return [];
+
+      const selectors = [
+        'button:not([disabled])',
+        'input:not([disabled])',
+        'textarea:not([disabled])',
+        'select:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])',
+      ];
+
+      return Array.from(modalRef.querySelectorAll(selectors.join(', ')));
+    };
+
+    // Handle keyboard navigation
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Close on Escape
+      if (e.key === 'Escape') {
+        props.onClose();
+        return;
+      }
+
+      // Focus trap on Tab
+      if (e.key === 'Tab') {
+        const focusableElements = getFocusableElements();
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        const activeElement = document.activeElement as HTMLElement;
+
+        // Shift + Tab (backwards)
+        if (e.shiftKey) {
+          if (activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        }
+        // Tab (forwards)
+        else {
+          if (activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
+    // Focus first element when modal opens
+    const focusableElements = getFocusableElements();
+    if (focusableElements.length > 0) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        focusableElements[0].focus();
+      }, 50);
+    }
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup on close
+    onCleanup(() => {
+      document.removeEventListener('keydown', handleKeyDown);
+    });
+  });
 
   return (
     <Show when={props.isOpen}>
       <div class="asset-modal-backdrop" onClick={props.onClose}>
-        <div class="asset-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          ref={modalRef}
+          class="asset-modal"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="asset-modal-title"
+        >
           {/* Header */}
           <div class="asset-modal__header">
-            <h2 class="asset-modal__title">
+            <h2 id="asset-modal-title" class="asset-modal__title">
               Add Asset{props.variantTitle ? ` to ${props.variantTitle}` : ''}
             </h2>
             <button
@@ -220,6 +290,14 @@ export default function AssetSearchModal(props: AssetSearchModalProps) {
               onClick={() => setActiveTab('upload')}
             >
               Quick Upload
+            </button>
+            <button
+              class={`asset-modal__tab ${activeTab() === 'document' ? 'asset-modal__tab--active' : ''}`}
+              role="tab"
+              aria-selected={activeTab() === 'document'}
+              onClick={() => setActiveTab('document')}
+            >
+              Create Document
             </button>
           </div>
 
@@ -383,6 +461,32 @@ export default function AssetSearchModal(props: AssetSearchModalProps) {
                 </div>
               </form>
             </Show>
+
+            <Show when={activeTab() === 'document'}>
+              <div class="asset-document">
+                <div class="asset-document__content">
+                  <svg class="asset-document__icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <line x1="10" y1="9" x2="8" y2="9"></line>
+                  </svg>
+                  <h3 class="asset-document__title">Create a Document</h3>
+                  <p class="asset-document__description">
+                    Documents are collaborative writing tools that can be converted to PDF assets and attached to your products.
+                  </p>
+                  <p class="asset-document__note">
+                    You'll be taken to the document editor. After creating your document, convert it to an asset and return here to attach it.
+                  </p>
+                </div>
+                <div class="asset-document__actions">
+                  <a href="/documents" class="asset-document__link">
+                    View My Documents →
+                  </a>
+                </div>
+              </div>
+            </Show>
           </div>
 
           {/* Footer */}
@@ -410,6 +514,15 @@ export default function AssetSearchModal(props: AssetSearchModalProps) {
               >
                 {uploading() ? 'Uploading...' : 'Upload & Attach'}
               </button>
+            </Show>
+            <Show when={activeTab() === 'document'}>
+              <a
+                href="/documents/new"
+                class="asset-modal__button asset-modal__button--primary"
+                style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;"
+              >
+                Create New Document
+              </a>
             </Show>
           </div>
         </div>
