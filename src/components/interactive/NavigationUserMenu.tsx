@@ -217,8 +217,8 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
               </For>
             </div>
 
-            {/* View All Link (only show if 5+ products) */}
-            <Show when={props.totalProductCount && props.totalProductCount >= 5}>
+            {/* View All Link (only show if more than 3 products) */}
+            <Show when={props.totalProductCount && props.totalProductCount > 3}>
               <a
                 href="/products"
                 class="nav-user-menu__view-all"
@@ -309,8 +309,8 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
               </For>
             </div>
 
-            {/* View All Link (only show if 5+ documents) */}
-            <Show when={props.totalDocumentCount && props.totalDocumentCount >= 5}>
+            {/* View All Link (only show if more than 2 documents) */}
+            <Show when={props.totalDocumentCount && props.totalDocumentCount > 2}>
               <a
                 href="/documents"
                 class="nav-user-menu__view-all"
