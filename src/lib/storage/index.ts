@@ -15,6 +15,3 @@ export type { StorageBucket, UploadResult, UploadOptions } from "./uploads";
 
 // Export product storage functions
 export { uploadProductCover, deleteProductCover, uploadVariantImage } from "./products";
-
-// Export asset storage functions
-export { uploadAssetFile, uploadAssetImage, createSignedDownloadUrl } from "./assets";

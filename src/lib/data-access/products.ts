@@ -1,5 +1,16 @@
 import { serverClient } from './client';
-import type { Product, ProductVariant, ProductVariantPrice, ProductTag, ProductStatus, Asset, User } from '@/types';
+import type {
+  Product,
+  ProductVariant,
+  ProductVariantPrice,
+  ProductTag,
+  ProductStatus,
+  ProductFile,
+  ProductComponent,
+  ProductRoyalty,
+  Asset,
+  User
+} from '@/types';
 
 export interface CreateProductParams {
   title: string;
@@ -1047,4 +1058,373 @@ export const getProductContributors = async (productId: string): Promise<User[]>
   }
 
   return users as User[];
+};
+
+// ===== Product Files (replaces Asset Files) =====
+
+/**
+ * Create a product file
+ */
+export const createProductFile = async (
+  productId: string,
+  fileData: {
+    title: string;
+    description?: string;
+    file_url: string;
+    storage_path: string;
+    file_size_bytes: number;
+    mime_type: string;
+  }
+): Promise<ProductFile | null> => {
+  // Get current max position
+  const { data: existingFiles } = await serverClient
+    .from('product_files')
+    .select('position')
+    .eq('product_id', productId)
+    .eq('deleted', false)
+    .order('position', { ascending: false })
+    .limit(1);
+
+  const nextPosition = existingFiles && existingFiles.length > 0
+    ? existingFiles[0].position + 1
+    : 0;
+
+  const { data, error } = await serverClient
+    .from('product_files')
+    .insert({
+      product_id: productId,
+      title: fileData.title,
+      description: fileData.description || '',
+      file_url: fileData.file_url,
+      storage_path: fileData.storage_path,
+      file_size_bytes: fileData.file_size_bytes,
+      mime_type: fileData.mime_type,
+      position: nextPosition,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating product file:', error);
+    return null;
+  }
+
+  return data as ProductFile;
+};
+
+/**
+ * Get files for a product
+ */
+export const getProductFiles = async (productId: string): Promise<ProductFile[]> => {
+  const { data, error } = await serverClient
+    .from('product_files')
+    .select('*')
+    .eq('product_id', productId)
+    .eq('deleted', false)
+    .order('position', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching product files:', error);
+    return [];
+  }
+
+  return data as ProductFile[];
+};
+
+/**
+ * Get product file by ID
+ */
+export const getProductFileById = async (fileId: string): Promise<ProductFile | null> => {
+  const { data, error } = await serverClient
+    .from('product_files')
+    .select('*')
+    .eq('id', fileId)
+    .eq('deleted', false)
+    .single();
+
+  if (error) {
+    return null;
+  }
+
+  return data as ProductFile;
+};
+
+/**
+ * Delete product file (soft delete)
+ */
+export const deleteProductFile = async (fileId: string): Promise<boolean> => {
+  const { error } = await serverClient
+    .from('product_files')
+    .update({
+      deleted: true,
+      deleted_at: new Date().toISOString(),
+    })
+    .eq('id', fileId);
+
+  if (error) {
+    console.error('Error deleting product file:', error);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Reorder product files
+ */
+export const reorderProductFiles = async (
+  fileOrders: Array<{ id: string; position: number }>
+): Promise<boolean> => {
+  try {
+    for (const { id, position } of fileOrders) {
+      const { error } = await serverClient
+        .from('product_files')
+        .update({ position, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error reordering file:', error);
+        return false;
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error('Error reordering files:', error);
+    return false;
+  }
+};
+
+// ===== Product Components (Product-in-Product) =====
+
+/**
+ * Link a product as a component to a variant
+ * Captures the royalty amount at link time
+ */
+export const linkProductToVariant = async (
+  variantId: string,
+  childProductId: string,
+  royaltyAmountCents: number
+): Promise<boolean> => {
+  const { error } = await serverClient
+    .from('product_components')
+    .insert({
+      parent_variant_id: variantId,
+      child_product_id: childProductId,
+      royalty_amount_cents: royaltyAmountCents,
+    });
+
+  if (error) {
+    console.error('Error linking product to variant:', error);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Get products linked as components to a variant
+ */
+export const getVariantComponents = async (variantId: string): Promise<Product[]> => {
+  const { data, error } = await serverClient
+    .from('product_components')
+    .select('child_product_id')
+    .eq('parent_variant_id', variantId)
+    .eq('deleted', false);
+
+  if (error || !data) {
+    return [];
+  }
+
+  const productIds = data.map(pc => pc.child_product_id);
+
+  if (productIds.length === 0) {
+    return [];
+  }
+
+  const { data: products, error: productsError } = await serverClient
+    .from('products')
+    .select('*')
+    .in('id', productIds)
+    .eq('deleted', false);
+
+  if (productsError || !products) {
+    return [];
+  }
+
+  return products as Product[];
+};
+
+/**
+ * Get component details (with royalty amount)
+ */
+export const getVariantComponentDetails = async (
+  variantId: string
+): Promise<Array<{ product: Product; royaltyAmountCents: number }>> => {
+  const { data, error } = await serverClient
+    .from('product_components')
+    .select('child_product_id, royalty_amount_cents')
+    .eq('parent_variant_id', variantId)
+    .eq('deleted', false);
+
+  if (error || !data) {
+    return [];
+  }
+
+  const results: Array<{ product: Product; royaltyAmountCents: number }> = [];
+
+  for (const component of data) {
+    const product = await getProductById(component.child_product_id);
+    if (product) {
+      results.push({
+        product,
+        royaltyAmountCents: component.royalty_amount_cents,
+      });
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Unlink a product component from a variant
+ */
+export const unlinkProductFromVariant = async (
+  variantId: string,
+  childProductId: string
+): Promise<boolean> => {
+  const { error } = await serverClient
+    .from('product_components')
+    .delete()
+    .eq('parent_variant_id', variantId)
+    .eq('child_product_id', childProductId);
+
+  if (error) {
+    console.error('Error unlinking product from variant:', error);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Get all products that are embeddable (for component selection)
+ */
+export const getEmbeddableProducts = async (userId: string): Promise<Product[]> => {
+  const { data, error } = await serverClient
+    .from('products')
+    .select('*')
+    .eq('is_embeddable', true)
+    .eq('deleted', false)
+    .or(`user_id.eq.${userId},status.eq.public`)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching embeddable products:', error);
+    return [];
+  }
+
+  return data as Product[];
+};
+
+// ===== Product Royalties =====
+
+/**
+ * Get all royalties for a product
+ */
+export const getProductRoyalties = async (productId: string): Promise<ProductRoyalty[]> => {
+  const { data, error } = await serverClient
+    .from('product_royalties')
+    .select('*')
+    .eq('product_id', productId)
+    .eq('deleted', false)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching product royalties:', error);
+    return [];
+  }
+
+  return data as ProductRoyalty[];
+};
+
+/**
+ * Create a new royalty for a product
+ */
+export const createProductRoyalty = async (
+  productId: string,
+  userId: string,
+  royaltyType: 'fixed' | 'percentage',
+  royaltyValue: number
+): Promise<ProductRoyalty | null> => {
+  const { data, error } = await serverClient
+    .from('product_royalties')
+    .insert({
+      product_id: productId,
+      user_id: userId,
+      royalty_type: royaltyType,
+      royalty_value: royaltyValue,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating product royalty:', error);
+    return null;
+  }
+
+  return data as ProductRoyalty;
+};
+
+/**
+ * Update an existing royalty
+ */
+export const updateProductRoyalty = async (
+  royaltyId: string,
+  royaltyValue: number
+): Promise<boolean> => {
+  const { error } = await serverClient
+    .from('product_royalties')
+    .update({
+      royalty_value: royaltyValue,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', royaltyId);
+
+  if (error) {
+    console.error('Error updating product royalty:', error);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Delete a royalty (soft delete)
+ */
+export const deleteProductRoyalty = async (royaltyId: string): Promise<boolean> => {
+  const { error } = await serverClient
+    .from('product_royalties')
+    .update({
+      deleted: true,
+      deleted_at: new Date().toISOString(),
+    })
+    .eq('id', royaltyId);
+
+  if (error) {
+    console.error('Error deleting product royalty:', error);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Calculate total royalty cost for a product
+ * Returns the sum of all fixed royalties (in cents)
+ */
+export const calculateProductRoyaltyTotal = async (productId: string): Promise<number> => {
+  const royalties = await getProductRoyalties(productId);
+  return royalties
+    .filter(r => r.royalty_type === 'fixed')
+    .reduce((total, royalty) => total + royalty.royalty_value, 0);
 };

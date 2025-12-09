@@ -49,7 +49,8 @@
       "Bash(npm test:*)",
       "Bash(tail:*)",
       "Bash(git diff:*)",
-      "WebFetch(domain:www.kickstarter.com)"
+      "WebFetch(domain:www.kickstarter.com)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

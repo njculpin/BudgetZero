@@ -1,37 +1,43 @@
 import { serverClient } from './client';
-import type { AssetRoyalty, SaleRoyaltyTransaction, RoyaltyType } from '@/types';
+import type { ProductRoyalty, SaleRoyaltyTransaction, RoyaltyType } from '@/types';
 
 export interface CreateRoyaltyParams {
-  assetId: string;
+  productId: string;
   userId: string;
   royaltyValue: number; // Flat rate in cents
 }
 
 /**
- * Get all royalties for an asset
+ * Get all royalties for a product
  */
-export const getAssetRoyalties = async (assetId: string): Promise<AssetRoyalty[]> => {
+export const getProductRoyalties = async (productId: string): Promise<ProductRoyalty[]> => {
   const { data, error } = await serverClient
-    .from('asset_royalties')
+    .from('product_royalties')
     .select('*')
-    .eq('asset_id', assetId)
+    .eq('product_id', productId)
     .eq('deleted', false)
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Error fetching asset royalties:', error);
+    console.error('Error fetching product royalties:', error);
     return [];
   }
 
-  return data as AssetRoyalty[];
+  return data as ProductRoyalty[];
 };
+
+/**
+ * Backward compatibility: Get all royalties for an asset (now treated as product)
+ * @deprecated Use getProductRoyalties instead
+ */
+export const getAssetRoyalties = getProductRoyalties;
 
 /**
  * Get a specific royalty by ID
  */
-export const getRoyaltyById = async (royaltyId: string): Promise<AssetRoyalty | null> => {
+export const getRoyaltyById = async (royaltyId: string): Promise<ProductRoyalty | null> => {
   const { data, error } = await serverClient
-    .from('asset_royalties')
+    .from('product_royalties')
     .select('*')
     .eq('id', royaltyId)
     .eq('deleted', false)
@@ -41,19 +47,19 @@ export const getRoyaltyById = async (royaltyId: string): Promise<AssetRoyalty | 
     return null;
   }
 
-  return data as AssetRoyalty;
+  return data as ProductRoyalty;
 };
 
 /**
- * Create a new royalty for an asset
+ * Create a new royalty for a product
  */
-export const createAssetRoyalty = async (
+export const createProductRoyalty = async (
   params: CreateRoyaltyParams
-): Promise<AssetRoyalty | null> => {
+): Promise<ProductRoyalty | null> => {
   const { data, error } = await serverClient
-    .from('asset_royalties')
+    .from('product_royalties')
     .insert({
-      asset_id: params.assetId,
+      product_id: params.productId,
       user_id: params.userId,
       royalty_type: 'fixed',
       royalty_value: params.royaltyValue,
@@ -62,22 +68,28 @@ export const createAssetRoyalty = async (
     .single();
 
   if (error) {
-    console.error('Error creating asset royalty:', error);
+    console.error('Error creating product royalty:', error);
     return null;
   }
 
-  return data as AssetRoyalty;
+  return data as ProductRoyalty;
 };
+
+/**
+ * Backward compatibility: Create a new royalty for an asset (now treated as product)
+ * @deprecated Use createProductRoyalty instead
+ */
+export const createAssetRoyalty = createProductRoyalty;
 
 /**
  * Update an existing royalty
  */
-export const updateAssetRoyalty = async (
+export const updateProductRoyalty = async (
   royaltyId: string,
   royaltyValue: number
 ): Promise<boolean> => {
   const { error } = await serverClient
-    .from('asset_royalties')
+    .from('product_royalties')
     .update({
       royalty_value: royaltyValue,
       updated_at: new Date().toISOString(),
@@ -85,7 +97,7 @@ export const updateAssetRoyalty = async (
     .eq('id', royaltyId);
 
   if (error) {
-    console.error('Error updating asset royalty:', error);
+    console.error('Error updating product royalty:', error);
     return false;
   }
 
@@ -93,13 +105,19 @@ export const updateAssetRoyalty = async (
 };
 
 /**
+ * Backward compatibility: Update an existing asset royalty (now treated as product)
+ * @deprecated Use updateProductRoyalty instead
+ */
+export const updateAssetRoyalty = updateProductRoyalty;
+
+/**
  * Delete a royalty (soft delete)
  */
-export const deleteAssetRoyalty = async (
+export const deleteProductRoyalty = async (
   royaltyId: string
 ): Promise<boolean> => {
   const { error } = await serverClient
-    .from('asset_royalties')
+    .from('product_royalties')
     .update({
       deleted: true,
       deleted_at: new Date().toISOString(),
@@ -107,7 +125,7 @@ export const deleteAssetRoyalty = async (
     .eq('id', royaltyId);
 
   if (error) {
-    console.error('Error deleting asset royalty:', error);
+    console.error('Error deleting product royalty:', error);
     return false;
   }
 
@@ -115,15 +133,27 @@ export const deleteAssetRoyalty = async (
 };
 
 /**
- * Calculate total flat rate cost for an asset
+ * Backward compatibility: Delete an asset royalty (now treated as product)
+ * @deprecated Use deleteProductRoyalty instead
+ */
+export const deleteAssetRoyalty = deleteProductRoyalty;
+
+/**
+ * Calculate total flat rate cost for a product
  * Returns the sum of all royalty flat rates in cents
  */
-export const calculateTotalAssetCost = async (
-  assetId: string
+export const calculateTotalProductCost = async (
+  productId: string
 ): Promise<number> => {
-  const royalties = await getAssetRoyalties(assetId);
+  const royalties = await getProductRoyalties(productId);
   return royalties.reduce((total, royalty) => total + royalty.royalty_value, 0);
 };
+
+/**
+ * Backward compatibility: Calculate total flat rate cost for an asset (now treated as product)
+ * @deprecated Use calculateTotalProductCost instead
+ */
+export const calculateTotalAssetCost = calculateTotalProductCost;
 
 /**
  * Get all royalty transactions for a user (earnings)

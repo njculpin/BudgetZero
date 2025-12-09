@@ -2,6 +2,7 @@ import type { BaseEntity } from "./common.types";
 
 export type ProductStatus = "draft" | "private" | "public" | "archived";
 export type ProductCollaboratorRole = "owner" | "editor" | "viewer";
+export type RoyaltyType = 'fixed' | 'percentage';
 
 export interface Product extends BaseEntity {
   handle: string;
@@ -14,6 +15,13 @@ export interface Product extends BaseEntity {
   needs_attention: boolean;
   attention_reason: string | null;
   attention_since: string | null;
+  // Product-as-component fields (replaces Asset functionality)
+  is_embeddable: boolean; // Can this product be embedded in other products?
+  direct_sale_price_cents: number | null; // Price when sold directly to customers
+  embedding_royalty_cents: number | null; // Royalty when embedded in another product
+  download_count: number;
+  total_size_bytes: number;
+  file_count: number;
 }
 
 export interface ProductCollaborator extends BaseEntity {
@@ -74,9 +82,31 @@ export interface ProductVariantImage extends BaseEntity {
   position: number;
 }
 
-export interface ProductAsset extends BaseEntity {
-  variant_id: string;
-  asset_id: string;
+// Product Files (replaces AssetFile)
+export interface ProductFile extends BaseEntity {
+  product_id: string;
+  title: string;
+  description: string;
+  file_url: string;
+  storage_path: string;
+  file_size_bytes: number;
+  mime_type: string;
+  position: number;
+}
+
+// Product Components (replaces ProductAsset for product-in-product relationships)
+export interface ProductComponent extends BaseEntity {
+  parent_variant_id: string; // The variant that contains this component
+  child_product_id: string; // The product being embedded
+  royalty_amount_cents: number; // Royalty amount captured at link time
+}
+
+// Product Royalties (replaces AssetRoyalty)
+export interface ProductRoyalty extends BaseEntity {
+  product_id: string;
+  user_id: string;
+  royalty_type: RoyaltyType;
+  royalty_value: number; // Fixed: cents | Percentage: 0-100
 }
 
 export interface ProductReview extends BaseEntity {

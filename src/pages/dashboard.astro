@@ -13,7 +13,6 @@ import { FormSubmitButton } from "@/components/interactive";
 
 import { getUserById } from "@/lib/data-access/users";
 import { getUserProducts, getProductImages } from "@/lib/data-access/products";
-import { getUserAssets, getAssetImages } from "@/lib/data-access/assets";
 import { getUserEarningsSummary, getRoyaltyTransactionHistory } from "@/lib/data-access/royalties";
 import { getAvailablePayoutBalance, getUserPayouts } from "@/lib/data-access/payouts";
 
@@ -31,7 +30,6 @@ const userHandle = userProfile?.handle;
 
 // Fetch user's content
 const userProducts = await getUserProducts(userId);
-const userAssets = await getUserAssets(userId);
 
 // Fetch royalty earnings
 const earningsSummary = await getUserEarningsSummary(userId);
@@ -43,7 +41,7 @@ const recentPayouts = await getUserPayouts(userId);
 
 // Create unified content array with images
 type ContentItem = {
-  type: 'asset' | 'product';
+  type: 'product';
   id: string;
   handle: string;
   title: string;
@@ -53,21 +51,6 @@ type ContentItem = {
 };
 
 const contentItems: ContentItem[] = await Promise.all([
-  ...userAssets.map(async (asset) => {
-    const images = await getAssetImages(asset.id);
-    const coverImage = images.length > 0
-      ? images.sort((a, b) => a.position - b.position)[0]
-      : null;
-    return {
-      type: 'asset' as const,
-      id: asset.id,
-      handle: asset.handle,
-      title: asset.title,
-      imageUrl: coverImage?.file_url || 'https://placehold.co/400x400?text=Asset',
-      createdAt: asset.created_at,
-      status: asset.status,
-    };
-  }),
   ...userProducts.map(async (product) => {
     const images = await getProductImages(product.id);
     const coverImage = images.length > 0
@@ -111,15 +94,6 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
                 size="md"
               >
                 Create Document
-              </FormSubmitButton>
-              <FormSubmitButton
-                client:load
-                action="/api/assets/create-asset"
-                method="post"
-                variant="outline"
-                size="md"
-              >
-                Create Asset
               </FormSubmitButton>
               <FormSubmitButton
                 client:load
@@ -191,7 +165,7 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
                                   {transaction.productTitle} - {transaction.variantTitle}
                                 </span>
                                 <span class="transaction-item__subtitle">
-                                  {transaction.assetTitle}
+                                  {transaction.componentTitle || 'Product royalty'}
                                 </span>
                                 <span class="transaction-item__date">
                                   {new Date(transaction.createdAt).toLocaleDateString()}
@@ -225,7 +199,7 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
                   <div class="payout-setup">
                     <div class="payout-setup__info">
                       <p class="payout-setup__description">
-                        Connect your bank account to receive royalty payouts when your assets are purchased. Set up takes just a few minutes.
+                        Connect your bank account to receive royalty payouts when your products are purchased. Set up takes just a few minutes.
                       </p>
                       <div class="payout-setup__features">
                         <div class="payout-setup__feature">
@@ -322,7 +296,7 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
                 </CardHeader>
                 <CardContent>
                   <div class="payout-history">
-                    <p class="payout-history__empty">No balance available for payout. You'll see new transactions here when your assets generate royalties.</p>
+                    <p class="payout-history__empty">No balance available for payout. You'll see new transactions here when your products generate royalties.</p>
                     <div class="payout-history__list">
                       {recentPayouts.slice(0, 5).map((payout) => (
                         <div class="payout-item">

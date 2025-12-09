@@ -6,10 +6,9 @@ import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import Badge from "@/components/Badge.astro";
 import { setSession } from "@/lib/auth";
-import { getSaleById, getSaleItems, getSaleItemAssets } from "@/lib/data-access/sales";
+import { getSaleById, getSaleItems } from "@/lib/data-access/sales";
 import Breadcrumb from "@/components/Breadcrumb.astro";
-import { getProductById, getVariantById } from "@/lib/data-access/products";
-import { getAssetById } from "@/lib/data-access/assets";
+import { getProductById, getVariantById, getProductFiles } from "@/lib/data-access/products";
 
 const { purchase: saleId } = Astro.params;
 
@@ -55,24 +54,18 @@ if (sale.user_id !== userId) {
 // Get sale items
 const saleItems = await getSaleItems(saleId);
 
-// Fetch product, variant, and asset details for each sale item
+// Fetch product, variant, and files for each sale item
 const itemsWithDetails = await Promise.all(
   saleItems.map(async (item) => {
     const product = await getProductById(item.product_id);
     const variant = await getVariantById(item.variant_id);
-    const saleItemAssets = await getSaleItemAssets(item.id);
-
-    const assets = await Promise.all(
-      saleItemAssets.map(async (sia) => {
-        return await getAssetById(sia.asset_id);
-      })
-    );
+    const files = product ? await getProductFiles(product.id) : [];
 
     return {
       ...item,
       product,
       variant,
-      assets: assets.filter(a => a !== null),
+      files,
     };
   })
 );

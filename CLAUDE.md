@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Game Loopers is a social commerce platform for tabletop game creators (designers, 3D modelers, illustrators) to collaborate, publish digital downloads, manage licensing, and distribute royalties. Think of it as a marketplace where contributors can assemble game products, attach assets with royalty splits, and customers purchase complete game packages.
+Game Loopers is a social commerce platform for tabletop game creators (designers, 3D modelers, illustrators) to collaborate, publish digital downloads, manage licensing, and distribute royalties. Think of it as a marketplace where contributors can assemble game products with embedded components, manage royalty splits, and customers purchase complete game packages.
 
 **Key Documentation:**
 - `/ROADMAP.md` - Product roadmap, phasing strategy, and success metrics
@@ -46,13 +46,14 @@ npm run preview   # Preview production build locally
 
 **Data Access Layer** (`/src/lib/data-access/`)
 - `client.ts` - Supabase database client
-- Future: `users.ts`, `products.ts`, `assets.ts` with CRUD functions
-- Export service functions like `getUserById()`, `createProduct()`, `updateAsset()`
+- Includes: `users.ts`, `products.ts`, `documents.ts`, `royalties.ts` with CRUD functions
+- Export service functions like `getUserById()`, `createProduct()`, `updateDocument()`
 - ❌ Never import `@supabase/supabase-js` outside this directory
 
 **Storage Layer** (`/src/lib/storage/`)
 - `client.ts` - Supabase storage client
-- Future: `uploads.ts` with functions like `uploadAssetFile()`, `getDownloadUrl()`
+- `uploads.ts` - Generic upload functions for product files and images
+- `products.ts` - Product-specific storage functions
 - ❌ Never import `@supabase/supabase-js` outside this directory
 
 **Payments Layer** (`/src/lib/payments/`) - Not yet created
@@ -84,8 +85,7 @@ src/types/
 ├── common.types.ts      # BaseEntity, BaseEntityWithoutDelete
 ├── users.types.ts       # User, UserTag, UserReview, UserFollows
 ├── documents.types.ts   # Document, DocumentBlock, DocumentCollaborator
-├── assets.types.ts      # Asset, AssetFile, AssetRoyalty, AssetLicense
-├── products.types.ts    # Product, ProductVariant, ProductVariantPrice
+├── products.types.ts    # Product, ProductFile, ProductComponent, ProductRoyalty
 ├── commerce.types.ts    # Cart, Sale, SaleItem, Wishlist
 ├── jams.types.ts        # Jam, JamPrize, JamProduct
 ├── system.types.ts      # Notification, ActivityFeed, Session
@@ -140,9 +140,6 @@ src/components/
 ├── products/                        # /products/*.astro
 │   ├── ProductEditForm.tsx, ProductVariantManager.tsx, etc.
 │   └── index.ts
-├── assets/                          # /assets/*.astro
-│   ├── AssetEditForm.tsx, AssetRoyaltyManager.tsx, etc.
-│   └── index.ts
 ├── documents/                       # /documents/*.astro
 ├── users/                           # /users/*.astro
 ├── cart/                            # /cart.astro
@@ -165,7 +162,6 @@ import { LoadingButton, TagInput } from '@/components/interactive';
 
 // Page-specific components
 import { ProductEditForm, ProductVariantManager } from '@/components/products';
-import { AssetEditForm, AssetRoyaltyManager } from '@/components/assets';
 import { NotificationCenter } from '@/components/notifications';
 ```
 
@@ -186,7 +182,6 @@ Astro file-based routing in `/src/pages/`:
 - `/users/[handle]` - User profile (owner sees edit view, others see public)
 - `/products` - Product marketplace
 - `/products/[handle]` - Product detail
-- `/assets/[handle]` - Asset detail
 - `/documents/[handle]` - Document editor (private, collaborators only)
 - `/jams` - Game jam directory
 - `/jams/[handle]` - Jam detail
@@ -208,16 +203,16 @@ Astro file-based routing in `/src/pages/`:
 
 **Core Entities:**
 - **Users**: Creators and customers with handles, bios, Stripe IDs for payouts
-- **Products**: Sellable items with variants, prices, price breaks
-- **Assets**: Digital downloads (3D models, PDFs, images) with royalty splits
-- **Documents**: Private collaborative docs (Notion-like blocks) that publish as PDF assets
+- **Products**: Sellable items with variants, prices, downloadable files, and embeddable components
+- **Documents**: Private collaborative docs (Notion-like blocks) that can generate PDFs
 - **Jams**: Game jams with products, prizes, reviews
-- **Cart/Sales**: E-commerce with line items, asset downloads, royalty transactions
+- **Cart/Sales**: E-commerce with line items, file downloads, royalty transactions
 
 **Key Relationships:**
 - Products have ProductVariants (SKUs with options/pricing)
-- ProductAssets link variants to downloadable Assets
-- AssetRoyalties define splits (fixed $ or %) paid to contributors
+- Products have ProductFiles (downloadable content attached to the product)
+- ProductComponents link variants to embeddable products (product-in-product pattern)
+- ProductRoyalties define splits (fixed $ or %) paid to contributors
 - SaleRoyaltyTransactions track payments to contributors per sale
 
 **Soft Deletes:**
@@ -225,7 +220,7 @@ Most entities have `deleted` boolean and `deleted_at` timestamp. Never hard-dele
 
 ## SolidJS Island Pattern
 
-Interactive components are organized by domain (e.g., `/src/components/products/`, `/src/components/assets/`) or in `/src/components/interactive/` for generic reusable components. Use Signals for reactive state:
+Interactive components are organized by domain (e.g., `/src/components/products/`, `/src/components/documents/`) or in `/src/components/interactive/` for generic reusable components. Use Signals for reactive state:
 
 ```tsx
 // Example: SignInForm.tsx
@@ -259,7 +254,7 @@ export default function SignInForm() {
 
 **Form State:**
 - Simple forms (login, signup): SolidJS Signals only
-- Complex forms (asset upload, checkout): Signals + Zod validation
+- Complex forms (product file upload, checkout): Signals + Zod validation
 - Keep state local to islands (use Nanostores only if cross-island state needed)
 
 ## Code Quality Rules
@@ -276,9 +271,9 @@ export default function SignInForm() {
 
 **Current Personas (MVP - Digital Marketplace):**
 - **Game Designers:** Create products, hire collaborators, earn from sales
-- **Illustrators:** Sell art assets, license work, earn royalties when used in products
-- **3D Modelers:** Sell STL files, license models, earn royalties when used in products
-- **Consumers:** Purchase complete game packages, download assets, support creators
+- **Illustrators:** Sell art products, license work, earn royalties when embedded in other products
+- **3D Modelers:** Sell STL file products, license models, earn royalties when embedded in other products
+- **Consumers:** Purchase complete game packages, download digital files, support creators
 
 **Future Personas (Phase 3 - Physical Services):**
 - **Printers:** Provide 3D printing services to turn STL files into physical miniatures (DEFERRED until Month 7+)
