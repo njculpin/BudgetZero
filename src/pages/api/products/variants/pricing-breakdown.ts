@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { getVariantById, getVariantAssets, getVariantPrices } from "@/lib/data-access/products";
-import { getAssetRoyalties } from "@/lib/data-access/royalties";
+import { getVariantById, getVariantComponents, getVariantPrices } from "@/lib/data-access/products";
+import { getProductRoyalties } from "@/lib/data-access/royalties";
 import { getUserById } from "@/lib/data-access/users";
 
 const pricingBreakdownSchema = z.object({
@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ url }) => {
       });
     }
 
-    const assets = await getVariantAssets(validatedData.variantId);
+    const components = await getVariantComponents(validatedData.variantId);
     const prices = await getVariantPrices(validatedData.variantId);
 
     // Get the base price (use the lowest min_quantity price)
@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ url }) => {
       return new Response(
         JSON.stringify({
           variant,
-          assets: [],
+          components: [],
           breakdown: null,
           message: "No pricing set for this variant"
         }),
@@ -53,10 +53,10 @@ export const GET: APIRoute = async ({ url }) => {
       );
     }
 
-    // Calculate breakdown for each asset with flat rates
-    const assetBreakdowns = await Promise.all(
-      assets.map(async (asset) => {
-        const royalties = await getAssetRoyalties(asset.id);
+    // Calculate breakdown for each product component with flat rates
+    const componentBreakdowns = await Promise.all(
+      components.map(async (component) => {
+        const royalties = await getProductRoyalties(component.id);
 
         // Get user info for each royalty recipient
         const royaltiesWithUsers = await Promise.all(
@@ -73,41 +73,41 @@ export const GET: APIRoute = async ({ url }) => {
           })
         );
 
-        // Calculate total flat rate for this asset
-        const assetFlatRate = royaltiesWithUsers.reduce((sum, r) => sum + r.royalty_value, 0);
+        // Calculate total flat rate for this component
+        const componentFlatRate = royaltiesWithUsers.reduce((sum, r) => sum + r.royalty_value, 0);
 
-        // Calculate what percentage of the product price this asset represents
-        const assetPercentage = basePrice.unit_amount > 0
-          ? Math.round((assetFlatRate / basePrice.unit_amount) * 10000) / 100
+        // Calculate what percentage of the product price this component represents
+        const componentPercentage = basePrice.unit_amount > 0
+          ? Math.round((componentFlatRate / basePrice.unit_amount) * 10000) / 100
           : 0;
 
-        // Calculate actual payout (capped at asset flat rate, won't exceed it even if percentage is higher)
-        const assetPayout = Math.min(assetFlatRate, Math.round((basePrice.unit_amount * assetPercentage) / 100));
+        // Calculate actual payout (capped at component flat rate, won't exceed it even if percentage is higher)
+        const componentPayout = Math.min(componentFlatRate, Math.round((basePrice.unit_amount * componentPercentage) / 100));
 
         return {
-          asset: {
-            id: asset.id,
-            title: asset.title,
-            handle: asset.handle,
+          component: {
+            id: component.id,
+            title: component.title,
+            handle: component.handle,
           },
           royalties: royaltiesWithUsers,
-          flatRate: assetFlatRate,
-          percentage: assetPercentage,
-          payout: assetPayout,
+          flatRate: componentFlatRate,
+          percentage: componentPercentage,
+          payout: componentPayout,
         };
       })
     );
 
     // Calculate totals
-    const totalAssetFlatRates = assetBreakdowns.reduce((sum, ab) => sum + ab.flatRate, 0);
-    const totalAssetPayouts = assetBreakdowns.reduce((sum, ab) => sum + ab.payout, 0);
+    const totalComponentFlatRates = componentBreakdowns.reduce((sum, cb) => sum + cb.flatRate, 0);
+    const totalComponentPayouts = componentBreakdowns.reduce((sum, cb) => sum + cb.payout, 0);
 
     // Platform fee (5% of base price)
     const platformFeePercentage = 5;
     const platformFee = Math.round((basePrice.unit_amount * platformFeePercentage) / 100);
 
-    // Net to product owner (remainder after assets and platform fee)
-    const netToOwner = basePrice.unit_amount - totalAssetPayouts - platformFee;
+    // Net to product owner (remainder after component payouts and platform fee)
+    const netToOwner = basePrice.unit_amount - totalComponentPayouts - platformFee;
     const netToOwnerPercentage = basePrice.unit_amount > 0
       ? Math.round((netToOwner / basePrice.unit_amount) * 10000) / 100
       : 0;
@@ -121,10 +121,10 @@ export const GET: APIRoute = async ({ url }) => {
         amount: platformFee,
         percentage: platformFeePercentage,
       },
-      assets: {
-        totalFlatRates: totalAssetFlatRates,
-        totalPayouts: totalAssetPayouts,
-        items: assetBreakdowns,
+      components: {
+        totalFlatRates: totalComponentFlatRates,
+        totalPayouts: totalComponentPayouts,
+        items: componentBreakdowns,
       },
       netToOwner: {
         amount: netToOwner,
@@ -132,10 +132,10 @@ export const GET: APIRoute = async ({ url }) => {
       },
       validation: {
         productPrice: basePrice.unit_amount,
-        sumOfAssetRates: totalAssetFlatRates,
-        isValid: basePrice.unit_amount >= totalAssetFlatRates,
-        shortfall: totalAssetFlatRates > basePrice.unit_amount
-          ? totalAssetFlatRates - basePrice.unit_amount
+        sumOfComponentRates: totalComponentFlatRates,
+        isValid: basePrice.unit_amount >= totalComponentFlatRates,
+        shortfall: totalComponentFlatRates > basePrice.unit_amount
+          ? totalComponentFlatRates - basePrice.unit_amount
           : 0,
       },
     };

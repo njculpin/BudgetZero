@@ -1,5 +1,5 @@
 import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
-import type { RoyaltyType } from "./assets.types";
+import type { RoyaltyType } from "./products.types";
 
 export type SaleStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type RoyaltyTransactionStatus = 'pending' | 'ready_to_pay' | 'paid' | 'failed' | 'refunded';

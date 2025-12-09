@@ -5,15 +5,14 @@ import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
 import { AddToCartButton } from "@/components/cart";
-import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductChat, ProductVariantManager, ProductVariantEditor, ProductPriceManager, VariantAssetPicker, ProductValueBreakdown, ProductCostBreakdown, VariantDeleteButton } from "@/components/products";
-import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getVariantAssets, getProductContributors } from "@/lib/data-access/products";
-import { getAssetImages } from "@/lib/data-access/assets";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductChat, ProductVariantManager, ProductVariantEditor, ProductPriceManager, ProductCostBreakdown, VariantDeleteButton } from "@/components/products";
+import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getProductContributors } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 import { getJamById, getJamProductReviews } from "@/lib/data-access/jams";
 import { serverClient } from "@/lib/data-access/client";
 import AlertMessage from "@/components/AlertMessage.astro";
-import type { Asset, JamProductReview } from "@/types";
+import type {  JamProductReview } from "@/types";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
@@ -47,19 +46,7 @@ const coverImage = productImages[0]?.file_url || null;
 const variantsWithPrices = await Promise.all(
   variants.map(async (variant) => {
     const prices = await getVariantPrices(variant.id);
-    const assets = await getVariantAssets(variant.id);
-    return { ...variant, prices, assets };
-  })
-);
-
-// Fetch asset images for all assets across all variants
-const assetImagesMap = new Map();
-const allAssets = variantsWithPrices.flatMap(v => v.assets || []);
-await Promise.all(
-  allAssets.map(async (asset) => {
-    const images = await getAssetImages(asset.id);
-    const coverImage = images[0]?.file_url || null;
-    assetImagesMap.set(asset.id, coverImage);
+    return { ...variant, prices };
   })
 );
 
@@ -334,61 +321,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
                       initialDescription={variant.description}
                       initialSku={variant.sku}
                     />
-                  )}
-
-                  {isEditMode && currentUser && (
-                    <VariantAssetPicker
-                      client:load
-                      variantId={variant.id}
-                      userId={currentUser.id}
-                    />
-                  )}
-
-                  {!isEditMode && variant.assets && variant.assets.length > 0 && (
-                    <div class="variant-item__assets">
-                      <div class="variant-item__assets-header">
-                        <h5 class="variant-item__assets-title">What's Included</h5>
-                        <span class="variant-item__assets-count">
-                          {variant.assets.length} asset{variant.assets.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-
-                      {variant.prices && variant.prices.length > 0 && (
-                        <ProductValueBreakdown
-                          client:load
-                          variantId={variant.id}
-                          price={variant.prices[0].unit_amount}
-                          assetCount={variant.assets.length}
-                        />
-                      )}
-
-                      <div class="variant-item__assets-list">
-                        {variant.assets.map((asset: Asset) => {
-                          const assetCoverImage = assetImagesMap.get(asset.id);
-                          return (
-                            <a href={`/assets/${asset.handle}`} class="variant-item__asset-card">
-                              <div class="variant-item__asset-image-container">
-                                {assetCoverImage ? (
-                                  <img
-                                    src={assetCoverImage}
-                                    alt={asset.title}
-                                    class="variant-item__asset-image"
-                                  />
-                                ) : (
-                                  <div class="variant-item__asset-image-placeholder">
-                                    📦
-                                  </div>
-                                )}
-                              </div>
-                              <div class="variant-item__asset-info">
-                                <h6 class="variant-item__asset-title">{asset.title}</h6>
-                                <p class="variant-item__asset-handle">@{asset.handle}</p>
-                              </div>
-                            </a>
-                          );
-                        })}
-                      </div>
-                    </div>
                   )}
 
                   {!isEditMode && variant.prices && variant.prices.length > 0 && (

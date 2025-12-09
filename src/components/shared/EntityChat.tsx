@@ -1,14 +1,12 @@
 import { For } from "solid-js";
 import { useChat, type BaseChatMessage } from "@/lib/hooks/useChat";
-import { subscribeToAssetChat } from "@/lib/realtime/asset-chat-subscription";
 import { subscribeToProductChat } from "@/lib/realtime/product-chat-subscription";
 import { subscribeToDocumentChat } from "@/lib/realtime/document-chat-subscription";
 import "./entity-chat.css";
 
-type EntityType = "asset" | "product" | "document";
+type EntityType = "product" | "document";
 
 interface EntityChatMessage extends BaseChatMessage {
-  asset_id?: string;
   product_id?: string;
   document_id?: string;
 }
@@ -26,13 +24,6 @@ const entityConfig: Record<EntityType, {
   subscribeToChat: (entityId: string, onMessage: (message: EntityChatMessage) => void) => Promise<() => void>;
   labelText: string;
 }> = {
-  asset: {
-    getMessagesEndpoint: "/api/assets/chat/get-messages",
-    entityParamName: "assetId",
-    sendMessageEndpoint: "/api/assets/chat/add-message",
-    subscribeToChat: subscribeToAssetChat,
-    labelText: "Send a message to asset contributors",
-  },
   product: {
     getMessagesEndpoint: "/api/products/chat/get-messages",
     entityParamName: "productId",

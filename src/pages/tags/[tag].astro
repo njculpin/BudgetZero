@@ -4,7 +4,6 @@ import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
 import { getProductsByTag, getProductImages } from "@/lib/data-access/products";
-import { getAssetsByTag, getAssetImages } from "@/lib/data-access/assets";
 
 const { tag } = Astro.params;
 
@@ -15,11 +14,8 @@ if (!tag) {
 // Decode the tag from the URL
 const decodedTag = decodeURIComponent(tag);
 
-// Fetch products and assets with this tag
-const [products, assets] = await Promise.all([
-  getProductsByTag(decodedTag),
-  getAssetsByTag(decodedTag)
-]);
+// Fetch products with this tag
+const products = await getProductsByTag(decodedTag);
 
 // Fetch cover images for each product
 const productsWithImages = await Promise.all(
@@ -36,22 +32,7 @@ const productsWithImages = await Promise.all(
   })
 );
 
-// Fetch cover images for each asset
-const assetsWithImages = await Promise.all(
-  assets.map(async (asset) => {
-    const images = await getAssetImages(asset.id);
-    const coverImage = images.length > 0
-      ? images.sort((a, b) => a.position - b.position)[0]
-      : null;
-
-    return {
-      ...asset,
-      coverImageUrl: coverImage?.file_url || 'https://placehold.co/600x400?text=Asset',
-    };
-  })
-);
-
-const totalCount = productsWithImages.length + assetsWithImages.length;
+const totalCount = productsWithImages.length;
 ---
 
 <Layout title={`${decodedTag} - Game Loopers`}>
@@ -78,11 +59,6 @@ const totalCount = productsWithImages.length + assetsWithImages.length;
               {productsWithImages.length > 0 && (
                 <span class="tags-header__breakdown-item">
                   {productsWithImages.length} product{productsWithImages.length !== 1 ? 's' : ''}
-                </span>
-              )}
-              {assetsWithImages.length > 0 && (
-                <span class="tags-header__breakdown-item">
-                  {assetsWithImages.length} asset{assetsWithImages.length !== 1 ? 's' : ''}
                 </span>
               )}
             </div>
@@ -121,35 +97,6 @@ const totalCount = productsWithImages.length + assetsWithImages.length;
               </div>
             )}
 
-            <!-- Assets Section -->
-            {assetsWithImages.length > 0 && (
-              <div class="tag-section">
-                <h2 class="tag-section__title">Assets</h2>
-                <div class="items-grid">
-                  {assetsWithImages.map((asset) => (
-                    <a href={`/assets/${asset.handle}`} class="item-card">
-                      <div class="item-card__badge item-card__badge--asset">Asset</div>
-                      <div class="item-card__content">
-                        <img
-                          src={asset.coverImageUrl}
-                          alt={asset.title}
-                          class="item-card__image"
-                          loading="lazy"
-                        />
-                        <div class="item-card__info">
-                          <h3 class="item-card__title">{asset.title}</h3>
-                          {asset.description && (
-                            <p class="item-card__description">
-                              {asset.description.substring(0, 100)}{asset.description.length > 100 ? '...' : ''}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
           </>
         ) : (
           <Card>

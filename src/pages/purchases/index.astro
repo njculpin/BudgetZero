@@ -6,9 +6,8 @@ import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import { setSession } from "@/lib/auth";
-import { getUserSales, getSaleItems, getSaleItemAssets } from "@/lib/data-access/sales";
-import { getProductById, getVariantById } from "@/lib/data-access/products";
-import { getAssetById, getAssetFiles } from "@/lib/data-access/assets";
+import { getUserSales, getSaleItems } from "@/lib/data-access/sales";
+import { getProductById, getVariantById, getProductFiles } from "@/lib/data-access/products";
 import PageHeader from "@/components/PageHeader.astro";
 import EmptyState from "@/components/EmptyState.astro";
 
@@ -50,21 +49,13 @@ const purchasesWithDetails = await Promise.all(
       saleItems.map(async (item) => {
         const product = await getProductById(item.product_id);
         const variant = await getVariantById(item.variant_id);
-        const saleItemAssets = await getSaleItemAssets(item.id);
-
-        const assetsWithFiles = await Promise.all(
-          saleItemAssets.map(async (sia) => {
-            const asset = await getAssetById(sia.asset_id);
-            const files = asset ? await getAssetFiles(asset.id) : [];
-            return { ...asset, files };
-          })
-        );
+        const files = product ? await getProductFiles(product.id) : [];
 
         return {
           ...item,
           product,
           variant,
-          assets: assetsWithFiles,
+          files,
         };
       })
     );
@@ -117,44 +108,31 @@ const purchasesWithDetails = await Promise.all(
                         </p>
                       </div>
 
-                      {item.assets && item.assets.length > 0 ? (
+                      {item.files && item.files.length > 0 ? (
                         <div class="purchase-item__assets">
                           <h4 class="purchase-item__assets-title">Available Downloads</h4>
-                          {item.assets.map((asset) => (
-                            <div class="asset-download">
-                              <div class="asset-download__info">
-                                <h5 class="asset-download__name">{asset?.title}</h5>
-                                {asset?.description && (
-                                  <p class="asset-download__description">{asset.description}</p>
-                                )}
-                                <p class="asset-download__files-count">
-                                  {asset?.files?.length || 0} {asset?.files?.length === 1 ? 'file' : 'files'}
-                                </p>
-                              </div>
-
-                              {asset?.files && asset.files.length > 0 && (
-                                <div class="asset-download__files">
-                                  {asset.files.map((file) => (
-                                    <div class="file-download">
-                                      <div class="file-download__info">
-                                        <span class="file-download__name">{file.title}</span>
-                                        <span class="file-download__size">
-                                          {(file.file_size_bytes / 1024 / 1024).toFixed(2)} MB
-                                        </span>
-                                      </div>
-                                      <form method="POST" action="/api/download">
-                                        <input type="hidden" name="file_id" value={file.id} />
-                                        <input type="hidden" name="asset_id" value={asset.id} />
-                                        <Button type="submit" variant="outline" size="sm">
-                                          <span slot="text">Download</span>
-                                        </Button>
-                                      </form>
-                                    </div>
-                                  ))}
+                          <div class="asset-download__files">
+                            {item.files.map((file) => (
+                              <div class="file-download">
+                                <div class="file-download__info">
+                                  <span class="file-download__name">{file.title}</span>
+                                  {file.description && (
+                                    <span class="file-download__description">{file.description}</span>
+                                  )}
+                                  <span class="file-download__size">
+                                    {(file.file_size_bytes / 1024 / 1024).toFixed(2)} MB
+                                  </span>
                                 </div>
-                              )}
-                            </div>
-                          ))}
+                                <form method="POST" action="/api/download">
+                                  <input type="hidden" name="file_id" value={file.id} />
+                                  <input type="hidden" name="product_id" value={item.product_id} />
+                                  <Button type="submit" variant="outline" size="sm">
+                                    <span slot="text">Download</span>
+                                  </Button>
+                                </form>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       ) : (
                         <p class="purchase-item__no-assets">

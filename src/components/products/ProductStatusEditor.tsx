@@ -4,7 +4,6 @@ import {
   ErrorMessage,
   SuccessMessage,
 } from "@/components/interactive";
-import "@/components/assets/asset-status-editor.css";
 
 export interface ProductStatusEditorProps {
   productId: string;
