@@ -11,7 +11,6 @@ export interface Cart extends BaseEntityWithoutDelete {
 export interface CartItem extends BaseEntityWithoutDelete {
   cart_id: string;
   product_id: string;
-  variant_id: string;
   quantity: number;
 }
 
@@ -30,7 +29,6 @@ export interface Sale extends BaseEntity {
 export interface SaleItem extends BaseEntity {
   sale_id: string;
   product_id: string;
-  variant_id: string;
   price_cents: number;
   currency: string;
   quantity: number;

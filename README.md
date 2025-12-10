@@ -132,154 +132,6 @@ DocumentCollaborators {
     deleted_at: timestamp
 }
 
-Assets {
-    id: uuid
-    handle: string // unique and global
-    user_id: uuid ref to Users
-    title: string
-    description: string
-    status: 'draft' | 'public' | 'archived'
-    current_version: number
-    download_count: number
-    total_size_bytes: number
-    file_count: number
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
-AssetVersions {
-    id: uuid
-    asset_id: uuid ref to Assets
-    version_number: number
-    title: string
-    description: string
-    status: 'draft' | 'public' | 'archived'
-    files_snapshot: jsonb
-    images_snapshot: jsonb
-    created_by: uuid ref to Users
-    created_at: timestamp
-    change_notes: string
-    UNIQUE(asset_id, version_number)
-}
-
-AssetCollaborators {
-    id: uuid
-    asset_id: uuid ref to Assets
-    user_id: uuid ref to Users
-    role: 'owner' | 'editor' | 'viewer'
-    can_edit: boolean
-    can_delete: boolean
-    can_invite: boolean
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
-AssetFiles {
-    id: uuid
-    asset_id: uuid ref to Assets
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp  
-}
-
-AssetImages {
-    id: uuid
-    asset_id: uuid ref to Assets
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp  
-}
-
-AssetTags {
-    id: uuid
-    asset_id: uuid ref to Assets
-    value: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
-AssetRoyalties {
-    id: uuid
-    asset_id: uuid ref to Assets
-    user_id: uuid ref to Users
-    royalty_type: 'fixed' | 'percentage'
-    royalty_value: number
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
-AssetLicense {
-    id: uuid
-    asset_id: uuid ref to Assets
-    license_id: uuid ref to Licenses
-    is_active: boolean
-    granted_at: timestamp
-    expires_at: timestamp
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
-AssetChatMessage {
-    id: uuid
-    asset_id: uuid ref to Assets
-    user_id: uuid ref to Users
-    message: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
-AssetChatMessageReaction {
-    id: uuid
-    message_id: uuid ref to AssetChatMessage
-    user_id: uuid ref to Users
-    emoji: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
-AssetChatMessageAttachments {
-    id: uuid
-    message_id: uuid ref to AssetChatMessage
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    created_at: timestamp
-    updated_at: timestamp 
-    deleted: boolean
-    deleted_at: timestamp
-}
-
 Licenses {
     id: uuid
     title: string
@@ -313,6 +165,12 @@ Products {
     current_version: number
     view_count: number
     public_at: timestamp
+    is_embeddable: boolean // can be embedded in other products
+    direct_sale_price_cents: number // price when sold directly
+    embedding_royalty_cents: number // royalty when embedded in another product
+    download_count: number
+    total_size_bytes: number
+    file_count: number
     created_at: timestamp
     updated_at: timestamp
     deleted: boolean
@@ -327,7 +185,8 @@ ProductVersions {
     description: string
     status: 'draft' | 'public'
     variants_snapshot: jsonb
-    assets_snapshot: jsonb
+    files_snapshot: jsonb
+    components_snapshot: jsonb
     created_by: uuid ref to Users
     created_at: timestamp
     change_notes: string
@@ -416,14 +275,42 @@ ProductVariantImages {
     created_at: timestamp
     updated_at: timestamp
     deleted: boolean
-    deleted_at: timestamp    
+    deleted_at: timestamp
 }
 
-ProductAssets {
+ProductFiles {
     id: uuid
     product_id: uuid ref to Products
-    asset_id: uuid ref to Assets
-    variant_id: uuid ref to ProductVariants
+    title: string
+    description: string
+    file_url: string
+    storage_path: string
+    file_size_bytes: number
+    mime_type: string
+    position: number
+    created_at: timestamp
+    updated_at: timestamp
+    deleted: boolean
+    deleted_at: timestamp
+}
+
+ProductComponents {
+    id: uuid
+    parent_variant_id: uuid ref to ProductVariants // variant that contains component
+    child_product_id: uuid ref to Products // product being embedded
+    royalty_amount_cents: number // royalty captured at link time
+    created_at: timestamp
+    updated_at: timestamp
+    deleted: boolean
+    deleted_at: timestamp
+}
+
+ProductRoyalties {
+    id: uuid
+    product_id: uuid ref to Products
+    user_id: uuid ref to Users
+    royalty_type: 'fixed' | 'percentage'
+    royalty_value: number // fixed: cents | percentage: 0-100
     created_at: timestamp
     updated_at: timestamp
     deleted: boolean
@@ -538,22 +425,11 @@ SaleItems {
   deleted_at: timestamp
 }
 
-SaleItemAssets {
-  id: uuid
-  sale_item_id: uuid ref to SaleItems
-  asset_id: uuid ref to Assets
-  created_at: timestamp
-  updated_at: timestamp
-  deleted: boolean
-  deleted_at: timestamp
-}
-
 SaleRoyaltyTransactions {
   id: uuid
   sale_id: uuid ref to Sales
   sale_item_id: uuid ref to SaleItems
-  sale_item_asset_id: uuid ref to SaleItemAssets
-  asset_royalty_id: uuid ref to AssetRoyalties
+  product_royalty_id: uuid ref to ProductRoyalties
   recipient_user_id: uuid ref to Users
   royalty_type: 'fixed' | 'percentage'
   royalty_value: number
@@ -652,7 +528,7 @@ Notifications {
     user_id: uuid ref to Users // who receives it
     title: string
     message: string
-    entity_type: 'user' | 'asset' | 'document' | 'product' | 'sale'
+    entity_type: 'user' | 'document' | 'product' | 'sale'
     entity_id: uuid
     snapshot: jsonb
     delivery_type: 'push' | 'email' | 'inapp'
@@ -667,20 +543,10 @@ Notifications {
 ActivityFeed {
     id: uuid
     user_id: uuid ref to Users // who performed the action
-    entity_type: 'user' | 'asset' | 'document' | 'product' | 'sale' | 'jam'
+    entity_type: 'user' | 'document' | 'product' | 'sale' | 'jam'
     entity_id: uuid
     action_type: 'created' | 'updated' | 'deleted' | 'public' | 'purchased' | 'reviewed'
     snapshot: jsonb
-    created_at: timestamp
-}
-
-AssetDownloads {
-    id: uuid
-    asset_id: uuid ref to Assets
-    user_id: uuid ref to Users
-    sale_id: uuid ref to Sales
-    download_url: string
-    expires_at: timestamp
     created_at: timestamp
 }
 
@@ -731,13 +597,13 @@ LogEvents {
     id: uuid
     title: string
     message: string
-    entity_type: 'user' | 'asset' | 'document' | 'product' | 'sale'
+    entity_type: 'user' | 'document' | 'product' | 'sale'
     snapshot: jsonb
     created_at: timestamp
 }
 
 ## Views
-"/" - landing page, featured products, trending assets, etc...
+"/" - landing page, featured products, etc...
 "/feed" - allows a user to view global activity for the entire platform
 "/login" - allows a user to login
 
@@ -746,14 +612,10 @@ LogEvents {
 "/users/[handle]/feed" - allows viewing user activity on a particular user account
 
 "/documents" - allows a user to view and search for their own documents and those they are collaborating on.
-"/documents/[handle]" - allows a user to manage details about their own documents. Documents are never public, they are public as a PDF asset.
+"/documents/[handle]" - allows a user to manage details about their own documents. Documents are private collaboration tools.
 "/documents/[handle]/feed" - allows viewing document activity on a particular document
 
-"/assets" - allows a user to view and search for assets and those they are collaborating on.
-"/assets/[handle]" - allows a user to manage details about their own assets. If not the owner or a collaborator, you view the public asset as a customer.
-"/assets/[handle]/feed" - allows viewing asset activity on a particular asset
-
-"/products" - allows a user to view and search for products and those they are collaborating on.
+"/products" - allows a user to view and search for products.
 "/products/[handle]" - allows a user to manage details about their own products. If not the owner or a collaborator, you view the public product as a customer.
 "/products/[handle]/feed" - allows viewing product activity on a particular product
 
@@ -786,7 +648,7 @@ Astro API Routes + Supabase Direct:
 
 **Storage Layer** (`/src/lib/storage/`)
 - All Supabase Storage SDK calls isolated here
-- Export storage functions (e.g., `uploadAssetFile`, `getDownloadUrl`)
+- Export storage functions (e.g., `uploadProductFile`, `uploadProductImage`, `createSignedUrl`)
 - No direct Storage SDK imports outside this layer
 
 **Auth Layer** (`/src/lib/auth/`)
@@ -798,7 +660,7 @@ Astro API Routes + Supabase Direct:
 - SolidJS components with client-side interactivity
 - Use Signals for local state
 - Call Astro API routes or Supabase client directly
-- Examples: SignUpForm, AssetUploader, CartCheckout
+- Examples: SignUpForm, ProductFileUploader, CartCheckout
 
 ## Deployment
 Vercel deploys automatically on git push to main branch
@@ -817,41 +679,41 @@ Vercel deploys automatically on git push to main branch
   - Astro pages can import from abstraction layers for server-side rendering
 - **Form Patterns:**
   - Use SolidJS native forms with Signals for simple forms (login, signup)
-  - Use Signals + Zod for complex forms with validation (asset uploads, checkout)
+  - Use Signals + Zod for complex forms with validation (product file uploads, checkout)
   - Keep form state local to islands
 
   ## User Personas and Journey
 
   ### (Consumer) Game Buyer
   - Someone who enjoys miniatures games
-  - Someone who enjoys painting minatures
+  - Someone who enjoys painting miniatures
   - Someone who enjoys print and play games
   - This person will be able to follow Game Designers, 3D Modelers, Artists, etc... on the platform.
-  - This person will be able to make purchases for games and assets
-  - This person will have confidence in the idea that they are helping to support the livelyhood of contributors to the games they purchase
+  - This person will be able to make purchases for games and products
+  - This person will have confidence in the idea that they are helping to support the livelihood of contributors to the games they purchase
 
   ### (Contributor)  Illustrator
-  - Someone who contributes character designs, illustrations, etc... to the platform as an available asset
+  - Someone who creates embeddable illustration products (character designs, maps, tokens, etc.)
   - Someone who can offer services to other members, ex: a game designer hires an illustrator to do work on their game.
-  - Someone who can sell prints, and digital assets of their illustrations
-  - Someone who can license their work to other members
+  - Someone who can sell digital art products
+  - Someone who earns royalties when their products are embedded in other products
 
   ### (Contributor)  3D modeler
-  - Someone who contributes 3d Models etc... to the platform as an available asset
+  - Someone who creates embeddable 3D model products (STL files, OBJs, etc.)
   - Someone who can offer services to other members, ex: a game designer hires an 3d Modeler to do work on their game.
-  - Someone who can sell STLs, OBJs, Zip files of 3d models as digital downloads
-  - Someone who can license their work to other members
+  - Someone who can sell STL files as digital download products
+  - Someone who earns royalties when their products are embedded in other products
 
   ### (Contributor)  3D printer
-  - someone who can accept 3d print order from sales as an upgrade to the sale. ex: A buyer makes a game purchase and as an upsell during checkout we compare with available local printers who can take the job then send them the order.
+  - Someone who can accept 3d print orders from sales as an upgrade to the sale. ex: A buyer makes a game purchase and as an upsell during checkout we compare with available local printers who can take the job then send them the order.
 
   ### (Contributor) Game Designer
   - Someone who can design, develop, and sell game products on the platform
   - Someone who designs tabletop games and miniatures games
-  - Someone who looks for 3d models, 3d modelers, illustrators, printers, etc... to complete and market their games
+  - Someone who assembles products from multiple creators (embeds products within products)
   - Someone looking for a way to streamline this process of licensing, royalty payments, sales channels, etc...
 
   #### Contributor
-  - Someone who provides skills, services, assets to be added to products
-  - Someone who wants to earn revenue from these sales passively
+  - Someone who creates embeddable products to be used in other products
+  - Someone who wants to earn revenue from these sales passively through royalties
   - Someone who wants to collaborate with others to make games.

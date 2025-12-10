@@ -23,20 +23,20 @@ export default function OnboardingWizard(props: Props) {
     {
       title: "Welcome to Game Loopers! 🎮",
       description:
-        "You're joining a community of tabletop game creators who collaborate, share assets, and earn royalties together.",
+        "You're joining a community of tabletop game creators who collaborate, publish products, and earn together.",
       icon: "👋",
     },
     {
-      title: "Start with Assets",
+      title: "Create Documents",
       description:
-        "Create digital assets (3D models, artwork, maps) that can be used in products. Set your royalty splits to earn when others use your work.",
-      icon: "🎨",
+        "Start with collaborative documents to write rulebooks, design content, and build your game materials with your team.",
+      icon: "📝",
       cta: {
-        label: "Create Your First Asset",
+        label: "Create Your First Document",
         action: () => {
           const form = document.createElement("form");
           form.method = "POST";
-          form.action = "/api/assets/create-asset";
+          form.action = "/api/documents/create-document";
           document.body.appendChild(form);
           form.submit();
         },
@@ -45,7 +45,7 @@ export default function OnboardingWizard(props: Props) {
     {
       title: "Build Products",
       description:
-        "Combine your assets (or use community assets) to create complete game products. Royalties are automatically distributed to all contributors.",
+        "Package your content into complete game products with variants and pricing. Sell digital downloads directly to customers.",
       icon: "📦",
       cta: {
         label: "Create Your First Product",

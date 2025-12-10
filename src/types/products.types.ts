@@ -44,44 +44,6 @@ export interface ProductImage extends BaseEntity {
   position: number;
 }
 
-export interface ProductVariant extends BaseEntity {
-  product_id: string;
-  title: string;
-  description: string;
-  sku: string;
-  is_digital: boolean;
-  options: Record<string, unknown>;
-  position: number;
-}
-
-export interface ProductVariantPrice extends BaseEntity {
-  variant_id: string;
-  currency: string;
-  unit_amount: number;
-  min_quantity: number;
-  max_quantity: number | null;
-}
-
-export interface ProductPriceBreak extends BaseEntity {
-  price_id: string;
-  min_quantity: number;
-  max_quantity: number;
-  amount_cents: number;
-  currency: string;
-}
-
-export interface ProductVariantImage extends BaseEntity {
-  product_id: string;
-  variant_id: string;
-  title: string;
-  description: string;
-  file_url: string;
-  storage_path: string;
-  file_size_bytes: number;
-  mime_type: string;
-  position: number;
-}
-
 // Product Files (replaces AssetFile)
 export interface ProductFile extends BaseEntity {
   product_id: string;
@@ -94,11 +56,11 @@ export interface ProductFile extends BaseEntity {
   position: number;
 }
 
-// Product Components (replaces ProductAsset for product-in-product relationships)
+// Product Components (product-level embedding for collaborative products)
 export interface ProductComponent extends BaseEntity {
-  parent_variant_id: string; // The variant that contains this component
+  parent_product_id: string; // The product that embeds another product
   child_product_id: string; // The product being embedded
-  royalty_amount_cents: number; // Royalty amount captured at link time
+  inherited_price_cents: number; // Price inherited from embedded product at link time
 }
 
 // Product Royalties (replaces AssetRoyalty)

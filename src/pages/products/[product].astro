@@ -4,14 +4,12 @@ import Badge from "@/components/Badge.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import { AddToCartButton } from "@/components/cart";
-import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductChat, ProductVariantManager, ProductVariantEditor, ProductPriceManager, ProductCostBreakdown, VariantDeleteButton } from "@/components/products";
-import { getProductByHandle, getProductTags, getProductVariants, getVariantPrices, getProductImages, getProductContributors } from "@/lib/data-access/products";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductChat, ProductEmbeddedProducts } from "@/components/products";
+import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductContributors } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 import { getJamById, getJamProductReviews } from "@/lib/data-access/jams";
 import { serverClient } from "@/lib/data-access/client";
-import AlertMessage from "@/components/AlertMessage.astro";
 import type {  JamProductReview } from "@/types";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
@@ -39,16 +37,9 @@ if (!productData) {
 
 const owner = await getUserById(productData.user_id);
 const tags = await getProductTags(productData.id);
-const variants = await getProductVariants(productData.id);
 const productImages = await getProductImages(productData.id);
+const productFiles = await getProductFiles(productData.id);
 const coverImage = productImages[0]?.file_url || null;
-
-const variantsWithPrices = await Promise.all(
-  variants.map(async (variant) => {
-    const prices = await getVariantPrices(variant.id);
-    return { ...variant, prices };
-  })
-);
 
 let currentUser = null;
 const accessToken = Astro.cookies.get("sb-access-token");
@@ -84,10 +75,6 @@ const isEditMode = isOwner;
 const urlParams = new URL(Astro.request.url).searchParams;
 const jamId = urlParams.get('jam');
 let targetJam = null;
-let jamSubmissionError = null;
-let jamSubmissionSuccess = urlParams.get('jam_success');
-let reviewError = urlParams.get('error');
-let reviewSuccess = urlParams.get('review_success');
 let userReview: JamProductReview | null = null;
 let isProductInJam = false;
 let allJamReviews: JamProductReview[] = [];
@@ -108,26 +95,8 @@ if (jamId) {
     isProductInJam = !!existingSubmission;
   }
 
-  // Validate jam submission is possible
+  // Get jam reviews
   if (targetJam) {
-    const now = new Date();
-    const startDate = new Date(targetJam.start_date);
-    const endDate = new Date(targetJam.end_date);
-    const isActive = now >= startDate && now <= endDate;
-
-    if (isProductInJam && isOwner) {
-      jamSubmissionError = "This product has already been submitted to this jam";
-    } else if (!isActive) {
-      const isUpcoming = now < startDate;
-      jamSubmissionError = isUpcoming
-        ? `Submissions for this jam open on ${startDate.toLocaleDateString()}`
-        : `Submissions for this jam closed on ${endDate.toLocaleDateString()}`;
-    } else if (productData.status !== 'public') {
-      jamSubmissionError = "Only public products can be submitted to jams";
-    } else if (!isOwner) {
-      jamSubmissionError = "You must own this product to submit it to a jam";
-    }
-
     // Get all reviews for this product in this jam
     allJamReviews = await getJamProductReviews(jamId, productData.id);
 
@@ -138,9 +107,6 @@ if (jamId) {
   }
 }
 
-// Get first variant with pricing for display
-const defaultVariant = variantsWithPrices.find(v => v.prices && v.prices.length > 0) || variantsWithPrices[0];
-const defaultPrice = defaultVariant?.prices?.[0];
 ---
 
 <Layout title={`${productData.title} - Game Loopers`}>
@@ -288,132 +254,62 @@ const defaultPrice = defaultVariant?.prices?.[0];
             </Card>
           )}
 
-          <!-- Variants Section -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Product Variants</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {variantsWithPrices.length > 0 ? (
-              <div class="product-variants__list">
-              {variantsWithPrices.map((variant) => (
-                <div class="variant-item">
-                  {!isEditMode && (
-                    <div class="variant-item__header">
-                      <div class="variant-item__title-group">
-                        <h4 class="variant-item__title">{variant.title}</h4>
-                        {variant.sku && (
-                          <span class="variant-item__sku">SKU: <code>{variant.sku}</code></span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {!isEditMode && variant.description && (
-                    <p class="variant-item__description">{variant.description}</p>
-                  )}
-
-                  {isEditMode && (
-                    <ProductVariantEditor
-                      client:load
-                      variantId={variant.id}
-                      initialTitle={variant.title}
-                      initialDescription={variant.description}
-                      initialSku={variant.sku}
-                    />
-                  )}
-
-                  {!isEditMode && variant.prices && variant.prices.length > 0 && (
-                    <div class="variant-item__pricing">
-                      <div class="variant-item__price-list">
-                        {variant.prices.map((price) => (
-                          <div class="variant-item__price">
-                            <span class="variant-item__price-amount">
-                              {price.unit_amount === 0
-                                ? 'FREE'
-                                : `${price.currency.toUpperCase()} ${(price.unit_amount / 100).toFixed(2)}`}
-                            </span>
-                            {(price.min_quantity > 1 || price.max_quantity) && (
-                              <span class="variant-item__price-quantity">
-                                {price.min_quantity > 1 && `${price.min_quantity}+ units`}
-                                {price.max_quantity && ` (max ${price.max_quantity})`}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div class="variant-item__actions">
-                        {currentUser && (
-                          <AddToCartButton
-                            client:load
-                            productId={productData.id}
-                            variantId={variant.id}
-                            quantity={1}
-                            variant="primary"
-                            size="md"
-                          />
-                        )}
-                        {!currentUser && (
-                          <a href={`/sign-in?redirect=/products/${product}`}>
-                            <Button variant="primary" size="md">
-                              <span slot="text">Sign In to Purchase</span>
-                            </Button>
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {isEditMode && (
-                    <ProductPriceManager
-                      client:load
-                      variantId={variant.id}
-                      variantTitle={variant.title}
-                      existingPrices={variant.prices || []}
-                    />
-                  )}
-
-                  {isEditMode && (
-                    <ProductCostBreakdown
-                      client:load
-                      variantId={variant.id}
-                      currentPrice={variant.prices && variant.prices.length > 0 ? variant.prices[0].unit_amount : 0}
-                    />
-                  )}
-
-                  {isEditMode && (
-                    <VariantDeleteButton
-                      client:load
-                      variantId={variant.id}
-                      variantTitle={variant.title}
-                    />
-                  )}
-                </div>
-              ))}
-              </div>
-            ) : (
-              <div class="product-empty">
-                <div class="product-empty__icon">📦</div>
-                <p class="product-empty__text">
+          <!-- Files Section -->
+          {(isEditMode || productFiles.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Files</CardTitle>
+                <CardDescription>
                   {isEditMode
-                    ? "No variants added yet. Variants let you offer different options (digital/physical) and pricing tiers."
-                    : "This product doesn't have any variants available yet."}
-                </p>
+                    ? 'Upload downloadable files (PDFs, ZIPs, STLs, etc.). Purchasers will receive all files.'
+                    : `${productFiles.length} file(s) included with purchase`}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 {isEditMode && (
-                  <p class="product-empty__help">
-                    Variants contain the actual downloadable assets or physical items that customers receive.
-                  </p>
+                  <ProductFilesForm
+                    client:load
+                    productId={productData.id}
+                    existingFiles={productFiles}
+                  />
                 )}
-              </div>
-            )}
-          </CardContent>
-          {isEditMode && (
-            <CardFooter>
-              <ProductVariantManager client:load productId={productData.id} />
-            </CardFooter>
+                {!isEditMode && productFiles.length > 0 && (
+                  <div class="product-files-list">
+                    {productFiles.map((file) => (
+                      <div class="product-file-item">
+                        <span class="product-file-icon">📁</span>
+                        <div class="product-file-info">
+                          <div class="product-file-name">{file.title}</div>
+                          {file.description && (
+                            <div class="product-file-description">{file.description}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
-        </Card>
+
+          <!-- Embedded Products Section -->
+          {isEditMode && currentUser && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Embedded Products</CardTitle>
+                <CardDescription>
+                  Add products from other creators. Their price will be inherited and added to your product's total price.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProductEmbeddedProducts
+                  client:load
+                  productId={productData.id}
+                  userId={currentUser.id}
+                />
+              </CardContent>
+            </Card>
+          )}
 
         <!-- Reviews Section (Jam Context) -->
         {!isEditMode && jamId && targetJam && isProductInJam && (
@@ -432,52 +328,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
 
         <!-- Sidebar Column -->
         <div class="page-columns__column">
-        {!isEditMode && variantsWithPrices.length > 0 && defaultPrice && (
-          <Card>
-            <CardContent>
-              <div class="product-purchase">
-                <div class="product-purchase__price">
-                  <p class="product-purchase__price-label">Price</p>
-                  <p class="product-purchase__price-value">
-                    {defaultPrice.unit_amount === 0
-                      ? 'FREE'
-                      : `$${(defaultPrice.unit_amount / 100).toFixed(2)}`}
-                  </p>
-                  {variantsWithPrices.length > 1 && (
-                    <p class="product-purchase__variant-note">
-                      {variantsWithPrices.length} variants available
-                    </p>
-                  )}
-                </div>
-
-                {defaultVariant && (
-                  <div class="product-purchase__actions">
-                    {currentUser ? (
-                      <AddToCartButton
-                        client:load
-                        productId={productData.id}
-                        variantId={defaultVariant.id}
-                        quantity={1}
-                        variant="primary"
-                        size="lg"
-                      />
-                    ) : (
-                      <a href={`/sign-in?redirect=/products/${product}`} class="product-purchase__cta-link">
-                        <Button variant="primary" size="lg">
-                          <span slot="text">Sign In to Purchase</span>
-                        </Button>
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                <p class="product-purchase__note">
-                  Instant access after purchase • Digital download
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {isContributor && currentUser && (
           <Card>
@@ -497,6 +347,24 @@ const defaultPrice = defaultVariant?.prices?.[0];
 
         {isEditMode && (
           <>
+            <!-- Quick Actions Card (Edit Mode) -->
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Common product management tasks</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div class="quick-actions">
+                  <form action="/api/documents/create-document" method="POST" class="quick-actions__form">
+                    <input type="hidden" name="relatedProductId" value={productData.id} />
+                    <Button type="submit" variant="outline" size="md">
+                      <span slot="text">📝 Create Related Document</span>
+                    </Button>
+                  </form>
+                </div>
+              </CardContent>
+            </Card>
+
             <!-- Status Card (Edit Mode) -->
             <Card>
               <CardHeader>
@@ -508,7 +376,6 @@ const defaultPrice = defaultVariant?.prices?.[0];
                   client:load
                   productId={productData.id}
                   currentStatus={productData.status}
-                  hasVariants={variantsWithPrices.length > 0}
                 />
               </CardContent>
             </Card>
@@ -1449,5 +1316,77 @@ const defaultPrice = defaultVariant?.prices?.[0];
     font-size: var(--text-sm);
     color: var(--foreground);
     line-height: var(--leading-relaxed);
+  }
+
+  /* ===== Product Files List (View Mode) ===== */
+  .product-files-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .product-file-item {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-md);
+    padding: var(--spacing-md);
+    background-color: var(--muted);
+    border-radius: var(--radius-md);
+    border: var(--border-width-default) solid var(--border);
+  }
+
+  .product-file-icon {
+    font-size: var(--text-2xl);
+    flex-shrink: 0;
+  }
+
+  .product-file-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+    flex: 1;
+  }
+
+  .product-file-name {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .product-file-description {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  /* ===== Variant Section Styles ===== */
+  .variant-item__section {
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-2xl);
+    border-top: 2px dashed var(--border);
+  }
+
+  .variant-item__section-title {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .variant-item__section-description {
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  /* ===== Quick Actions ===== */
+  .quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .quick-actions__form {
+    display: flex;
   }
 </style>

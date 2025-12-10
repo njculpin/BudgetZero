@@ -1,8 +1,6 @@
 import { serverClient } from './client';
 import type {
   Product,
-  ProductVariant,
-  ProductVariantPrice,
   ProductTag,
   ProductStatus,
   ProductFile,
@@ -25,21 +23,6 @@ export interface UpdateProductParams {
   handle?: string;
   tags?: string[];
   publicAt?: string;
-}
-
-export interface CreateVariantParams {
-  title: string;
-  description?: string;
-  sku?: string;
-  options?: Record<string, unknown>;
-  position?: number;
-}
-
-export interface CreatePriceParams {
-  currency?: string;
-  unitAmount: number;
-  minQuantity?: number;
-  maxQuantity?: number;
 }
 
 /**
@@ -380,260 +363,6 @@ export const getRecentProducts = async (
   return productsWithThumbnails;
 };
 
-// ===== Product Variants =====
-
-/**
- * Create a product variant
- */
-export const createVariant = async (
-  productId: string,
-  params: CreateVariantParams
-): Promise<ProductVariant | null> => {
-  let sku = params.sku;
-
-  if (!sku) {
-    const product = await getProductById(productId);
-    if (!product) return null;
-    sku = `${product.handle}-${params.title.toLowerCase().replace(/\s+/g, '-')}`;
-  }
-
-  const { data, error } = await serverClient
-    .from('product_variants')
-    .insert({
-      product_id: productId,
-      sku,
-      title: params.title,
-      description: params.description,
-      options: params.options || {},
-      position: params.position ?? 0,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating variant:', error);
-    return null;
-  }
-
-  return data as ProductVariant;
-};
-
-/**
- * Get variants for a product
- */
-export const getProductVariants = async (productId: string): Promise<ProductVariant[]> => {
-  const { data, error } = await serverClient
-    .from('product_variants')
-    .select('*')
-    .eq('product_id', productId)
-    .eq('deleted', false)
-    .order('position', { ascending: true });
-
-  if (error) {
-    return [];
-  }
-
-  return data as ProductVariant[];
-};
-
-/**
- * Get variant by ID
- */
-export const getVariantById = async (variantId: string): Promise<ProductVariant | null> => {
-  const { data, error } = await serverClient
-    .from('product_variants')
-    .select('*')
-    .eq('id', variantId)
-    .eq('deleted', false)
-    .single();
-
-  if (error) {
-    return null;
-  }
-
-  return data as ProductVariant;
-};
-
-/**
- * Update a variant
- */
-export const updateVariant = async (
-  variantId: string,
-  updates: Partial<CreateVariantParams>
-): Promise<ProductVariant | null> => {
-  const updateData: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
-  };
-
-  if (updates.title !== undefined) updateData.title = updates.title;
-  if (updates.description !== undefined) updateData.description = updates.description;
-  if (updates.sku !== undefined) updateData.sku = updates.sku;
-  if (updates.options !== undefined) updateData.options = updates.options;
-  if (updates.position !== undefined) updateData.position = updates.position;
-
-  const { error } = await serverClient
-    .from('product_variants')
-    .update(updateData)
-    .eq('id', variantId);
-
-  if (error) {
-    console.error('Error updating variant:', error);
-    return null;
-  }
-
-  return await getVariantById(variantId);
-};
-
-/**
- * Delete a variant
- */
-export const deleteVariant = async (
-  variantId: string
-): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('product_variants')
-    .update({
-      deleted: true,
-      deleted_at: new Date().toISOString(),
-    })
-    .eq('id', variantId);
-
-  if (error) {
-    console.error('Error deleting variant:', error);
-    return false;
-  }
-
-  return true;
-};
-
-// ===== Variant Prices =====
-
-/**
- * Create a price for a variant
- */
-export const createVariantPrice = async (
-  variantId: string,
-  params: CreatePriceParams
-): Promise<ProductVariantPrice | null> => {
-  const { data, error } = await serverClient
-    .from('product_variant_prices')
-    .insert({
-      variant_id: variantId,
-      currency: params.currency || 'usd',
-      unit_amount: params.unitAmount,
-      min_quantity: params.minQuantity || 1,
-      max_quantity: params.maxQuantity,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating variant price:', error);
-
-    // If it's a duplicate key constraint violation, throw a specific error
-    if (error.code === '23505') {
-      throw new Error(`duplicate key: A price already exists for quantity ${params.minQuantity || 1}`);
-    }
-
-    return null;
-  }
-
-  return data as ProductVariantPrice;
-};
-
-/**
- * Get prices for a variant
- */
-export const getVariantPrices = async (variantId: string): Promise<ProductVariantPrice[]> => {
-  const { data, error } = await serverClient
-    .from('product_variant_prices')
-    .select('*')
-    .eq('variant_id', variantId)
-    .order('min_quantity', { ascending: true });
-
-  if (error) {
-    return [];
-  }
-
-  return data as ProductVariantPrice[];
-};
-
-// ===== Product Assets =====
-
-/**
- * Link an asset to a variant
- */
-export const linkAssetToVariant = async (
-  variantId: string,
-  assetId: string
-): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('product_assets')
-    .insert({
-      variant_id: variantId,
-      asset_id: assetId,
-    });
-
-  if (error) {
-    console.error('Error linking asset to variant:', error);
-    return false;
-  }
-
-  return true;
-};
-
-/**
- * Get assets linked to a variant
- */
-export const getVariantAssets = async (variantId: string): Promise<Asset[]> => {
-  const { data, error } = await serverClient
-    .from('product_assets')
-    .select('asset_id')
-    .eq('variant_id', variantId);
-
-  if (error || !data) {
-    return [];
-  }
-
-  const assetIds = data.map(pa => pa.asset_id);
-
-  if (assetIds.length === 0) {
-    return [];
-  }
-
-  const { data: assets, error: assetsError } = await serverClient
-    .from('assets')
-    .select('*')
-    .in('id', assetIds)
-    .eq('deleted', false);
-
-  if (assetsError || !assets) {
-    return [];
-  }
-
-  return assets as Asset[];
-};
-
-/**
- * Unlink an asset from a variant
- */
-export const unlinkAssetFromVariant = async (
-  variantId: string,
-  assetId: string
-): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('product_assets')
-    .delete()
-    .eq('variant_id', variantId)
-    .eq('asset_id', assetId);
-
-  if (error) {
-    console.error('Error unlinking asset from variant:', error);
-    return false;
-  }
-
-  return true;
-};
 
 // ===== Product Tags =====
 
@@ -764,53 +493,6 @@ export const searchProducts = async (userId: string, query: string): Promise<Pro
   return data as Product[];
 };
 
-/**
- * Get products that use a specific asset
- * Returns up to 5 most recent products (by updated_at)
- */
-export const getProductsUsingAsset = async (assetId: string, limit = 5): Promise<Product[]> => {
-  // First, get all variant IDs that link to this asset
-  const { data: productAssets, error: paError } = await serverClient
-    .from('product_assets')
-    .select('variant_id')
-    .eq('asset_id', assetId);
-
-  if (paError || !productAssets || productAssets.length === 0) {
-    return [];
-  }
-
-  const variantIds = productAssets.map(pa => pa.variant_id);
-
-  // Get all products from those variants
-  const { data: variants, error: variantsError } = await serverClient
-    .from('product_variants')
-    .select('product_id')
-    .in('id', variantIds)
-    .eq('deleted', false);
-
-  if (variantsError || !variants || variants.length === 0) {
-    return [];
-  }
-
-  // Get unique product IDs
-  const productIds = [...new Set(variants.map(v => v.product_id))];
-
-  // Fetch the products
-  const { data, error } = await serverClient
-    .from('products')
-    .select('*')
-    .in('id', productIds)
-    .eq('deleted', false)
-    .order('updated_at', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    console.error('Error fetching products using asset:', error);
-    return [];
-  }
-
-  return data as Product[];
-};
 
 // ===== Product Images =====
 
@@ -923,121 +605,17 @@ export const deleteProductImage = async (imageId: string): Promise<boolean> => {
   return true;
 };
 
-/**
- * Get available assets for a user (owned or collaborated assets)
- * These are assets the user can add to their product variants
- */
-export const getAvailableAssetsForUser = async (userId: string): Promise<Asset[]> => {
-  // Get assets owned by user
-  const { data: ownedAssets, error: ownedError } = await serverClient
-    .from('assets')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('deleted', false)
-    .order('created_at', { ascending: false });
-
-  if (ownedError) {
-    console.error('Error fetching owned assets:', ownedError);
-    return [];
-  }
-
-  // Get assets where user is a contributor
-  const { data: contributions, error: contribError } = await serverClient
-    .from('asset_contributors')
-    .select('asset_id')
-    .eq('user_id', userId);
-
-  if (contribError || !contributions) {
-    return ownedAssets as Asset[];
-  }
-
-  const contributedAssetIds = contributions.map(c => c.asset_id);
-
-  if (contributedAssetIds.length === 0) {
-    return ownedAssets as Asset[];
-  }
-
-  // Get contributed assets
-  const { data: contributedAssets, error: contributedError } = await serverClient
-    .from('assets')
-    .select('*')
-    .in('id', contributedAssetIds)
-    .eq('deleted', false);
-
-  if (contributedError || !contributedAssets) {
-    return ownedAssets as Asset[];
-  }
-
-  // Combine and deduplicate
-  const allAssets = [...(ownedAssets || []), ...contributedAssets];
-  const uniqueAssets = Array.from(
-    new Map(allAssets.map(asset => [asset.id, asset])).values()
-  );
-
-  return uniqueAssets.sort((a, b) =>
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
-};
-
-/**
- * Calculate total royalty cost for all assets in a variant
- * Returns the sum of all royalty values (in cents) for assets linked to this variant
- */
-export const getVariantRoyaltyTotal = async (variantId: string): Promise<number> => {
-  const assets = await getVariantAssets(variantId);
-
-  if (assets.length === 0) {
-    return 0;
-  }
-
-  let total = 0;
-
-  for (const asset of assets) {
-    const { data: royalties, error } = await serverClient
-      .from('asset_royalties')
-      .select('royalty_value')
-      .eq('asset_id', asset.id)
-      .eq('deleted', false);
-
-    if (!error && royalties) {
-      total += royalties.reduce((sum, r) => sum + r.royalty_value, 0);
-    }
-  }
-
-  return total;
-};
 
 /**
  * Get all contributors for a product
- * Returns unique users who have royalties on any asset linked to any variant of the product
+ * Returns unique users who have royalties on the product
  */
 export const getProductContributors = async (productId: string): Promise<User[]> => {
-  // Get all variants for the product
-  const variants = await getProductVariants(productId);
-
-  if (variants.length === 0) {
-    return [];
-  }
-
-  const variantIds = variants.map(v => v.id);
-
-  // Get all assets linked to these variants
-  const { data: productAssets, error: paError } = await serverClient
-    .from('product_assets')
-    .select('asset_id')
-    .in('variant_id', variantIds);
-
-  if (paError || !productAssets || productAssets.length === 0) {
-    return [];
-  }
-
-  const assetIds = [...new Set(productAssets.map(pa => pa.asset_id))];
-
-  // Get all royalties for these assets
+  // Get all royalties for this product
   const { data: royalties, error: royaltiesError } = await serverClient
-    .from('asset_royalties')
+    .from('product_royalties')
     .select('user_id')
-    .in('asset_id', assetIds)
+    .eq('product_id', productId)
     .eq('deleted', false);
 
   if (royaltiesError || !royalties || royalties.length === 0) {
@@ -1195,116 +773,7 @@ export const reorderProductFiles = async (
 };
 
 // ===== Product Components (Product-in-Product) =====
-
-/**
- * Link a product as a component to a variant
- * Captures the royalty amount at link time
- */
-export const linkProductToVariant = async (
-  variantId: string,
-  childProductId: string,
-  royaltyAmountCents: number
-): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('product_components')
-    .insert({
-      parent_variant_id: variantId,
-      child_product_id: childProductId,
-      royalty_amount_cents: royaltyAmountCents,
-    });
-
-  if (error) {
-    console.error('Error linking product to variant:', error);
-    return false;
-  }
-
-  return true;
-};
-
-/**
- * Get products linked as components to a variant
- */
-export const getVariantComponents = async (variantId: string): Promise<Product[]> => {
-  const { data, error } = await serverClient
-    .from('product_components')
-    .select('child_product_id')
-    .eq('parent_variant_id', variantId)
-    .eq('deleted', false);
-
-  if (error || !data) {
-    return [];
-  }
-
-  const productIds = data.map(pc => pc.child_product_id);
-
-  if (productIds.length === 0) {
-    return [];
-  }
-
-  const { data: products, error: productsError } = await serverClient
-    .from('products')
-    .select('*')
-    .in('id', productIds)
-    .eq('deleted', false);
-
-  if (productsError || !products) {
-    return [];
-  }
-
-  return products as Product[];
-};
-
-/**
- * Get component details (with royalty amount)
- */
-export const getVariantComponentDetails = async (
-  variantId: string
-): Promise<Array<{ product: Product; royaltyAmountCents: number }>> => {
-  const { data, error } = await serverClient
-    .from('product_components')
-    .select('child_product_id, royalty_amount_cents')
-    .eq('parent_variant_id', variantId)
-    .eq('deleted', false);
-
-  if (error || !data) {
-    return [];
-  }
-
-  const results: Array<{ product: Product; royaltyAmountCents: number }> = [];
-
-  for (const component of data) {
-    const product = await getProductById(component.child_product_id);
-    if (product) {
-      results.push({
-        product,
-        royaltyAmountCents: component.royalty_amount_cents,
-      });
-    }
-  }
-
-  return results;
-};
-
-/**
- * Unlink a product component from a variant
- */
-export const unlinkProductFromVariant = async (
-  variantId: string,
-  childProductId: string
-): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('product_components')
-    .delete()
-    .eq('parent_variant_id', variantId)
-    .eq('child_product_id', childProductId);
-
-  if (error) {
-    console.error('Error unlinking product from variant:', error);
-    return false;
-  }
-
-  return true;
-};
+// Note: Product-level embedding functions are in the API layer
 
 /**
  * Get all products that are embeddable (for component selection)
@@ -1427,4 +896,76 @@ export const calculateProductRoyaltyTotal = async (productId: string): Promise<n
   return royalties
     .filter(r => r.royalty_type === 'fixed')
     .reduce((total, royalty) => total + royalty.royalty_value, 0);
+};
+
+/**
+ * Calculate total product price (file prices + embedded product prices)
+ * Returns total price in cents
+ */
+export const calculateProductTotalPrice = async (productId: string): Promise<number> => {
+  // Get file prices
+  const { data: files } = await serverClient
+    .from('product_files')
+    .select('price_cents')
+    .eq('product_id', productId)
+    .eq('deleted', false);
+
+  const filePriceTotal = (files || []).reduce(
+    (sum, file) => sum + (file.price_cents || 0),
+    0
+  );
+
+  // Get embedded product prices
+  const { data: components } = await serverClient
+    .from('product_components')
+    .select('inherited_price_cents')
+    .eq('parent_product_id', productId)
+    .eq('deleted', false);
+
+  const embeddedPriceTotal = (components || []).reduce(
+    (sum, comp) => sum + (comp.inherited_price_cents || 0),
+    0
+  );
+
+  return filePriceTotal + embeddedPriceTotal;
+};
+
+/**
+ * Get product price breakdown
+ * Returns detailed breakdown of file prices and embedded product prices
+ */
+export const getProductPriceBreakdown = async (productId: string): Promise<{
+  filePriceTotal: number;
+  embeddedPriceTotal: number;
+  totalPrice: number;
+}> => {
+  // Get file prices
+  const { data: files } = await serverClient
+    .from('product_files')
+    .select('price_cents')
+    .eq('product_id', productId)
+    .eq('deleted', false);
+
+  const filePriceTotal = (files || []).reduce(
+    (sum, file) => sum + (file.price_cents || 0),
+    0
+  );
+
+  // Get embedded product prices
+  const { data: components } = await serverClient
+    .from('product_components')
+    .select('inherited_price_cents')
+    .eq('parent_product_id', productId)
+    .eq('deleted', false);
+
+  const embeddedPriceTotal = (components || []).reduce(
+    (sum, comp) => sum + (comp.inherited_price_cents || 0),
+    0
+  );
+
+  return {
+    filePriceTotal,
+    embeddedPriceTotal,
+    totalPrice: filePriceTotal + embeddedPriceTotal,
+  };
 };

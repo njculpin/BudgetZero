@@ -50,7 +50,10 @@
       "Bash(tail:*)",
       "Bash(git diff:*)",
       "WebFetch(domain:www.kickstarter.com)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(xargs kill:*)"
     ],
     "deny": [],
     "ask": []

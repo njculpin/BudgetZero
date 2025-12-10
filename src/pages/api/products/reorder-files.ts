@@ -1,10 +1,16 @@
 import type { APIRoute } from "astro";
-import { z } from "zod";
 import { setSession } from "@/lib/auth";
-import { createVariant, getProductById } from "@/lib/data-access/products";
+import { getProductById, reorderProductFiles } from "@/lib/data-access/products";
+import { z } from "zod";
 
-const createVariantSchema = z.object({
+const reorderSchema = z.object({
   productId: z.string().uuid(),
+  fileOrders: z.array(
+    z.object({
+      id: z.string().uuid(),
+      position: z.number().int().min(0),
+    })
+  ),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -41,37 +47,33 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const userId = session.data.user.id;
 
   try {
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      body = {};
+    const body = await request.json();
+    const validatedData = reorderSchema.parse(body);
+
+    // Check product ownership
+    const product = await getProductById(validatedData.productId);
+    if (!product) {
+      return new Response(JSON.stringify({ error: "Product not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    const validatedData = createVariantSchema.parse(body);
-
-    // Verify ownership
-    const product = await getProductById(validatedData.productId);
-    if (!product || product.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Not authorized" }), {
+    if (product.user_id !== userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Auto-generate title based on existing variant count
-    const { getProductVariants } = await import("@/lib/data-access/products");
-    const existingVariants = await getProductVariants(validatedData.productId);
-    const variantNumber = existingVariants.length + 1;
-    const autoTitle = `Variant ${variantNumber}`;
+    const success = await reorderProductFiles(
+      validatedData.productId,
+      validatedData.fileOrders
+    );
 
-    const variant = await createVariant(validatedData.productId, {
-      title: autoTitle,
-    });
-
-    if (!variant) {
+    if (!success) {
       return new Response(
-        JSON.stringify({ error: "Failed to create variant" }),
+        JSON.stringify({ error: "Failed to reorder files" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
@@ -80,40 +82,26 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        variant,
-      }),
+      JSON.stringify({ success: true }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error) {
-    console.error("Create variant error:", error);
-
     if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({
-          error: "Validation failed",
-          details: error.errors,
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
+        JSON.stringify({ error: "Validation failed", details: error.errors }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
+    console.error("Reorder files error:", error);
     return new Response(
       JSON.stringify({
-        error:
-          error instanceof Error ? error.message : "Failed to create variant",
+        error: error instanceof Error ? error.message : "Failed to reorder files",
       }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 };

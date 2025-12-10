@@ -46,93 +46,90 @@
 
 ## Business Rules
 
-### Asset & Product Status System
+### Product Status & Embeddability System
 
-Game Loopers implements different status systems for **products** (3-state) and **assets** (4-state):
+Game Loopers implements a unified **product-centric** system where products contain files and can be embedded in other products.
 
 #### Product Status (3-State)
 
 | Status | Description | Visibility |
 |--------|-------------|------------|
 | `draft` | Work in progress | Owner only |
-| `public` | Ready for sale | Public |
+| `public` | Ready for sale or embedding | Public |
 | `archived` | Removed from listings | Owner only |
 
-#### Asset Status (4-State)
+#### Product Embeddability
 
-| Status | Description | Visibility | Use Case |
-|--------|-------------|------------|----------|
-| `draft` | Work in progress, not ready | Owner only | Assets being created/edited |
-| `private` | Ready for use in MY products only | Owner only | Exclusive assets for owner's products |
-| `public` | Can be used in ANY user's products | Everyone | Marketplace assets with royalties |
-| `archived` | Removed from listings, recoverable | Owner only | Deprecated assets |
+Products have an `is_embeddable` boolean flag that determines if they can be used as components in other products:
 
-#### Asset Visibility & RLS Policies
+**Embeddable Products** (`is_embeddable=true`):
+- Can be embedded in other products as components
+- Creator earns royalties when embedded (captured at link time in `product_components.royalty_amount_cents`)
+- Can still be sold directly with `direct_sale_price_cents`
+- Example: STL file product, illustration pack, map tiles
 
-**Private Assets** (`status='private'`):
-- Only visible to the asset owner
-- Can be linked to owner's products
-- Cannot be discovered or used by other users
-- Default status after publishing from draft (safer default)
+**Non-Embeddable Products** (`is_embeddable=false`):
+- Complete products sold as standalone items only
+- Cannot be used as components in other products
+- Example: Full game package, complete adventure module
 
-**Public Assets** (`status='public'`):
-- Visible to all users in asset marketplace
-- Can be linked to ANY user's products
-- Creator earns royalties when used in other products
-- Requires clear monetization model (royalty splits)
+#### Product Files
 
-#### Product Publishing Validation
+Products can have multiple files attached (`product_files` table):
+- **ProductFiles**: Downloadable content (PDFs, STLs, images, ZIP archives)
+- Each file has title, description, file_url, storage_path, mime_type
+- Files are ordered by `position` field
+- All files are included when product is purchased
 
-**Critical Rule**: Products can only be public if ALL linked assets have `status='private'` OR `status='public'`.
+#### Product Components (Embedding)
 
-This validation is enforced at the database level via the `validate_product_asset_status_trigger` trigger.
+Products can embed other products via the `product_components` table:
+- Links a **parent variant** to a **child product**
+- Captures royalty amount at link time (ensures price stability)
+- Child product owner earns royalty on every sale of parent product
+- Enables collaborative revenue sharing across creators
+
+**Example:**
+```
+Parent Product: "Fantasy RPG Starter Kit" ($25)
+├── Component: "Dragon STL Pack" (royalty: $5)
+├── Component: "Character Art Bundle" (royalty: $3)
+└── Component: "Battle Map Tiles" (royalty: $2)
+
+Sale Revenue Split:
+- Parent creator: $15
+- Dragon STL creator: $5
+- Character Art creator: $3
+- Battle Map creator: $2
+```
+
+#### Publishing Validation
+
+**Critical Rule**: Products can only be public if they have either:
+1. At least one file (`product_files`), OR
+2. At least one embedded component (`product_components`), OR
+3. Both files and components
 
 **Why this matters**:
-- Prevents customers from purchasing products with unavailable downloads (draft/archived assets)
-- Ensures data integrity across the product-asset relationship
-- Forces creators to complete all asset preparation before going live
-- Allows both exclusive (private) and collaborative (public) workflows
-
-**Implementation Details**:
-```sql
--- Database trigger validates on product status update
-CREATE TRIGGER validate_product_asset_status_trigger
-  BEFORE UPDATE ON products
-  FOR EACH ROW
-  EXECUTE FUNCTION validate_product_asset_status();
-
--- Validation logic
-WHERE a.status NOT IN ('private', 'public')  -- Rejects draft and archived
-```
-
-**Error Handling**:
-When attempting to publish a product with draft or archived assets, the database will throw:
-```
-Cannot publish product: one or more linked assets are not ready.
-Assets must have status = 'private' or 'public' (not draft or archived) before publishing the product.
-```
+- Prevents empty products from being published
+- Ensures customers always receive something when they purchase
+- Maintains marketplace quality and trust
 
 **UI Implications**:
-- Product edit forms should show asset status with clear indicators:
-  - 🔒 Private (exclusive to you)
-  - 🌐 Public (marketplace, earns royalties)
-  - ✏️ Draft (not ready)
-  - 📦 Archived (removed)
-- Publish button should be disabled if any assets are draft/archived
-- Clear messaging should guide creators to set assets to private or public
-- Asset creation defaults to 'draft', requires explicit publish action
+- Publish button should be disabled if product has no files and no components
+- Clear messaging: "Add files or embed products before publishing"
+- Product editor should show file count and component count
+- Easy path to add first file or link first component
 
 **Edge Cases Handled**:
-- ✅ Soft-deleted assets are ignored in validation
-- ✅ Soft-deleted variants are ignored in validation
-- ✅ Empty products (no assets) can be public
-- ✅ Status can be changed from public → draft without validation
-- ✅ Other product fields can be updated while assets are draft
-- ✅ Asset status changes after product publish don't unpublish the product
-- ✅ Mix of private and public assets is allowed in same product
+- ✅ Products with only files (no components) can be public
+- ✅ Products with only components (no direct files) can be public
+- ✅ Products can be draft indefinitely while being built
+- ✅ Embedded child products can be archived without affecting parent
+- ✅ Removing all files/components returns product to draft automatically
 
 **Testing Coverage**:
-See `/src/lib/data-access/__tests__/products.test.ts` → `P0 SECURITY: Asset Status Validation on Product Publish (4-State System)` (14 tests)
+See `/src/lib/data-access/__tests__/products.test.ts` → Product publishing validation tests
 
 ---
 
@@ -362,7 +359,7 @@ Based on a modular scale (1.25 ratio):
 
 ### Browse Components (Refactored 2024-11-24)
 
-Shared components for browsing products, assets, and jams.
+Shared components for browsing products and jams.
 
 #### BrowseCTA Component
 
@@ -371,7 +368,7 @@ Shared components for browsing products, assets, and jams.
 **Purpose**: Encourage guests to sign in/sign up
 
 ```astro
-<BrowseCTA message="Sign in to create and sell your digital assets" />
+<BrowseCTA message="Sign in to create and sell your digital products" />
 ```
 
 **Elements**:
@@ -442,7 +439,7 @@ Shared components for browsing products, assets, and jams.
 
 **Location**: `/src/components/islands/AssetChat.tsx`, `ProductChat.tsx`
 **Framework**: SolidJS (client-side islands)
-**BEM Blocks**: `.asset-chat`, `.product-chat`
+**BEM Blocks**: `.product-chat`, `.document-chat`
 
 #### Key Features
 
@@ -454,16 +451,16 @@ Shared components for browsing products, assets, and jams.
 #### Elements
 
 ```css
-.asset-chat__messages       /* Message container (aria-live) */
-.asset-chat__message-row    /* Individual message wrapper */
-.asset-chat__avatar         /* User avatar circle */
-.asset-chat__avatar-initials /* Initials when no image */
-.asset-chat__message        /* Message bubble */
-.asset-chat__message--own   /* Modifier for user's own messages */
-.asset-chat__message-author /* Username display */
-.asset-chat__message-text   /* Message content */
-.asset-chat__input          /* Chat input field */
-.asset-chat__submit         /* Send button */
+.product-chat__messages       /* Message container (aria-live) */
+.product-chat__message-row    /* Individual message wrapper */
+.product-chat__avatar         /* User avatar circle */
+.product-chat__avatar-initials /* Initials when no image */
+.product-chat__message        /* Message bubble */
+.product-chat__message--own   /* Modifier for user's own messages */
+.product-chat__message-author /* Username display */
+.product-chat__message-text   /* Message content */
+.product-chat__input          /* Chat input field */
+.product-chat__submit         /* Send button */
 ```
 
 ---
