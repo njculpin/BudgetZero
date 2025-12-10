@@ -74,9 +74,9 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
 
 <Layout title="Dashboard - Game Loopers">
   {/* Show onboarding for users with no content */}
-  {contentItems.length === 0 && (
+  <!-- {contentItems.length === 0 && (
     <FirstTimeUserOnboarding client:load />
-  )}
+  )} -->
 
   <main class="page">
     <div class="page__container">
@@ -165,7 +165,7 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
                                   {transaction.productTitle} - {transaction.variantTitle}
                                 </span>
                                 <span class="transaction-item__subtitle">
-                                  {transaction.componentTitle || 'Product royalty'}
+                                  {transaction.assetTitle || 'Product royalty'}
                                 </span>
                                 <span class="transaction-item__date">
                                   {new Date(transaction.createdAt).toLocaleDateString()}

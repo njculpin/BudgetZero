@@ -12,13 +12,13 @@
 
 **Unique Value Props:**
 1. **Transparent Royalty Network** - See exactly who gets paid and how much
-2. **Collaborative Product Assembly** - Combine assets from multiple creators with automated revenue splits
-3. **Integrated Creation Pipeline** - Documents → Assets → Products → (Future: Physical fulfillment)
+2. **Collaborative Product Assembly** - Embed products from multiple creators with automated revenue splits
+3. **Integrated Creation Pipeline** - Documents → Products (with files & embedded components) → (Future: Physical fulfillment)
 
 **Competitive Positioning:**
 - vs. DriveThruRPG: Modern, creator-first, transparent royalties
 - vs. itch.io: Better royalty splits, tabletop-focused, collaborative tools
-- vs. Gumroad: Asset reuse network effects, community features (jams)
+- vs. Gumroad: Product embedding network effects, community features (jams)
 
 ---
 
@@ -26,11 +26,11 @@
 
 ### ✅ Completed Features (40%)
 - User authentication (Supabase PKCE)
-- Asset management (4-state system: draft/private/public/archived)
+- Product management with file uploads and embedding
 - Product creation with variants
 - Royalty configuration and splits
 - Document collaboration (TipTap editor)
-- Real-time chat (assets, products, documents)
+- Real-time chat (products, documents)
 - Game jam system with reviews
 - Row-Level Security policies
 - Dashboard with content filtering
@@ -51,15 +51,15 @@
    - **Impact:** Cannot sell products or pay creators
    - **Effort:** 2-3 weeks
 
-2. **Asset Download System** - Purchased assets can't be downloaded
+2. **Product File Download System** - Purchased product files can't be downloaded
    - Missing: Signed URL generation from Supabase Storage
-   - Missing: `/api/purchases/[saleId]/download/[assetId]` endpoint
+   - Missing: `/api/purchases/[saleId]/download/[fileId]` endpoint
    - Missing: Purchase verification logic
    - **Impact:** Buyers can't access files they paid for
    - **Effort:** 1 week
 
 **Priority 1 (High - Critical for Launch):**
-3. **Search & Discovery** - No way to find products/assets
+3. **Search & Discovery** - No way to find products
    - Missing: Tag-based filtering UI (`/products?tag=fantasy`)
    - Missing: Full-text search
    - Missing: Trending tags widget
@@ -73,9 +73,9 @@
    - **Impact:** Collaboration features half-implemented
    - **Effort:** 1.5 weeks (defer to post-MVP)
 
-5. **Document PDF Export** - Can't publish documents as assets
+5. **Document PDF Export** - Can't export documents as PDF files
    - Missing: `/api/documents/[docId]/export-pdf` using pdf-lib
-   - Missing: Auto-asset creation from document
+   - Missing: Auto-product creation with PDF file from document
    - **Impact:** Unique feature is non-functional
    - **Effort:** 1 week (defer to post-MVP)
 
@@ -90,9 +90,9 @@
 - [x] Stripe Checkout session creation
 - [x] Webhook handler for `checkout.session.completed`
 - [x] Create `sales` and `sale_items` records on successful payment
-- [x] Generate `sale_item_assets` download access records
+- [x] Generate download access records for purchased product files
 - [x] Email purchase confirmation (integrate Resend)
-- [x] Asset download endpoint with signed URLs
+- [x] Product file download endpoint with signed URLs
 - [x] Royalty calculation and distribution
 
 **Deliverable:** ✅ Users can purchase products and receive confirmation
@@ -112,29 +112,28 @@
 
 ---
 
-### Week 4-5: Asset Downloads & Search ✅ COMPLETE
+### Week 4-5: Product File Downloads & Search ✅ COMPLETE
 **Features:**
 - [x] Signed download URL generation (24-hour expiry)
 - [x] Purchase verification (check user owns sale)
-- [x] Download tracking (increment `assets.download_count`)
-- [x] Tag filtering on `/products` and `/assets` pages
+- [x] Download tracking (increment `products.download_count`)
+- [x] Tag filtering on `/products` page
 - [x] Basic text search (title + description)
 
-**Deliverable:** ✅ Users can download purchased assets and find products
+**Deliverable:** ✅ Users can download purchased product files and find products
 
 **Note:** Search and tag filtering were already implemented. Download endpoint created in Week 1-3.
 
 **Files to Create/Update:**
-- Create: `/src/pages/api/purchases/[saleId]/download/[assetId].ts`
+- Create: `/src/pages/api/purchases/[saleId]/download/[fileId].ts`
 - Update: `/src/pages/products/index.astro` (add tag filters)
-- Update: `/src/pages/assets/index.astro` (add tag filters)
 - Update: `/src/lib/data-access/products.ts` (search functions)
 
 **Testing Checklist:**
 - [ ] Only purchase owners can generate download links
 - [ ] Download URLs expire after 24 hours
 - [ ] Tag filtering returns correct results
-- [ ] Search works across products and assets
+- [ ] Search works across products
 
 ---
 
@@ -144,7 +143,7 @@
 - [x] Unify StatusBadge component (consolidated Badge.astro)
 - [x] Extract Avatar component (reusable)
 - [x] Create onboarding wizard for first-time creators
-- [x] Add "Requirements Checklist" to asset editor (AssetStatusRequirements)
+- [x] Add "Requirements Checklist" to product editor (ProductStatusRequirements)
 - [x] Performance optimization (hydration strategy, image lazy loading)
 - [ ] Improve cart "What's Included" breakdown (deferred to post-MVP)
 
@@ -156,13 +155,13 @@
 - ✅ `Avatar.astro` (reusable avatar with fallback)
 - ✅ `Badge.astro` (unified status indicator with all variants)
 - ✅ `OnboardingWizard.tsx` (first-time creator flow)
-- ✅ `AssetStatusRequirements.tsx` (checklist widget)
+- ✅ `ProductStatusRequirements.tsx` (checklist widget)
 
 **Testing Checklist:**
 - [ ] All avatars display correctly across site
 - [ ] Status badges consistent in styling
 - [ ] Onboarding wizard guides new users
-- [ ] Asset requirements clear to creators
+- [ ] Product requirements clear to creators
 
 ---
 
@@ -201,7 +200,7 @@
 ### Month 2: Discovery & Engagement
 **Features:**
 - [ ] Advanced search with filters (price range, file type, license)
-- [ ] Trending products/assets widgets
+- [ ] Trending products widgets
 - [ ] Creator spotlight on homepage
 - [ ] Email marketing (new product alerts, jam announcements)
 - [ ] Social sharing (Open Graph tags, Twitter cards)
@@ -217,15 +216,15 @@
 
 ### Month 3: Collaboration Features
 **Features:**
-- [ ] Collaborator invitations (asset + product + document)
-- [ ] Document PDF export
+- [ ] Collaborator invitations (product + document)
+- [ ] Document PDF export to product files
 - [ ] Shared revenue dashboard (see royalty earnings breakdown)
 - [ ] User following system
 - [ ] Activity feed (show followed creators' new products)
 
 **Success Metrics:**
 - 30% of products use multi-creator royalty splits
-- 50+ documents public as PDF assets
+- 50+ documents exported as PDF files to products
 - 200+ creator-to-creator follows
 - 15% increase in repeat collaboration
 
@@ -300,7 +299,7 @@
 - Create: `/src/pages/services/[handle].astro` (service provider profile)
 - Create: `/src/components/ServiceListingCard.astro`
 - Create: `/src/components/PortfolioGallery.astro`
-- Update: `/src/pages/assets/[asset].astro` (add "Order Print" section)
+- Update: `/src/pages/products/[product].astro` (add "Order Print" section)
 
 **Metrics:**
 - 10+ verified printers recruited
@@ -381,7 +380,7 @@
 - Mobile app (React Native or Progressive Web App)
 - Print-on-demand fulfillment automation (similar to Printful)
 - Live print queue viewing (see your order being printed via webcam)
-- AI-powered asset recommendations
+- AI-powered product recommendations
 - Virtual tabletop integration (Roll20, Foundry VTT)
 - Subscription model (unlimited downloads for monthly fee)
 - Gift cards

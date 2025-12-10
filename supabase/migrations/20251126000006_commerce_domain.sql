@@ -19,11 +19,10 @@ CREATE TABLE IF NOT EXISTS public.cart_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cart_id UUID NOT NULL REFERENCES public.carts(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-  variant_id UUID NOT NULL REFERENCES public.product_variants(id) ON DELETE CASCADE,
   quantity INTEGER NOT NULL CHECK (quantity > 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(cart_id, variant_id)
+  UNIQUE(cart_id, product_id)
 );
 
 COMMENT ON TABLE public.cart_items IS 'Items in shopping carts';
@@ -55,7 +54,6 @@ CREATE TABLE IF NOT EXISTS public.sale_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   sale_id UUID NOT NULL REFERENCES public.sales(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-  variant_id UUID NOT NULL REFERENCES public.product_variants(id) ON DELETE CASCADE,
   price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
   currency TEXT NOT NULL DEFAULT 'usd',
   quantity INTEGER NOT NULL CHECK (quantity > 0),
@@ -163,7 +161,6 @@ CREATE INDEX IF NOT EXISTS carts_user_id_idx ON public.carts(user_id);
 -- Cart items indexes
 CREATE INDEX IF NOT EXISTS cart_items_cart_id_idx ON public.cart_items(cart_id);
 CREATE INDEX IF NOT EXISTS cart_items_product_id_idx ON public.cart_items(product_id);
-CREATE INDEX IF NOT EXISTS cart_items_variant_id_idx ON public.cart_items(variant_id);
 
 -- Sales indexes
 CREATE INDEX IF NOT EXISTS sales_user_id_idx ON public.sales(user_id);
@@ -174,7 +171,6 @@ CREATE INDEX IF NOT EXISTS sales_created_at_idx ON public.sales(created_at DESC)
 -- Sale items indexes
 CREATE INDEX IF NOT EXISTS sale_items_sale_id_idx ON public.sale_items(sale_id);
 CREATE INDEX IF NOT EXISTS sale_items_product_id_idx ON public.sale_items(product_id);
-CREATE INDEX IF NOT EXISTS sale_items_variant_id_idx ON public.sale_items(variant_id);
 
 -- Sale item assets indexes
 CREATE INDEX IF NOT EXISTS sale_item_assets_sale_item_id_idx ON public.sale_item_assets(sale_item_id);

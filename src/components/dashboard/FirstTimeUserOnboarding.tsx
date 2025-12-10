@@ -1,9 +1,49 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, Show, onMount } from "solid-js";
 import "./first-time-user-onboarding.css";
 
 export default function FirstTimeUserOnboarding() {
   const [currentStep, setCurrentStep] = createSignal(0);
   const [isVisible, setIsVisible] = createSignal(true);
+
+  // Check localStorage AFTER mount to avoid hydration mismatch
+  onMount(() => {
+    const hasSeenOnboarding = localStorage.getItem("onboarding_seen") === "true";
+    if (hasSeenOnboarding) {
+      setIsVisible(false);
+    }
+  });
+
+  // Handler functions - defined before steps array so they can be referenced
+  const handleComplete = () => {
+    console.log("handleComplete called");
+    // Set localStorage flag so this doesn't show again
+    if (typeof window !== "undefined") {
+      localStorage.setItem("onboarding_seen", "true");
+      console.log("localStorage set:", localStorage.getItem("onboarding_seen"));
+    }
+    setIsVisible(false);
+    console.log("isVisible set to false");
+  };
+
+  const handleSkip = () => {
+    console.log("handleSkip called");
+    handleComplete();
+  };
+
+  const handleNext = () => {
+    console.log("handleNext called, current step:", currentStep());
+    if (currentStep() < steps.length - 1) {
+      setCurrentStep(currentStep() + 1);
+    } else {
+      handleComplete();
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep() > 0) {
+      setCurrentStep(currentStep() - 1);
+    }
+  };
 
   const steps = [
     {
@@ -22,16 +62,16 @@ export default function FirstTimeUserOnboarding() {
     },
     {
       title: "How It Works",
-      description: "Create once, earn forever through our transparent royalty system.",
+      description: "Create, collaborate, and earn through our transparent marketplace.",
       emoji: "💡",
       content: (
         <div class="onboarding__workflow">
           <div class="onboarding__workflow-step">
             <div class="onboarding__workflow-number">1</div>
             <div class="onboarding__workflow-content">
-              <h4 class="onboarding__workflow-title">Create Assets</h4>
+              <h4 class="onboarding__workflow-title">Create Products</h4>
               <p class="onboarding__workflow-description">
-                Upload your 3D models, rulebooks, art, or documents
+                Build complete game packages with multiple variants and pricing options
               </p>
             </div>
           </div>
@@ -41,9 +81,9 @@ export default function FirstTimeUserOnboarding() {
           <div class="onboarding__workflow-step">
             <div class="onboarding__workflow-number">2</div>
             <div class="onboarding__workflow-content">
-              <h4 class="onboarding__workflow-title">Set Royalties</h4>
+              <h4 class="onboarding__workflow-title">Collaborate with Documents</h4>
               <p class="onboarding__workflow-description">
-                Define how much you earn when others use your assets
+                Use collaborative documents to create rulebooks and game content
               </p>
             </div>
           </div>
@@ -53,9 +93,9 @@ export default function FirstTimeUserOnboarding() {
           <div class="onboarding__workflow-step">
             <div class="onboarding__workflow-number">3</div>
             <div class="onboarding__workflow-content">
-              <h4 class="onboarding__workflow-title">Bundle into Products</h4>
+              <h4 class="onboarding__workflow-title">Publish & Sell</h4>
               <p class="onboarding__workflow-description">
-                Combine assets into complete game packages
+                List your products on the marketplace for customers to discover
               </p>
             </div>
           </div>
@@ -65,9 +105,9 @@ export default function FirstTimeUserOnboarding() {
           <div class="onboarding__workflow-step">
             <div class="onboarding__workflow-number">4</div>
             <div class="onboarding__workflow-content">
-              <h4 class="onboarding__workflow-title">Publish & Earn</h4>
+              <h4 class="onboarding__workflow-title">Earn Revenue</h4>
               <p class="onboarding__workflow-description">
-                Sales automatically split among all contributors
+                Get paid for your work through our integrated payment system
               </p>
             </div>
           </div>
@@ -78,17 +118,31 @@ export default function FirstTimeUserOnboarding() {
     },
     {
       title: "Ready to Start?",
-      description: "Let's create your first asset together.",
+      description: "Choose how you'd like to begin your journey.",
       emoji: "🚀",
       content: (
         <div class="onboarding__cta">
           <div class="onboarding__option">
-            <h4 class="onboarding__option-title">Quick Start Wizard</h4>
+            <h4 class="onboarding__option-title">Create a Product</h4>
             <p class="onboarding__option-description">
-              Follow a guided process to create and publish your first asset
+              Start building your first game product with variants and pricing
             </p>
-            <a href="/api/assets/create-asset" class="onboarding__option-button onboarding__option-button--primary">
-              Create First Asset
+            <a href="/api/products/create-product" class="onboarding__option-button onboarding__option-button--primary">
+              Create Product
+            </a>
+          </div>
+
+          <div class="onboarding__divider">
+            <span class="onboarding__divider-text">or</span>
+          </div>
+
+          <div class="onboarding__option">
+            <h4 class="onboarding__option-title">Start a Document</h4>
+            <p class="onboarding__option-description">
+              Begin writing your rulebook or game content collaboratively
+            </p>
+            <a href="/api/documents/create-document" class="onboarding__option-button onboarding__option-button--primary">
+              Create Document
             </a>
           </div>
 
@@ -114,32 +168,6 @@ export default function FirstTimeUserOnboarding() {
       secondaryAction: null
     }
   ];
-
-  const handleComplete = () => {
-    // Set localStorage flag so this doesn't show again
-    if (typeof window !== "undefined") {
-      localStorage.setItem("onboarding_seen", "true");
-    }
-    setIsVisible(false);
-  };
-
-  const handleSkip = () => {
-    handleComplete();
-  };
-
-  const handleNext = () => {
-    if (currentStep() < steps.length - 1) {
-      setCurrentStep(currentStep() + 1);
-    } else {
-      handleComplete();
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep() > 0) {
-      setCurrentStep(currentStep() - 1);
-    }
-  };
 
   const step = () => steps[currentStep()];
 
