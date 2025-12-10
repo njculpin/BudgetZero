@@ -4,7 +4,7 @@ import Badge from "@/components/Badge.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductChat, ProductEmbeddedProducts } from "@/components/products";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown } from "@/components/products";
 import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductContributors } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
@@ -328,6 +328,20 @@ if (jamId) {
 
         <!-- Sidebar Column -->
         <div class="page-columns__column">
+
+        <!-- Price Breakdown Card -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Pricing</CardTitle>
+            <CardDescription>Complete price breakdown</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductPriceBreakdown
+              client:load
+              productId={productData.id}
+            />
+          </CardContent>
+        </Card>
 
         {isContributor && currentUser && (
           <Card>

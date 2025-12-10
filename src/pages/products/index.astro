@@ -4,7 +4,7 @@ import Card from "@/components/Card.astro";
 import CardContent from "@/components/CardContent.astro";
 import PageHeader from "@/components/PageHeader.astro";
 import BrowseCTA from "@/components/home/BrowseCTA.astro";
-import { getAllProducts, getProductImages, getProductVariants, getVariantPrices } from "@/lib/data-access/products";
+import { getAllProducts, getProductImages } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { getAllTags } from "@/lib/data-access/tags";
 import { setSession } from "@/lib/auth";
@@ -46,29 +46,14 @@ const tagArray = tagFilter ? [tagFilter] : undefined;
 const allProducts = await getAllProducts(searchQuery, tagArray, limit, offset);
 console.log(allProducts)
 
-// Fetch images and prices for each product
+// Fetch images for each product
 const productsWithDetails = await Promise.all(
   allProducts.map(async (product) => {
     const images = await getProductImages(product.id);
-    const variants = await getProductVariants(product.id);
-
-    // Get the lowest price across all variants
-    let lowestPrice = null;
-    for (const variant of variants) {
-      const prices = await getVariantPrices(variant.id);
-      if (prices.length > 0) {
-        const minPrice = Math.min(...prices.map(p => p.unit_amount));
-        if (lowestPrice === null || minPrice < lowestPrice) {
-          lowestPrice = minPrice;
-        }
-      }
-    }
 
     return {
       ...product,
       cover_image_url: images[0]?.file_url || null,
-      lowestPrice,
-      variantCount: variants.length
     };
   })
 );
@@ -186,18 +171,6 @@ const productTags = allTags
                       <p class="product-card__description">
                         {product.description}
                       </p>
-                    )}
-                    {product.lowestPrice !== null && (
-                      <div class="product-card__footer">
-                        <span class="product-card__price">
-                          From ${(product.lowestPrice / 100).toFixed(2)}
-                        </span>
-                        {product.variantCount > 1 && (
-                          <span class="product-card__variants">
-                            {product.variantCount} variants
-                          </span>
-                        )}
-                      </div>
                     )}
                   </div>
                 </a>

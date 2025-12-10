@@ -11,3 +11,4 @@ export { default as ProductChat } from './ProductChat';
 export { default as ProductConflictBanner } from './ProductConflictBanner';
 export { default as ProductValueBreakdown } from './ProductValueBreakdown';
 export { default as ProductEmbeddedProducts } from './ProductEmbeddedProducts';
+export { default as ProductPriceBreakdown } from './ProductPriceBreakdown';

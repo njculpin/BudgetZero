@@ -291,8 +291,27 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
 
             <div class="embedded-products__modal-body">
               <p class="embedded-products__modal-description">
-                Search for public products or your own private products to embed. The embedded product's price will be added to your product's total price.
+                Search for public products or your own private products to embed. The embedded product's price will be added to your product's total price. Royalty payments will be made to the product owner on each sale.
               </p>
+
+              <div class="embedded-products__create-product">
+                <form action="/api/products/create-product" method="POST" class="embedded-products__create-form">
+                  <button type="submit" class="embedded-products__create-button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Create New Product to Embed
+                  </button>
+                  <p class="embedded-products__create-hint">
+                    Don't see the product you need? Create a new one and embed it here.
+                  </p>
+                </form>
+              </div>
+
+              <div class="embedded-products__divider">
+                <span class="embedded-products__divider-text">Or search existing products</span>
+              </div>
 
               <div class="embedded-products__search">
                 <input

@@ -1,0 +1,188 @@
+/* ===== Product Price Breakdown ===== */
+.price-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.price-breakdown__loading {
+  padding: var(--spacing-2xl);
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+}
+
+.price-breakdown__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2xl);
+}
+
+/* ===== Section ===== */
+.price-breakdown__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.price-breakdown__section-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ===== Items List ===== */
+.price-breakdown__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.price-breakdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  padding: var(--spacing-md);
+  background-color: var(--muted);
+  border-radius: var(--radius-sm);
+  border: var(--border-width-default) solid var(--border);
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.price-breakdown__item:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.price-breakdown__item-icon {
+  font-size: var(--text-xl);
+  flex-shrink: 0;
+}
+
+.price-breakdown__item-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+  flex: 1;
+  min-width: 0;
+}
+
+.price-breakdown__item-name {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.price-breakdown__item-creator {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.price-breakdown__item-price {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  flex-shrink: 0;
+}
+
+/* ===== Subtotal ===== */
+.price-breakdown__subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: var(--border-width-default) solid var(--border);
+}
+
+.price-breakdown__subtotal-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+}
+
+.price-breakdown__subtotal-value {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+/* ===== Total ===== */
+.price-breakdown__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l * 0.9) c h) 100%);
+  border-radius: var(--radius-md);
+  border: var(--border-width-thick) solid var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.price-breakdown__total-label {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.price-breakdown__total-value {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-foreground);
+}
+
+/* ===== Empty State ===== */
+.price-breakdown__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-md);
+  padding: var(--spacing-3xl);
+  text-align: center;
+}
+
+.price-breakdown__empty-icon {
+  font-size: var(--text-5xl);
+}
+
+.price-breakdown__empty-text {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.price-breakdown__empty-hint {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .price-breakdown__item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .price-breakdown__item-price {
+    align-self: flex-end;
+  }
+
+  .price-breakdown__total {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  .price-breakdown__total-value {
+    font-size: var(--text-2xl);
+  }
+}
