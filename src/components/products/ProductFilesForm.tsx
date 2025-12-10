@@ -13,6 +13,7 @@ export interface ProductFile {
   file_size_bytes: number;
   mime_type: string;
   position: number;
+  price_cents: number;
 }
 
 export interface ProductFilesFormProps {
@@ -49,6 +50,11 @@ const getFileIcon = (mimeType: string): string => {
   return '📁';
 };
 
+// Helper to format cents to dollars
+const formatPrice = (cents: number): string => {
+  return `$${(cents / 100).toFixed(2)}`;
+};
+
 export default function ProductFilesForm(props: ProductFilesFormProps) {
   const [files, setFiles] = createSignal<ProductFile[]>(props.existingFiles);
   const [uploadQueue, setUploadQueue] = createSignal<UploadProgress[]>([]);
@@ -58,6 +64,8 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
   const [draggedIndex, setDraggedIndex] = createSignal<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = createSignal<number | null>(null);
   const [isDraggingFiles, setIsDraggingFiles] = createSignal(false);
+  const [editingFileId, setEditingFileId] = createSignal<string | null>(null);
+  const [editPrice, setEditPrice] = createSignal("");
 
   // Update files when props change
   createEffect(() => {
@@ -276,6 +284,56 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
     }
   };
 
+  const handleStartEditPrice = (file: ProductFile) => {
+    setEditingFileId(file.id);
+    setEditPrice((file.price_cents / 100).toFixed(2));
+  };
+
+  const handleCancelEditPrice = () => {
+    setEditingFileId(null);
+    setEditPrice("");
+  };
+
+  const handleSavePrice = async (fileId: string) => {
+    setError("");
+    setSuccess("");
+
+    const priceValue = parseFloat(editPrice());
+    if (isNaN(priceValue) || priceValue < 0) {
+      setError("Please enter a valid price");
+      return;
+    }
+
+    const priceCents = Math.round(priceValue * 100);
+
+    try {
+      const response = await fetch("/api/products/update-file-price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileId,
+          priceCents
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || "Failed to update file price");
+        return;
+      }
+
+      setSuccess("Price updated successfully! Refreshing...");
+      setEditingFileId(null);
+      setEditPrice("");
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      setError("An unexpected error occurred while updating price");
+    }
+  };
+
   return (
     <div class="file-list-editor">
       <Show when={error()}>
@@ -335,6 +393,51 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
                 {file.description && (
                   <div class="file-list__description">{file.description}</div>
                 )}
+                <Show when={editingFileId() === file.id} fallback={
+                  <div class="file-list__price">
+                    <span class="file-list__price-label">Price:</span>
+                    <span class="file-list__price-value">{formatPrice(file.price_cents)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleStartEditPrice(file)}
+                      class="file-list__edit-price"
+                      aria-label="Edit price"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                }>
+                  <div class="file-list__price-edit">
+                    <label class="file-list__price-edit-label">
+                      <span>Price ($):</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editPrice()}
+                        onInput={(e) => setEditPrice(e.currentTarget.value)}
+                        class="file-list__price-input"
+                        placeholder="0.00"
+                      />
+                    </label>
+                    <div class="file-list__price-actions">
+                      <button
+                        type="button"
+                        onClick={() => handleSavePrice(file.id)}
+                        class="file-list__save-price"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelEditPrice}
+                        class="file-list__cancel-price"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </Show>
               </div>
               <button
                 type="button"

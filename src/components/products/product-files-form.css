@@ -111,6 +111,120 @@
   line-height: var(--leading-relaxed);
 }
 
+/* ===== Price Display ===== */
+.file-list__price {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin-top: var(--gap-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--muted);
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+
+.file-list__price-label {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.file-list__price-value {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.file-list__edit-price {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: transparent;
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.file-list__edit-price:hover {
+  border-color: var(--primary);
+  background-color: oklch(from var(--primary) l c h / 0.1);
+}
+
+/* ===== Price Edit Mode ===== */
+.file-list__price-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  margin-top: var(--gap-xs);
+  padding: var(--spacing-md);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.file-list__price-edit-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.file-list__price-edit-label > span {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+.file-list__price-input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--background);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  color: var(--foreground);
+  width: 200px;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.file-list__price-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 0.1);
+}
+
+.file-list__price-actions {
+  display: flex;
+  gap: var(--gap-sm);
+}
+
+.file-list__save-price,
+.file-list__cancel-price {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.file-list__save-price {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.file-list__save-price:hover {
+  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+}
+
+.file-list__cancel-price {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.file-list__cancel-price:hover {
+  background-color: oklch(from var(--muted) calc(l * 0.9) c h);
+}
+
 .file-list__delete {
   display: flex;
   align-items: center;

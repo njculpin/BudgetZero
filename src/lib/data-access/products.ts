@@ -748,6 +748,29 @@ export const deleteProductFile = async (fileId: string): Promise<boolean> => {
 };
 
 /**
+ * Update product file price
+ */
+export const updateProductFilePrice = async (
+  fileId: string,
+  priceCents: number
+): Promise<boolean> => {
+  const { error } = await serverClient
+    .from('product_files')
+    .update({
+      price_cents: priceCents,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', fileId);
+
+  if (error) {
+    console.error('Error updating product file price:', error);
+    return false;
+  }
+
+  return true;
+};
+
+/**
  * Reorder product files
  */
 export const reorderProductFiles = async (
