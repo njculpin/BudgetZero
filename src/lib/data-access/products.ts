@@ -4,10 +4,12 @@ import type {
   ProductTag,
   ProductStatus,
   ProductFile,
+  ProductDocument,
   ProductComponent,
   ProductRoyalty,
   Asset,
-  User
+  User,
+  Document
 } from '@/types';
 
 export interface CreateProductParams {
@@ -678,6 +680,7 @@ export const createProductFile = async (
       file_size_bytes: fileData.file_size_bytes,
       mime_type: fileData.mime_type,
       position: nextPosition,
+      price_cents: 0,
     })
     .select()
     .single();
@@ -991,4 +994,113 @@ export const getProductPriceBreakdown = async (productId: string): Promise<{
     embeddedPriceTotal,
     totalPrice: filePriceTotal + embeddedPriceTotal,
   };
+};
+
+/**
+ * Get documents attached to a product with full document details
+ */
+export const getProductDocuments = async (
+  productId: string
+): Promise<(ProductDocument & { document: Document })[]> => {
+  const { data, error } = await serverClient
+    .from('product_documents')
+    .select(`
+      *,
+      document:documents(*)
+    `)
+    .eq('product_id', productId)
+    .eq('deleted', false)
+    .order('position', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching product documents:', error);
+    return [];
+  }
+
+  return data as (ProductDocument & { document: Document })[];
+};
+
+/**
+ * Add a document to a product
+ */
+export const addDocumentToProduct = async (
+  productId: string,
+  documentId: string,
+  priceCents: number = 0
+): Promise<ProductDocument | null> => {
+  // Get current max position
+  const { data: existingDocs } = await serverClient
+    .from('product_documents')
+    .select('position')
+    .eq('product_id', productId)
+    .eq('deleted', false)
+    .order('position', { ascending: false })
+    .limit(1);
+
+  const nextPosition = existingDocs && existingDocs.length > 0
+    ? existingDocs[0].position + 1
+    : 0;
+
+  const { data, error } = await serverClient
+    .from('product_documents')
+    .insert({
+      product_id: productId,
+      document_id: documentId,
+      price_cents: priceCents,
+      position: nextPosition,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error adding document to product:', error);
+    return null;
+  }
+
+  return data as ProductDocument;
+};
+
+/**
+ * Remove a document from a product (soft delete)
+ */
+export const removeDocumentFromProduct = async (
+  productDocumentId: string
+): Promise<boolean> => {
+  const { error } = await serverClient
+    .from('product_documents')
+    .update({
+      deleted: true,
+      deleted_at: new Date().toISOString(),
+    })
+    .eq('id', productDocumentId);
+
+  if (error) {
+    console.error('Error removing document from product:', error);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Update product document price
+ */
+export const updateProductDocumentPrice = async (
+  productDocumentId: string,
+  priceCents: number
+): Promise<boolean> => {
+  const { error } = await serverClient
+    .from('product_documents')
+    .update({
+      price_cents: priceCents,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', productDocumentId);
+
+  if (error) {
+    console.error('Error updating product document price:', error);
+    return false;
+  }
+
+  return true;
 };

@@ -1,7 +1,7 @@
 # Game Loopers Design System
 
-**Version**: 1.1
-**Last Updated**: 2025-11-25
+**Version**: 1.2
+**Last Updated**: 2025-12-11
 **Framework**: Astro 5.15 + SolidJS Islands
 
 ---
@@ -50,13 +50,21 @@
 
 Game Loopers implements a unified **product-centric** system where products contain files and can be embedded in other products.
 
-#### Product Status (3-State)
+#### Product Status (4-State)
 
-| Status | Description | Visibility |
-|--------|-------------|------------|
-| `draft` | Work in progress | Owner only |
-| `public` | Ready for sale or embedding | Public |
-| `archived` | Removed from listings | Owner only |
+| Status | Description | Visibility | Use Case |
+|--------|-------------|------------|----------|
+| `draft` | Work in progress, not ready for any use | Owner only | Initial creation, active editing |
+| `private` | Ready but restricted to owner's use only | Owner only | Testing, internal products, owner-exclusive content |
+| `unlisted` | Ready for direct purchase but hidden from marketplace | Anyone with link | Pre-launch, exclusive access, beta testing |
+| `public` | Ready for sale and visible in marketplace | Public listings + search | General release, maximum visibility |
+
+**Status Transitions:**
+- Products start as `draft` on creation
+- Can move to `private` for owner-only use (still hidden from marketplace)
+- Can move to `unlisted` for link-only access (purchasable but not discoverable)
+- Move to `public` when ready for full marketplace visibility
+- Any status can transition to any other status based on creator needs
 
 #### Product Embeddability
 
@@ -778,7 +786,21 @@ Defined in `/src/styles/global.css` (as of 2024-11-24):
 
 ## Migration Notes
 
-### Recent Changes (2025-11-25)
+### Recent Changes (2025-12-11)
+
+1. **Product Status System (4-State)**:
+   - Upgraded from 3-state (`draft`, `public`, `archived`) to 4-state system
+   - **New statuses**: `private` (owner-only, hidden from marketplace) and `unlisted` (purchasable via direct link, hidden from listings)
+   - **Use cases**:
+     - `draft`: Initial creation, active development
+     - `private`: Testing, internal-only products, owner-exclusive content
+     - `unlisted`: Pre-launch access, beta testing, exclusive links
+     - `public`: Full marketplace visibility
+   - **UX Impact**: Creators now have granular control over product visibility without needing to delete or archive
+   - Component updated: `ProductStatusEditor.tsx` implements 4-state selector
+   - Database field: `products.status` enum type updated
+
+### Previous Changes (2025-11-25)
 
 1. **Asset Status System (4-State)**:
    - Implemented 4-state asset status system: `draft`, `private`, `public`, `archived`

@@ -44,7 +44,6 @@ const offset = (page - 1) * limit;
 
 const tagArray = tagFilter ? [tagFilter] : undefined;
 const allProducts = await getAllProducts(searchQuery, tagArray, limit, offset);
-console.log(allProducts)
 
 // Fetch images for each product
 const productsWithDetails = await Promise.all(
@@ -189,13 +188,26 @@ const productTags = allTags
                 actionText="Clear filters"
                 actionHref="/products"
               />
+            ) : currentUser ? (
+              <div class="empty-state">
+                <div class="empty-state__icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                </div>
+                <h3 class="empty-state__title">No products yet</h3>
+                <p class="empty-state__description">Be the first to create a product and share it with the community.</p>
+                <div class="empty-state__action">
+                  <form action="/api/products/create-product" method="POST">
+                    <button type="submit" class="empty-state__button">Create Product</button>
+                  </form>
+                </div>
+              </div>
             ) : (
               <EmptyState
                 icon="products"
                 title="No products yet"
                 description="Be the first to create a product and share it with the community."
-                actionText={currentUser ? "Create Product" : "Sign in to create"}
-                actionHref={currentUser ? "/api/products/create-product" : "/sign-in"}
+                actionText="Sign in to create"
+                actionHref="/sign-in"
               />
             )}
           </CardContent>
