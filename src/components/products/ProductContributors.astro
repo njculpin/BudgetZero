@@ -1,0 +1,36 @@
+---
+import Avatar from "@/components/users/Avatar.astro";
+import type { User } from "@/types";
+import "./product-contributors.css";
+
+export interface Props {
+  contributors: User[];
+}
+
+const { contributors } = Astro.props;
+---
+
+<div class="product-contributors">
+  {contributors.map((contributor) => (
+    <a
+      href={`/users/${contributor.handle}`}
+      class="product-contributors__item"
+    >
+      <Avatar
+        src={contributor.avatar_url}
+        alt={contributor.display_name || contributor.handle}
+        size="md"
+      />
+      <div class="product-contributors__info">
+        <div class="product-contributors__name">
+          {contributor.display_name || contributor.handle}
+        </div>
+        <div class="product-contributors__handle">@{contributor.handle}</div>
+      </div>
+    </a>
+  ))}
+
+  {contributors.length === 0 && (
+    <p class="product-contributors__empty">No contributors yet</p>
+  )}
+</div>

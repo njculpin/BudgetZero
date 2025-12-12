@@ -73,15 +73,14 @@ export const getCartItems = async (cartId: string): Promise<CartItem[]> => {
 export const addToCart = async (
   cartId: string,
   productId: string,
-  variantId: string,
-  quantity: number
+  quantity: number = 1
 ): Promise<CartItem | null> => {
   // Check if item already exists in cart
   const { data: existingItem } = await serverClient
     .from('cart_items')
     .select('*')
     .eq('cart_id', cartId)
-    .eq('variant_id', variantId)
+    .eq('product_id', productId)
     .single();
 
   if (existingItem) {
@@ -111,7 +110,6 @@ export const addToCart = async (
     .insert({
       cart_id: cartId,
       product_id: productId,
-      variant_id: variantId,
       quantity,
     })
     .select()

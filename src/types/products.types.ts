@@ -15,13 +15,6 @@ export interface Product extends BaseEntity {
   needs_attention: boolean;
   attention_reason: string | null;
   attention_since: string | null;
-  // Product-as-component fields (replaces Asset functionality)
-  is_embeddable: boolean; // Can this product be embedded in other products?
-  direct_sale_price_cents: number | null; // Price when sold directly to customers
-  embedding_royalty_cents: number | null; // Royalty when embedded in another product
-  download_count: number;
-  total_size_bytes: number;
-  file_count: number;
 }
 
 export interface ProductCollaborator extends BaseEntity {
@@ -53,6 +46,15 @@ export interface ProductFile extends BaseEntity {
   storage_path: string;
   file_size_bytes: number;
   mime_type: string;
+  position: number;
+  price_cents: number;
+}
+
+// Product Documents (documents attached to products with pricing)
+export interface ProductDocument extends BaseEntity {
+  product_id: string;
+  document_id: string;
+  price_cents: number;
   position: number;
 }
 

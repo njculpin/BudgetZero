@@ -66,9 +66,9 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
       case "draft":
         return "Draft";
       case "private":
-        return "private";
+        return "Private";
       case "public":
-        return "public";
+        return "Public";
       case "archived":
         return "Archived";
       default:
@@ -81,7 +81,7 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
       case "draft":
         return "Only visible to you. Not available for purchase.";
       case "private":
-        return "Only viisble to you and contributors. Not available for purchase.";
+        return "Only visible to you and contributors. Not available for purchase.";
       case "public":
         return "Visible in marketplace. Available for purchase by anyone.";
       case "archived":
@@ -138,6 +138,23 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
 
         <button
           type="button"
+          onClick={() => handleStatusChange("private")}
+          disabled={status() === "private" || isLoading()}
+          class="status-editor__button"
+          classList={{
+            "status-editor__button--active": status() === "private",
+          }}
+        >
+          <div class="status-editor__button-content">
+            <span class="status-badge status-badge--private">Private</span>
+            <span class="status-editor__button-description">
+              Only you and contributors can view
+            </span>
+          </div>
+        </button>
+
+        <button
+          type="button"
           onClick={() => handleStatusChange("public")}
           disabled={status() === "public" || isLoading() || !canPublish()}
           class="status-editor__button"
@@ -147,7 +164,7 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
           title={!canPublish() ? "Requires at least one variant" : ""}
         >
           <div class="status-editor__button-content">
-            <span class="status-badge status-badge--public">public</span>
+            <span class="status-badge status-badge--public">Public</span>
             <span class="status-editor__button-description">
               {!canPublish() ? "⚠️ Requires variants" : "List for sale"}
             </span>

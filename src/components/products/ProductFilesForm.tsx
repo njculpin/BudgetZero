@@ -26,6 +26,11 @@ interface UploadProgress {
   progress: number;
 }
 
+interface PendingFile {
+  file: File;
+  price: string;
+}
+
 const MAX_FILES = 20;
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
@@ -58,6 +63,7 @@ const formatPrice = (cents: number): string => {
 export default function ProductFilesForm(props: ProductFilesFormProps) {
   const [files, setFiles] = createSignal<ProductFile[]>(props.existingFiles);
   const [uploadQueue, setUploadQueue] = createSignal<UploadProgress[]>([]);
+  const [pendingFiles, setPendingFiles] = createSignal<PendingFile[]>([]);
   const [hasReordered, setHasReordered] = createSignal(false);
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal("");
@@ -101,7 +107,7 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
     input.value = ''; // Reset input
   };
 
-  // Process and upload files
+  // Process and show files for review with price inputs
   const handleFiles = async (selectedFiles: File[]) => {
     // Validate file sizes
     const invalidFiles = selectedFiles.filter(f => f.size > MAX_FILE_SIZE);
@@ -118,25 +124,46 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
 
     setError("");
 
-    // Create upload progress items
-    const uploads: UploadProgress[] = selectedFiles.map((file) => ({
+    // Add files to pending list with default price
+    const pending: PendingFile[] = selectedFiles.map((file) => ({
       file,
-      progress: 0,
+      price: "0.00",
     }));
 
-    setUploadQueue(uploads);
-
-    // Upload files
-    await uploadFiles(selectedFiles);
+    setPendingFiles(pending);
   };
 
-  const uploadFiles = async (selectedFiles: File[]) => {
+  // Update price for a pending file
+  const updatePendingFilePrice = (index: number, price: string) => {
+    setPendingFiles(pendingFiles().map((pf, i) =>
+      i === index ? { ...pf, price } : pf
+    ));
+  };
+
+  // Remove a file from pending list
+  const removePendingFile = (index: number) => {
+    setPendingFiles(pendingFiles().filter((_, i) => i !== index));
+  };
+
+  // Confirm and upload all pending files
+  const confirmUpload = async () => {
+    await uploadFiles(pendingFiles());
+  };
+
+  const uploadFiles = async (pendingFileList: PendingFile[]) => {
     try {
+      // Create upload progress items
+      const uploads: UploadProgress[] = pendingFileList.map((pf) => ({
+        file: pf.file,
+        progress: 0,
+      }));
+      setUploadQueue(uploads);
+
       const formData = new FormData();
       formData.append("productId", props.productId);
 
-      selectedFiles.forEach((file) => {
-        formData.append("files", file);
+      pendingFileList.forEach((pf) => {
+        formData.append("files", pf.file);
       });
 
       const response = await fetch("/api/products/upload-files", {
@@ -151,13 +178,38 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
         return;
       }
 
+      const result = await response.json();
+
+      // Update prices for uploaded files
+      const uploadedFiles = result.files;
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const pendingFile = pendingFileList[i];
+        const uploadedFile = uploadedFiles[i];
+        const priceCents = Math.round(parseFloat(pendingFile.price) * 100);
+
+        // If price is non-zero, update it
+        if (priceCents > 0) {
+          await fetch("/api/products/update-file-price", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileId: uploadedFile.id,
+              priceCents
+            }),
+          });
+          // Update the local file object with the price
+          uploadedFile.price_cents = priceCents;
+        }
+      }
+
+      // Reactively add uploaded files to the list
+      setFiles([...files(), ...uploadedFiles]);
       setSuccess("Files uploaded successfully!");
       setUploadQueue([]);
+      setPendingFiles([]);
 
-      // Reload page to show new files
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Auto-dismiss success message
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError("An unexpected error occurred");
       setUploadQueue([]);
@@ -274,11 +326,12 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
         return;
       }
 
-      setSuccess("File deleted successfully! Refreshing...");
+      // Reactively remove the file from the list
+      setFiles(files().filter(f => f.id !== fileId));
+      setSuccess("File deleted successfully!");
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Auto-dismiss success message
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError("An unexpected error occurred while deleting file");
     }
@@ -322,13 +375,19 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
         return;
       }
 
-      setSuccess("Price updated successfully! Refreshing...");
+      // Reactively update the price in the files list
+      setFiles(files().map(f =>
+        f.id === fileId
+          ? { ...f, price_cents: priceCents }
+          : f
+      ));
+
+      setSuccess("Price updated successfully!");
       setEditingFileId(null);
       setEditPrice("");
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Auto-dismiss success message
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError("An unexpected error occurred while updating price");
     }
@@ -342,6 +401,71 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
 
       <Show when={success()}>
         <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
+      </Show>
+
+      {/* Pending files for upload with price inputs */}
+      <Show when={pendingFiles().length > 0}>
+        <div class="pending-files">
+          <h3 class="pending-files__title">Set Prices for New Files</h3>
+          <div class="pending-files__list">
+            <For each={pendingFiles()}>
+              {(pendingFile, index) => (
+                <div class="pending-files__item">
+                  <div class="pending-files__icon">
+                    {getFileIcon(pendingFile.file.type)}
+                  </div>
+                  <div class="pending-files__info">
+                    <div class="pending-files__name">{pendingFile.file.name}</div>
+                    <div class="pending-files__meta">
+                      {formatFileSize(pendingFile.file.size)}
+                    </div>
+                  </div>
+                  <div class="pending-files__price">
+                    <label class="pending-files__price-label">
+                      Price ($):
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={pendingFile.price}
+                        onInput={(e) => updatePendingFilePrice(index(), e.currentTarget.value)}
+                        class="pending-files__price-input"
+                        placeholder="0.00"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removePendingFile(index())}
+                    class="pending-files__remove"
+                    aria-label={`Remove ${pendingFile.file.name}`}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </For>
+          </div>
+          <div class="pending-files__actions">
+            <button
+              type="button"
+              onClick={confirmUpload}
+              class="pending-files__upload-button"
+            >
+              Upload All ({pendingFiles().length} file{pendingFiles().length !== 1 ? 's' : ''})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingFiles([])}
+              class="pending-files__cancel-button"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </Show>
 
       <div

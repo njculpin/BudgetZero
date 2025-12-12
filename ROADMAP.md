@@ -1,8 +1,8 @@
 # Game Loopers Product Roadmap
 
-**Last Updated:** 2025-01-27
-**Current Status:** 85% complete toward MVP (Week 7/8)
-**Target MVP Launch:** 1 week remaining
+**Last Updated:** 2025-12-11
+**Current Status:** 75-80% complete toward MVP (Week 7/8)
+**Target MVP Launch:** Payment integration and downloads remain
 
 ---
 
@@ -24,7 +24,7 @@
 
 ## Current State Analysis
 
-### ✅ Completed Features (40%)
+### ✅ Completed Features (60%)
 - User authentication (Supabase PKCE)
 - Product management with file uploads and embedding
 - Product creation with variants
@@ -35,13 +35,19 @@
 - Row-Level Security policies
 - Dashboard with content filtering
 - User profiles with avatars
+- Add to cart / buy button functionality with modal confirmation
+- Product documents with pricing support
+- Product contributors display
+- Private product status (4-state system: draft, private, unlisted, public)
+- Shopping cart data access layer
+- Product price breakdown (files + documents + embedded products)
 
-### 🚧 In Progress Features (20%)
-- Status badge styling (multiple implementations need unification)
-- Avatar display (working in most places, needs fix in ProductReview)
-- Document autosave (credentials fix applied, needs testing)
+### 🚧 In Progress Features (15%)
+- Inline pricing for file uploads (currently separate edit step)
+- ProductDocumentsForm reactive updates (replace page reloads)
+- Code cleanup (remove unused imports, variables, functions)
 
-### ❌ Blocking Issues (40% - PREVENTS LAUNCH)
+### ❌ Blocking Issues (25% - PREVENTS LAUNCH)
 
 **Priority 0 (Critical - Blocks All Commerce):**
 1. **Payment Processing** - No Stripe Checkout implementation
@@ -165,7 +171,7 @@
 
 ---
 
-### Week 8: Soft Launch (Beta) 🚧 READY TO BEGIN
+### Week 8: Soft Launch (Beta) 🚧 BLOCKED - AWAITING PAYMENT INTEGRATION
 **Activities:**
 - [ ] Configure Stripe test mode (15 min - USER ACTION REQUIRED)
 - [ ] Run manual testing checklist (2-3 hours)
@@ -460,6 +466,9 @@
 |------|----------|-----------|-------|
 | 2025-01-27 | Defer physical services (Printer/Painter personas) until Month 7+ | Platform 60% complete, must finish digital MVP first to validate core mechanics | Product |
 | 2025-01-27 | Use sequential implementation (digital → physical) instead of parallel | Limited resources, reduce complexity, validate product-market fit first | Product |
+| 2025-12-11 | Replace cart toast with modal confirmation | 3-second toast was easy to miss, modal improves conversion confidence | UX |
+| 2025-12-11 | Add documents to product price breakdown | Price transparency critical for buyer trust | Product |
+| 2025-12-11 | Implement 4-state product status system | Enables draft/private/unlisted/public workflow for creators | Product |
 | TBD | Platform fee percentage (recommend 5% digital, 10% services) | Needs competitive analysis and creator surveys | Business |
 | TBD | Should STL creators earn royalties on physical prints? | Needs community feedback and pricing model validation | Product |
 
@@ -467,26 +476,30 @@
 
 ## Next Actions (Immediate - This Week)
 
-1. **Fix ProductReview avatars** (30 minutes)
-   - Update `/src/components/ProductReview.astro`
-   - Add avatar image check before showing initials
-   - Test with users who have/don't have avatars
+1. **Complete UX improvements** (in progress)
+   - ✅ Add documents to price breakdown
+   - ✅ Replace cart toast with modal confirmation
+   - [ ] Add inline pricing to file upload flow
+   - [ ] Remove page reloads in ProductDocumentsForm
+   - [ ] Update DESIGN_SYSTEM.md with 4-state product status
 
-2. **Start payment processing** (Priority 0)
+2. **Start payment processing** (Priority 0 - CRITICAL)
    - Create `/src/pages/api/checkout/create-session.ts`
    - Review Stripe Checkout documentation
    - Set up webhook endpoint in Stripe Dashboard
    - Create `/src/pages/api/webhooks/stripe.ts`
+   - Implement royalty distribution logic
 
-3. **Update CLAUDE.md** (documentation)
-   - Add Printer and Painter personas to overview
-   - Mark as "Future Phase 3"
-   - Link to PERSONAS.md and ROADMAP.md
+3. **Implement file download system** (Priority 0 - CRITICAL)
+   - Create signed URL generation from Supabase Storage
+   - Create `/src/pages/api/purchases/[saleId]/download/[fileId].ts`
+   - Add purchase verification logic
+   - Track download counts
 
-4. **Create development task list**
-   - Break down Week 1-3 payment processing into daily tasks
-   - Assign story points and dependencies
-   - Set up project board (GitHub Projects or Linear)
+4. **Code quality cleanup**
+   - Remove unused imports and variables across codebase
+   - Ensure TypeScript strict mode compliance
+   - Update documentation to reflect current state
 
 ---
 
@@ -506,5 +519,5 @@
 
 ---
 
-**Last Reviewed:** 2025-01-27
-**Next Review:** After MVP launch (Week 8)
+**Last Reviewed:** 2025-12-11
+**Next Review:** After payment integration complete or Week 8 (whichever comes first)

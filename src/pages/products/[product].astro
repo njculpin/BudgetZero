@@ -4,8 +4,9 @@ import Badge from "@/components/Badge.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown } from "@/components/products";
-import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductContributors } from "@/lib/data-access/products";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductDocumentsForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown, AddToCartButton } from "@/components/products";
+import ProductContributors from "@/components/products/ProductContributors.astro";
+import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributors } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 import { getJamById, getJamProductReviews } from "@/lib/data-access/jams";
@@ -39,6 +40,7 @@ const owner = await getUserById(productData.user_id);
 const tags = await getProductTags(productData.id);
 const productImages = await getProductImages(productData.id);
 const productFiles = await getProductFiles(productData.id);
+const productDocuments = await getProductDocuments(productData.id);
 const coverImage = productImages[0]?.file_url || null;
 
 let currentUser = null;
@@ -64,11 +66,8 @@ const productContributors = await getProductContributors(productData.id);
 const contributorIds = productContributors.map(c => c.id);
 const isContributor = currentUser ? contributorIds.includes(currentUser.id) || isOwner : false;
 
-if (productData.status !== 'public' && !isOwner) {
-  return Astro.redirect('/404');
-}
-
-// Check if user is in edit mode
+// Products are publicly viewable regardless of status
+// Editing is only available to owners/contributors when logged in
 const isEditMode = isOwner;
 
 // Check for jam submission flow
@@ -292,6 +291,47 @@ if (jamId) {
             </Card>
           )}
 
+          <!-- Product Documents Section -->
+          {(isEditMode || productDocuments.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Documents</CardTitle>
+                <CardDescription>
+                  {isEditMode
+                    ? 'Attach documents to this product. Documents can be edited and priced separately.'
+                    : `${productDocuments.length} document(s) included with purchase`}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isEditMode && currentUser && (
+                  <ProductDocumentsForm
+                    client:load
+                    productId={productData.id}
+                    userId={currentUser.id}
+                    existingDocuments={productDocuments}
+                  />
+                )}
+                {!isEditMode && productDocuments.length > 0 && (
+                  <div class="product-documents-list">
+                    {productDocuments.map((doc) => (
+                      <div class="product-document-item">
+                        <span class="product-document-icon">📄</span>
+                        <div class="product-document-info">
+                          <div class="product-document-name">
+                            <a href={`/documents/${doc.document.handle}`}>{doc.document.title}</a>
+                          </div>
+                          {doc.document.description && (
+                            <div class="product-document-description">{doc.document.description}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <!-- Embedded Products Section -->
           {isEditMode && currentUser && (
             <Card>
@@ -342,6 +382,31 @@ if (jamId) {
             />
           </CardContent>
         </Card>
+
+        <!-- Add to Cart Button -->
+        <Card>
+          <CardContent>
+            <AddToCartButton
+              client:load
+              productId={productData.id}
+              productTitle={productData.title}
+              isAuthenticated={!!currentUser}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Contributors Card -->
+        {productContributors.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Contributors</CardTitle>
+              <CardDescription>People who contributed to this product</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductContributors contributors={productContributors} />
+            </CardContent>
+          </Card>
+        )}
 
         {isContributor && currentUser && (
           <Card>
