@@ -39,12 +39,14 @@ export default function DocumentEditor(props: DocumentEditorProps) {
   let updatePresence: ((presence: { userId: string; userName: string | null; userHandle: string | null }) => void) | null = null;
   let unsubscribeRealtime: (() => void) | null = null;
   let isRemoteUpdate = false; // Flag to prevent broadcasting remote updates
+  let imageInputRef: HTMLInputElement | undefined;
 
   const [isSaving, setIsSaving] = createSignal(false);
   const [lastSaved, setLastSaved] = createSignal<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = createSignal(false);
   const [activeEditors, setActiveEditors] = createSignal<PresenceUser[]>([]);
   const [isFullscreen, setIsFullscreen] = createSignal(false);
+  const [isUploadingImage, setIsUploadingImage] = createSignal(false);
 
   const saveContent = async () => {
     if (!editor || !props.canEdit) return;
@@ -266,11 +268,57 @@ export default function DocumentEditor(props: DocumentEditorProps) {
     }
   };
 
-  const addImage = () => {
-    const url = window.prompt("Enter image URL:");
-    if (url) {
-      editor?.chain().focus().setImage({ src: url }).run();
+  const handleImageUpload = async (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
     }
+
+    setIsUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("documentId", props.documentId);
+      formData.append("files", file);
+
+      const response = await fetch("/api/documents/upload-attachments", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        console.error("Failed to upload image:", data.error);
+        alert("Failed to upload image");
+        return;
+      }
+
+      const result = await response.json();
+      const uploadedImage = result.attachments[0];
+
+      // Insert the uploaded image into the editor
+      if (uploadedImage?.file_url) {
+        editor?.chain().focus().setImage({ src: uploadedImage.file_url }).run();
+      }
+
+      // Clear the input
+      input.value = "";
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Failed to upload image");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const triggerImageUpload = () => {
+    imageInputRef?.click();
   };
 
   const insertTable = () => {
@@ -444,15 +492,30 @@ export default function DocumentEditor(props: DocumentEditorProps) {
             <button
               type="button"
               class="document-editor__toolbar-btn"
-              onClick={addImage}
-              title="Add Image"
+              onClick={triggerImageUpload}
+              disabled={isUploadingImage()}
+              title={isUploadingImage() ? "Uploading image..." : "Upload Image"}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
+              {isUploadingImage() ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="document-editor__spinner">
+                  <circle cx="12" cy="12" r="10" opacity="0.25" />
+                  <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+              )}
             </button>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style="display: none;"
+            />
             <button
               type="button"
               class="document-editor__toolbar-btn"

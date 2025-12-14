@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
-import { updateProduct, getProductById, getProductVariants, getVariantAssets, createProductImage } from "@/lib/data-access/products";
+import { updateProduct, getProductById, createProductImage } from "@/lib/data-access/products";
 import { uploadFile, generateFilePath } from "@/lib/storage";
 import { z } from "zod";
 
@@ -14,23 +14,19 @@ const updateProductSchema = z.object({
 });
 
 /**
- * Check if a product can be public by verifying all linked assets are public
+ * Check if a product can be published
+ * Currently allows publishing with or without files/documents
+ * This could be extended to require minimum content
  */
 async function validatePublishStatus(productId: string): Promise<{ valid: boolean; error?: string }> {
-  const variants = await getProductVariants(productId);
+  // Products can be published as long as they have basic info (title, description)
+  // Files and documents are optional
 
-  for (const variant of variants) {
-    const assets = await getVariantAssets(variant.id);
-
-    for (const asset of assets) {
-      if (asset.status !== 'public') {
-        return {
-          valid: false,
-          error: `Cannot publish product: Asset "${asset.title}" in variant "${variant.title}" must be public first`
-        };
-      }
-    }
-  }
+  // Future validation ideas:
+  // - Require at least one file or document
+  // - Require product images
+  // - Require minimum description length
+  // - Check that all embedded products are public
 
   return { valid: true };
 }
@@ -113,6 +109,27 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         JSON.stringify({ error: "Failed to update product" }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
+    }
+
+    // Trigger PDF generation when product is published
+    if (validatedData.status === 'public' && product.status !== 'public') {
+      // Status changed to public - generate PDFs for all documents
+      try {
+        const pdfFormData = new FormData();
+        pdfFormData.append("productId", validatedData.productId);
+
+        await fetch(new URL("/api/products/generate-document-pdfs", request.url), {
+          method: "POST",
+          headers: {
+            Cookie: request.headers.get("Cookie") || "",
+          },
+          body: pdfFormData,
+        });
+        // Note: PDF generation happens asynchronously, don't wait for it
+      } catch (error) {
+        console.error("Failed to trigger PDF generation:", error);
+        // Don't fail the product update if PDF generation fails
+      }
     }
 
     return new Response(JSON.stringify({ product: updatedProduct }), {

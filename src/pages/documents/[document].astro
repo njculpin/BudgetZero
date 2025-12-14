@@ -13,13 +13,14 @@ import {
   canUserEditDocument,
   getDocumentCollaboratorUsers,
   getDocumentContent,
+  getDocumentAttachments,
 } from "@/lib/data-access/documents";
 import { getUserById } from "@/lib/data-access/users";
 import DocumentEditor from "@/components/documents/DocumentEditor";
 import DocumentDeleteButton from "@/components/documents/DocumentDeleteButton";
 import DocumentChat from "@/components/documents/DocumentChat";
+import { DocumentAttachmentsForm } from "@/components/documents";
 import EditableBreadcrumb from "@/components/interactive/EditableBreadcrumb";
-import DocumentCreateAssetButton from "@/components/documents/DocumentCreateAssetButton";
 import Breadcrumb from "@/components/Breadcrumb.astro";
 
 const { params, cookies } = Astro;
@@ -80,6 +81,9 @@ const collaboratorImages = collaborators.map((user) => ({
   alt: user.name || user.handle,
   href: `/users/${user.handle}`,
 }));
+
+// Get attachments
+const attachments = await getDocumentAttachments(document.id);
 
 // Format date helper
 const formatDate = (dateStr: string) => {
@@ -196,6 +200,20 @@ const formatDate = (dateStr: string) => {
             </CardContent>
           </Card>
 
+          <!-- Attachments (editors only) -->
+          {canEdit && currentUser && (
+            <Card>
+              <CardContent>
+                <DocumentAttachmentsForm
+                  client:visible
+                  documentId={document.id}
+                  userId={currentUser.id}
+                  existingAttachments={attachments}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           <!-- Document Information -->
           <Card>
             <CardHeader>
@@ -231,12 +249,6 @@ const formatDate = (dateStr: string) => {
               </CardHeader>
               <CardContent>
                 <div class="document-actions">
-                  <DocumentCreateAssetButton
-                    client:load
-                    documentId={document.id}
-                    documentTitle={document.title}
-                  />
-                  <div class="document-actions__divider" />
                   <DocumentDeleteButton
                     client:load
                     documentId={document.id}

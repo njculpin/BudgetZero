@@ -33,10 +33,23 @@ export const POST: APIRoute = async ({ cookies }) => {
       });
     }
 
-    return new Response(null, {
-      status: 303,
-      headers: { Location: `/documents/${document.handle}` },
-    });
+    // Check if request wants JSON response (from fetch) or redirect (from form submission)
+    const contentType = request.headers.get("Accept");
+    const wantsJson = contentType?.includes("application/json");
+
+    if (wantsJson) {
+      // Return JSON for fetch requests
+      return new Response(JSON.stringify({ success: true, document }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } else {
+      // Redirect for form submissions
+      return new Response(null, {
+        status: 303,
+        headers: { Location: `/documents/${document.handle}` },
+      });
+    }
   } catch (error) {
     console.error("Error creating document:", error);
     return new Response(
