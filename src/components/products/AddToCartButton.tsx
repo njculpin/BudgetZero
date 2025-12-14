@@ -72,11 +72,15 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
   };
 
   onMount(() => {
-    document.addEventListener("keydown", handleKeyDown);
+    if (typeof document !== 'undefined') {
+      document.addEventListener("keydown", handleKeyDown);
+    }
   });
 
   onCleanup(() => {
-    document.removeEventListener("keydown", handleKeyDown);
+    if (typeof document !== 'undefined') {
+      document.removeEventListener("keydown", handleKeyDown);
+    }
   });
 
   return (

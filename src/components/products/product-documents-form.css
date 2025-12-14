@@ -263,16 +263,30 @@
   color: var(--muted-foreground);
 }
 
+.modal-create-form {
+  margin-top: var(--spacing-md);
+}
+
 .modal-create-link {
   display: inline-block;
-  margin-top: var(--spacing-md);
+  padding: 0;
+  background: none;
+  border: none;
   color: var(--primary);
   text-decoration: none;
   font-weight: var(--font-weight-semibold);
+  font-size: var(--text-base);
+  cursor: pointer;
 }
 
 .modal-create-link:hover {
   text-decoration: underline;
+}
+
+.modal-create-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 .available-docs-list {

@@ -77,6 +77,43 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
+    // Trigger PDF regeneration for all published products using this document
+    try {
+      // Import here to avoid circular dependency issues
+      const { serverClient } = await import("@/lib/data-access/client");
+
+      // Find all published products that use this document
+      const { data: productDocs } = await serverClient
+        .from("product_documents")
+        .select("product_id, products!inner(status)")
+        .eq("document_id", documentId)
+        .eq("deleted", false)
+        .eq("products.status", "public")
+        .eq("products.deleted", false);
+
+      // Trigger PDF regeneration for each product
+      if (productDocs && productDocs.length > 0) {
+        for (const productDoc of productDocs) {
+          const pdfFormData = new FormData();
+          pdfFormData.append("productId", productDoc.product_id);
+
+          // Fire and forget - don't wait for PDF generation
+          fetch(new URL("/api/products/generate-document-pdfs", request.url), {
+            method: "POST",
+            headers: {
+              Cookie: request.headers.get("Cookie") || "",
+            },
+            body: pdfFormData,
+          }).catch((error) => {
+            console.error(`Failed to trigger PDF regeneration for product ${productDoc.product_id}:`, error);
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to check for PDF regeneration:", error);
+      // Don't fail the content update if PDF regeneration fails
+    }
+
     return new Response(
       JSON.stringify({ success: true }),
       {

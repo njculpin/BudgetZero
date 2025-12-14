@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "node scripts/dev.js",
+    "dev:clean": "bash scripts/clean-start.sh",
     "dev:astro": "astro dev",
     "dev:only": "astro dev",
     "supabase:start": "supabase start",

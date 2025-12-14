@@ -45,10 +45,12 @@ export function useDeleteConfirm(config: UseDeleteConfirmConfig): UseDeleteConfi
     setIsDeleting(true);
 
     try {
+      const formData = new FormData();
+      formData.append(config.entityParamName, config.entityId);
+
       const response = await fetch(config.deleteEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [config.entityParamName]: config.entityId }),
+        body: formData,
       });
 
       if (!response.ok) {

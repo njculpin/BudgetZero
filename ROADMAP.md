@@ -1,8 +1,8 @@
 # Game Loopers Product Roadmap
 
-**Last Updated:** 2025-12-11
-**Current Status:** 75-80% complete toward MVP (Week 7/8)
-**Target MVP Launch:** Payment integration and downloads remain
+**Last Updated:** 2025-12-13
+**Current Status:** 85-90% complete toward MVP (Week 7/8)
+**Target MVP Launch:** Beta-ready pending checkout verification (1-2 weeks)
 
 ---
 
@@ -24,53 +24,56 @@
 
 ## Current State Analysis
 
-### ✅ Completed Features (60%)
+### ✅ Completed Features (85-90%)
 - User authentication (Supabase PKCE)
 - Product management with file uploads and embedding
-- Product creation with variants
+- Product-centric architecture (no variants/assets)
 - Royalty configuration and splits
-- Document collaboration (TipTap editor)
+- Document collaboration (TipTap editor with image upload)
+- Document file attachments
 - Real-time chat (products, documents)
 - Game jam system with reviews
 - Row-Level Security policies
-- Dashboard with content filtering
+- Dashboard with content filtering and first-time onboarding
 - User profiles with avatars
-- Add to cart / buy button functionality with modal confirmation
-- Product documents with pricing support
+- Shopping cart with modal confirmation
+- **Stripe Checkout integration** (needs verification)
+- **File download system with signed URLs**
+- **Search and discovery with tags**
+- Product documents with pricing and auto-PDF generation (placeholder)
 - Product contributors display
-- Private product status (4-state system: draft, private, unlisted, public)
-- Shopping cart data access layer
+- Product status system (draft, private, public, archived)
 - Product price breakdown (files + documents + embedded products)
+- Auto-attach documents created from products
 
 ### 🚧 In Progress Features (15%)
 - Inline pricing for file uploads (currently separate edit step)
 - ProductDocumentsForm reactive updates (replace page reloads)
 - Code cleanup (remove unused imports, variables, functions)
 
-### ❌ Blocking Issues (25% - PREVENTS LAUNCH)
+### ⚠️ Verification Needed (Must Test Before Launch)
 
-**Priority 0 (Critical - Blocks All Commerce):**
-1. **Payment Processing** - No Stripe Checkout implementation
-   - Missing: `/api/checkout/create-session`
-   - Missing: `/api/webhooks/stripe` (payment success handler)
-   - Missing: Royalty payout distribution in `/src/lib/payments/payouts.ts`
-   - **Impact:** Cannot sell products or pay creators
-   - **Effort:** 2-3 weeks
+**Priority 0 (Critical - Needs Verification):**
+1. **✅ Payment Processing - IMPLEMENTED** (needs end-to-end testing)
+   - ✅ Implemented: `/api/checkout/create-session.ts`
+   - ✅ Implemented: `/api/webhooks/stripe.ts` (payment_intent, refunds)
+   - ⚠️ Warning: Contains legacy variant/asset references - may need refactoring
+   - **Action Required:** Test full checkout flow with Stripe test card
+   - **Risk:** Checkout may fail due to variant code mismatch
 
-2. **Product File Download System** - Purchased product files can't be downloaded
-   - Missing: Signed URL generation from Supabase Storage
-   - Missing: `/api/purchases/[saleId]/download/[fileId]` endpoint
-   - Missing: Purchase verification logic
-   - **Impact:** Buyers can't access files they paid for
-   - **Effort:** 1 week
+2. **✅ Product File Download System - IMPLEMENTED**
+   - ✅ Implemented: `/api/download.ts` with signed URLs
+   - ✅ Implemented: Purchase verification via `hasUserPurchasedAsset()`
+   - ✅ Implemented: 1-hour signed URL expiry
+   - **Status:** Complete and functional
 
-**Priority 1 (High - Critical for Launch):**
-3. **Search & Discovery** - No way to find products
-   - Missing: Tag-based filtering UI (`/products?tag=fantasy`)
-   - Missing: Full-text search
-   - Missing: Trending tags widget
-   - **Impact:** Users bounce due to poor discoverability
-   - **Effort:** 1.5 weeks
+3. **✅ Search & Discovery - IMPLEMENTED**
+   - ✅ Implemented: Tag-based filtering at `/products?tag=fantasy`
+   - ✅ Implemented: Full-text search with `searchQuery` parameter
+   - ✅ Implemented: Top 10 trending tags display
+   - **Status:** Complete and functional
+
+**Priority 1 (High - Deferred to Phase 2):**
 
 4. **Collaborator Invitations** - Can't invite contributors
    - Missing: Invitation UI and flow

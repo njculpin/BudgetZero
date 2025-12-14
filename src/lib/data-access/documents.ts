@@ -525,3 +525,98 @@ export const getRecentDocuments = async (
 
   return (data || []) as DocumentSummary[];
 };
+
+// ============================================
+// DOCUMENT ATTACHMENTS
+// ============================================
+
+export interface DocumentAttachment {
+  id: string;
+  document_id: string;
+  title: string;
+  description: string;
+  file_url: string;
+  storage_path: string;
+  file_size_bytes: number;
+  mime_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateDocumentAttachmentParams {
+  title: string;
+  description?: string;
+  file_url: string;
+  storage_path: string;
+  file_size_bytes: number;
+  mime_type: string;
+}
+
+/**
+ * Get all attachments for a document
+ */
+export const getDocumentAttachments = async (
+  documentId: string
+): Promise<DocumentAttachment[]> => {
+  const { data, error } = await serverClient
+    .from("document_attachments")
+    .select("*")
+    .eq("document_id", documentId)
+    .eq("deleted", false)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching document attachments:", error);
+    return [];
+  }
+
+  return (data || []) as DocumentAttachment[];
+};
+
+/**
+ * Create a new document attachment
+ */
+export const createDocumentAttachment = async (
+  documentId: string,
+  params: CreateDocumentAttachmentParams
+): Promise<DocumentAttachment | null> => {
+  const { data, error } = await serverClient
+    .from("document_attachments")
+    .insert({
+      document_id: documentId,
+      title: params.title,
+      description: params.description || "",
+      file_url: params.file_url,
+      storage_path: params.storage_path,
+      file_size_bytes: params.file_size_bytes,
+      mime_type: params.mime_type,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating document attachment:", error);
+    return null;
+  }
+
+  return data as DocumentAttachment;
+};
+
+/**
+ * Delete a document attachment
+ */
+export const deleteDocumentAttachment = async (
+  attachmentId: string
+): Promise<boolean> => {
+  const { error } = await serverClient
+    .from("document_attachments")
+    .update({ deleted: true, deleted_at: new Date().toISOString() })
+    .eq("id", attachmentId);
+
+  if (error) {
+    console.error("Error deleting document attachment:", error);
+    return false;
+  }
+
+  return true;
+};

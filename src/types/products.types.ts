@@ -56,6 +56,9 @@ export interface ProductDocument extends BaseEntity {
   document_id: string;
   price_cents: number;
   position: number;
+  pdf_url: string | null;
+  pdf_storage_path: string | null;
+  pdf_generated_at: string | null;
 }
 
 // Product Components (product-level embedding for collaborative products)

@@ -315,6 +315,20 @@
   background-color: oklch(from var(--primary) l c h / 0.3);
 }
 
+/* Spinner Animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.document-editor__spinner {
+  animation: spin 1s linear infinite;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .document-editor__toolbar {

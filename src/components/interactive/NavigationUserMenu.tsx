@@ -230,33 +230,6 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
             </Show>
           </Show>
 
-          <div class="nav-user-menu__divider" role="separator"></div>
-
-          {/* Create Document Button */}
-          <a
-            href="/documents/new"
-            class="nav-user-menu__create-button"
-            role="menuitem"
-            onClick={closeMenu}
-          >
-            <svg
-              class="nav-user-menu__create-icon"
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Create Document
-          </a>
-
           {/* Documents Section */}
           <Show
             when={props.recentDocuments && props.recentDocuments.length > 0}
@@ -278,7 +251,7 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
                   <polyline points="14 2 14 8 20 8"></polyline>
                 </svg>
                 <p class="nav-user-menu__empty-title">No documents yet</p>
-                <p class="nav-user-menu__empty-text">Create your first document to start collaborating</p>
+                <p class="nav-user-menu__empty-text">Documents are created when you add them to products</p>
               </div>
             }
           >

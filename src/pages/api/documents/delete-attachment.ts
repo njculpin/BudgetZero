@@ -1,13 +1,10 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
-import { addDocumentToProduct, getProductById } from "@/lib/data-access/products";
-import { z } from "zod";
-
-const addDocumentSchema = z.object({
-  productId: z.string().uuid(),
-  documentId: z.string().uuid(),
-  priceCents: z.number().int().min(0).default(0),
-});
+import {
+  getDocumentById,
+  canUserEditDocument,
+  deleteDocumentAttachment,
+} from "@/lib/data-access/documents";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const accessToken = cookies.get("sb-access-token");
@@ -44,42 +41,46 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const formData = await request.formData();
-    const productId = formData.get("productId") as string;
+    const attachmentId = formData.get("attachmentId") as string;
     const documentId = formData.get("documentId") as string;
-    const priceCents = parseInt(formData.get("priceCents") as string, 10);
 
-    const validatedData = addDocumentSchema.parse({
-      productId,
-      documentId,
-      priceCents,
-    });
+    if (!attachmentId) {
+      return new Response(JSON.stringify({ error: "Attachment ID is required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
-    // Check product ownership
-    const product = await getProductById(validatedData.productId);
-    if (!product) {
-      return new Response(JSON.stringify({ error: "Product not found" }), {
+    if (!documentId) {
+      return new Response(JSON.stringify({ error: "Document ID is required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Check document access
+    const document = await getDocumentById(documentId);
+    if (!document) {
+      return new Response(JSON.stringify({ error: "Document not found" }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    if (product.user_id !== userId) {
+    const canEdit = await canUserEditDocument(documentId, userId);
+    if (!canEdit) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Add document to product
-    const productDocument = await addDocumentToProduct(
-      validatedData.productId,
-      validatedData.documentId,
-      validatedData.priceCents
-    );
+    // Delete the attachment
+    const success = await deleteDocumentAttachment(attachmentId);
 
-    if (!productDocument) {
+    if (!success) {
       return new Response(
-        JSON.stringify({ error: "Failed to add document to product" }),
+        JSON.stringify({ error: "Failed to delete attachment" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
@@ -88,17 +89,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, productDocument }),
+      JSON.stringify({ success: true, message: "Attachment deleted successfully" }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error) {
-    console.error("Add document error:", error);
+    console.error("Delete attachment error:", error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to add document",
+        error: error instanceof Error ? error.message : "Failed to delete attachment",
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );

@@ -40,6 +40,7 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
   const [selectedDocument, setSelectedDocument] = createSignal<any>(null);
   const [addDocumentPrice, setAddDocumentPrice] = createSignal("0.00");
   const [mounted, setMounted] = createSignal(false);
+  const [creatingDocument, setCreatingDocument] = createSignal(false);
 
   createEffect(() => {
     setMounted(true);
@@ -89,14 +90,14 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
     setSuccess("");
 
     try {
+      const formData = new FormData();
+      formData.append("productId", props.productId);
+      formData.append("documentId", doc.id);
+      formData.append("priceCents", priceCents.toString());
+
       const response = await fetch("/api/products/add-document", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: props.productId,
-          documentId: doc.id,
-          priceCents: priceCents,
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -117,7 +118,8 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
       // Auto-dismiss success message
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError("An unexpected error occurred");
+      console.error("Add document error:", err);
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     }
   };
 
@@ -201,6 +203,66 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
   const handleCancelEditPrice = () => {
     setEditingDocId(null);
     setEditPrice("");
+  };
+
+  const handleCreateDocument = async () => {
+    setCreatingDocument(true);
+    setError("");
+
+    try {
+      // Create the document
+      const response = await fetch("/api/documents/create-document", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || "Failed to create document");
+        setCreatingDocument(false);
+        return;
+      }
+
+      const createResult = await response.json();
+      const newDocument = createResult.document;
+
+      // Automatically add the new document to this product with $0.00 price
+      const formData = new FormData();
+      formData.append("productId", props.productId);
+      formData.append("documentId", newDocument.id);
+      formData.append("priceCents", "0");
+
+      const addResponse = await fetch("/api/products/add-document", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!addResponse.ok) {
+        const data = await addResponse.json();
+        setError(data.error || "Document created but failed to add to product");
+        setCreatingDocument(false);
+        // Still refetch to show the document in the available list
+        availableDocs.refetch();
+        return;
+      }
+
+      const addResult = await addResponse.json();
+
+      // Reactively add the new document to the list
+      setDocuments([...documents(), addResult.productDocument]);
+      setSuccess("Document created and added to product!");
+      setShowAddModal(false);
+
+      // Auto-dismiss success message
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      console.error("Create document error:", err);
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+    } finally {
+      setCreatingDocument(false);
+    }
   };
 
   return (
@@ -365,9 +427,16 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                   fallback={
                     <div class="modal-empty">
                       <p>No documents available to add</p>
-                      <a href="/api/documents/create-document" class="modal-create-link">
-                        Create a new document
-                      </a>
+                      <div class="modal-create-form">
+                        <button
+                          type="button"
+                          onClick={handleCreateDocument}
+                          disabled={creatingDocument()}
+                          class="modal-create-link"
+                        >
+                          {creatingDocument() ? "Creating..." : "Create a new document"}
+                        </button>
+                      </div>
                     </div>
                   }
                 >

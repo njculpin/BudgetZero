@@ -1,0 +1,249 @@
+.document-attachments-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.document-attachments-form__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.document-attachments-form__title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.document-attachments-form__add-button {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.document-attachments-form__add-button:hover {
+  background: oklch(from var(--primary) calc(l * 0.9) c h);
+}
+
+.document-attachments-form__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.document-attachments-form__empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  border-radius: var(--radius-md);
+}
+
+.document-attachments-form__empty-hint {
+  margin-top: var(--spacing-sm);
+  font-size: var(--text-sm);
+}
+
+/* Selected Files Preview */
+.selected-files {
+  padding: var(--spacing-lg);
+  background: var(--muted);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.selected-files__header {
+  margin-bottom: var(--spacing-md);
+}
+
+.selected-files__title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.selected-files__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.selected-files__item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--background);
+  border-radius: var(--radius-sm);
+  border: var(--border-width-default) solid var(--border);
+}
+
+.selected-files__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-files__name {
+  font-weight: var(--font-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-files__meta {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-xs);
+}
+
+.selected-files__actions {
+  display: flex;
+  gap: var(--gap-md);
+}
+
+.selected-files__upload-button {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.selected-files__upload-button:hover:not(:disabled) {
+  background: oklch(from var(--primary) calc(l * 0.9) c h);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.selected-files__upload-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.selected-files__cancel-button {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  background: var(--muted);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.selected-files__cancel-button:hover:not(:disabled) {
+  background: oklch(from var(--muted) calc(l * 0.95) c h);
+}
+
+.selected-files__cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Attachments List */
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.attachments-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-md);
+  padding: var(--spacing-md);
+  background: var(--muted);
+  border-radius: var(--radius-md);
+  border: var(--border-width-default) solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.attachments-list__item:hover {
+  border-color: var(--primary);
+  background: oklch(from var(--muted) calc(l * 0.98) c h);
+}
+
+.attachments-list__icon {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.attachments-list__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attachments-list__title {
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachments-list__meta {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.attachments-list__description {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-xs);
+}
+
+.attachments-list__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.attachments-list__download-button,
+.attachments-list__delete-button {
+  padding: var(--spacing-sm);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attachments-list__download-button {
+  color: var(--primary);
+}
+
+.attachments-list__download-button:hover {
+  background: oklch(from var(--primary) l c h / 0.1);
+}
+
+.attachments-list__delete-button {
+  color: var(--destructive);
+}
+
+.attachments-list__delete-button:hover {
+  background: var(--destructive-background, oklch(0.95 0.05 25));
+}
