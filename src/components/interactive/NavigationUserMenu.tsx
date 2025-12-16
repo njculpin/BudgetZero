@@ -29,8 +29,6 @@ export interface NavigationUserMenuProps {
   links: NavigationUserMenuLink[];
   recentProducts?: ProductSummary[];
   totalProductCount?: number;
-  recentDocuments?: DocumentSummary[];
-  totalDocumentCount?: number;
 }
 
 export default function NavigationUserMenu(props: NavigationUserMenuProps) {
@@ -226,71 +224,6 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
                 onClick={closeMenu}
               >
                 View all {props.totalProductCount} projects →
-              </a>
-            </Show>
-          </Show>
-
-          {/* Documents Section */}
-          <Show
-            when={props.recentDocuments && props.recentDocuments.length > 0}
-            fallback={
-              <div class="nav-user-menu__empty-state">
-                <svg
-                  class="nav-user-menu__empty-icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                </svg>
-                <p class="nav-user-menu__empty-title">No documents yet</p>
-                <p class="nav-user-menu__empty-text">Documents are created when you add them to products</p>
-              </div>
-            }
-          >
-            <div class="nav-user-menu__projects">
-              <For each={props.recentDocuments}>
-                {(document) => (
-                  <a
-                    href={`/documents/${document.handle}`}
-                    class="nav-user-menu__project-item"
-                    role="menuitem"
-                    onClick={closeMenu}
-                  >
-                    <div class="nav-user-menu__project-thumbnail">
-                      <div class="nav-user-menu__project-placeholder">
-                        {document.title.charAt(0).toUpperCase()}
-                      </div>
-                    </div>
-                    <div class="nav-user-menu__project-content">
-                      <div class="nav-user-menu__project-header">
-                        <span class="nav-user-menu__project-title">{document.title}</span>
-                      </div>
-                      <span class="nav-user-menu__project-meta">
-                        Updated {formatRelativeTime(document.updated_at)}
-                      </span>
-                    </div>
-                  </a>
-                )}
-              </For>
-            </div>
-
-            {/* View All Link (only show if more than 2 documents) */}
-            <Show when={props.totalDocumentCount && props.totalDocumentCount > 2}>
-              <a
-                href="/documents"
-                class="nav-user-menu__view-all"
-                role="menuitem"
-                onClick={closeMenu}
-              >
-                View all {props.totalDocumentCount} documents →
               </a>
             </Show>
           </Show>

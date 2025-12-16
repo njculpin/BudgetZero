@@ -1,15 +1,13 @@
-import { createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import { ErrorMessage, ConfirmDialog } from "@/components/interactive";
+import CartItemBreakdown from "./CartItemBreakdown";
 import "@/components/interactive/base.css";
 import "./cart-item-row.css";
-import type { CartItem } from "@/types";
-import type { Product, ProductVariant, ProductVariantPrice } from "@/types";
+import type { CartItem, Product } from "@/types";
 
 interface CartItemRowProps {
   item: CartItem & {
     product: Product | null;
-    variant: ProductVariant | null;
-    price: ProductVariantPrice | null;
   };
   onUpdate?: () => void;
   onRemove?: () => void;
@@ -94,14 +92,18 @@ export default function CartItemRow(props: CartItemRowProps) {
     }
   };
 
-  const formatPrice = (cents: number, currency: string) => {
+  const formatPrice = (cents: number) => {
     if (cents === 0) return "FREE";
-    return `${currency.toUpperCase()} ${(cents / 100).toFixed(2)}`;
+    return `$${(cents / 100).toFixed(2)}`;
+  };
+
+  const unitPrice = () => {
+    // Use price_cents from cart item (product's total price)
+    return props.item.price_cents || 0;
   };
 
   const totalPrice = () => {
-    if (!props.item.price) return 0;
-    return props.item.price.unit_amount * quantity();
+    return unitPrice() * quantity();
   };
 
   return (
@@ -122,14 +124,12 @@ export default function CartItemRow(props: CartItemRowProps) {
               {props.item.product?.title || "Unknown Product"}
             </a>
           </h3>
-          <p class="cart-item-row__variant-name">
-            {props.item.variant?.title || ""}
+          <p class="cart-item-row__price">
+            {formatPrice(unitPrice())} each
           </p>
-          {props.item.price && (
-            <p class="cart-item-row__price">
-              {formatPrice(props.item.price.unit_amount, props.item.price.currency)}
-            </p>
-          )}
+          <Show when={props.item.product?.id}>
+            <CartItemBreakdown productId={props.item.product!.id} />
+          </Show>
         </div>
 
         <div class="cart-item-row__actions">
@@ -180,11 +180,9 @@ export default function CartItemRow(props: CartItemRowProps) {
         </div>
 
         <div class="cart-item-row__total">
-          {props.item.price && (
-            <p class="cart-item-row__total-price">
-              {formatPrice(totalPrice(), props.item.price.currency)}
-            </p>
-          )}
+          <p class="cart-item-row__total-price">
+            {formatPrice(totalPrice())}
+          </p>
         </div>
       </div>
 

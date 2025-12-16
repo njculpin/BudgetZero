@@ -8,7 +8,6 @@ import {
 export interface ProductStatusEditorProps {
   productId: string;
   currentStatus: "draft" | "private" | "public" | "archived";
-  hasVariants: boolean;
 }
 
 export default function ProductStatusEditor(props: ProductStatusEditorProps) {
@@ -17,14 +16,7 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal("");
 
-  const canPublish = () => props.hasVariants;
-
   const handleStatusChange = async (newStatus: "draft" | "private" | "public" | "archived") => {
-    // Validate publish requirements
-    if (newStatus === "public" && !canPublish()) {
-      setError("Cannot publish product without at least one variant");
-      return;
-    }
 
     setError("");
     setSuccess("");
@@ -156,17 +148,17 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
         <button
           type="button"
           onClick={() => handleStatusChange("public")}
-          disabled={status() === "public" || isLoading() || !canPublish()}
+          disabled={status() === "public" || isLoading()}
           class="status-editor__button"
           classList={{
             "status-editor__button--active": status() === "public",
           }}
-          title={!canPublish() ? "Requires at least one variant" : ""}
+          title={""}
         >
           <div class="status-editor__button-content">
             <span class="status-badge status-badge--public">Public</span>
             <span class="status-editor__button-description">
-              {!canPublish() ? "⚠️ Requires variants" : "List for sale"}
+              List for sale
             </span>
           </div>
         </button>

@@ -1,7 +1,7 @@
 # Game Loopers Design System
 
-**Version**: 1.2
-**Last Updated**: 2025-12-11
+**Version**: 1.3
+**Last Updated**: 2025-12-13
 **Framework**: Astro 5.15 + SolidJS Islands
 
 ---
@@ -55,15 +55,15 @@ Game Loopers implements a unified **product-centric** system where products cont
 | Status | Description | Visibility | Use Case |
 |--------|-------------|------------|----------|
 | `draft` | Work in progress, not ready for any use | Owner only | Initial creation, active editing |
-| `private` | Ready but restricted to owner's use only | Owner only | Testing, internal products, owner-exclusive content |
-| `unlisted` | Ready for direct purchase but hidden from marketplace | Anyone with link | Pre-launch, exclusive access, beta testing |
+| `private` | Ready but restricted to owner's use only | Owner + contributors | Testing, internal products, owner-exclusive content |
 | `public` | Ready for sale and visible in marketplace | Public listings + search | General release, maximum visibility |
+| `archived` | No longer available for sale | Hidden | Removed from marketplace, historical record |
 
 **Status Transitions:**
 - Products start as `draft` on creation
-- Can move to `private` for owner-only use (still hidden from marketplace)
-- Can move to `unlisted` for link-only access (purchasable but not discoverable)
-- Move to `public` when ready for full marketplace visibility
+- Can move to `private` for owner and contributor access (still hidden from marketplace)
+- Move to `public` when ready for full marketplace visibility and sales
+- Can move to `archived` to remove from sale while preserving data
 - Any status can transition to any other status based on creator needs
 
 #### Product Embeddability
@@ -755,6 +755,307 @@ When opening a modal:
 
 ---
 
+### AddToCartButton Component
+
+**Location**: `/src/components/products/AddToCartButton.tsx`
+**Framework**: SolidJS (client-side island)
+**BEM Block**: `.add-to-cart`
+
+#### Features
+
+- Adds products to shopping cart with quantity of 1
+- Redirects unauthenticated users to sign-in page with return URL
+- Success modal with focus management and keyboard navigation
+- Loading states during cart operations
+- Error handling with inline error messages
+
+#### Elements
+
+```css
+.add-to-cart__button           /* Main CTA button */
+.add-to-cart__icon             /* Shopping cart SVG icon */
+.add-to-cart__text             /* Button label */
+.add-to-cart__loading          /* Loading state indicator */
+.add-to-cart__error            /* Error message container */
+
+/* Success Modal */
+.add-to-cart-modal__overlay    /* Modal background overlay */
+.add-to-cart-modal__content    /* Modal card container */
+.add-to-cart-modal__header     /* Modal header section */
+.add-to-cart-modal__icon-wrapper /* Success checkmark circle */
+.add-to-cart-modal__icon       /* Checkmark SVG */
+.add-to-cart-modal__title      /* "Added to Cart!" heading */
+.add-to-cart-modal__description /* Product name confirmation */
+.add-to-cart-modal__actions    /* Button container */
+.add-to-cart-modal__button     /* Modal action button */
+.add-to-cart-modal__button--primary   /* "View Cart" button */
+.add-to-cart-modal__button--secondary /* "Continue Shopping" button */
+```
+
+#### Accessibility
+
+- Modal uses `role="dialog"` and `aria-modal="true"`
+- Auto-focus on close button when modal opens
+- Escape key closes modal
+- Screen reader announces modal title via `aria-labelledby`
+
+#### Usage
+
+```tsx
+<AddToCartButton
+  productId={product.id}
+  productTitle={product.title}
+  isAuthenticated={!!user}
+  client:load
+/>
+```
+
+---
+
+### ProductDocumentsForm Component
+
+**Location**: `/src/components/products/ProductDocumentsForm.tsx`
+**Framework**: SolidJS (client-side island)
+**BEM Block**: `.product-documents-form`
+
+#### Features
+
+- Attach existing documents to products
+- Create new documents directly from product editor
+- Set individual prices for each document (in cents)
+- Inline price editing with save/cancel actions
+- Remove documents from product
+- Modal for selecting documents from user's library
+- Empty state with helpful instructions
+
+#### Elements
+
+```css
+.product-documents-form                 /* Root container */
+.product-documents-form__header         /* Header with add button */
+.product-documents-form__add-button     /* "Add Document" button */
+.product-documents-form__empty          /* Empty state message */
+.product-documents-form__empty-hint     /* Empty state instructions */
+
+/* Document List */
+.document-list                          /* Documents container */
+.document-list__item                    /* Individual document row */
+.document-list__info                    /* Document title/description */
+.document-list__title                   /* Document title with link */
+.document-list__description             /* Document description */
+.document-list__actions                 /* Actions container */
+.document-list__price                   /* Price display */
+.document-list__price-value             /* Price amount */
+.document-list__edit-button             /* "Edit Price" button */
+.document-list__price-edit              /* Inline price edit form */
+.document-list__price-label             /* Price input label */
+.document-list__price-input             /* Price number input */
+.document-list__price-actions           /* Save/Cancel buttons */
+.document-list__save-price              /* Save button */
+.document-list__cancel-price            /* Cancel button */
+.document-list__remove-button           /* Remove document button */
+
+/* Modal (see global .modal-* classes) */
+.modal-overlay                          /* Background overlay */
+.modal-content                          /* Modal card */
+.modal-header                           /* Modal header */
+.modal-title                            /* Modal heading */
+.modal-close                            /* Close button (×) */
+.modal-body                             /* Modal content area */
+.modal-empty                            /* Empty state in modal */
+.modal-create-form                      /* Create document form */
+.modal-create-link                      /* "Create new document" button */
+```
+
+#### Key Interactions
+
+1. **Add Existing Document**: Opens modal → Select document → Set price → Confirm
+2. **Create New Document**: Click "Create a new document" → Auto-creates and adds to product with $0.00 price
+3. **Edit Price**: Click "Edit Price" → Inline input appears → Save or Cancel
+4. **Remove Document**: Click remove icon → Confirm dialog → Removes from product
+
+#### Usage
+
+```tsx
+<ProductDocumentsForm
+  productId={product.id}
+  userId={user.id}
+  existingDocuments={productDocuments}
+  client:load
+/>
+```
+
+---
+
+### ProductContributors Component
+
+**Location**: `/src/components/products/ProductContributors.astro`
+**Framework**: Astro (server-side rendered)
+**BEM Block**: `.product-contributors`
+
+#### Features
+
+- Displays list of product contributors with avatars
+- Links to contributor profile pages
+- Hover animation (translates right 4px)
+- Empty state when no contributors exist
+
+#### Elements
+
+```css
+.product-contributors              /* Root container */
+.product-contributors__item        /* Individual contributor link */
+.product-contributors__info        /* Name and handle container */
+.product-contributors__name        /* Display name */
+.product-contributors__handle      /* @username */
+.product-contributors__empty       /* Empty state message */
+```
+
+#### Usage
+
+```astro
+<ProductContributors contributors={collaborators} />
+```
+
+---
+
+### ProductPriceBreakdown Component
+
+**Location**: `/src/components/products/ProductPriceBreakdown.tsx`
+**Framework**: SolidJS (client-side island)
+**BEM Block**: `.price-breakdown`
+
+#### Features
+
+- Fetches and displays itemized pricing for product files, documents, and embedded products
+- Shows subtotals for each category (when multiple items exist)
+- Calculates and displays total price
+- Loading state while fetching data
+- Empty state for free products ($0.00 total)
+- Creator attribution for embedded products
+- Responsive layout (stacks on mobile)
+
+#### Elements
+
+```css
+.price-breakdown                        /* Root container */
+.price-breakdown__loading               /* Loading indicator */
+.price-breakdown__content               /* Main content container */
+
+/* Section (Files/Documents/Embedded) */
+.price-breakdown__section               /* Category section */
+.price-breakdown__section-title         /* Section heading (Files, Documents, etc.) */
+
+/* Items List */
+.price-breakdown__items                 /* Items container */
+.price-breakdown__item                  /* Individual item row */
+.price-breakdown__item-icon             /* Emoji icon (📄, 📝, 📦) */
+.price-breakdown__item-info             /* Name and creator container */
+.price-breakdown__item-name             /* Item title */
+.price-breakdown__item-creator          /* "by Creator Name" (embedded products only) */
+.price-breakdown__item-price            /* Item price */
+
+/* Subtotals */
+.price-breakdown__subtotal              /* Category subtotal row */
+.price-breakdown__subtotal-label        /* "Files Subtotal" label */
+.price-breakdown__subtotal-value        /* Subtotal amount */
+
+/* Total */
+.price-breakdown__total                 /* Total price row (bold, primary background) */
+.price-breakdown__total-label           /* "TOTAL PRICE" label */
+.price-breakdown__total-value           /* Total amount */
+
+/* Empty State */
+.price-breakdown__empty                 /* Free product state */
+.price-breakdown__empty-icon            /* 💰 emoji */
+.price-breakdown__empty-text            /* "Free" heading */
+.price-breakdown__empty-hint            /* Explanation text */
+```
+
+#### Data Structure
+
+Fetches data from three API endpoints:
+- `/api/products/{id}/files` - Product files with individual prices
+- `/api/products/{id}/documents` - Attached documents with prices
+- `/api/products/{id}/embedded-products` - Embedded products with inherited prices
+
+#### Usage
+
+```tsx
+<ProductPriceBreakdown
+  productId={product.id}
+  client:load
+/>
+```
+
+---
+
+### ProductStatusEditor Component
+
+**Location**: `/src/components/products/ProductStatusEditor.tsx`
+**Framework**: SolidJS (client-side island)
+**BEM Block**: `.status-editor`
+
+#### Features
+
+- 4-state product status system: draft, private, public, archived
+- Inline status descriptions explaining visibility and purchase availability
+- Uses global `.status-badge` component for consistent status display
+- Validation messaging for publishing requirements (linked assets must be private or public)
+- Auto-reload after status change to update all UI elements
+- Disabled state for current status button
+
+#### Status Definitions
+
+| Status | Visibility | Purchasable | Use Case |
+|--------|-----------|-------------|----------|
+| **Draft** | Owner only | No | Work in progress, not ready for any use |
+| **Private** | Owner + contributors | No | Testing, internal-only products |
+| **Public** | Everyone | Yes | Listed in marketplace, available for purchase |
+| **Archived** | Hidden | No | Removed from marketplace |
+
+#### Elements
+
+```css
+.status-editor                          /* Root container */
+.status-editor__current                 /* Current status section */
+.status-editor__label                   /* Section headings */
+.status-editor__description             /* Status description text */
+.status-editor__actions                 /* Status change buttons section */
+.status-editor__info                    /* Info message box */
+.status-editor__info-text               /* Info message content */
+.status-editor__button                  /* Status option button */
+.status-editor__button--active          /* Current status (disabled) */
+.status-editor__button-content          /* Button inner container */
+.status-editor__button-description      /* Button subtitle */
+
+/* Uses global status-badge */
+.status-badge                           /* Status pill (from global.css) */
+.status-badge--draft                    /* Draft modifier */
+.status-badge--private                  /* Private modifier */
+.status-badge--public                   /* Public modifier */
+.status-badge--archived                 /* Archived modifier */
+.status-badge--large                    /* Large size modifier */
+```
+
+#### Business Rules
+
+**Publishing Validation**: Products can only be set to `public` if:
+1. All linked assets are `private` OR `public` status
+2. Draft or archived assets will prevent publishing (enforced by database trigger)
+
+#### Usage
+
+```tsx
+<ProductStatusEditor
+  productId={product.id}
+  currentStatus={product.status}
+  client:load
+/>
+```
+
+---
+
 ## Component Inventory
 
 | Component | Location | BEM Block | Description |
@@ -768,6 +1069,11 @@ When opening a modal:
 | DocumentChat | `/src/components/islands/DocumentChat.tsx` | `.document-chat` | Real-time document chat |
 | ConfirmDialog | `/src/components/islands/ConfirmDialog.tsx` | `.confirm-dialog` | Modal confirmation |
 | Navigation | `/src/components/Navigation.astro` | `.navigation` | Main site navigation |
+| AddToCartButton | `/src/components/products/AddToCartButton.tsx` | `.add-to-cart` | Add product to cart with modal |
+| ProductDocumentsForm | `/src/components/products/ProductDocumentsForm.tsx` | `.product-documents-form` | Attach/manage documents on product |
+| ProductContributors | `/src/components/products/ProductContributors.astro` | `.product-contributors` | Display product contributors |
+| ProductPriceBreakdown | `/src/components/products/ProductPriceBreakdown.tsx` | `.price-breakdown` | Itemized price breakdown |
+| ProductStatusEditor | `/src/components/products/ProductStatusEditor.tsx` | `.status-editor` | 4-state product status system |
 
 ### Browse Page Shared Classes
 
@@ -786,19 +1092,19 @@ Defined in `/src/styles/global.css` (as of 2024-11-24):
 
 ## Migration Notes
 
-### Recent Changes (2025-12-11)
+### Recent Changes (2025-12-13)
 
 1. **Product Status System (4-State)**:
    - Upgraded from 3-state (`draft`, `public`, `archived`) to 4-state system
-   - **New statuses**: `private` (owner-only, hidden from marketplace) and `unlisted` (purchasable via direct link, hidden from listings)
+   - **New status**: `private` (owner + contributors only, hidden from marketplace)
    - **Use cases**:
-     - `draft`: Initial creation, active development
-     - `private`: Testing, internal-only products, owner-exclusive content
-     - `unlisted`: Pre-launch access, beta testing, exclusive links
-     - `public`: Full marketplace visibility
-   - **UX Impact**: Creators now have granular control over product visibility without needing to delete or archive
+     - `draft`: Initial creation, active development, not ready for any use
+     - `private`: Testing, internal-only products, owner and contributor access
+     - `public`: Full marketplace visibility, available for purchase
+     - `archived`: Removed from sale, historical record preserved
+   - **UX Impact**: Creators have granular control over product visibility without needing to delete
    - Component updated: `ProductStatusEditor.tsx` implements 4-state selector
-   - Database field: `products.status` enum type updated
+   - Database field: `products.status` enum type supports all 4 states
 
 ### Previous Changes (2025-11-25)
 
