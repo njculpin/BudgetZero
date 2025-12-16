@@ -962,6 +962,7 @@ export const calculateProductTotalPrice = async (productId: string): Promise<num
  */
 export const getProductPriceBreakdown = async (productId: string): Promise<{
   filePriceTotal: number;
+  documentPriceTotal: number;
   embeddedPriceTotal: number;
   totalPrice: number;
 }> => {
@@ -974,6 +975,18 @@ export const getProductPriceBreakdown = async (productId: string): Promise<{
 
   const filePriceTotal = (files || []).reduce(
     (sum, file) => sum + (file.price_cents || 0),
+    0
+  );
+
+  // Get document prices
+  const { data: documents } = await serverClient
+    .from('product_documents')
+    .select('price_cents')
+    .eq('product_id', productId)
+    .eq('deleted', false);
+
+  const documentPriceTotal = (documents || []).reduce(
+    (sum, doc) => sum + (doc.price_cents || 0),
     0
   );
 
@@ -991,8 +1004,9 @@ export const getProductPriceBreakdown = async (productId: string): Promise<{
 
   return {
     filePriceTotal,
+    documentPriceTotal,
     embeddedPriceTotal,
-    totalPrice: filePriceTotal + embeddedPriceTotal,
+    totalPrice: filePriceTotal + documentPriceTotal + embeddedPriceTotal,
   };
 };
 

@@ -471,7 +471,7 @@
 | 2025-01-27 | Use sequential implementation (digital → physical) instead of parallel | Limited resources, reduce complexity, validate product-market fit first | Product |
 | 2025-12-11 | Replace cart toast with modal confirmation | 3-second toast was easy to miss, modal improves conversion confidence | UX |
 | 2025-12-11 | Add documents to product price breakdown | Price transparency critical for buyer trust | Product |
-| 2025-12-11 | Implement 4-state product status system | Enables draft/private/unlisted/public workflow for creators | Product |
+| 2025-12-11 | Implement 4-state product status system | Enables draft/private/public/archived workflow for creators | Product |
 | TBD | Platform fee percentage (recommend 5% digital, 10% services) | Needs competitive analysis and creator surveys | Business |
 | TBD | Should STL creators earn royalties on physical prints? | Needs community feedback and pricing model validation | Product |
 

@@ -3,6 +3,7 @@ import {
   ErrorMessage,
   SuccessMessage,
 } from "@/components/interactive";
+import Modal from "@/components/Modal";
 import "./product-documents-form.css";
 
 export interface ProductDocument {
@@ -378,7 +379,7 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                     type="button"
                     onClick={() => handleRemoveDocument(doc.id)}
                     class="document-list__remove-button"
-                    title="Remove document from product"
+                    aria-label={`Remove ${doc.document.title} from product`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -390,6 +391,7 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                       stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
+                      aria-hidden="true"
                     >
                       <line x1="18" y1="6" x2="6" y2="18" />
                       <line x1="6" y1="6" x2="18" y2="18" />
@@ -403,21 +405,12 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
       </Show>
 
       {/* Add Document Modal */}
-      <Show when={showAddModal()}>
-        <div class="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div class="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div class="modal-header">
-              <h3 class="modal-title">Add Document to Product</h3>
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                class="modal-close"
-              >
-                ×
-              </button>
-            </div>
-
-            <div class="modal-body">
+      <Modal
+        isOpen={showAddModal()}
+        onClose={() => setShowAddModal(false)}
+        title="Add Document to Product"
+        size="md"
+      >
               <Show
                 when={!availableDocs.loading}
                 fallback={<p>Loading your documents...</p>}
@@ -505,10 +498,7 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                   </Show>
                 </Show>
               </Show>
-            </div>
-          </div>
-        </div>
-      </Show>
+      </Modal>
     </div>
   );
 }

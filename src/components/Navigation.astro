@@ -1,7 +1,6 @@
 ---
 import Button from "./Button.astro";
 import NavigationMobile from "@/components/interactive/NavigationMobile";
-import NavigationDropdown from "@/components/interactive/NavigationDropdown";
 import NavigationUserMenu from "@/components/interactive/NavigationUserMenu";
 import { setSession } from '@/lib/auth';
 import { getUserById } from '@/lib/data-access/users';
@@ -60,7 +59,6 @@ if (accessToken && refreshToken) {
 const userMenuLinks = [
   { href: `/users/${userHandle}`, label: "Profile" },
   { isDivider: true, label: "" },
-  { href: "/documents", label: "My Documents" },
   { href: "/purchases", label: "Purchases" },
   { href: "/connect/onboarding", label: "Payouts" },
   { isDivider: true, label: "" },
@@ -74,7 +72,6 @@ const authedLinks = [
   { href: "/jams", label: "Jams" },
   { href: "/cart", label: "Cart" },
   { href: `/users/${userHandle}`, label: "Profile" },
-  { href: "/documents", label: "My Documents" },
   { href: "/purchases", label: "Purchases" },
   { href: "/connect/onboarding", label: "Payouts" },
   { href: "/settings", label: "Settings" },
@@ -128,8 +125,6 @@ const unAuthedLinks = [
             links={userMenuLinks}
             recentProducts={recentProducts}
             totalProductCount={totalProductCount}
-            recentDocuments={recentDocuments}
-            totalDocumentCount={totalDocumentCount}
           />
         </>
       ) : (

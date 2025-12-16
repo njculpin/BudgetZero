@@ -11,7 +11,7 @@ import { setSession } from "@/lib/auth";
 import Breadcrumb from "@/components/Breadcrumb.astro";
 import EmptyState from "@/components/EmptyState.astro";
 import { getOrCreateCart, getCartItems } from "@/lib/data-access/cart";
-import { getProductById, getVariantById, getVariantPrices } from "@/lib/data-access/products";
+import { getProductById, getProductPriceBreakdown } from "@/lib/data-access/products";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -48,29 +48,30 @@ const cart = await getOrCreateCart(userId);
 
 const cartItems = cart ? await getCartItems(cart.id) : [];
 
-// Fetch product and variant details for each cart item
+// Fetch product details and calculate prices for each cart item
 const cartItemsWithDetails = await Promise.all(
   cartItems.map(async (item) => {
     const product = await getProductById(item.product_id);
-    const variant = await getVariantById(item.variant_id);
-    const prices = variant ? await getVariantPrices(variant.id) : [];
-    const price = prices.length > 0 ? prices[0] : null; // Use first price for now
+
+    // Calculate product price
+    let price_cents = 0;
+    if (product) {
+      const priceBreakdown = await getProductPriceBreakdown(product.id);
+      price_cents = priceBreakdown.totalPrice;
+    }
 
     return {
       ...item,
       product,
-      variant,
-      price,
+      price_cents,
     };
   })
 );
 
 // Calculate totals
 const subtotal = cartItemsWithDetails.reduce((total, item) => {
-  if (item.price) {
-    return total + (item.price.unit_amount * item.quantity);
-  }
-  return total;
+  const itemPrice = item.price_cents || 0;
+  return total + (itemPrice * item.quantity);
 }, 0);
 
 const showAddedMessage = Astro.url.searchParams.get('added') === 'true';

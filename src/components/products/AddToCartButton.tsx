@@ -1,4 +1,5 @@
-import { createSignal, Show, onMount, onCleanup } from "solid-js";
+import { createSignal, Show } from "solid-js";
+import Modal, { ModalHeader, ModalFooter } from "@/components/Modal";
 import "./add-to-cart-button.css";
 
 export interface AddToCartButtonProps {
@@ -11,8 +12,6 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
   const [isLoading, setIsLoading] = createSignal(false);
   const [showSuccessModal, setShowSuccessModal] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
-  let modalRef: HTMLDivElement | undefined;
-  let closeButtonRef: HTMLButtonElement | undefined;
 
   const handleAddToCart = async () => {
     // If not authenticated, redirect to sign in
@@ -44,11 +43,6 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
 
       // Show success modal
       setShowSuccessModal(true);
-
-      // Focus the close button when modal opens
-      setTimeout(() => {
-        closeButtonRef?.focus();
-      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add to cart");
     } finally {
@@ -63,25 +57,6 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
   const handleViewCart = () => {
     window.location.href = "/cart";
   };
-
-  // Handle escape key to close modal
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && showSuccessModal()) {
-      handleCloseModal();
-    }
-  };
-
-  onMount(() => {
-    if (typeof document !== 'undefined') {
-      document.addEventListener("keydown", handleKeyDown);
-    }
-  });
-
-  onCleanup(() => {
-    if (typeof document !== 'undefined') {
-      document.removeEventListener("keydown", handleKeyDown);
-    }
-  });
 
   return (
     <div class="add-to-cart">
@@ -123,79 +98,69 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
       </Show>
 
       {/* Success Modal */}
-      <Show when={showSuccessModal()}>
-        <div
-          class="add-to-cart-modal__overlay"
-          onClick={handleCloseModal}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="cart-modal-title"
+      <Modal
+        isOpen={showSuccessModal()}
+        onClose={handleCloseModal}
+        size="sm"
+        showCloseButton={false}
+      >
+        <ModalHeader
+          centered
+          icon={
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          }
         >
-          <div
-            ref={modalRef}
-            class="add-to-cart-modal__content"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div class="add-to-cart-modal__header">
-              <div class="add-to-cart-modal__icon-wrapper">
-                <svg
-                  class="add-to-cart-modal__icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <h3 id="cart-modal-title" class="add-to-cart-modal__title">
-                Added to Cart!
-              </h3>
-              <p class="add-to-cart-modal__description">
-                "{props.productTitle}" has been added to your cart
-              </p>
-            </div>
+          <h3 class="add-to-cart__success-title">Added to Cart!</h3>
+          <p class="add-to-cart__success-description">
+            "{props.productTitle}" has been added to your cart
+          </p>
+        </ModalHeader>
 
-            <div class="add-to-cart-modal__actions">
-              <button
-                type="button"
-                onClick={handleViewCart}
-                class="add-to-cart-modal__button add-to-cart-modal__button--primary"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="9" cy="21" r="1" />
-                  <circle cx="20" cy="21" r="1" />
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                </svg>
-                View Cart
-              </button>
-              <button
-                ref={closeButtonRef}
-                type="button"
-                onClick={handleCloseModal}
-                class="add-to-cart-modal__button add-to-cart-modal__button--secondary"
-              >
-                Continue Shopping
-              </button>
-            </div>
-          </div>
-        </div>
-      </Show>
+        <ModalFooter justify="center">
+          <button
+            type="button"
+            onClick={handleViewCart}
+            class="button button--primary button--md add-to-cart__view-cart-button"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            <span class="button__text">View Cart</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleCloseModal}
+            class="button button--ghost button--md"
+          >
+            <span class="button__text">Continue Shopping</span>
+          </button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }

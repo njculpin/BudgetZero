@@ -266,7 +266,7 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
                     target="_blank"
                     rel="noopener noreferrer"
                     class="attachments-list__download-button"
-                    title="Download file"
+                    aria-label={`Download ${attachment.title}`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -278,6 +278,7 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
                       stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
+                      aria-hidden="true"
                     >
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="7 10 12 15 17 10" />
@@ -288,7 +289,7 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
                     type="button"
                     onClick={() => handleDeleteAttachment(attachment.id, attachment.title)}
                     class="attachments-list__delete-button"
-                    title="Delete attachment"
+                    aria-label={`Delete ${attachment.title}`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -297,6 +298,7 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
+                      aria-hidden="true"
                       stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
