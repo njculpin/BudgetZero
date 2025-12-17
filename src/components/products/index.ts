@@ -1,6 +1,7 @@
 // Product components barrel export
 export { default as ProductEditForm } from './ProductEditForm';
 export { default as ProductCreateForm } from './ProductCreateForm';
+export { default as ProductCreatedModal } from './ProductCreatedModal';
 export { default as ProductBasicInfoForm } from './ProductBasicInfoForm';
 export { default as ProductTagsForm } from './ProductTagsForm';
 export { default as ProductImagesForm } from './ProductImagesForm';
@@ -13,4 +14,5 @@ export { default as ProductConflictBanner } from './ProductConflictBanner';
 export { default as ProductValueBreakdown } from './ProductValueBreakdown';
 export { default as ProductEmbeddedProducts } from './ProductEmbeddedProducts';
 export { default as ProductPriceBreakdown } from './ProductPriceBreakdown';
+export { default as ProductRoyaltyBreakdown } from './ProductRoyaltyBreakdown';
 export { default as AddToCartButton } from './AddToCartButton';

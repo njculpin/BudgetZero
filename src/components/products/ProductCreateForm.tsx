@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js";
 import TagInput from "@/components/interactive/TagInput";
+import ProductCreatedModal from "./ProductCreatedModal";
 import "./product-create-form.css";
 
 export default function ProductCreateForm() {
@@ -9,6 +10,8 @@ export default function ProductCreateForm() {
   const [tags, setTags] = createSignal<string[]>([]);
   const [error, setError] = createSignal<string>("");
   const [isLoading, setIsLoading] = createSignal<boolean>(false);
+  const [showSuccessModal, setShowSuccessModal] = createSignal<boolean>(false);
+  const [createdProduct, setCreatedProduct] = createSignal<{ title: string; handle: string } | null>(null);
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -37,9 +40,14 @@ export default function ProductCreateForm() {
       }
 
       const data = await response.json();
-      // Redirect to the product page
+      // Show success modal instead of immediately redirecting
       if (data.product && data.product.handle) {
-        window.location.href = `/products/${data.product.handle}`;
+        setCreatedProduct({
+          title: data.product.title,
+          handle: data.product.handle,
+        });
+        setIsLoading(false);
+        setShowSuccessModal(true);
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
@@ -52,13 +60,14 @@ export default function ProductCreateForm() {
   };
 
   return (
-    <div class="card product-create-card">
-      <div class="card-header">
-        <h2 class="card-title">Create New Product</h2>
-        <p class="card-description">
-          List your tabletop game, expansion, or accessory for sale
-        </p>
-      </div>
+    <>
+      <div class="card product-create-card">
+        <div class="card-header">
+          <h2 class="card-title">Create New Product</h2>
+          <p class="card-description">
+            List your tabletop game, expansion, or accessory for sale
+          </p>
+        </div>
 
       <div class="card-content">
         <form onSubmit={handleSubmit} class="product-form">
@@ -187,5 +196,15 @@ export default function ProductCreateForm() {
         </form>
       </div>
     </div>
+
+      {createdProduct() && (
+        <ProductCreatedModal
+          isOpen={showSuccessModal()}
+          onClose={() => setShowSuccessModal(false)}
+          productTitle={createdProduct()!.title}
+          productHandle={createdProduct()!.handle}
+        />
+      )}
+    </>
   );
 }

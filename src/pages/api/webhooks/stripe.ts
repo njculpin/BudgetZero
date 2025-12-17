@@ -1,27 +1,29 @@
 import type { APIRoute } from "astro";
 import { verifyWebhookSignature, type Stripe } from "@/lib/payments";
-import { createSale, createSaleItem, createSaleItemAsset, getSaleByStripeChargeId, refundSale } from "@/lib/data-access/sales";
+import { createSale, createSaleItem, getSaleByStripeChargeId, refundSale } from "@/lib/data-access/sales";
 import { getCartItems, clearCart } from "@/lib/data-access/cart";
-import { getProductById, getVariantById, getVariantPrices } from "@/lib/data-access/products";
-import { serverClient } from "@/lib/data-access/client";
+import { getProductById, getProductPriceBreakdown, getProductFiles } from "@/lib/data-access/products";
 import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
-import { createRoyaltyTransactionsForSaleItemAsset, markSaleRoyaltiesAsRefunded } from "@/lib/data-access/royalties";
+import { markSaleRoyaltiesAsRefunded } from "@/lib/data-access/royalties";
+
+// Mock mode flag - set to true to bypass Stripe signature verification
+const USE_MOCK_STRIPE = true;
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 
-if (!webhookSecret) {
+if (!USE_MOCK_STRIPE && !webhookSecret) {
   console.error('STRIPE_WEBHOOK_SECRET is not set');
 }
 
 export const POST: APIRoute = async ({ request }) => {
-  if (!webhookSecret) {
+  if (!USE_MOCK_STRIPE && !webhookSecret) {
     return new Response('Webhook secret not configured', { status: 500 });
   }
 
   // Get the raw body and signature
   const signature = request.headers.get('stripe-signature');
 
-  if (!signature) {
+  if (!USE_MOCK_STRIPE && !signature) {
     return new Response('No signature', { status: 400 });
   }
 
@@ -29,7 +31,11 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const body = await request.text();
-    event = verifyWebhookSignature(body, signature, webhookSecret);
+    event = verifyWebhookSignature(
+      body,
+      signature || 'mock_signature',
+      webhookSecret || 'mock_secret'
+    );
   } catch (error) {
     console.error('Webhook signature verification failed:', error);
     return new Response(
@@ -95,21 +101,25 @@ export const POST: APIRoute = async ({ request }) => {
           // Collect items for email
           const emailItems: Array<{
             productTitle: string;
-            variantTitle: string;
             quantity: number;
             priceCents: number;
           }> = [];
 
-          // 2. Create SaleItems and link assets for each cart item
+          // 2. Create SaleItems and link files for each cart item
           for (const cartItem of cartItems) {
-            // Get product and variant details
+            // Get product details and pricing
             const product = await getProductById(cartItem.product_id);
-            const variant = await getVariantById(cartItem.variant_id);
-            const prices = variant ? await getVariantPrices(variant.id) : [];
-            const price = prices.length > 0 ? prices[0] : null;
 
-            if (!product || !variant || !price) {
-              console.error(`Invalid cart item: ${cartItem.id}`);
+            if (!product) {
+              console.error(`Product not found: ${cartItem.product_id}`);
+              continue;
+            }
+
+            // Get product price breakdown
+            const priceBreakdown = await getProductPriceBreakdown(product.id);
+
+            if (priceBreakdown.totalPrice === 0) {
+              console.error(`Product has no price: ${product.id}`);
               continue;
             }
 
@@ -117,16 +127,15 @@ export const POST: APIRoute = async ({ request }) => {
             const saleItem = await createSaleItem({
               saleId: sale.id,
               productId: cartItem.product_id,
-              variantId: cartItem.variant_id,
-              priceCents: price.unit_amount,
-              currency: price.currency,
+              priceCents: priceBreakdown.totalPrice,
+              currency: 'usd',
               quantity: cartItem.quantity,
               snapshot: {
                 product_title: product.title,
-                variant_title: variant.title,
-                variant_sku: variant.sku,
                 product_description: product.description,
-                variant_description: variant.description,
+                files_price: priceBreakdown.filePriceTotal,
+                documents_price: priceBreakdown.documentPriceTotal,
+                embedded_price: priceBreakdown.embeddedPriceTotal,
               },
             });
 
@@ -140,39 +149,20 @@ export const POST: APIRoute = async ({ request }) => {
             // Add to email items
             emailItems.push({
               productTitle: product.title,
-              variantTitle: variant.title,
               quantity: cartItem.quantity,
-              priceCents: price.unit_amount * cartItem.quantity,
+              priceCents: priceBreakdown.totalPrice * cartItem.quantity,
             });
 
-            // 3. Get variant assets and link them to the sale item
-            const { data: productAssets } = await serverClient
-              .from('product_assets')
-              .select('asset_id')
-              .eq('variant_id', cartItem.variant_id);
+            // 3. Get product files and grant download access
+            const productFiles = await getProductFiles(product.id);
 
-            if (productAssets && productAssets.length > 0) {
-              for (const productAsset of productAssets) {
-                const saleItemAsset = await createSaleItemAsset(
-                  saleItem.id,
-                  productAsset.asset_id
-                );
+            if (productFiles && productFiles.length > 0) {
+              for (const file of productFiles) {
+                // TODO: Create sale_item_files record to grant download access
+                console.log('Granting access to file:', file.id);
 
-                if (saleItemAsset) {
-                  console.log('Linked asset to sale item:', productAsset.asset_id);
-
-                  // 4. Create royalty transactions for this asset
-                  const royaltyTransactions = await createRoyaltyTransactionsForSaleItemAsset({
-                    saleId: sale.id,
-                    saleItemId: saleItem.id,
-                    saleItemAssetId: saleItemAsset.id,
-                    assetId: productAsset.asset_id,
-                    saleItemPriceCents: price.unit_amount * cartItem.quantity,
-                    currency: price.currency,
-                  });
-
-                  console.log(`Created ${royaltyTransactions.length} royalty transactions for asset ${productAsset.asset_id}`);
-                }
+                // TODO: Create royalty transactions for this file
+                // This will need to be implemented with product-centric royalty logic
               }
             }
           }

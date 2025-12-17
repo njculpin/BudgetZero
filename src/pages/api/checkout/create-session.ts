@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
 import { getOrCreateCart, getCartItems } from "@/lib/data-access/cart";
-import { getProductById, getVariantById, getVariantPrices, getVariantAssets } from "@/lib/data-access/products";
+import { getProductById, getProductPriceBreakdown, getProductFiles } from "@/lib/data-access/products";
 import { createCheckoutSession } from "@/lib/payments";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -62,32 +62,36 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const lineItems = await Promise.all(
       cartItems.map(async (item) => {
         const product = await getProductById(item.product_id);
-        const variant = await getVariantById(item.variant_id);
-        const prices = await getVariantPrices(item.variant_id);
 
-        if (!product || !variant || !prices || prices.length === 0) {
-          throw new Error(`Product or variant not found for cart item ${item.id}`);
+        if (!product) {
+          throw new Error(`Product not found for cart item ${item.id}`);
         }
 
-        // Get the price (use first price for now, could be enhanced with currency selection)
-        const price = prices[0];
+        // Get product price breakdown (files + documents + embedded products)
+        const priceBreakdown = await getProductPriceBreakdown(product.id);
 
-        // Get variant assets to include in metadata
-        const assets = await getVariantAssets(item.variant_id);
-        const assetIds = assets.map(a => a.id);
+        if (priceBreakdown.totalPrice === 0) {
+          throw new Error(`Product ${product.id} has no price set`);
+        }
+
+        // Get product files to include in metadata (for download access)
+        const productFiles = await getProductFiles(product.id);
+        const fileIds = productFiles.map(f => f.id);
 
         return {
           price_data: {
-            currency: price.currency,
-            unit_amount: price.unit_amount,
+            currency: 'usd', // Default to USD, can be enhanced with multi-currency support
+            unit_amount: priceBreakdown.totalPrice,
             product_data: {
-              name: `${product.title} - ${variant.title}`,
-              description: variant.description || product.description || undefined,
+              name: product.title,
+              description: product.description || undefined,
               images: product.cover_image_url ? [product.cover_image_url] : [],
               metadata: {
                 product_id: product.id,
-                variant_id: variant.id,
-                asset_ids: assetIds.join(','),
+                file_ids: fileIds.join(','),
+                files_price: priceBreakdown.filePriceTotal.toString(),
+                documents_price: priceBreakdown.documentPriceTotal.toString(),
+                embedded_price: priceBreakdown.embeddedPriceTotal.toString(),
               },
             },
           },

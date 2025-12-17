@@ -1,0 +1,124 @@
+/* ===== Product Created Modal ===== */
+
+.product-created__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.product-created__description {
+  margin: var(--spacing-sm) 0 0 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+}
+
+.product-created__body {
+  padding: var(--spacing-lg) 0;
+}
+
+.product-created__checklist-title {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.product-created__checklist-description {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.product-created__checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--spacing-lg) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.product-created__checklist-item {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+}
+
+.product-created__checklist-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-created__checklist-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-created__checklist-item-title {
+  margin: 0 0 var(--spacing-2xs) 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.product-created__checklist-item-description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
+.product-created__tip {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background-color: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-md);
+  color: var(--info-fg);
+}
+
+.product-created__tip svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.product-created__tip-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.product-created__tip-text strong {
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .product-created__checklist-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .product-created__checklist-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .product-created__checklist-item-title {
+    font-size: var(--text-sm);
+  }
+
+  .product-created__checklist-item-description {
+    font-size: var(--text-xs);
+  }
+}
