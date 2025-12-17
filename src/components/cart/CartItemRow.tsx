@@ -19,6 +19,7 @@ export default function CartItemRow(props: CartItemRowProps) {
   const [isRemoving, setIsRemoving] = createSignal(false);
   const [error, setError] = createSignal("");
   const [showDeleteDialog, setShowDeleteDialog] = createSignal(false);
+  const [liveMessage, setLiveMessage] = createSignal("");
 
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -48,6 +49,11 @@ export default function CartItemRow(props: CartItemRowProps) {
 
       setQuantity(newQuantity);
       setIsUpdating(false);
+
+      // Announce change to screen readers
+      const productName = props.item.product?.title || "Product";
+      setLiveMessage(`${productName} quantity updated to ${newQuantity}`);
+      setTimeout(() => setLiveMessage(""), 3000);
 
       // Notify parent to refresh cart
       if (props.onUpdate) {
@@ -82,6 +88,10 @@ export default function CartItemRow(props: CartItemRowProps) {
         return;
       }
 
+      // Announce removal to screen readers
+      const productName = props.item.product?.title || "Product";
+      setLiveMessage(`${productName} removed from cart`);
+
       // Notify parent to refresh cart
       if (props.onRemove) {
         props.onRemove();
@@ -108,6 +118,15 @@ export default function CartItemRow(props: CartItemRowProps) {
 
   return (
     <div class="cart-item-row">
+      {/* Visually hidden live region for screen reader announcements */}
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        class="sr-only"
+      >
+        {liveMessage()}
+      </div>
+
       {error() && (
         <div class="cart-item-row__error">
           <ErrorMessage

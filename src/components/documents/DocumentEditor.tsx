@@ -335,8 +335,9 @@ export default function DocumentEditor(props: DocumentEditorProps) {
               class="document-editor__toolbar-btn"
               onClick={undo}
               title="Undo"
+              aria-label="Undo"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M3 7v6h6M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
               </svg>
             </button>
@@ -345,8 +346,9 @@ export default function DocumentEditor(props: DocumentEditorProps) {
               class="document-editor__toolbar-btn"
               onClick={redo}
               title="Redo"
+              aria-label="Redo"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M21 7v6h-6M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7" />
               </svg>
             </button>
@@ -426,8 +428,9 @@ export default function DocumentEditor(props: DocumentEditorProps) {
               class="document-editor__toolbar-btn"
               onClick={toggleBulletList}
               title="Bullet List"
+              aria-label="Bullet List"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <line x1="8" y1="6" x2="21" y2="6" />
                 <line x1="8" y1="12" x2="21" y2="12" />
                 <line x1="8" y1="18" x2="21" y2="18" />
@@ -441,8 +444,9 @@ export default function DocumentEditor(props: DocumentEditorProps) {
               class="document-editor__toolbar-btn"
               onClick={toggleOrderedList}
               title="Numbered List"
+              aria-label="Numbered List"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <line x1="10" y1="6" x2="21" y2="6" />
                 <line x1="10" y1="12" x2="21" y2="12" />
                 <line x1="10" y1="18" x2="21" y2="18" />
@@ -456,8 +460,9 @@ export default function DocumentEditor(props: DocumentEditorProps) {
               class="document-editor__toolbar-btn"
               onClick={toggleBlockquote}
               title="Quote"
+              aria-label="Quote"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21" />
                 <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3" />
               </svg>
@@ -467,8 +472,9 @@ export default function DocumentEditor(props: DocumentEditorProps) {
               class="document-editor__toolbar-btn"
               onClick={toggleCodeBlock}
               title="Code Block"
+              aria-label="Code Block"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <polyline points="16 18 22 12 16 6" />
                 <polyline points="8 6 2 12 8 18" />
               </svg>

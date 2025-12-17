@@ -15,7 +15,7 @@ export interface CreateSaleParams {
 export interface CreateSaleItemParams {
   saleId: string;
   productId: string;
-  variantId: string;
+  variantId?: string; // Optional for backward compatibility
   priceCents: number;
   currency: string;
   quantity: number;
@@ -62,7 +62,7 @@ export const createSaleItem = async (
     .insert({
       sale_id: params.saleId,
       product_id: params.productId,
-      variant_id: params.variantId,
+      variant_id: params.variantId || null,
       price_cents: params.priceCents,
       currency: params.currency,
       quantity: params.quantity,

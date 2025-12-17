@@ -1,4 +1,4 @@
-import { Show, createEffect } from "solid-js";
+import { Show, createEffect, onCleanup } from "solid-js";
 import { type JSX, type ParentComponent } from "solid-js";
 import "./modal.css";
 
@@ -13,7 +13,20 @@ export interface ModalProps {
   children: JSX.Element;
 }
 
+// Focusable element selectors for accessibility
+const FOCUSABLE_SELECTORS = [
+  'a[href]',
+  'button:not([disabled])',
+  'textarea:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
 export default function Modal(props: ModalProps) {
+  let modalRef: HTMLDivElement | undefined;
+  let previouslyFocusedElement: HTMLElement | null = null;
+
   const size = props.size || "md";
   const showCloseButton = props.showCloseButton !== false; // default true
   const closeOnOverlayClick = props.closeOnOverlayClick !== false; // default true
@@ -41,6 +54,59 @@ export default function Modal(props: ModalProps) {
     }
   });
 
+  // Focus management and trap
+  createEffect(() => {
+    if (props.isOpen && modalRef) {
+      // Store previously focused element
+      previouslyFocusedElement = document.activeElement as HTMLElement;
+
+      // Find all focusable elements in modal
+      const focusableElements = modalRef.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS);
+      const firstFocusable = focusableElements[0];
+      const lastFocusable = focusableElements[focusableElements.length - 1];
+
+      // Focus first element
+      if (firstFocusable) {
+        setTimeout(() => firstFocusable.focus(), 0);
+      }
+
+      // Handle tab key to trap focus
+      const handleTabKey = (e: KeyboardEvent) => {
+        if (e.key !== 'Tab' || !modalRef) return;
+
+        // Get currently focused element
+        const focusedElement = document.activeElement;
+        const focusedIndex = Array.from(focusableElements).indexOf(focusedElement as HTMLElement);
+
+        if (e.shiftKey) {
+          // Shift + Tab - move backwards
+          if (focusedElement === firstFocusable || focusedIndex === -1) {
+            e.preventDefault();
+            lastFocusable?.focus();
+          }
+        } else {
+          // Tab - move forwards
+          if (focusedElement === lastFocusable || focusedIndex === -1) {
+            e.preventDefault();
+            firstFocusable?.focus();
+          }
+        }
+      };
+
+      window.addEventListener('keydown', handleTabKey);
+
+      // Cleanup
+      onCleanup(() => {
+        window.removeEventListener('keydown', handleTabKey);
+
+        // Restore focus to previously focused element
+        if (previouslyFocusedElement && typeof previouslyFocusedElement.focus === 'function') {
+          previouslyFocusedElement.focus();
+        }
+      });
+    }
+  });
+
   const handleOverlayClick = () => {
     if (closeOnOverlayClick) {
       props.onClose();
@@ -51,6 +117,7 @@ export default function Modal(props: ModalProps) {
     <Show when={props.isOpen}>
       <div class="modal__overlay" onClick={handleOverlayClick}>
         <div
+          ref={modalRef}
           class={`modal__content modal__content--${size}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"

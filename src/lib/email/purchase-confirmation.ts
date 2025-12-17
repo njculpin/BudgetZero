@@ -7,7 +7,6 @@ export interface PurchaseConfirmationData {
   currency: string;
   items: Array<{
     productTitle: string;
-    variantTitle: string;
     quantity: number;
     priceCents: number;
   }>;
@@ -27,8 +26,7 @@ export async function sendPurchaseConfirmation(
         (item) => `
         <tr>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
-            <strong>${item.productTitle}</strong><br>
-            <span style="color: #6b7280; font-size: 14px;">${item.variantTitle}</span>
+            <strong>${item.productTitle}</strong>
           </td>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">
@@ -142,7 +140,7 @@ ORDER CONFIRMED
 Order #${data.saleId.slice(0, 8).toUpperCase()}
 
 ORDER SUMMARY
-${data.items.map(item => `${item.productTitle} - ${item.variantTitle}\nQuantity: ${item.quantity} × ${data.currency.toUpperCase()} ${(item.priceCents / item.quantity / 100).toFixed(2)} = ${data.currency.toUpperCase()} ${(item.priceCents / 100).toFixed(2)}`).join('\n\n')}
+${data.items.map(item => `${item.productTitle}\nQuantity: ${item.quantity} × ${data.currency.toUpperCase()} ${(item.priceCents / item.quantity / 100).toFixed(2)} = ${data.currency.toUpperCase()} ${(item.priceCents / 100).toFixed(2)}`).join('\n\n')}
 
 Total: ${data.currency.toUpperCase()} ${(data.totalCents / 100).toFixed(2)}
 

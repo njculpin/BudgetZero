@@ -4,7 +4,7 @@ import Badge from "@/components/Badge.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductDocumentsForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown, AddToCartButton } from "@/components/products";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductDocumentsForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown, ProductRoyaltyBreakdown, AddToCartButton } from "@/components/products";
 import ProductContributors from "@/components/products/ProductContributors.astro";
 import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributors } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
@@ -377,6 +377,20 @@ if (jamId) {
           </CardHeader>
           <CardContent>
             <ProductPriceBreakdown
+              client:load
+              productId={productData.id}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Royalty Breakdown Card -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Support Creators</CardTitle>
+            <CardDescription>Your purchase supports all contributors</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductRoyaltyBreakdown
               client:load
               productId={productData.id}
             />
