@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
 import { verifyWebhookSignature, type Stripe } from "@/lib/payments";
-import { createSale, createSaleItem, getSaleByStripeChargeId, refundSale } from "@/lib/data-access/sales";
+import { createSale, createSaleItem, getSaleByStripeChargeId, refundSale, createSaleItemAsset } from "@/lib/data-access/sales";
 import { getCartItems, clearCart } from "@/lib/data-access/cart";
-import { getProductById, getProductPriceBreakdown, getProductFiles } from "@/lib/data-access/products";
+import { getProductById, getProductPriceBreakdown, getProductFiles, getProductComponents } from "@/lib/data-access/products";
 import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
-import { markSaleRoyaltiesAsRefunded } from "@/lib/data-access/royalties";
+import { markSaleRoyaltiesAsRefunded, createRoyaltyTransactionsForProduct } from "@/lib/data-access/royalties";
 
 // Mock mode flag - set to true to bypass Stripe signature verification
 const USE_MOCK_STRIPE = true;
@@ -153,27 +153,62 @@ export const POST: APIRoute = async ({ request }) => {
               priceCents: priceBreakdown.totalPrice * cartItem.quantity,
             });
 
-            // 3. Get product files and grant download access
-            const productFiles = await getProductFiles(product.id);
+            // 3. Grant download access by creating sale_item_asset record
+            // This treats the product as an asset for backward compatibility with download system
+            const saleItemAsset = await createSaleItemAsset(saleItem.id, product.id);
 
-            if (productFiles && productFiles.length > 0) {
-              for (const file of productFiles) {
-                // TODO: Create sale_item_files record to grant download access
-                console.log('Granting access to file:', file.id);
+            if (!saleItemAsset) {
+              console.error(`Failed to create download access for product: ${product.id}`);
+              continue;
+            }
 
-                // TODO: Create royalty transactions for this file
-                // This will need to be implemented with product-centric royalty logic
+            console.log('Granted download access for product:', product.id);
+
+            // 4. Create royalty transactions for product-level royalties
+            const productRoyalties = await createRoyaltyTransactionsForProduct({
+              saleId: sale.id,
+              saleItemId: saleItem.id,
+              saleItemAssetId: saleItemAsset.id,
+              productId: product.id,
+              saleItemPriceCents: priceBreakdown.totalPrice,
+              currency: 'usd',
+            });
+
+            console.log(`Created ${productRoyalties.length} royalty transactions for product ${product.id}`);
+
+            // 5. Create royalty transactions for embedded products
+            const components = await getProductComponents(product.id);
+
+            for (const component of components) {
+              // Create sale_item_asset for embedded product
+              const embeddedSaleItemAsset = await createSaleItemAsset(saleItem.id, component.child_product_id);
+
+              if (!embeddedSaleItemAsset) {
+                console.error(`Failed to create download access for embedded product: ${component.child_product_id}`);
+                continue;
               }
+
+              // Create royalty transactions for the embedded product
+              const embeddedRoyalties = await createRoyaltyTransactionsForProduct({
+                saleId: sale.id,
+                saleItemId: saleItem.id,
+                saleItemAssetId: embeddedSaleItemAsset.id,
+                productId: component.child_product_id,
+                saleItemPriceCents: component.inherited_price_cents,
+                currency: 'usd',
+              });
+
+              console.log(`Created ${embeddedRoyalties.length} royalty transactions for embedded product ${component.child_product_id}`);
             }
           }
 
-          // 5. Clear the cart
+          // 6. Clear the cart
           const cleared = await clearCart(cartId);
           if (cleared) {
             console.log('Cart cleared:', cartId);
           }
 
-          // 6. Send purchase confirmation email
+          // 7. Send purchase confirmation email
           const origin = process.env.VERCEL_URL
             ? `https://${process.env.VERCEL_URL}`
             : 'http://localhost:4321';

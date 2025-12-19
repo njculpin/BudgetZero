@@ -152,7 +152,7 @@
   gap: var(--gap-md);
   padding: var(--spacing-md);
   background-color: var(--destructive);
-  color: var(--color-white);
+  color: var(--destructive-foreground);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);

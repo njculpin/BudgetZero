@@ -1,4 +1,11 @@
-import { createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
+import {
+  FormField,
+  TextAreaField,
+  SelectField,
+  LoadingButton,
+  ErrorMessage,
+} from "@/components/interactive";
 import TagInput from "@/components/interactive/TagInput";
 import ProductCreatedModal from "./ProductCreatedModal";
 import "./product-create-form.css";
@@ -61,120 +68,87 @@ export default function ProductCreateForm() {
 
   return (
     <>
-      <div class="card product-create-card">
-        <div class="card-header">
-          <h2 class="card-title">Create New Product</h2>
-          <p class="card-description">
+      <div class="product-create-form">
+        <div class="product-create-form__header">
+          <h2 class="product-create-form__title">Create New Product</h2>
+          <p class="product-create-form__description">
             List your tabletop game, expansion, or accessory for sale
           </p>
         </div>
 
-      <div class="card-content">
-        <form onSubmit={handleSubmit} class="product-form">
-          {error() && (
-            <div class="product-form__error" role="alert">
-              {error()}
-            </div>
-          )}
+        <form onSubmit={handleSubmit} class="product-create-form__form">
+          <Show when={error()}>
+            <ErrorMessage message={error()} onDismiss={() => setError("")} />
+          </Show>
 
-          <div class="product-form__field">
-            <label for="title" class="product-form__label">
-              Product Title *
-            </label>
-            <input
-              type="text"
-              name="title"
-              id="title"
-              class="product-form__input"
-              value={title()}
-              onInput={(e: InputEvent) =>
-                setTitle((e.currentTarget as HTMLInputElement).value)
-              }
-              placeholder="My Awesome Board Game"
-              required
-              disabled={isLoading()}
-            />
-            <p class="product-form__help-text">
-              Give your product a clear, descriptive title
-            </p>
-          </div>
+          <FormField
+            label="Product Title"
+            name="title"
+            type="text"
+            value={title()}
+            onInput={(e) => setTitle(e.currentTarget.value)}
+            placeholder="My Awesome Board Game"
+            helpText="Give your product a clear, descriptive title"
+            required
+            disabled={isLoading()}
+          />
 
-          <div class="product-form__field">
-            <label for="description" class="product-form__label">
-              Description
-            </label>
-            <textarea
-              name="description"
-              id="description"
-              class="product-form__textarea"
-              value={description()}
-              onInput={(e: InputEvent) =>
-                setDescription((e.currentTarget as HTMLTextAreaElement).value)
-              }
-              placeholder="Describe your product in detail..."
-              rows={6}
-              disabled={isLoading()}
-            />
-            <p class="product-form__help-text">
-              Explain what makes your product unique. Include gameplay details,
-              components, player count, etc.
-            </p>
-          </div>
+          <TextAreaField
+            label="Description"
+            name="description"
+            value={description()}
+            onInput={(e) => setDescription(e.currentTarget.value)}
+            placeholder="Describe your product in detail..."
+            helpText="Explain what makes your product unique. Include gameplay details, components, player count, etc."
+            rows={6}
+            disabled={isLoading()}
+          />
 
-          <div class="product-form__field">
-            <label for="tags" class="product-form__label">
-              Tags
-            </label>
+          <div class="form-field">
+            <label class="form-field__label">Tags</label>
             <TagInput
               name="tags"
               placeholder="Add tags (e.g., strategy, family-friendly)"
               initialTags={tags()}
               onChange={handleTagsChange}
             />
-            <p class="product-form__help-text">
+            <p class="form-field__help-text">
               Add tags to help buyers find your product (e.g., "strategy",
               "family-friendly", "dungeon-crawler")
             </p>
           </div>
 
-          <div class="product-form__field">
-            <label for="status" class="product-form__label">
-              Status
-            </label>
-            <select
-              name="status"
-              id="status"
-              class="product-form__select"
-              value={status()}
-              onChange={(e: Event) =>
-                setStatus((e.currentTarget as HTMLSelectElement).value)
-              }
-              disabled={isLoading()}
-            >
-              <option value="draft">Draft</option>
-              <option value="private">Private</option>
-              <option value="public">Public</option>
-            </select>
-            <p class="product-form__help-text">
-              public products are visible in the marketplace
-            </p>
-          </div>
+          <SelectField
+            label="Status"
+            name="status"
+            value={status()}
+            onChange={(e: Event) =>
+              setStatus((e.currentTarget as HTMLSelectElement).value)
+            }
+            options={[
+              { value: "draft", label: "Draft" },
+              { value: "private", label: "Private" },
+              { value: "public", label: "Public" },
+            ]}
+            helpText="Public products are visible in the marketplace"
+            disabled={isLoading()}
+          />
 
-          <div class="product-form__info">
-            <h3 class="product-form__info-title">Next Steps</h3>
-            <p class="product-form__info-text">
+          <div class="product-create-form__info">
+            <h3 class="product-create-form__info-title">Next Steps</h3>
+            <p class="product-create-form__info-text">
               After creating your product, you'll be able to:
             </p>
-            <ul class="product-form__info-list">
-              <li>Add product variants (PDF, Physical, Bundle, etc.)</li>
-              <li>Set pricing for each variant</li>
-              <li>Link downloadable assets to variants</li>
+            <ul class="product-create-form__info-list">
               <li>Upload a cover image</li>
+              <li>Add downloadable files</li>
+              <li>Embed other products as components</li>
+              <li>Set up pricing and royalties</li>
             </ul>
           </div>
 
-          <div class="product-form__actions">
-            <a href="/dashboard">
+          <div class="product-create-form__actions">
+            <a href="/dashboard" class="product-create-form__cancel-link">
               <button
                 type="button"
                 class="button button--ghost button--md"
@@ -183,19 +157,16 @@ export default function ProductCreateForm() {
                 <span class="button__text">Cancel</span>
               </button>
             </a>
-            <button
+            <LoadingButton
               type="submit"
-              class="button button--primary button--md"
-              disabled={isLoading()}
+              isLoading={isLoading()}
+              loadingText="Creating..."
             >
-              <span class="button__text">
-                {isLoading() ? "Creating..." : "Create Product"}
-              </span>
-            </button>
+              Create Product
+            </LoadingButton>
           </div>
         </form>
       </div>
-    </div>
 
       {createdProduct() && (
         <ProductCreatedModal

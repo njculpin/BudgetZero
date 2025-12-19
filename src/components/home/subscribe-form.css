@@ -38,7 +38,9 @@
   gap: var(--gap-xs);
 }
 
-/* Label */
+/* ===== Note: Form field styles standardized ===== */
+/* Using design tokens from global.css for consistency */
+
 .subscribe-form__label {
   display: inline-block;
   font-size: var(--text-sm);
@@ -49,21 +51,18 @@
   cursor: pointer;
 }
 
-/* Input */
 .subscribe-form__input {
-  min-width: 0;
+  width: 100%;
   height: var(--height-input-md);
-  padding: var(--spacing-xxs) var(--spacing-lg);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--input);
+  padding: var(--input-padding-y) var(--input-padding-x);
+  border-radius: var(--input-radius);
+  border: var(--border-width-default) solid var(--input);
   background-color: transparent;
   color: var(--foreground);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   box-shadow: var(--shadow-xs);
-  transition: color var(--duration-normal) var(--ease-in-out),
-    box-shadow var(--duration-normal) var(--ease-in-out),
-    border-color var(--duration-normal) var(--ease-in-out);
+  transition: var(--input-transition);
   outline: none;
 }
 
@@ -79,14 +78,14 @@
 .subscribe-form__input:disabled {
   pointer-events: none;
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: var(--opacity-50);
 }
 
 /* Error Message */
 .subscribe-form__error {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md);
   background-color: var(--destructive);
-  color: var(--color-white);
+  color: var(--destructive-foreground);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
@@ -94,10 +93,10 @@
 
 /* Success Message */
 .subscribe-form__success {
-  padding: var(--spacing-sm);
-  background-color: oklch(from var(--color-success) l c h / 0.1);
-  color: var(--color-success);
-  border: var(--border-width-default) solid var(--color-success);
+  padding: var(--spacing-md);
+  background-color: var(--success-bg);
+  color: var(--success-fg);
+  border: var(--border-width-default) solid var(--success);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);

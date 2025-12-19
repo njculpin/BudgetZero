@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
-import { signUp } from "../../../lib/auth";
+import { signUp, signInWithPassword } from "../../../lib/auth";
 import { sendEmail } from "@/lib/email";
 
-export const POST: APIRoute = async ({ request, redirect }) => {
+export const POST: APIRoute = async ({ request, redirect, cookies }) => {
   const formData = await request.formData();
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
@@ -17,24 +17,24 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     );
   }
 
-  const { error } = await signUp({
+  const { error: signUpError } = await signUp({
     email,
     password,
   });
 
-  if (error) {
-    console.error("Sign-up error:", error.message, error);
+  if (signUpError) {
+    console.error("Sign-up error:", signUpError.message, signUpError);
 
     // Make error messages more user-friendly
-    let userMessage = error.message;
+    let userMessage = signUpError.message;
 
-    if (error.message.includes("Password should contain at least one character")) {
+    if (signUpError.message.includes("Password should contain at least one character")) {
       userMessage = "Password must include: lowercase letter, uppercase letter, number, and special character (!@#$%^&* etc.)";
-    } else if (error.message.includes("Password should be at least")) {
+    } else if (signUpError.message.includes("Password should be at least")) {
       userMessage = "Password must be at least 6 characters long";
-    } else if (error.message.includes("User already registered")) {
+    } else if (signUpError.message.includes("User already registered")) {
       userMessage = "An account with this email already exists. Please sign in instead.";
-    } else if (error.message.includes("Invalid email")) {
+    } else if (signUpError.message.includes("Invalid email")) {
       userMessage = "Please enter a valid email address";
     }
 
@@ -43,6 +43,35 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  // Auto-login after successful signup
+  const { data: signInData, error: signInError } = await signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInError || !signInData.session) {
+    console.error("Auto-login after signup failed:", signInError);
+    // Fall back to manual sign-in
+    return redirect("/sign-in?message=Account created. Please sign in.");
+  }
+
+  // Set session cookies
+  cookies.set("sb-access-token", signInData.session.access_token, {
+    path: "/",
+    httpOnly: true,
+    secure: import.meta.env.PROD,
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  });
+
+  cookies.set("sb-refresh-token", signInData.session.refresh_token, {
+    path: "/",
+    httpOnly: true,
+    secure: import.meta.env.PROD,
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+  });
 
   // Send welcome email
   const origin = new URL(request.url).origin;
@@ -95,5 +124,6 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     console.error('Failed to send welcome email:', error);
   });
 
-  return redirect("/sign-in");
+  // Redirect to dashboard after successful auto-login
+  return redirect("/dashboard");
 };
