@@ -438,6 +438,84 @@ export async function createRoyaltyTransactionsForSaleItemAsset(params: {
 }
 
 /**
+ * Create royalty transactions for a product sale
+ * Handles both direct product royalties and embedded product royalties
+ */
+export async function createRoyaltyTransactionsForProduct(params: {
+  saleId: string;
+  saleItemId: string;
+  saleItemAssetId: string;
+  productId: string;
+  saleItemPriceCents: number;
+  currency: string;
+}): Promise<SaleRoyaltyTransaction[]> {
+  const { saleId, saleItemId, saleItemAssetId, productId, saleItemPriceCents, currency } = params;
+
+  // Get all royalties for this product
+  const productRoyalties = await getProductRoyalties(productId);
+
+  if (productRoyalties.length === 0) {
+    console.log(`No royalties configured for product ${productId}`);
+    return [];
+  }
+
+  const createdTransactions: SaleRoyaltyTransaction[] = [];
+
+  for (const royalty of productRoyalties) {
+    // Calculate the royalty amount based on type
+    let calculatedCents: number;
+
+    if (royalty.royalty_type === 'fixed') {
+      // Fixed amount in cents
+      calculatedCents = royalty.royalty_value;
+    } else if (royalty.royalty_type === 'percentage') {
+      // Percentage of sale price
+      calculatedCents = Math.round((saleItemPriceCents * royalty.royalty_value) / 100);
+    } else {
+      console.warn(`Unknown royalty type: ${royalty.royalty_type}`);
+      continue;
+    }
+
+    // Skip if calculated amount is 0 or negative
+    if (calculatedCents <= 0) {
+      console.warn(`Calculated royalty is ${calculatedCents} for royalty ${royalty.id}, skipping`);
+      continue;
+    }
+
+    // Create the royalty transaction
+    const { data, error } = await serverClient
+      .from('sale_royalty_transactions')
+      .insert({
+        sale_id: saleId,
+        sale_item_id: saleItemId,
+        sale_item_asset_id: saleItemAssetId,
+        asset_royalty_id: royalty.id,
+        recipient_user_id: royalty.user_id,
+        royalty_type: royalty.royalty_type,
+        royalty_value: royalty.royalty_value,
+        calculated_cents: calculatedCents,
+        status: 'ready_to_pay',
+        stripe_transfer_id: '',
+        paid_at: null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error creating royalty transaction for royalty ${royalty.id}:`, error);
+      continue;
+    }
+
+    if (data) {
+      createdTransactions.push(data as SaleRoyaltyTransaction);
+      console.log(`Created royalty transaction: ${data.id} for ${calculatedCents / 100} ${currency} to user ${royalty.user_id}`);
+    }
+  }
+
+  return createdTransactions;
+}
+
+/**
  * Mark all royalty transactions for a sale as refunded
  * This prevents payouts for refunded transactions
  */

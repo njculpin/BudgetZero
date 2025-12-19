@@ -3,6 +3,9 @@ import "./product-royalty-breakdown.css";
 
 export interface ProductRoyaltyBreakdownProps {
   productId: string;
+  productOwnerId?: string;
+  productOwnerHandle?: string;
+  productOwnerName?: string;
 }
 
 interface RoyaltyRecipient {
@@ -35,19 +38,13 @@ export default function ProductRoyaltyBreakdown(props: ProductRoyaltyBreakdownPr
         }
         const royaltiesData = await royaltiesResponse.json();
 
-        // Fetch product owner info
-        const productResponse = await fetch(`/api/products/${productId}`);
-        if (!productResponse.ok) {
-          throw new Error("Failed to fetch product");
-        }
-        const productData = await productResponse.json();
-
+        // Use provided owner info or default values
         return {
           totalPrice: priceData.totalPrice || 0,
           productOwner: {
-            userId: productData.product.user_id,
-            userHandle: productData.owner?.handle || "Unknown",
-            userName: productData.owner?.full_name || productData.owner?.handle || "Unknown",
+            userId: props.productOwnerId || "",
+            userHandle: props.productOwnerHandle || "Unknown",
+            userName: props.productOwnerName || props.productOwnerHandle || "Unknown",
           },
           royalties: royaltiesData.royalties || [],
         };

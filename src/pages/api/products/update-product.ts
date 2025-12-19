@@ -11,6 +11,7 @@ const updateProductSchema = z.object({
   status: z.enum(["draft", "public", "archived"]).optional(),
   handle: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  isEmbeddable: z.boolean().optional(),
 });
 
 /**
@@ -102,6 +103,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       status: validatedData.status,
       handle: validatedData.handle,
       tags: validatedData.tags,
+      isEmbeddable: validatedData.isEmbeddable,
     });
 
     if (!updatedProduct) {
@@ -204,6 +206,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const description = formData.get("description") as string;
     const status = formData.get("status") as string;
     const tagsJson = formData.get("tags") as string;
+    const isEmbeddableString = formData.get("isEmbeddable") as string;
 
     // Handle both single cover image and multiple images
     const coverImageFile = formData.get("coverImage") as File | null;
@@ -282,6 +285,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       description?: string;
       status?: "draft" | "private" | "public" | "archived";
       tags?: string[];
+      isEmbeddable?: boolean;
     } = {};
 
     if (title) {
@@ -295,6 +299,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
     if (tagsJson) {
       updateData.tags = JSON.parse(tagsJson);
+    }
+    if (isEmbeddableString !== null && isEmbeddableString !== undefined) {
+      updateData.isEmbeddable = isEmbeddableString === 'true';
     }
 
     const updatedProduct = await updateProduct(productId, updateData);

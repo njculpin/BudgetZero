@@ -25,6 +25,7 @@ export interface UpdateProductParams {
   handle?: string;
   tags?: string[];
   publicAt?: string;
+  isEmbeddable?: boolean;
 }
 
 /**
@@ -204,6 +205,7 @@ export const updateProduct = async (
   if (updatesToApply.status !== undefined) updateData.status = updatesToApply.status;
   if (updatesToApply.handle !== undefined) updateData.handle = updatesToApply.handle;
   if (updatesToApply.publicAt !== undefined) updateData.public_at = updatesToApply.publicAt;
+  if (updatesToApply.isEmbeddable !== undefined) updateData.is_embeddable = updatesToApply.isEmbeddable;
 
   const { error } = await serverClient
     .from('products')
@@ -960,6 +962,24 @@ export const calculateProductTotalPrice = async (productId: string): Promise<num
  * Get product price breakdown
  * Returns detailed breakdown of file prices and embedded product prices
  */
+/**
+ * Get embedded products (product components) for a product
+ */
+export const getProductComponents = async (productId: string): Promise<ProductComponent[]> => {
+  const { data, error } = await serverClient
+    .from('product_components')
+    .select('*')
+    .eq('parent_product_id', productId)
+    .eq('deleted', false);
+
+  if (error) {
+    console.error('Error fetching product components:', error);
+    return [];
+  }
+
+  return data as ProductComponent[];
+};
+
 export const getProductPriceBreakdown = async (productId: string): Promise<{
   filePriceTotal: number;
   documentPriceTotal: number;

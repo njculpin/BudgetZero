@@ -15,6 +15,7 @@ export interface Product extends BaseEntity {
   needs_attention: boolean;
   attention_reason: string | null;
   attention_since: string | null;
+  is_embeddable: boolean;
 }
 
 export interface ProductCollaborator extends BaseEntity {

@@ -53,11 +53,11 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       return new Response("File not found", { status: 404 });
     }
 
-    // Create signed download URL (expires in 1 hour)
+    // Create signed download URL (expires in 24 hours)
     const signedUrl = await createSignedUrl(
       'product-files',
       file.storage_path,
-      3600
+      86400
     );
 
     if (!signedUrl) {

@@ -22,19 +22,17 @@
 }
 
 .edit-profile-form__input {
-  min-width: 0;
+  width: 100%;
   height: var(--height-input-md);
-  padding: var(--spacing-xxs) var(--spacing-lg);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--input);
+  padding: var(--input-padding-y) var(--input-padding-x);
+  border-radius: var(--input-radius);
+  border: var(--border-width-default) solid var(--input);
   background-color: transparent;
   color: var(--foreground);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   box-shadow: var(--shadow-xs);
-  transition: color var(--duration-normal) var(--ease-in-out),
-    box-shadow var(--duration-normal) var(--ease-in-out),
-    border-color var(--duration-normal) var(--ease-in-out);
+  transition: var(--input-transition);
   outline: none;
 }
 
@@ -44,33 +42,35 @@
 
 .edit-profile-form__input:focus-visible {
   border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+  box-shadow: var(--focus-shadow);
 }
 
 .edit-profile-form__input:disabled {
   pointer-events: none;
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: var(--opacity-50);
 }
 
 .edit-profile-form__textarea {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: var(--border-width-default) solid var(--input-border);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
+  padding: var(--input-padding-y) var(--input-padding-x);
+  border: var(--border-width-default) solid var(--input);
+  border-radius: var(--input-radius);
+  font-size: var(--text-base);
   font-family: inherit;
   line-height: var(--leading-normal);
   resize: vertical;
-  transition: border-color var(--duration-normal) var(--ease-in-out);
+  min-height: 6rem;
+  transition: var(--input-transition);
   background-color: transparent;
   color: var(--foreground);
+  box-shadow: var(--shadow-xs);
 }
 
 .edit-profile-form__textarea:focus {
   outline: none;
   border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+  box-shadow: var(--focus-shadow);
 }
 
 .edit-profile-form__textarea:disabled {
@@ -118,9 +118,9 @@
 
 /* ===== Error Message ===== */
 .edit-profile-form__error {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md);
   background-color: var(--destructive);
-  color: var(--color-white);
+  color: var(--destructive-foreground);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);

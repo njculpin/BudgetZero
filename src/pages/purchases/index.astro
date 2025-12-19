@@ -7,7 +7,7 @@ import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import { setSession } from "@/lib/auth";
 import { getUserSales, getSaleItems } from "@/lib/data-access/sales";
-import { getProductById, getVariantById, getProductFiles } from "@/lib/data-access/products";
+import { getProductById, getProductFiles } from "@/lib/data-access/products";
 import PageHeader from "@/components/PageHeader.astro";
 import EmptyState from "@/components/EmptyState.astro";
 
@@ -48,13 +48,11 @@ const purchasesWithDetails = await Promise.all(
     const itemsWithDetails = await Promise.all(
       saleItems.map(async (item) => {
         const product = await getProductById(item.product_id);
-        const variant = await getVariantById(item.variant_id);
         const files = product ? await getProductFiles(product.id) : [];
 
         return {
           ...item,
           product,
-          variant,
           files,
         };
       })
@@ -103,9 +101,11 @@ const purchasesWithDetails = await Promise.all(
                         <h3 class="purchase-item__product">
                           {item.product?.title}
                         </h3>
-                        <p class="purchase-item__variant">
-                          {item.variant?.title}
-                        </p>
+                        {item.product?.description && (
+                          <p class="purchase-item__description">
+                            {item.product.description}
+                          </p>
+                        )}
                       </div>
 
                       {item.files && item.files.length > 0 ? (
@@ -218,10 +218,11 @@ const purchasesWithDetails = await Promise.all(
   color: var(--foreground);
 }
 
-.purchase-item__variant {
+.purchase-item__description {
   margin: 0;
   font-size: var(--text-sm);
   color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
 }
 
 .purchase-item__assets-title {

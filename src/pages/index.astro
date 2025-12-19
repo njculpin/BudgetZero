@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Button from "@/components/Button.astro";
 import Badge from "@/components/Badge.astro";
-import { getAllProducts, getProductImages } from "@/lib/data-access/products";
+import { getAllProducts, getProductImages, getProductFiles, getProductDocuments, getProductComponents } from "@/lib/data-access/products";
 import { getActiveJam } from "@/lib/data-access/jams";
 import { getUserById } from "@/lib/data-access/users";
 
@@ -19,6 +19,11 @@ const getProductCards = async (products: typeof allProducts) => {
         : null;
       const owner = await getUserById(product.user_id);
 
+      // Get content counts for "What's Included" preview
+      const files = await getProductFiles(product.id);
+      const documents = await getProductDocuments(product.id);
+      const components = await getProductComponents(product.id);
+
       return {
         id: product.id,
         handle: product.handle,
@@ -28,7 +33,10 @@ const getProductCards = async (products: typeof allProducts) => {
         ownerName: owner?.name || owner?.handle || 'Creator',
         ownerHandle: owner?.handle || '',
         status: product.status,
-        createdAt: product.created_at
+        createdAt: product.created_at,
+        fileCount: files.length,
+        documentCount: documents.length,
+        componentCount: components.length,
       };
     })
   );
@@ -100,11 +108,33 @@ const categories = [
               </div>
               <div class="product-card__content">
                 <h3 class="product-card__title">{product.title}</h3>
-                <p class="product-card__creator">by {product.ownerName}</p>
+                <p class="product-card__creator">
+                  by <a href={`/users/${product.ownerHandle}`} class="product-card__creator-link" onclick="event.stopPropagation()">{product.ownerName}</a>
+                </p>
                 <p class="product-card__description">{product.description}</p>
-                <div class="product-card__meta">
-                  <Badge variant={product.status as any} size="sm">{product.status}</Badge>
-                </div>
+
+                {(product.fileCount > 0 || product.documentCount > 0 || product.componentCount > 0) && (
+                  <div class="product-card__includes">
+                    <span class="product-card__includes-label">Includes:</span>
+                    <div class="product-card__includes-items">
+                      {product.fileCount > 0 && (
+                        <span class="product-card__includes-item">
+                          📁 {product.fileCount} {product.fileCount === 1 ? 'file' : 'files'}
+                        </span>
+                      )}
+                      {product.documentCount > 0 && (
+                        <span class="product-card__includes-item">
+                          📄 {product.documentCount} {product.documentCount === 1 ? 'document' : 'documents'}
+                        </span>
+                      )}
+                      {product.componentCount > 0 && (
+                        <span class="product-card__includes-item">
+                          🧩 {product.componentCount} {product.componentCount === 1 ? 'component' : 'components'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </a>
           ))}
@@ -125,11 +155,33 @@ const categories = [
               </div>
               <div class="product-card__content">
                 <h3 class="product-card__title">{product.title}</h3>
-                <p class="product-card__creator">by {product.ownerName}</p>
+                <p class="product-card__creator">
+                  by <a href={`/users/${product.ownerHandle}`} class="product-card__creator-link" onclick="event.stopPropagation()">{product.ownerName}</a>
+                </p>
                 <p class="product-card__description">{product.description}</p>
-                <div class="product-card__meta">
-                  <Badge variant={product.status as any} size="sm">{product.status}</Badge>
-                </div>
+
+                {(product.fileCount > 0 || product.documentCount > 0 || product.componentCount > 0) && (
+                  <div class="product-card__includes">
+                    <span class="product-card__includes-label">Includes:</span>
+                    <div class="product-card__includes-items">
+                      {product.fileCount > 0 && (
+                        <span class="product-card__includes-item">
+                          📁 {product.fileCount} {product.fileCount === 1 ? 'file' : 'files'}
+                        </span>
+                      )}
+                      {product.documentCount > 0 && (
+                        <span class="product-card__includes-item">
+                          📄 {product.documentCount} {product.documentCount === 1 ? 'document' : 'documents'}
+                        </span>
+                      )}
+                      {product.componentCount > 0 && (
+                        <span class="product-card__includes-item">
+                          🧩 {product.componentCount} {product.componentCount === 1 ? 'component' : 'components'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </a>
           ))}
@@ -355,6 +407,18 @@ const categories = [
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted-foreground);
+  }
+
+  .product-card__creator-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+    transition: color 0.2s ease;
+  }
+
+  .product-card__creator-link:hover {
+    color: var(--primary);
+    text-decoration: underline;
   }
 
   .product-card__description {

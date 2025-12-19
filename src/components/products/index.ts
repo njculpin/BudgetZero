@@ -8,6 +8,8 @@ export { default as ProductImagesForm } from './ProductImagesForm';
 export { default as ProductFilesForm } from './ProductFilesForm';
 export { default as ProductDocumentsForm } from './ProductDocumentsForm';
 export { default as ProductStatusEditor } from './ProductStatusEditor';
+export { default as ProductRequirementsChecklist } from './ProductRequirementsChecklist';
+export { default as ProductEmbeddableToggle } from './ProductEmbeddableToggle';
 export { default as ProductDeleteButton } from './ProductDeleteButton';
 export { default as ProductChat } from './ProductChat';
 export { default as ProductConflictBanner } from './ProductConflictBanner';
