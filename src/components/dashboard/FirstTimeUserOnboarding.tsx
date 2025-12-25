@@ -15,23 +15,18 @@ export default function FirstTimeUserOnboarding() {
 
   // Handler functions - defined before steps array so they can be referenced
   const handleComplete = () => {
-    console.log("handleComplete called");
     // Set localStorage flag so this doesn't show again
     if (typeof window !== "undefined") {
       localStorage.setItem("onboarding_seen", "true");
-      console.log("localStorage set:", localStorage.getItem("onboarding_seen"));
     }
     setIsVisible(false);
-    console.log("isVisible set to false");
   };
 
   const handleSkip = () => {
-    console.log("handleSkip called");
     handleComplete();
   };
 
   const handleNext = () => {
-    console.log("handleNext called, current step:", currentStep());
     if (currentStep() < steps.length - 1) {
       setCurrentStep(currentStep() + 1);
     } else {

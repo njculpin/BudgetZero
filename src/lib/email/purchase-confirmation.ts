@@ -169,10 +169,6 @@ Game Loopers - A social commerce platform for tabletop game creators
       text,
     });
 
-    if (result.success) {
-      console.log(`Purchase confirmation email sent to ${data.to} for sale ${data.saleId}`);
-    }
-
     return result.success;
   } catch (error) {
     console.error('Error sending purchase confirmation email:', error);

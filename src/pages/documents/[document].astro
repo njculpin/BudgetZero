@@ -22,6 +22,7 @@ import DocumentChat from "@/components/documents/DocumentChat";
 import { DocumentAttachmentsForm } from "@/components/documents";
 import EditableBreadcrumb from "@/components/interactive/EditableBreadcrumb";
 import Breadcrumb from "@/components/Breadcrumb.astro";
+import Badge from "@/components/Badge.astro";
 
 const { params, cookies } = Astro;
 const documentHandle = params.document;
@@ -120,25 +121,36 @@ const formatDate = (dateStr: string) => {
         />
       )}
 
-      <!-- Hero Section -->
-      <div class="document-hero">
-        <div class="document-hero__content">
-          <h1 class="document-hero__title">{document.title}</h1>
-          <div class="document-hero__meta">
-            <span class="document-hero__status">DRAFT</span>
+      <!-- Page Header -->
+      <header class="page-header">
+        <div class="page-header__content">
+          <h1 class="page-header__title">{document.title}</h1>
+          <div class="page-header__meta">
             {owner && (
-              <span class="document-hero__author">
-                by <a href={`/users/${owner.handle}`} class="document-hero__author-link">
+              <span class="page-header__author">
+                by <a href={`/users/${owner.handle}`} class="page-header__author-link">
                   {owner.name || owner.handle}
                 </a>
               </span>
             )}
+            <span class="page-header__divider">•</span>
+            <Badge variant="draft" size="sm">
+              DRAFT
+            </Badge>
+            {canEdit && (
+              <>
+                <span class="page-header__divider">•</span>
+                <Badge variant="primary" size="sm">
+                  {isOwner ? "Owner • Changes auto-save" : "Collaborator • Changes auto-save"}
+                </Badge>
+              </>
+            )}
           </div>
           {document.description && (
-            <p class="document-hero__description">{document.description}</p>
+            <p class="page-header__description">{document.description}</p>
           )}
         </div>
-      </div>
+      </header>
 
       <div class="page-columns">
         <!-- Main Content Column -->
@@ -316,75 +328,66 @@ const formatDate = (dateStr: string) => {
   font-weight: var(--font-weight-medium);
 }
 
-/* ===== Document Hero Section ===== */
-.document-hero {
-  position: relative;
-  background-color: var(--primary);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  margin-bottom: var(--spacing-4xl);
+/* ===== Page Header (Compact) ===== */
+.page-header {
+  padding: var(--spacing-2xl) 0;
+  border-bottom: var(--border-width-default) solid var(--border);
+  margin-bottom: var(--spacing-3xl);
 }
 
-.document-hero__content {
-  padding: var(--spacing-4xl);
+.page-header__content {
   display: flex;
   flex-direction: column;
   gap: var(--gap-md);
 }
 
-.document-hero__title {
+.page-header__title {
   margin: 0;
   font-size: var(--text-3xl);
   font-weight: var(--font-weight-bold);
-  color: var(--primary-foreground);
   line-height: var(--leading-tight);
+  color: var(--foreground);
 }
 
-.document-hero__meta {
+.page-header__meta {
   display: flex;
   align-items: center;
-  gap: var(--gap-lg);
+  gap: var(--gap-md);
   flex-wrap: wrap;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
 }
 
-.document-hero__status {
-  display: inline-block;
-  padding: var(--spacing-xs) var(--spacing-lg);
-  border-radius: var(--radius-full);
-  font-size: var(--text-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background-color: oklch(from var(--primary-foreground) l c h / 0.2);
-  color: var(--primary-foreground);
+.page-header__author {
+  color: var(--muted-foreground);
 }
 
-.document-hero__author {
-  font-size: var(--text-base);
-  color: oklch(from var(--primary-foreground) l c h / 0.9);
-}
-
-.document-hero__author-link {
-  color: var(--primary-foreground);
+.page-header__author-link {
+  color: var(--foreground);
   text-decoration: none;
-  font-weight: var(--font-weight-semibold);
-  border-bottom: 1px solid oklch(from var(--primary-foreground) l c h / 0.5);
+  font-weight: var(--font-weight-medium);
+  transition: color var(--duration-fast) var(--ease-in-out);
 }
 
-.document-hero__author-link:hover {
-  border-bottom-color: var(--primary-foreground);
+.page-header__author-link:hover {
+  color: var(--primary);
+  text-decoration: underline;
 }
 
-.document-hero__author-link:focus-visible {
-  outline: 2px solid var(--primary-foreground);
+.page-header__author-link:focus-visible {
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-.document-hero__description {
-  margin: var(--spacing-md) 0 0;
+.page-header__divider {
+  color: var(--muted-foreground);
+}
+
+.page-header__description {
+  margin: var(--spacing-sm) 0 0;
   font-size: var(--text-base);
-  color: oklch(from var(--primary-foreground) l c h / 0.85);
+  color: var(--muted-foreground);
   line-height: var(--leading-relaxed);
   max-width: 600px;
 }
@@ -446,15 +449,16 @@ const formatDate = (dateStr: string) => {
 
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
-  .document-hero__content {
-    padding: var(--spacing-3xl) var(--spacing-2xl);
+  .page-header {
+    padding: var(--spacing-xl) 0;
+    margin-bottom: var(--spacing-2xl);
   }
 
-  .document-hero__title {
+  .page-header__title {
     font-size: var(--text-2xl);
   }
 
-  .document-hero__meta {
+  .page-header__meta {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--gap-sm);

@@ -272,6 +272,35 @@
   color: var(--muted-foreground);
 }
 
+/* ===== Empty State ===== */
+.file-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-3xl) var(--spacing-2xl);
+  text-align: center;
+}
+
+.file-list__empty-icon {
+  font-size: var(--text-6xl);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.file-list__empty-text {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.file-list__empty-hint {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
 /* ===== Upload Area ===== */
 .file-list__upload {
   display: flex;

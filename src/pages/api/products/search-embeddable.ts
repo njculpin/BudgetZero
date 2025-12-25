@@ -17,6 +17,7 @@ export const GET: APIRoute = async ({ url }) => {
     // 1. Public OR owned by the user
     // 2. Match the search query (title or handle)
     // 3. Not deleted
+    // TODO: Move to data access layer
     const { data: products, error } = await serverClient
       .from("products")
       .select(`

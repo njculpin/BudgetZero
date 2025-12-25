@@ -22,8 +22,15 @@ import {
 import type { Notification, NotificationSettings } from '@/types';
 
 // Mock the database client
-vi.mock('../../database/client', () => ({
-  createClient: vi.fn(),
+vi.mock('../client', () => ({
+  serverClient: {
+    from: vi.fn(),
+    rpc: vi.fn(),
+  },
+  dataClient: {
+    from: vi.fn(),
+    rpc: vi.fn(),
+  },
 }));
 
 describe('Notification Data Access Layer', () => {
@@ -32,16 +39,13 @@ describe('Notification Data Access Layer', () => {
     rpc: ReturnType<typeof vi.fn>;
   };
 
-  beforeEach(() => {
-    // Create fresh mock client for each test
-    mockClient = {
-      from: vi.fn(),
-      rpc: vi.fn(),
-    };
+  beforeEach(async () => {
+    // Get reference to mocked client
+    const { serverClient } = await import('../client');
+    mockClient = serverClient as typeof mockClient;
 
-    // Setup the mock to return our mock client
-    const { createClient } = await import('../../database/client');
-    vi.mocked(createClient).mockResolvedValue(mockClient as never);
+    // Reset mocks before each test
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
@@ -212,9 +216,8 @@ describe('Notification Data Access Layer', () => {
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        // Note: count query returns count, not data
+        then: vi.fn((resolve) => resolve({ count: 5, error: null })),
       };
-      mockQuery.eq.mockResolvedValue({ count: 5, error: null });
 
       mockClient.from.mockReturnValue(mockQuery);
 
@@ -231,8 +234,8 @@ describe('Notification Data Access Layer', () => {
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        then: vi.fn((resolve) => resolve({ count: 0, error: null })),
       };
-      mockQuery.eq.mockResolvedValue({ count: 0, error: null });
 
       mockClient.from.mockReturnValue(mockQuery);
 
@@ -245,11 +248,11 @@ describe('Notification Data Access Layer', () => {
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        then: vi.fn((resolve) => resolve({
+          count: null,
+          error: { message: 'Count failed' }
+        })),
       };
-      mockQuery.eq.mockResolvedValue({
-        count: null,
-        error: { message: 'Count failed' }
-      });
 
       mockClient.from.mockReturnValue(mockQuery);
 
@@ -262,8 +265,8 @@ describe('Notification Data Access Layer', () => {
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        then: vi.fn((resolve) => resolve({ count: null, error: null })),
       };
-      mockQuery.eq.mockResolvedValue({ count: null, error: null });
 
       mockClient.from.mockReturnValue(mockQuery);
 
@@ -383,8 +386,8 @@ describe('Notification Data Access Layer', () => {
       const mockQuery = {
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        then: vi.fn((resolve) => resolve({ error: null })),
       };
-      mockQuery.eq.mockResolvedValue({ error: null });
 
       mockClient.from.mockReturnValue(mockQuery);
 
@@ -405,8 +408,8 @@ describe('Notification Data Access Layer', () => {
       const mockQuery = {
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        then: vi.fn((resolve) => resolve({ error: { message: 'Bulk update failed' } })),
       };
-      mockQuery.eq.mockResolvedValue({ error: { message: 'Bulk update failed' } });
 
       mockClient.from.mockReturnValue(mockQuery);
 

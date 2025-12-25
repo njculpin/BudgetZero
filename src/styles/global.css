@@ -79,6 +79,20 @@
   --destructive-bg: oklch(from var(--destructive) l c h / 0.1);
   --destructive-fg: var(--destructive);
 
+  /* ===== Status Badge Colors ===== */
+  --status-draft-bg: var(--muted);
+  --status-draft-fg: var(--muted-foreground);
+  --status-draft-border: var(--border);
+  --status-private-bg: oklch(0.95 0.02 240);
+  --status-private-fg: oklch(0.35 0.08 240);
+  --status-private-border: oklch(0.85 0.04 240);
+  --status-public-bg: oklch(0.95 0.10 145);
+  --status-public-fg: oklch(0.35 0.15 145);
+  --status-public-border: oklch(0.80 0.12 145);
+  --status-archived-bg: oklch(0.95 0.02 0);
+  --status-archived-fg: oklch(0.40 0 0);
+  --status-archived-border: oklch(0.85 0 0);
+
   /* ===== Interactive Colors ===== */
   --primary-hover: oklch(from var(--primary) calc(l * 0.9) c h);
   --color-link: var(--primary);
@@ -370,12 +384,6 @@
   --modal-radius: var(--radius-2xl);
   --modal-shadow: var(--shadow-2xl);
 
-  /* ===== Layout Tokens: Hero Sections ===== */
-  --hero-min-height: 300px;
-  --hero-min-height-lg: 400px;
-  --hero-padding: var(--spacing-5xl) var(--spacing-4xl);
-  --hero-padding-sm: var(--spacing-3xl) var(--spacing-2xl);
-
   /* ===== Layout Tokens: Grid Columns ===== */
   --grid-cols-1: 1fr;
   --grid-cols-2: repeat(2, 1fr);
@@ -383,6 +391,18 @@
   --grid-cols-4: repeat(4, 1fr);
   --grid-cols-5: repeat(5, 1fr);
   --grid-cols-sidebar: 2fr 1fr;
+
+  /* ===== Component Tokens: Product Cards ===== */
+  --product-card-hover-lift: translateY(-4px);
+  --product-card-image-scale-hover: scale(1.05);
+  --product-card-image-aspect: 16 / 9;
+
+  /* ===== Component Tokens: File Type Badges ===== */
+  --file-type-badge-width: 3rem;
+
+  /* ===== Component Tokens: Browse Grid ===== */
+  --grid-card-min-width: 18.75rem;
+  --grid-card-min-width-md: 15.625rem;
 }
 
 .dark {
@@ -560,7 +580,7 @@ blockquote {
 }
 
 /* Responsive Typography */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   h1 {
     font-size: var(--text-3xl);
   }
@@ -605,7 +625,7 @@ blockquote {
 }
 
 /* Responsive: Reduce gaps on mobile */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .page {
     padding: var(--spacing-xl);
   }
@@ -625,20 +645,20 @@ blockquote {
   font-weight: var(--font-weight-semibold);
   border-radius: var(--radius-full);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wider);
   white-space: nowrap;
 }
 
 .status-badge--draft {
-  background: var(--muted);
-  color: var(--muted-foreground);
-  border: var(--border-width-default) solid var(--border);
+  background: var(--status-draft-bg);
+  color: var(--status-draft-fg);
+  border: var(--border-width-default) solid var(--status-draft-border);
 }
 
 .status-badge--private {
-  background: oklch(0.95 0.02 240);
-  color: oklch(0.35 0.08 240);
-  border: var(--border-width-default) solid oklch(0.85 0.04 240);
+  background: var(--status-private-bg);
+  color: var(--status-private-fg);
+  border: var(--border-width-default) solid var(--status-private-border);
 }
 
 .status-badge--unlisted {
@@ -648,15 +668,15 @@ blockquote {
 }
 
 .status-badge--public {
-  background: oklch(0.95 0.10 145);
-  color: oklch(0.35 0.15 145);
-  border: var(--border-width-default) solid oklch(0.80 0.12 145);
+  background: var(--status-public-bg);
+  color: var(--status-public-fg);
+  border: var(--border-width-default) solid var(--status-public-border);
 }
 
 .status-badge--archived {
-  background: oklch(0.95 0.02 0);
-  color: oklch(0.40 0 0);
-  border: var(--border-width-default) solid oklch(0.85 0 0);
+  background: var(--status-archived-bg);
+  color: var(--status-archived-fg);
+  border: var(--border-width-default) solid var(--status-archived-border);
 }
 
 .status-badge--large {
@@ -667,7 +687,7 @@ blockquote {
 /* ===== Shared Browse Page Components ===== */
 
 /* Page Header with Action */
-.page-header-with-action {
+.page-header--with-action {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -816,7 +836,7 @@ blockquote {
 /* Product Card Grid - Unified Card Style (Kickstarter-inspired) */
 .browse-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-card-min-width), 1fr));
   gap: var(--spacing-3xl);
   margin-bottom: var(--spacing-6xl);
 }
@@ -828,11 +848,11 @@ blockquote {
   color: inherit;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: transform 0.2s var(--ease-in-out), box-shadow 0.2s var(--ease-in-out);
+  transition: transform var(--duration-normal) var(--ease-in-out), box-shadow var(--duration-normal) var(--ease-in-out);
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
+  transform: var(--product-card-hover-lift);
   box-shadow: var(--shadow-lg);
 }
 
@@ -845,7 +865,7 @@ blockquote {
 .product-card__image {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: var(--product-card-image-aspect);
   overflow: hidden;
   background-color: var(--muted);
 }
@@ -859,7 +879,7 @@ blockquote {
 }
 
 .product-card:hover .product-card__image img {
-  transform: scale(1.05);
+  transform: var(--product-card-image-scale-hover);
 }
 
 .product-card__content {
@@ -908,7 +928,7 @@ blockquote {
   font-weight: var(--font-weight-semibold);
   color: var(--muted-foreground);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wider);
 }
 
 .product-card__includes-items {
@@ -971,7 +991,7 @@ blockquote {
   font-weight: var(--font-weight-semibold);
   color: var(--muted-foreground);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wider);
 }
 
 .product-card__files-list {
@@ -994,15 +1014,15 @@ blockquote {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px var(--spacing-xs);
+  padding: var(--spacing-xxs) var(--spacing-xs);
   background-color: var(--primary);
   color: var(--primary-foreground);
   font-size: var(--text-xs);
   font-weight: var(--font-weight-bold);
   border-radius: var(--radius-sm);
   text-transform: uppercase;
-  letter-spacing: 0.025em;
-  min-width: 3rem;
+  letter-spacing: var(--tracking-wide);
+  min-width: var(--file-type-badge-width);
   flex-shrink: 0;
 }
 
@@ -1018,18 +1038,18 @@ blockquote {
   font-size: var(--text-xs);
   color: var(--muted-foreground);
   font-style: italic;
-  padding-left: calc(3rem + var(--gap-sm));
+  padding-left: calc(var(--file-type-badge-width) + var(--gap-sm));
 }
 
 /* Responsive adjustments */
-@media (max-width: 1024px) {
+@media (max-width: 64rem) {
   .browse-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--grid-card-min-width-md), 1fr));
     gap: var(--spacing-2xl);
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
   .browse-grid {
     grid-template-columns: 1fr;
     gap: var(--spacing-xl);
@@ -1100,7 +1120,7 @@ blockquote {
 }
 
 /* Browse Responsive */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .page-header-with-action {
     flex-direction: column;
     gap: var(--gap-md);

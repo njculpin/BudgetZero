@@ -980,10 +980,15 @@ export const getProductComponents = async (productId: string): Promise<ProductCo
   return data as ProductComponent[];
 };
 
+// Platform fee percentage (10%)
+const PLATFORM_FEE_PERCENTAGE = 0.10;
+
 export const getProductPriceBreakdown = async (productId: string): Promise<{
   filePriceTotal: number;
   documentPriceTotal: number;
   embeddedPriceTotal: number;
+  subtotal: number;
+  platformFee: number;
   totalPrice: number;
 }> => {
   // Get file prices
@@ -1022,11 +1027,17 @@ export const getProductPriceBreakdown = async (productId: string): Promise<{
     0
   );
 
+  const subtotal = filePriceTotal + documentPriceTotal + embeddedPriceTotal;
+  const platformFee = Math.round(subtotal * PLATFORM_FEE_PERCENTAGE);
+  const totalPrice = subtotal + platformFee;
+
   return {
     filePriceTotal,
     documentPriceTotal,
     embeddedPriceTotal,
-    totalPrice: filePriceTotal + documentPriceTotal + embeddedPriceTotal,
+    subtotal,
+    platformFee,
+    totalPrice,
   };
 };
 

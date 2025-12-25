@@ -9,10 +9,10 @@ Game Loopers is a social commerce platform for tabletop game creators (designers
 **Key Documentation:**
 - `/ROADMAP.md` - Product roadmap, phasing strategy, and success metrics
 - `/PERSONAS.md` - Detailed user personas (current + future)
-- `/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
+- `/.claude/skills/CSS/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
 - `/CLAUDE.md` - This file (development guidelines)
 
-**Current Status:** ~60% complete toward MVP launch (see ROADMAP.md for details)
+**Current Status:** ~90-95% complete toward MVP launch (see ROADMAP.md for details)
 
 ## Development Commands
 
@@ -203,17 +203,22 @@ Astro file-based routing in `/src/pages/`:
 
 **Core Entities:**
 - **Users**: Creators and customers with handles, bios, Stripe IDs for payouts
-- **Products**: Sellable items with variants, prices, downloadable files, and embeddable components
-- **Documents**: Private collaborative docs (Notion-like blocks) that can generate PDFs
+- **Products**: Sellable items with files, documents, and embeddable components (product-in-product)
+- **Documents**: Private collaborative docs (Notion-like blocks) that can be attached to products
 - **Jams**: Game jams with products, prizes, reviews
 - **Cart/Sales**: E-commerce with line items, file downloads, royalty transactions
 
 **Key Relationships:**
-- Products have ProductVariants (SKUs with options/pricing)
-- Products have ProductFiles (downloadable content attached to the product)
-- ProductComponents link variants to embeddable products (product-in-product pattern)
-- ProductRoyalties define splits (fixed $ or %) paid to contributors
+- Products have ProductFiles (downloadable content with individual pricing)
+- Products have ProductDocuments (attached documents with individual pricing)
+- ProductComponents link parent products to child products (product-in-product embedding pattern)
+- ProductRoyalties are calculated from embedded components (child product owners earn royalties)
 - SaleRoyaltyTransactions track payments to contributors per sale
+
+**Architectural Changes (December 2024):**
+- **Removed:** Variant abstraction (SKUs/options) - added complexity without clear value
+- **Removed:** Asset abstraction - migrated to product-centric model
+- **Simplified:** Products are now the atomic unit; variants were over-engineering for MVP
 
 **Soft Deletes:**
 Most entities have `deleted` boolean and `deleted_at` timestamp. Never hard-delete records.
@@ -290,9 +295,20 @@ Auth uses Supabase PKCE flow with cookies:
 
 See `/src/pages/dashboard.astro` for reference implementation.
 
-## Migration Notes
+## Recent Architectural Changes
 
-This codebase recently migrated from another framework to Astro. The migration included:
+### December 2024 Simplification
+- **Asset Removal**: Migrated from asset-centric to product-centric model. Products are now the atomic sellable unit.
+- **Variant Removal**: Eliminated SKU/variant abstraction. Products have files and documents directly.
+- **Hero Section Removal**: Replaced large hero sections with compact page headers (~250px vertical space saved per page)
+
+### Platform Fees (December 2024)
+- **10% Platform Fee**: Implemented across all sales
+- **Revenue Preview**: Added creator-facing calculator showing exact revenue splits before publishing
+- **Royalty Transparency**: Built components to show who gets paid and how much
+
+### Earlier Migrations
+This codebase migrated from another framework to Astro in 2024. The migration included:
 - Converting to Astro server mode (Vercel adapter)
 - Establishing SDK isolation layers
 - Creating comprehensive TypeScript types

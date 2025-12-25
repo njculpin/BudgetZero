@@ -107,6 +107,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Check if already embedded
+    // TODO: Move to data access layer
     const { data: existing } = await serverClient
       .from("product_components")
       .select("id")

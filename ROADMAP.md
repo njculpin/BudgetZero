@@ -1,8 +1,8 @@
 # Game Loopers Product Roadmap
 
-**Last Updated:** 2025-12-13
-**Current Status:** 85-90% complete toward MVP (Week 7/8)
-**Target MVP Launch:** Beta-ready pending checkout verification (1-2 weeks)
+**Last Updated:** 2025-12-24
+**Current Status:** 93-95% complete toward MVP (Week 8+)
+**Target MVP Launch:** Beta-ready pending final testing (1-2 days estimated)
 
 ---
 
@@ -24,69 +24,131 @@
 
 ## Current State Analysis
 
-### ✅ Completed Features (85-90%)
+### ✅ Completed Features (90-95%)
+
+**Core Commerce:**
 - User authentication (Supabase PKCE)
-- Product management with file uploads and embedding
-- Product-centric architecture (no variants/assets)
-- Royalty configuration and splits
+- Shopping cart with modal confirmation
+- Stripe Checkout integration (implemented, needs end-to-end testing)
+- File download system with signed URLs
+- Purchase verification and download access control
+- Royalty calculation and distribution logic
+
+**Product System:**
+- Product-centric architecture (no variants - simplified from original plan)
+- Product management with file uploads
+- Product embedding system (product-in-product with royalties)
+- Product status system (draft, private, public, archived)
+- Product documents with pricing
+- Product files with individual pricing
+- Product price breakdown component (files + documents + embedded products)
+- Product embeddability toggle (is_embeddable flag)
+- Compact page headers (replaced bloated hero sections, ~250px vertical space saved)
+- Product contributors display
+- Product conflict resolution (version control for concurrent edits)
+
+**Revenue Transparency:**
+- Platform fee implementation (10% on all sales)
+- Revenue preview calculator for creators (shows exact splits before publishing)
+- Royalty breakdown component (shows who gets paid and how much)
+- Price breakdown API endpoints
+
+**Collaboration:**
 - Document collaboration (TipTap editor with image upload)
 - Document file attachments
 - Real-time chat (products, documents)
-- Game jam system with reviews
-- Row-Level Security policies
-- Dashboard with content filtering and first-time onboarding
-- User profiles with avatars
-- Shopping cart with modal confirmation
-- **Stripe Checkout integration** (needs verification)
-- **File download system with signed URLs**
-- **Search and discovery with tags**
-- Product documents with pricing and auto-PDF generation (placeholder)
-- Product contributors display
-- Product status system (draft, private, public, archived)
-- Product price breakdown (files + documents + embedded products)
 - Auto-attach documents created from products
 
-### 🚧 In Progress Features (15%)
-- Inline pricing for file uploads (currently separate edit step)
-- ProductDocumentsForm reactive updates (replace page reloads)
-- Code cleanup (remove unused imports, variables, functions)
+**Discovery & Community:**
+- Search and discovery with tags
+- Game jam system with reviews and voting
+- User profiles with avatars
+- Dashboard with content filtering and first-time onboarding
 
-### ⚠️ Verification Needed (Must Test Before Launch)
+**Infrastructure:**
+- Row-Level Security policies
+- 175+ test files (comprehensive test coverage)
+- API routes for all major features
 
-**Priority 0 (Critical - Needs Verification):**
-1. **✅ Payment Processing - IMPLEMENTED** (needs end-to-end testing)
+**Design System & Code Quality:**
+- BEM CSS methodology: 100% compliant (all hardcoded values replaced with design tokens)
+- Design token system: 19 tokens added (status colors, component tokens, responsive breakpoints)
+- CSS audit skill created (/audit-style) with comprehensive design system integration
+- User journey testing skill created (/persona-journey) for persona validation
+
+### 🚧 In Progress Features (5%)
+- End-to-end payment testing (Stripe test mode configuration needed)
+- Authentication edge case fixes (10 failing notification tests)
+- Visual regression validation (CSS refactoring verification)
+- Code cleanup (remove unused imports, variables, functions from recent refactors)
+
+### ⚠️ Critical Path to Launch
+
+**Priority 0 (Must Complete Before Beta):**
+
+1. **Authentication Edge Case Fixes** (BLOCKING LAUNCH)
+   - ✅ Core authentication working
+   - ⚠️ **Action Required:** Fix 10 failing notification API tests
+   - **Issues:** Missing token handling, malformed cookie parsing, expired session edge cases
+   - **Estimated Time:** 1-2 hours
+   - **Risk Level:** MEDIUM - Users may experience logout issues or authorization errors
+
+2. **End-to-End Checkout Testing** (BLOCKING LAUNCH)
    - ✅ Implemented: `/api/checkout/create-session.ts`
-   - ✅ Implemented: `/api/webhooks/stripe.ts` (payment_intent, refunds)
-   - ⚠️ Warning: Contains legacy variant/asset references - may need refactoring
-   - **Action Required:** Test full checkout flow with Stripe test card
-   - **Risk:** Checkout may fail due to variant code mismatch
+   - ✅ Implemented: `/api/webhooks/stripe.ts` (webhook handling)
+   - ✅ Implemented: Royalty distribution logic
+   - ⚠️ **Action Required:** Configure Stripe test mode (add test keys to .env - USER ACTION)
+   - ⚠️ **Action Required:** Un-skip 12 webhook tests and verify end-to-end flow
+   - ⚠️ **Action Required:** Test with Stripe test cards (successful + failed payments)
+   - **Estimated Time:** 15 min setup + 2-4 hours testing
+   - **Risk Level:** CRITICAL - Payment bugs could cause revenue loss, legal liability
 
-2. **✅ Product File Download System - IMPLEMENTED**
-   - ✅ Implemented: `/api/download.ts` with signed URLs
-   - ✅ Implemented: Purchase verification via `hasUserPurchasedAsset()`
-   - ✅ Implemented: 1-hour signed URL expiry
-   - **Status:** Complete and functional
+3. **Visual Regression Validation** (BLOCKING LAUNCH)
+   - ✅ CSS refactored: BEM 100% compliant, all design tokens applied
+   - ⚠️ **Action Required:** Manually verify pages in dev mode after CSS changes
+   - **Pages to Check:** /, /products, /products/[product], /cart, /dashboard, /create
+   - **Devices:** Mobile, tablet, desktop (responsive behavior)
+   - **Estimated Time:** 1-2 hours
+   - **Risk Level:** MEDIUM - Layout bugs, poor UX, visual regressions
 
-3. **✅ Search & Discovery - IMPLEMENTED**
-   - ✅ Implemented: Tag-based filtering at `/products?tag=fantasy`
-   - ✅ Implemented: Full-text search with `searchQuery` parameter
-   - ✅ Implemented: Top 10 trending tags display
-   - **Status:** Complete and functional
+4. **Production Environment Setup** (BLOCKING LAUNCH)
+   - Configure production Stripe keys in Vercel
+   - Set up webhook endpoints in Stripe dashboard
+   - Verify RLS policies in production Supabase
+   - Test OAuth callback URLs
+   - **Estimated Time:** 1-2 hours
+   - **Risk Level:** HIGH - Cannot launch without production config
 
-**Priority 1 (High - Deferred to Phase 2):**
+**Priority 1 (Important but Not Blocking):**
 
-4. **Collaborator Invitations** - Can't invite contributors
-   - Missing: Invitation UI and flow
-   - Missing: Email notifications
-   - Missing: Accept/decline workflow
-   - **Impact:** Collaboration features half-implemented
-   - **Effort:** 1.5 weeks (defer to post-MVP)
+5. **User Journey Validation**
+   - Use `/persona-journey` skill to test all 4 personas
+   - Validate: Create → Upload → Publish → Purchase → Download flows
+   - **Estimated Time:** 3-4 hours
+   - **Impact:** Catches workflow bugs before beta users encounter them
 
-5. **Document PDF Export** - Can't export documents as PDF files
-   - Missing: `/api/documents/[docId]/export-pdf` using pdf-lib
-   - Missing: Auto-product creation with PDF file from document
-   - **Impact:** Unique feature is non-functional
-   - **Effort:** 1 week (defer to post-MVP)
+6. **Code Quality Cleanup**
+   - Remove unused imports from recent refactors (asset removal, document-to-product migration)
+   - Verify no unused variables or functions
+   - Fix test data pollution (duplicate handle errors in products tests)
+   - **Estimated Time:** 2-3 hours
+   - **Impact:** Code maintainability, not user-facing
+
+**Deferred to Phase 2 (Post-MVP):**
+
+7. **Collaborator Invitations**
+   - Currently: Manual collaboration by embedding products
+   - Missing: Formal invitation system with email notifications
+   - **Impact:** Collaboration works via product embedding, formal invites are nice-to-have
+   - **Effort:** 1.5 weeks
+   - **Deferral Rationale:** Core collaboration works through product embedding and royalties
+
+8. **Document PDF Export**
+   - Currently: Documents are viewable but not exportable as PDFs
+   - Missing: `/api/documents/[docId]/export-pdf` endpoint
+   - **Impact:** Document system fully functional, PDF export is enhancement
+   - **Effort:** 1 week
+   - **Deferral Rationale:** Can add after validating document collaboration demand
 
 ---
 
@@ -174,17 +236,46 @@
 
 ---
 
-### Week 8: Soft Launch (Beta) 🚧 BLOCKED - AWAITING PAYMENT INTEGRATION
-**Activities:**
+### Week 8: Soft Launch (Beta) ⚠️ READY PENDING FINAL TESTING
+
+**Status: 93-95% Complete (Updated 2025-12-24)**
+
+**Recent Completion (Week 8 - Pre-Launch Polish):**
+- ✅ CSS BEM compliance: 88% → 100%
+- ✅ Design token compliance: 95% → 100%
+- ✅ Added 19 new design tokens (status colors, component tokens)
+- ✅ Fixed all BEM naming violations across 8 files
+- ✅ Replaced all hardcoded values in global.css (1,177 lines)
+- ✅ Created CSS audit skill (/audit-style)
+- ✅ Created user journey testing skill (/persona-journey)
+- ✅ Fixed all agent configurations
+
+**Pre-Launch Checklist:**
+- [ ] Fix authentication edge cases (10 failing notification tests) - 1-2 hours
+- [ ] Visual regression validation (verify CSS changes) - 1-2 hours
 - [ ] Configure Stripe test mode (15 min - USER ACTION REQUIRED)
-- [ ] Run manual testing checklist (2-3 hours)
-- [ ] Run automated E2E tests (30 min)
-- [ ] Recruit 20-50 beta creators (offer incentives)
+- [ ] Run end-to-end checkout test with Stripe test cards (2-4 hours)
+- [ ] Verify webhook handling for successful payments (30 min)
+- [ ] Test royalty distribution calculations (1 hour)
+- [ ] Verify file download access control (30 min)
+- [ ] Run automated E2E test suite (30 min)
+- [ ] Run persona journey validation (/persona-journey skill) - 3-4 hours
+- [ ] Configure production environment variables
+- [ ] Set up Stripe webhook endpoints in dashboard
+
+**Estimated Time to Launch-Ready: 1-2 days (5-9 hours of focused work)**
+
+**Launch Activities:**
+- [ ] Recruit 20-50 beta creators (offer incentives, early adopter badges)
 - [ ] Launch seed jam: "Create a One-Page Dungeon in 7 Days"
-- [ ] Monitor transactions for bugs
-- [ ] Collect feedback via surveys
-- [ ] Fix critical issues
-- [ ] Prepare for public launch
+- [ ] Monitor first 10 transactions closely for bugs
+- [ ] Collect feedback via in-app surveys
+- [ ] Fix critical issues within 24 hours
+- [ ] Document common user questions for FAQ
+
+**Technical Debt (P1 - Can defer to post-launch):**
+- [ ] Code cleanup: Remove unused imports and variables from recent refactors
+- [ ] Fix test data pollution (duplicate handle errors in products tests)
 
 **Success Metrics:**
 - 20+ creators with public products
@@ -259,7 +350,7 @@
 
 ### Month 5: Monetization & Scale
 **Features:**
-- [ ] Platform fee implementation (5% on digital sales)
+- [x] Platform fee implementation (10% on digital sales) - COMPLETED
 - [ ] Payout distribution automation (Stripe Connect transfers)
 - [ ] Discount codes (creator-generated promo codes)
 - [ ] Affiliate program (creators earn 10% for referrals)
@@ -472,37 +563,76 @@
 | 2025-12-11 | Replace cart toast with modal confirmation | 3-second toast was easy to miss, modal improves conversion confidence | UX |
 | 2025-12-11 | Add documents to product price breakdown | Price transparency critical for buyer trust | Product |
 | 2025-12-11 | Implement 4-state product status system | Enables draft/private/public/archived workflow for creators | Product |
-| TBD | Platform fee percentage (recommend 5% digital, 10% services) | Needs competitive analysis and creator surveys | Business |
-| TBD | Should STL creators earn royalties on physical prints? | Needs community feedback and pricing model validation | Product |
+| 2025-12-17 | Remove asset abstraction, migrate to product-centric model | Assets added complexity without clear value; products are the atomic unit | Architecture |
+| 2025-12-17 | Implement compact page headers | Hero sections consumed ~250px vertical space; compact headers improve content density | UX |
+| 2025-12-20 | Set platform fee at 10% for digital sales | Competitive with itch.io (10%), better than DriveThruRPG (~35%), sustainable for operations | Business |
+| 2025-12-20 | Add revenue preview calculator for creators | Transparency is core value prop; creators need to see exact splits before publishing | Product |
+| 2025-12-24 | Complete CSS refactoring to 100% BEM compliance | Week 8 pre-launch polish; ensures maintainability and consistency before scaling | Architecture |
+| 2025-12-24 | Prioritize payment testing over additional polish | Payment bugs are critical launch blocker; visual polish has diminishing returns | Product |
+| TBD | Should product creators earn royalties on physical prints of embedded 3D models? | Needs community feedback and pricing model validation (deferred to Phase 3) | Product |
 
 ---
 
-## Next Actions (Immediate - This Week)
+## Next Actions (Immediate - 1-2 Days to Launch)
 
-1. **Complete UX improvements** (in progress)
-   - ✅ Add documents to price breakdown
-   - ✅ Replace cart toast with modal confirmation
-   - [ ] Add inline pricing to file upload flow
-   - [ ] Remove page reloads in ProductDocumentsForm
-   - [ ] Update DESIGN_SYSTEM.md with 4-state product status
+**Updated 2025-12-24**
 
-2. **Start payment processing** (Priority 0 - CRITICAL)
-   - Create `/src/pages/api/checkout/create-session.ts`
-   - Review Stripe Checkout documentation
-   - Set up webhook endpoint in Stripe Dashboard
-   - Create `/src/pages/api/webhooks/stripe.ts`
-   - Implement royalty distribution logic
+### Day 1 Priority (Today/Tomorrow - 3-5 hours)
 
-3. **Implement file download system** (Priority 0 - CRITICAL)
-   - Create signed URL generation from Supabase Storage
-   - Create `/src/pages/api/purchases/[saleId]/download/[fileId].ts`
-   - Add purchase verification logic
-   - Track download counts
+1. **Authentication Edge Case Fixes** (P0 BLOCKING - 1-2 hours)
+   - Fix 10 failing notification API tests
+   - Issues: Missing token handling, malformed cookie parsing, expired sessions
+   - Files: `/src/pages/api/__tests__/notifications.test.ts`
+   - Impact: Users may experience logout issues or authorization errors
 
-4. **Code quality cleanup**
-   - Remove unused imports and variables across codebase
-   - Ensure TypeScript strict mode compliance
-   - Update documentation to reflect current state
+2. **Visual Regression Validation** (P0 BLOCKING - 1-2 hours)
+   - Run `npm run dev` and manually verify pages after CSS refactoring
+   - Pages: /, /products, /products/[product], /cart, /dashboard, /create
+   - Check: Mobile, tablet, desktop responsive behavior
+   - Impact: Layout bugs, visual regressions, poor UX
+
+3. **Configure Stripe Test Mode** (P0 BLOCKING - 15 min - USER ACTION REQUIRED)
+   - Add Stripe test keys to `.env`:
+     ```
+     STRIPE_SECRET_KEY=sk_test_...
+     STRIPE_PUBLISHABLE_KEY=pk_test_...
+     STRIPE_WEBHOOK_SECRET=whsec_...
+     ```
+   - Impact: Cannot test payment flow without this
+
+### Day 2 Priority (Next Day - 5-7 hours)
+
+4. **Payment Integration Testing** (P0 BLOCKING - 2-4 hours)
+   - Un-skip 12 webhook tests in `/src/pages/api/webhooks/__tests__/stripe.test.ts`
+   - Run full checkout flow with Stripe test cards
+   - Test: Successful payments, declined cards, expired cards
+   - Verify: Webhook signature, sale creation, royalty calculations, download access
+   - Impact: CRITICAL - Payment bugs cause revenue loss, legal liability
+
+5. **Production Environment Setup** (P0 BLOCKING - 1-2 hours)
+   - Configure production Stripe keys in Vercel
+   - Set up webhook endpoints in Stripe dashboard
+   - Verify Supabase production environment
+   - Test RLS policies in production
+   - Impact: Cannot launch without production config
+
+6. **User Journey Validation** (P1 RECOMMENDED - 3-4 hours)
+   - Run `/persona-journey` skill to test all 4 personas
+   - Validate: Create → Upload → Publish → Purchase → Download flows
+   - Impact: Catches workflow bugs before beta users encounter them
+
+### Post-Launch Priority (P2 - Can defer)
+
+7. **Code Quality Cleanup** (P2 DEFER - 2-3 hours)
+   - Remove unused imports from recent refactors
+   - Fix test data pollution (duplicate handle errors)
+   - Impact: Code maintainability only, not user-facing
+
+8. **Beta Launch Preparation** (1-2 days)
+   - Recruit 20-50 beta creators (TTRPG communities, Twitter, Discord)
+   - Prepare seed jam: "Create a One-Page Dungeon in 7 Days"
+   - Set up feedback collection mechanism
+   - Create FAQ/support documentation
 
 ---
 
@@ -511,7 +641,7 @@
 **Key Documents:**
 - `/PERSONAS.md` - All user personas (current + future)
 - `/CLAUDE.md` - Development guidelines and architecture
-- `/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
+- `/.claude/skills/CSS/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
 - `/TODO.md` - Granular task tracking (not yet created)
 
 **External Resources:**
@@ -522,5 +652,5 @@
 
 ---
 
-**Last Reviewed:** 2025-12-11
-**Next Review:** After payment integration complete or Week 8 (whichever comes first)
+**Last Reviewed:** 2025-12-21
+**Next Review:** After beta launch (estimated Week 9)

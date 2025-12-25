@@ -1,7 +1,7 @@
 # Game Loopers Design System
 
-**Version**: 1.3
-**Last Updated**: 2025-12-13
+**Version**: 1.4
+**Last Updated**: 2025-12-21
 **Framework**: Astro 5.15 + SolidJS Islands
 
 ---
@@ -495,6 +495,52 @@ Shared components for browsing products and jams.
   padding: var(--spacing-3xl);
 }
 ```
+
+---
+
+### PageHeader Component
+
+**Location**: `/src/components/PageHeader.astro`
+**BEM Block**: `.page-header`
+
+**Purpose**: Provides compact, consistent page headers across the application. Replaces bloated hero sections that previously consumed ~250px of vertical space.
+
+**Usage**:
+```astro
+<PageHeader
+  title="Products"
+  description="Browse digital products from tabletop creators"
+/>
+```
+
+**Elements**:
+```css
+.page-header                    /* Root container */
+.page-header__title             /* H1 heading (text-4xl, bold) */
+.page-header__description       /* Subtitle (text-lg, muted) */
+```
+
+**Styles**:
+```css
+.page-header {
+  text-align: left;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.page-header__title {
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.page-header__description {
+  margin: 0;
+  font-size: var(--text-lg);
+  color: var(--muted-foreground);
+}
+```
+
+**Design Decision**: Compact headers improve content density and reduce scrolling. Used consistently on product, document, jam, and create pages.
 
 ---
 
@@ -1056,6 +1102,126 @@ Fetches data from three API endpoints:
 
 ---
 
+### ProductRevenuePreview Component
+
+**Location**: `/src/components/products/ProductRevenuePreview.tsx`
+**Framework**: SolidJS (client-side island)
+**BEM Block**: `.revenue-preview`
+
+#### Features
+
+- Shows creators exactly how revenue will be distributed when someone purchases their product
+- Displays owner share, contributor royalties, and platform fee (10%)
+- Fetches real-time data from product configuration
+- Empty state when product has no pricing ($0.00)
+- Loading state while fetching data
+- Percentage breakdown for each recipient
+
+#### Elements
+
+```css
+.revenue-preview                       /* Root container */
+.revenue-preview__loading              /* Loading indicator */
+.revenue-preview__header               /* Header section */
+.revenue-preview__title                /* "Revenue Preview" heading */
+.revenue-preview__total                /* Total price display */
+.revenue-preview__total-label          /* "Customer Pays:" label */
+.revenue-preview__total-value          /* Total amount */
+.revenue-preview__description          /* Explanatory text */
+.revenue-preview__list                 /* Recipients container */
+.revenue-preview__item                 /* Individual recipient row */
+.revenue-preview__item--owner          /* Modifier for product owner */
+.revenue-preview__item--contributor    /* Modifier for contributors */
+.revenue-preview__item--platform       /* Modifier for platform fee */
+.revenue-preview__item-info            /* Recipient info container */
+.revenue-preview__item-name            /* Recipient name */
+.revenue-preview__item-handle          /* @username (contributors only) */
+.revenue-preview__item-role            /* Role description */
+.revenue-preview__item-amount          /* Amount container */
+.revenue-preview__item-price           /* Dollar amount */
+.revenue-preview__item-percentage      /* Percentage of total */
+.revenue-preview__note                 /* Disclaimer section */
+.revenue-preview__note-icon            /* Info icon */
+.revenue-preview__note-text            /* Disclaimer text */
+.revenue-preview__empty                /* Empty state */
+.revenue-preview__empty-icon           /* 💰 emoji */
+.revenue-preview__empty-text           /* Instruction text */
+```
+
+#### Usage
+
+```tsx
+<ProductRevenuePreview
+  productId={product.id}
+  productOwnerId={product.user_id}
+  productOwnerHandle={product.handle}
+  productOwnerName={product.owner_name}
+  client:load
+/>
+```
+
+#### Platform Fee Implementation
+
+- **10% Platform Fee**: Deducted from total price (subtotal = total - platform fee)
+- **Owner Share**: Subtotal minus all contributor royalties
+- **Transparency**: Shows exact dollar amounts and percentages for all recipients
+- **Purpose**: Helps creators understand their take-home revenue before publishing
+
+---
+
+### ProductRoyaltyBreakdown Component
+
+**Location**: `/src/components/products/ProductRoyaltyBreakdown.tsx`
+**Framework**: SolidJS (client-side island)
+**BEM Block**: `.royalty-breakdown`
+
+#### Features
+
+- Similar to ProductRevenuePreview but used in different contexts
+- Shows royalty distribution for existing published products
+- Used on product detail pages for transparency
+- Displays contributor attribution with user profiles
+
+#### Elements
+
+```css
+.royalty-breakdown                     /* Root container */
+.royalty-breakdown__loading            /* Loading indicator */
+.royalty-breakdown__header             /* Header section */
+.royalty-breakdown__title              /* "Revenue Breakdown" heading */
+.royalty-breakdown__total              /* Total price display */
+.royalty-breakdown__list               /* Recipients container */
+.royalty-breakdown__item               /* Individual recipient row */
+.royalty-breakdown__item--owner        /* Modifier for product owner */
+.royalty-breakdown__item--contributor  /* Modifier for contributors */
+.royalty-breakdown__item--platform     /* Modifier for platform fee */
+.royalty-breakdown__icon               /* User/group SVG icons */
+.royalty-breakdown__item-details       /* Recipient details container */
+.royalty-breakdown__item-name          /* Recipient name */
+.royalty-breakdown__item-handle        /* @username */
+.royalty-breakdown__item-role          /* Role description */
+.royalty-breakdown__item-price         /* Dollar amount */
+.royalty-breakdown__item-percentage    /* Percentage of total */
+```
+
+#### Usage
+
+```tsx
+<ProductRoyaltyBreakdown
+  productId={product.id}
+  productOwnerId={product.user_id}
+  productOwnerHandle={product.handle}
+  productOwnerName={product.owner_name}
+  client:load
+/>
+```
+
+#### Design Decision
+
+These components are core to Game Loopers' value proposition of **revenue transparency**. By showing exactly who gets paid and how much, we differentiate from competitors and build trust with creators.
+
+---
+
 ## Component Inventory
 
 | Component | Location | BEM Block | Description |
@@ -1063,17 +1229,18 @@ Fetches data from three API endpoints:
 | Button | `/src/components/Button.astro` | `.button` | Primary interactive element |
 | Card | `/src/components/Card.astro` | `.card` | Container for grouped content |
 | BrowseCTA | `/src/components/BrowseCTA.astro` | `.browse-cta` | Guest user call-to-action |
-| PageHeader | `/src/components/PageHeader.astro` | `.page-header` | Page title + description |
-| AssetChat | `/src/components/islands/AssetChat.tsx` | `.asset-chat` | Real-time asset chat |
-| ProductChat | `/src/components/islands/ProductChat.tsx` | `.product-chat` | Real-time product chat |
+| PageHeader | `/src/components/PageHeader.astro` | `.page-header` | Compact page title + description |
+| ProductChat | `/src/components/products/ProductChat.tsx` | `.product-chat` | Real-time product chat |
 | DocumentChat | `/src/components/islands/DocumentChat.tsx` | `.document-chat` | Real-time document chat |
 | ConfirmDialog | `/src/components/islands/ConfirmDialog.tsx` | `.confirm-dialog` | Modal confirmation |
 | Navigation | `/src/components/Navigation.astro` | `.navigation` | Main site navigation |
 | AddToCartButton | `/src/components/products/AddToCartButton.tsx` | `.add-to-cart` | Add product to cart with modal |
 | ProductDocumentsForm | `/src/components/products/ProductDocumentsForm.tsx` | `.product-documents-form` | Attach/manage documents on product |
 | ProductContributors | `/src/components/products/ProductContributors.astro` | `.product-contributors` | Display product contributors |
-| ProductPriceBreakdown | `/src/components/products/ProductPriceBreakdown.tsx` | `.price-breakdown` | Itemized price breakdown |
+| ProductPriceBreakdown | `/src/components/products/ProductPriceBreakdown.tsx` | `.price-breakdown` | Itemized price breakdown (buyer-facing) |
 | ProductStatusEditor | `/src/components/products/ProductStatusEditor.tsx` | `.status-editor` | 4-state product status system |
+| ProductRevenuePreview | `/src/components/products/ProductRevenuePreview.tsx` | `.revenue-preview` | Revenue calculator for creators |
+| ProductRoyaltyBreakdown | `/src/components/products/ProductRoyaltyBreakdown.tsx` | `.royalty-breakdown` | Royalty distribution visualization |
 
 ### Browse Page Shared Classes
 
@@ -1092,7 +1259,23 @@ Defined in `/src/styles/global.css` (as of 2024-11-24):
 
 ## Migration Notes
 
-### Recent Changes (2025-12-13)
+### Recent Changes (2025-12-21)
+
+1. **Compact Page Headers**:
+   - **Removed**: Large hero sections that consumed ~250px vertical space
+   - **Added**: `PageHeader.astro` component with compact title + description
+   - **Impact**: Improved content density, faster access to primary content
+   - **Pages affected**: Products, documents, jams, create, user directory
+   - **UX Benefit**: Users see actual content faster, less scrolling required
+
+2. **Revenue Transparency Components**:
+   - **Added**: `ProductRevenuePreview.tsx` - Creator-facing revenue calculator
+   - **Added**: `ProductRoyaltyBreakdown.tsx` - Public royalty distribution display
+   - **Platform Fee**: 10% deducted from all sales, clearly shown in breakdown
+   - **Purpose**: Core differentiator - show creators and buyers exactly who gets paid
+   - **Business Impact**: Builds trust through transparency
+
+### Previous Changes (2025-12-13)
 
 1. **Product Status System (4-State)**:
    - Upgraded from 3-state (`draft`, `public`, `archived`) to 4-state system

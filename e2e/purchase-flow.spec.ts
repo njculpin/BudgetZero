@@ -191,7 +191,7 @@ test.describe('Complete Purchase Flow', () => {
     await productCard.click();
 
     // Wait for product detail page
-    await expect(page.locator('.product-hero__title')).toContainText('Test Game for Purchase Flow');
+    await expect(page.locator('.page-header__title')).toContainText('Test Game for Purchase Flow');
 
     // STEP 3: Add to cart
     await page.click('button:has-text("Add to Cart")');

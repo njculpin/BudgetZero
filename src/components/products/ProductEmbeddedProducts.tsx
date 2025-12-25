@@ -92,7 +92,7 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
       setSearchResults(data.products || []);
       setIsSearching(false);
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError("Unable to search products. Please check your connection and try again.");
       setIsSearching(false);
     }
   };
@@ -129,7 +129,7 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError("Unable to embed product. Please try again.");
     }
   };
 
@@ -168,7 +168,7 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError("Unable to remove embedded product. Please try again.");
       setUnlinkingId(null);
     }
   };

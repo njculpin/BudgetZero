@@ -17,15 +17,27 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
   if (error) {
     console.error("Sign-in error:", error.message, error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    // Map common Supabase errors to user-friendly messages
+    let userMessage = error.message;
+    if (error.message.includes("Invalid login credentials")) {
+      userMessage = "The email or password you entered is incorrect. Please try again.";
+    } else if (error.message.includes("Email not confirmed")) {
+      userMessage = "Please verify your email address before signing in.";
+    } else if (error.message.includes("User not found")) {
+      userMessage = "No account found with this email address.";
+    } else {
+      userMessage = "Unable to sign in. Please check your credentials and try again.";
+    }
+
+    return new Response(JSON.stringify({ error: userMessage }), {
+      status: 401,
       headers: { "Content-Type": "application/json" },
     });
   }
 
   if (!data.session) {
     console.error("No session returned from sign-in");
-    return new Response(JSON.stringify({ error: "No session returned" }), {
+    return new Response(JSON.stringify({ error: "Unable to create session. Please try again or contact support if the problem persists." }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });

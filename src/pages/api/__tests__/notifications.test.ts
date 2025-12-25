@@ -68,6 +68,7 @@ describe('Notification API Endpoints', () => {
   describe('GET /api/notifications', () => {
     it('should return 401 when user is not authenticated', async () => {
       // Mock unauthenticated state
+      mockCookies.get.mockReset();
       mockCookies.get.mockReturnValue(undefined);
 
       // The endpoint would check cookies and return 401
@@ -136,6 +137,7 @@ describe('Notification API Endpoints', () => {
 
   describe('GET /api/notifications/unread-count', () => {
     it('should return 401 when user is not authenticated', async () => {
+      mockCookies.get.mockReset();
       mockCookies.get.mockReturnValue(undefined);
 
       expect(mockCookies.get('sb-access-token')).toBeUndefined();
@@ -165,6 +167,7 @@ describe('Notification API Endpoints', () => {
 
   describe('POST /api/notifications/mark-all-read', () => {
     it('should return 401 when user is not authenticated', async () => {
+      mockCookies.get.mockReset();
       mockCookies.get.mockReturnValue(undefined);
 
       expect(mockCookies.get('sb-access-token')).toBeUndefined();
@@ -201,6 +204,7 @@ describe('Notification API Endpoints', () => {
     });
 
     it('should return 401 when user is not authenticated', async () => {
+      mockCookies.get.mockReset();
       mockCookies.get.mockReturnValue(undefined);
 
       expect(mockCookies.get('sb-access-token')).toBeUndefined();
@@ -313,6 +317,7 @@ describe('Notification API Endpoints', () => {
     });
 
     it('should return 401 when user is not authenticated', async () => {
+      mockCookies.get.mockReset();
       mockCookies.get.mockReturnValue(undefined);
 
       expect(mockCookies.get('sb-access-token')).toBeUndefined();
@@ -418,6 +423,7 @@ describe('Notification API Endpoints', () => {
 
   describe('POST /api/settings/notifications', () => {
     it('should return 401 when user is not authenticated', async () => {
+      mockCookies.get.mockReset();
       mockCookies.get.mockReturnValue(undefined);
 
       expect(mockCookies.get('sb-access-token')).toBeUndefined();
@@ -494,6 +500,7 @@ describe('Notification API Endpoints', () => {
     });
 
     it('should return 401 when user is not authenticated', async () => {
+      mockCookies.get.mockReset();
       mockCookies.get.mockReturnValue(undefined);
 
       expect(mockCookies.get('sb-access-token')).toBeUndefined();
@@ -540,6 +547,7 @@ describe('Notification API Endpoints', () => {
 
   describe('Authentication Edge Cases', () => {
     it('should handle missing access token', async () => {
+      mockCookies.get.mockReset();
       mockCookies.get
         .mockReturnValueOnce(undefined) // No access token
         .mockReturnValueOnce({ value: 'mock-refresh-token' });
@@ -548,9 +556,12 @@ describe('Notification API Endpoints', () => {
     });
 
     it('should handle missing refresh token', async () => {
-      mockCookies.get
-        .mockReturnValueOnce({ value: 'mock-access-token' })
-        .mockReturnValueOnce(undefined); // No refresh token
+      mockCookies.get.mockReset();
+      mockCookies.get.mockImplementation((key) => {
+        if (key === 'sb-access-token') return { value: 'mock-access-token' };
+        if (key === 'sb-refresh-token') return undefined;
+        return undefined;
+      });
 
       const refreshToken = mockCookies.get('sb-refresh-token');
       expect(refreshToken).toBeUndefined();
@@ -569,6 +580,7 @@ describe('Notification API Endpoints', () => {
     });
 
     it('should handle malformed cookies', async () => {
+      mockCookies.get.mockReset();
       mockCookies.get.mockReturnValue({ value: '' });
 
       const cookie = mockCookies.get('sb-access-token');

@@ -94,13 +94,6 @@ export default function ProductEmbeddableToggle(props: ProductEmbeddableTogglePr
           </span>
         </button>
       </div>
-
-      <div class="embeddable-toggle__help">
-        <p class="embeddable-toggle__help-text">
-          💡 <strong>What is embedding?</strong> When enabled, other creators can include your product as a component in their products.
-          You'll automatically earn royalties on each sale. This is perfect for STL files, artwork, and other reusable assets.
-        </p>
-      </div>
     </div>
   );
 }

@@ -8,7 +8,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const refreshToken = cookies.get("sb-refresh-token");
 
   if (!accessToken || !refreshToken) {
-    return new Response(JSON.stringify({ error: "Not authenticated" }), {
+    return new Response(JSON.stringify({ error: "Please sign in to upload files" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });
@@ -22,13 +22,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
 
     if (session.error || !session.data.user) {
-      return new Response(JSON.stringify({ error: "Invalid session" }), {
+      return new Response(JSON.stringify({ error: "Your session has expired. Please sign in again." }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Authentication failed" }), {
+    return new Response(JSON.stringify({ error: "Your session has expired. Please sign in again." }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });
@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     if (!files || files.length === 0) {
-      return new Response(JSON.stringify({ error: "No files provided" }), {
+      return new Response(JSON.stringify({ error: "Please select at least one file to upload" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
@@ -58,14 +58,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Check product ownership
     const product = await getProductById(productId);
     if (!product) {
-      return new Response(JSON.stringify({ error: "Product not found" }), {
+      return new Response(JSON.stringify({ error: "Product not found. It may have been deleted." }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
     }
 
     if (product.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: "You don't have permission to upload files to this product" }), {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
@@ -111,7 +111,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (uploadedFiles.length === 0) {
       return new Response(
-        JSON.stringify({ error: "Failed to upload any files" }),
+        JSON.stringify({ error: "Unable to upload files. Please check your file types and sizes, then try again." }),
         {
           status: 500,
           headers: { "Content-Type": "application/json" },

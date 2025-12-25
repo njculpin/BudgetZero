@@ -8,7 +8,7 @@ import Badge from "@/components/Badge.astro";
 import { setSession } from "@/lib/auth";
 import { getSaleById, getSaleItems } from "@/lib/data-access/sales";
 import Breadcrumb from "@/components/Breadcrumb.astro";
-import { getProductById, getVariantById, getProductFiles } from "@/lib/data-access/products";
+import { getProductById, getProductFiles } from "@/lib/data-access/products";
 
 const { purchase: saleId } = Astro.params;
 
@@ -54,17 +54,15 @@ if (sale.user_id !== userId) {
 // Get sale items
 const saleItems = await getSaleItems(saleId);
 
-// Fetch product, variant, and files for each sale item
+// Fetch product and files for each sale item
 const itemsWithDetails = await Promise.all(
   saleItems.map(async (item) => {
     const product = await getProductById(item.product_id);
-    const variant = await getVariantById(item.variant_id);
     const files = product ? await getProductFiles(product.id) : [];
 
     return {
       ...item,
       product,
-      variant,
       files,
     };
   })
@@ -144,13 +142,15 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
           <Card>
             <CardHeader>
               <CardTitle>
-                {item.product?.title} - {item.variant?.title}
+                {item.product?.title || "Unknown Product"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div class="purchase-item">
                 <div class="purchase-item__details">
-                  <p class="purchase-item__sku">SKU: {item.variant?.sku}</p>
+                  {item.product?.description && (
+                    <p class="purchase-item__description">{item.product.description}</p>
+                  )}
                   <p class="purchase-item__price">
                     {item.currency.toUpperCase()} {(item.price_cents / 100).toFixed(2)}
                     {item.quantity > 1 && ` × ${item.quantity}`}
@@ -158,14 +158,16 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
                 </div>
 
                 {/* Downloads */}
-                {item.assets && item.assets.length > 0 && (
+                {item.files && item.files.length > 0 && (
                   <div class="purchase-downloads">
                     <h3 class="purchase-downloads__title">Downloads</h3>
                     <div class="purchase-downloads__list">
-                      {item.assets.map((asset) => (
+                      {item.files.map((file) => (
                         <a
-                          href={`/assets/${asset.handle}`}
+                          href={file.file_url}
+                          download
                           class="download-item"
+                          target="_blank"
                         >
                           <div class="download-item__icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -175,10 +177,10 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
                             </svg>
                           </div>
                           <div class="download-item__content">
-                            <span class="download-item__title">{asset.title}</span>
-                            {asset.description && (
+                            <span class="download-item__title">{file.title}</span>
+                            {file.description && (
                               <span class="download-item__description">
-                                {asset.description}
+                                {file.description}
                               </span>
                             )}
                           </div>
@@ -289,15 +291,15 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
 
 .purchase-item__details {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: var(--gap-md);
 }
 
-.purchase-item__sku {
+.purchase-item__description {
   margin: 0;
   font-size: var(--text-sm);
   color: var(--muted-foreground);
-  font-family: monospace;
+  line-height: var(--leading-relaxed);
 }
 
 .purchase-item__price {
@@ -391,12 +393,6 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
 @media (max-width: 768px) {
   .purchase-header {
     flex-direction: column;
-  }
-
-  .purchase-item__details {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--gap-sm);
   }
 
   .order-info__row {
