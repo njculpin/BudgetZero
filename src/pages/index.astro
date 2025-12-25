@@ -1,7 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Button from "@/components/Button.astro";
-import Badge from "@/components/Badge.astro";
 import { getAllProducts, getProductImages, getProductFiles, getProductDocuments, getProductComponents } from "@/lib/data-access/products";
 import { getActiveJam } from "@/lib/data-access/jams";
 import { getUserById } from "@/lib/data-access/users";
@@ -83,10 +82,8 @@ const categories = [
       <!-- Active Jam Banner -->
       {activeJam && (
         <a href={`/jams/${activeJam.handle}`} class="jam-banner">
-          <div class="jam-banner__icon">🎮</div>
           <div class="jam-banner__content">
             <h3 class="jam-banner__title">{activeJam.title}</h3>
-            <p class="jam-banner__description">Join the game jam • Submit your project</p>
           </div>
           <div class="jam-banner__cta">
             View Jam →
@@ -304,6 +301,7 @@ const categories = [
     margin: 0 0 var(--spacing-xs) 0;
     font-size: var(--text-2xl);
     font-weight: var(--font-weight-bold);
+    color: var(--background);
   }
 
   .jam-banner__description {

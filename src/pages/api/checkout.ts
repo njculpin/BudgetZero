@@ -3,8 +3,7 @@ import { setSession } from "@/lib/auth";
 import { getOrCreateCart, getCartItems } from "@/lib/data-access/cart";
 import {
   getProductById,
-  getVariantById,
-  getVariantPrices,
+  getProductPriceBreakdown,
 } from "@/lib/data-access/products";
 import { createCheckoutSession } from "@/lib/payments";
 
@@ -70,29 +69,30 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Fetch product/variant details and create line items
+    // Fetch product details and pricing, create line items
     const lineItems = await Promise.all(
       cartItems.map(async (item) => {
         const product = await getProductById(item.product_id);
-        const variant = await getVariantById(item.variant_id);
-        const prices = variant ? await getVariantPrices(variant.id) : [];
-        const price = prices.length > 0 ? prices[0] : null;
 
-        if (!product || !variant || !price) {
-          throw new Error(`Invalid cart item: ${item.id}`);
+        if (!product) {
+          throw new Error(`Product not found: ${item.product_id}`);
+        }
+
+        // Get product price breakdown (files + documents + embedded + platform fee)
+        const priceBreakdown = await getProductPriceBreakdown(item.product_id);
+
+        if (!priceBreakdown || priceBreakdown.totalPrice === 0) {
+          throw new Error(`Invalid product pricing: ${item.product_id}`);
         }
 
         return {
           price_data: {
-            currency: price.currency,
-            unit_amount: price.unit_amount,
+            currency: "usd", // TODO: Support multiple currencies
+            unit_amount: priceBreakdown.totalPrice, // Price in cents
             product_data: {
-              name: `${product.title} - ${variant.title}`,
-              description:
-                variant.description || product.description || undefined,
-              images: product.cover_image_url
-                ? [product.cover_image_url]
-                : undefined,
+              name: product.title,
+              description: product.description || undefined,
+              // TODO: Add product cover image when available
             },
           },
           quantity: item.quantity,

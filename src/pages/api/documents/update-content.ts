@@ -80,6 +80,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Trigger PDF regeneration for all published products using this document
     try {
       // Import here to avoid circular dependency issues
+      // TODO: Move to data access layer
       const { serverClient } = await import("@/lib/data-access/client");
 
       // Find all published products that use this document

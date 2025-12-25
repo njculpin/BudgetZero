@@ -20,7 +20,6 @@ import { setSession } from "@/lib/auth";
 import { serverClient } from "@/lib/data-access/client";
 import JamVoting from "@/components/jams/JamVoting";
 import JamResults from "@/components/jams/JamResults.astro";
-import JamHero from "@/components/jams/JamHero.astro";
 import JamContentSection from "@/components/jams/JamContentSection.astro";
 import AlertMessage from "@/components/AlertMessage.astro";
 import RatingStars from "@/components/RatingStars.astro";
@@ -57,7 +56,6 @@ if (accessToken && refreshToken) {
   }
 }
 
-const creator = await getUserById(jam.user_id);
 const products = await getJamProducts(jam.id);
 const productRatings = await getJamProductRatings(jam.id);
 
@@ -81,6 +79,7 @@ await Promise.all(
 // Get user's products if authenticated
 let userProducts = [];
 if (currentUser) {
+  // TODO: move to data access layer
   const { data: userProductsData } = await serverClient
     .from("products")
     .select("*")
@@ -168,15 +167,6 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
       />
 
       <div class="page-columns__column">
-      <!-- Hero Section -->
-      <JamHero
-        jam={jam}
-        isCreator={isCreator}
-        creator={creator}
-        status={isUpcoming ? "upcoming" : isActive ? "active" : "ended"}
-        startDate={startDate}
-        endDate={endDate}
-      />
 
       <!-- Edit Form (Edit Mode Only) -->
       {isEditMode && (

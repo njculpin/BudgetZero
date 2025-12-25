@@ -4,7 +4,7 @@ import Badge from "@/components/Badge.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import { ProductBasicInfoForm, ProductStatusEditor, ProductRequirementsChecklist, ProductEmbeddableToggle, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductDocumentsForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown, ProductRoyaltyBreakdown, AddToCartButton } from "@/components/products";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductEmbeddableToggle, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductDocumentsForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown, ProductRoyaltyBreakdown, ProductRevenuePreview, AddToCartButton } from "@/components/products";
 import ProductContributors from "@/components/products/ProductContributors.astro";
 import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributors, getProductComponents } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
@@ -82,6 +82,7 @@ if (jamId) {
   targetJam = await getJamById(jamId);
 
   // Check if product is already in the jam
+  // TODO: Move to data access layer
   if (targetJam) {
     const { data: existingSubmission } = await serverClient
       .from("jam_products")
@@ -145,44 +146,13 @@ if (jamId) {
         />
       )}
 
-      <!-- Page Header -->
-      <header class="page-header">
-        <div class="page-header__content">
-          <h1 class="page-header__title">{productData.title}</h1>
-          <div class="page-header__meta">
-            <span class="page-header__author">
-              by <a href={`/users/${owner?.handle}`} class="page-header__author-link">
-                {owner?.name || owner?.handle || 'Unknown'}
-              </a>
-            </span>
-            <span class="page-header__divider">•</span>
-            <Badge variant={productData.status as 'draft' | 'public' | 'archived'} size="sm">
-              {productData.status}
-            </Badge>
-            {isOwner && (
-              <>
-                <span class="page-header__divider">•</span>
-                <Badge variant="primary" size="sm">
-                  Owner • Changes auto-save
-                </Badge>
-              </>
-            )}
-          </div>
-          {tags.length > 0 && (
-            <TagList className="page-header__tags">
-              {tags.map((tag) => <Tag>{tag.value}</Tag>)}
-            </TagList>
-          )}
-        </div>
-      </header>
-
       <div class="page-columns">
         <div class="page-columns__column">
           <!-- Description Section -->
           {!isEditMode && productData.description && (
             <Card>
               <CardHeader>
-                <CardTitle>About This Product</CardTitle>
+                <CardTitle>{productData.title}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p class="product-about-text">{productData.description}</p>
@@ -192,10 +162,6 @@ if (jamId) {
 
           {isEditMode && (
             <Card>
-              <CardHeader>
-                <CardTitle>About This Product</CardTitle>
-                <CardDescription>Edit your product description</CardDescription>
-              </CardHeader>
               <CardContent>
                 <ProductBasicInfoForm
                   client:load
@@ -337,6 +303,27 @@ if (jamId) {
             </Card>
           )}
 
+          <!-- Revenue Preview Section (Edit Mode) -->
+          {isEditMode && currentUser && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue Preview</CardTitle>
+                <CardDescription>
+                  See how revenue will be distributed when someone purchases this product.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProductRevenuePreview
+                  client:load
+                  productId={productData.id}
+                  productOwnerId={productData.user_id}
+                  productOwnerHandle={owner?.handle}
+                  productOwnerName={owner?.full_name || owner?.handle}
+                />
+              </CardContent>
+            </Card>
+          )}
+
         <!-- Reviews Section (Jam Context) -->
         {!isEditMode && jamId && targetJam && isProductInJam && (
           <Card>
@@ -381,7 +368,7 @@ if (jamId) {
               productId={productData.id}
               productOwnerId={productData.user_id}
               productOwnerHandle={owner?.handle}
-              productOwnerName={owner?.full_name || owner?.handle}
+              productOwnerName={owner?.name || owner?.handle}
             />
           </CardContent>
         </Card>
@@ -429,42 +416,6 @@ if (jamId) {
 
         {isEditMode && (
           <>
-            <!-- Quick Actions Card (Edit Mode) -->
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Common product management tasks</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div class="quick-actions">
-                  <form action="/api/documents/create-document" method="POST" class="quick-actions__form">
-                    <input type="hidden" name="relatedProductId" value={productData.id} />
-                    <Button type="submit" variant="outline" size="md">
-                      <span slot="text">📝 Create Related Document</span>
-                    </Button>
-                  </form>
-                </div>
-              </CardContent>
-            </Card>
-
-            <!-- Publishing Requirements Card (Edit Mode) -->
-            <Card>
-              <CardHeader>
-                <CardTitle>Publishing Checklist</CardTitle>
-                <CardDescription>Complete these requirements before publishing</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProductRequirementsChecklist
-                  client:load
-                  product={productData}
-                  fileCount={productFiles.length}
-                  imageCount={productImages.length}
-                  documentCount={productDocuments.length}
-                  embeddedProductCount={productComponents.length}
-                />
-              </CardContent>
-            </Card>
-
             <!-- Status Card (Edit Mode) -->
             <Card>
               <CardHeader>
@@ -1103,25 +1054,6 @@ if (jamId) {
 
   /* ===== Responsive ===== */
   @media (max-width: 768px) {
-    .product-hero__content {
-      padding: var(--spacing-3xl) var(--spacing-2xl);
-    }
-
-    .product-hero__mode-toggle {
-      top: var(--spacing-lg);
-      right: var(--spacing-lg);
-      flex-direction: column;
-      padding: var(--spacing-sm) var(--spacing-md);
-    }
-
-    .product-hero__header {
-      flex-direction: column;
-    }
-
-    .product-hero__title {
-      font-size: var(--text-3xl);
-    }
-
     .variant-item__header {
       flex-direction: column;
     }

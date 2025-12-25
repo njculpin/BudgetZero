@@ -50,8 +50,6 @@ export const POST: APIRoute = async ({ request }) => {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
 
-        console.log('Processing checkout.session.completed:', session.id);
-
         // Extract metadata
         const userId = session.metadata?.userId;
         const cartId = session.metadata?.cartId;
@@ -95,8 +93,6 @@ export const POST: APIRoute = async ({ request }) => {
           if (!sale) {
             throw new Error('Failed to create sale record');
           }
-
-          console.log('Created sale:', sale.id);
 
           // Collect items for email
           const emailItems: Array<{
@@ -144,8 +140,6 @@ export const POST: APIRoute = async ({ request }) => {
               continue;
             }
 
-            console.log('Created sale item:', saleItem.id);
-
             // Add to email items
             emailItems.push({
               productTitle: product.title,
@@ -162,8 +156,6 @@ export const POST: APIRoute = async ({ request }) => {
               continue;
             }
 
-            console.log('Granted download access for product:', product.id);
-
             // 4. Create royalty transactions for product-level royalties
             const productRoyalties = await createRoyaltyTransactionsForProduct({
               saleId: sale.id,
@@ -173,8 +165,6 @@ export const POST: APIRoute = async ({ request }) => {
               saleItemPriceCents: priceBreakdown.totalPrice,
               currency: 'usd',
             });
-
-            console.log(`Created ${productRoyalties.length} royalty transactions for product ${product.id}`);
 
             // 5. Create royalty transactions for embedded products
             const components = await getProductComponents(product.id);
@@ -197,16 +187,11 @@ export const POST: APIRoute = async ({ request }) => {
                 saleItemPriceCents: component.inherited_price_cents,
                 currency: 'usd',
               });
-
-              console.log(`Created ${embeddedRoyalties.length} royalty transactions for embedded product ${component.child_product_id}`);
             }
           }
 
           // 6. Clear the cart
-          const cleared = await clearCart(cartId);
-          if (cleared) {
-            console.log('Cart cleared:', cartId);
-          }
+          await clearCart(cartId);
 
           // 7. Send purchase confirmation email
           const origin = process.env.VERCEL_URL
@@ -222,8 +207,6 @@ export const POST: APIRoute = async ({ request }) => {
             purchaseUrl: `${origin}/purchases/${sale.id}`,
           });
 
-          console.log('Purchase fulfillment complete for sale:', sale.id);
-
           return new Response(
             JSON.stringify({ received: true, saleId: sale.id }),
             { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -236,18 +219,17 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       case 'payment_intent.succeeded': {
-        console.log('Payment intent succeeded:', event.data.object.id);
+        // Payment intent succeeded - main processing happens in checkout.session.completed
         break;
       }
 
       case 'payment_intent.payment_failed': {
-        console.log('Payment failed:', event.data.object.id);
+        // Payment failed - could add notification system here in the future
         break;
       }
 
       case 'charge.refunded': {
         const charge = event.data.object as Stripe.Charge;
-        console.log('Processing charge.refunded:', charge.id);
 
         // Get the payment intent ID (used as stripe_charge_id in our sales)
         const paymentIntentId = typeof charge.payment_intent === 'string'
@@ -263,7 +245,6 @@ export const POST: APIRoute = async ({ request }) => {
         const sale = await getSaleByStripeChargeId(paymentIntentId);
 
         if (!sale) {
-          console.log('No sale found for payment intent:', paymentIntentId);
           // This might be a charge we don't track - not an error
           return new Response(
             JSON.stringify({ received: true, message: 'No matching sale found' }),
@@ -275,14 +256,10 @@ export const POST: APIRoute = async ({ request }) => {
         const refundReason = charge.refunds?.data?.[0]?.reason || 'Customer requested refund';
 
         // Mark the sale as refunded
-        const saleRefunded = await refundSale(sale.id, refundReason);
-        if (saleRefunded) {
-          console.log('Sale marked as refunded:', sale.id);
-        }
+        await refundSale(sale.id, refundReason);
 
         // Mark all pending royalty transactions as refunded
         const refundedCount = await markSaleRoyaltiesAsRefunded(sale.id);
-        console.log(`Marked ${refundedCount} royalty transactions as refunded for sale:`, sale.id);
 
         return new Response(
           JSON.stringify({ received: true, saleId: sale.id, royaltiesRefunded: refundedCount }),
@@ -291,7 +268,8 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        // Unhandled event type - acknowledge receipt
+        break;
     }
 
     return new Response(

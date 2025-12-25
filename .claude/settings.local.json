@@ -56,7 +56,10 @@
       "Bash(xargs kill:*)",
       "Bash(chmod:*)",
       "Bash(pkill:*)",
-      "Bash(npm run test:coverage:*)"
+      "Bash(npm run test:coverage:*)",
+      "Skill(CSS)",
+      "Bash(for file in project-product-manager.md ux-flow-designer.md test-automation-engineer.md)",
+      "Bash(do sed -i '' '/^model: sonnet$/d' \"$file\")"
     ],
     "deny": [],
     "ask": []

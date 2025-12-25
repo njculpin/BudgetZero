@@ -55,7 +55,7 @@ const formatDate = (dateStr: string) => {
 <Layout title="Documents - Game Loopers">
   <div class="page">
     <div class="page__container">
-      <div class="page-header-with-action">
+      <div class="page-header--with-action">
         <PageHeader title="Documents" description="Collaborative game design documents - rulebooks, reference cards, and more"/>
         {currentUser && (
           <FormSubmitButton
@@ -135,7 +135,7 @@ const formatDate = (dateStr: string) => {
 
 <style>
 /* ===== Page Header with Action ===== */
-.page-header-with-action {
+.page-header--with-action {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -247,7 +247,7 @@ const formatDate = (dateStr: string) => {
 
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
-  .page-header-with-action {
+  .page-header--with-action {
     flex-direction: column;
     gap: var(--gap-md);
   }

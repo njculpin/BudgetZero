@@ -377,7 +377,6 @@ export async function createRoyaltyTransactionsForSaleItemAsset(params: {
   const assetRoyalties = await getAssetRoyalties(assetId);
 
   if (assetRoyalties.length === 0) {
-    console.log(`No royalties configured for asset ${assetId}`);
     return [];
   }
 
@@ -430,7 +429,6 @@ export async function createRoyaltyTransactionsForSaleItemAsset(params: {
 
     if (data) {
       createdTransactions.push(data as SaleRoyaltyTransaction);
-      console.log(`Created royalty transaction: ${data.id} for ${calculatedCents / 100} ${currency} to user ${royalty.user_id}`);
     }
   }
 
@@ -455,7 +453,6 @@ export async function createRoyaltyTransactionsForProduct(params: {
   const productRoyalties = await getProductRoyalties(productId);
 
   if (productRoyalties.length === 0) {
-    console.log(`No royalties configured for product ${productId}`);
     return [];
   }
 
@@ -508,7 +505,6 @@ export async function createRoyaltyTransactionsForProduct(params: {
 
     if (data) {
       createdTransactions.push(data as SaleRoyaltyTransaction);
-      console.log(`Created royalty transaction: ${data.id} for ${calculatedCents / 100} ${currency} to user ${royalty.user_id}`);
     }
   }
 

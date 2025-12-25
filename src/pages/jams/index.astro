@@ -63,7 +63,7 @@ const jamStatuses = new Map(allJams.map(jam => {
 <Layout title="Jams - Game Loopers">
   <div class="page">
     <div class="page__container">
-      <div class="page-header-with-action">
+      <div class="page-header--with-action">
         <PageHeader
           title="Jams"
           description="Discover jams from the community"
@@ -80,14 +80,6 @@ const jamStatuses = new Map(allJams.map(jam => {
           </FormSubmitButton>
         )}
       </div>
-
-      {!currentUser && (
-        <Card>
-          <CardContent>
-            <BrowseCTA message="Sign in to create and host your own game jam" />
-          </CardContent>
-        </Card>
-      )}
 
        <!-- All jams Section -->
       {allJams.length > 0 ? (

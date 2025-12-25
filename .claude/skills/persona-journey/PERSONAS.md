@@ -36,8 +36,8 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 **Role:** Creates STL files for miniatures, terrain, and game pieces
 
 **Goals:**
-- Sell digital STL files
-- Earn passive income through royalties when others use their models
+- Sell digital STL file products
+- Earn passive income through royalties when others embed their products
 - Build portfolio and reputation
 - License work for commercial use
 
@@ -48,25 +48,26 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Limited collaboration opportunities
 
 **Key Features:**
-- Asset creation with file uploads
+- Product creation with STL file uploads
 - 4-state status system (draft, private, public, archived)
-- Royalty configuration (earn when used in products)
+- Product embeddability (is_embeddable flag for royalty earnings)
+- Royalty configuration (earn when product is embedded in other products)
 - Portfolio showcase on profile
 
 **Success Metrics:**
-- Assets public (public status)
+- Public products (embeddable and ready for use)
 - Total downloads
-- Royalty earnings from product sales
-- Products using their assets
+- Royalty earnings when products are embedded
+- Number of products using their embeddable products
 
 ---
 
 ### 3. Illustrator / Artist
-**Role:** Creates 2D art assets (character portraits, maps, tokens, card art)
+**Role:** Creates 2D art products (character portraits, maps, tokens, card art)
 
 **Goals:**
 - License artwork for game products
-- Earn royalties on each product sale
+- Earn royalties on each product sale when work is embedded
 - Maintain copyright while allowing commercial use
 - Get credited for work
 
@@ -77,15 +78,16 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Unclear licensing terms
 
 **Key Features:**
-- Asset creation for images (PNG, JPG, PDF)
+- Product creation with image files (PNG, JPG, PDF)
+- Product embeddability for licensing
 - Public marketplace visibility
 - Transparent royalty splits
 - Automatic attribution on product pages
 
 **Success Metrics:**
-- Assets in public marketplace
-- Products using their artwork
-- Royalty earnings
+- Public embeddable products in marketplace
+- Products embedding their artwork
+- Royalty earnings from embedded products
 - Profile views and follows
 
 ---
@@ -288,20 +290,21 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 | Creator Type | Creates | Consumers | Earns From |
 |-------------|---------|-----------|------------|
 | Game Designer | Products | Buyers | Product sales |
-| 3D Modeler | STL Assets | Designers | Asset sales + royalties when used in products |
-| Illustrator | Art Assets | Designers | Asset sales + royalties when used in products |
+| 3D Modeler | Embeddable STL Products | Designers | Direct sales + royalties when embedded in other products |
+| Illustrator | Embeddable Art Products | Designers | Direct sales + royalties when embedded in other products |
 | Consumer | Reviews | N/A | N/A |
 
 **Example Transaction:**
-- Designer creates product "Fantasy RPG Starter Kit" ($25)
-- Uses 3D Modeler's STL pack (configured royalty: $5)
-- Uses Illustrator's character art (configured royalty: $3)
+- Designer creates product "Fantasy RPG Starter Kit" ($25 total price)
+- Embeds 3D Modeler's STL pack product (royalty: $5)
+- Embeds Illustrator's character art product (royalty: $3)
 - Consumer buys product for $25
-- **Revenue split:**
-  - 3D Modeler: $5
-  - Illustrator: $3
-  - Designer: $17
-  - Platform: $1.25 (5% fee)
+- **Revenue split (with 10% platform fee):**
+  - Platform fee (10%): $2.50
+  - Subtotal after fee: $22.50
+  - 3D Modeler royalty: $5.00
+  - Illustrator royalty: $3.00
+  - Designer (owner share): $14.50 ($22.50 - $5.00 - $3.00)
 
 ---
 
@@ -309,40 +312,42 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 
 | Creator Type | Creates | Consumers | Earns From |
 |-------------|---------|-----------|------------|
-| 3D Modeler | STL Assets | Designers + Consumers + Printers | Asset sales + print royalties (optional) |
+| 3D Modeler | Embeddable STL Products | Designers + Consumers + Printers | Product sales + print royalties (optional) |
 | Printer | Physical Minis | Consumers | Print service fees |
 | Painter | Painted Minis | Consumers | Paint service fees |
 | Consumer | Reviews | N/A | N/A |
 
 **Example Transaction (Print + Paint):**
-- Consumer finds 3D Modeler's STL "Dragon Mini" ($5 digital)
+- Consumer finds 3D Modeler's STL product "Dragon Mini" ($5 digital)
 - Adds print service from Printer ($20)
 - Adds paint service from Painter ($15)
 - Total: $40
-- **Revenue split:**
-  - 3D Modeler: $5 (digital asset sale)
-  - Printer: $18 (after 10% platform fee)
+- **Revenue split (with 10% platform fee):**
+  - 3D Modeler product sale: $5.00 (digital product purchase)
+  - Platform fee on services: $3.50 (10% of $35 in services)
+  - Printer: $18.00 (after 10% platform fee)
   - Painter: $13.50 (after 10% platform fee)
-  - Platform: $3.50 total
 
 **Open Question:** Should 3D Modeler also earn royalty on physical prints?
-- **Option A:** No royalty (they already earned from digital sale)
+- **Option A:** No royalty (they already earned from digital product sale)
 - **Option B:** $1-2 per print (incentivizes creating print-friendly models)
-- **Recommendation:** Start with Option A, add Option B if print-optimized models become issue
+- **Recommendation:** Start with Option A, add Option B if print-optimized models become an issue
+- **Note:** This decision deferred to Phase 3 community feedback
 
 ---
 
 ## Collaboration Patterns
 
 ### Current (Digital)
-- **Designer + Modeler:** Designer uses Modeler's STL in product, royalty auto-paid
-- **Designer + Illustrator:** Designer uses Illustrator's art in product, royalty auto-paid
-- **Designer + Designer:** Co-create product, both listed as owners (future feature)
+- **Designer + Modeler:** Designer embeds Modeler's STL product, royalty auto-calculated and paid
+- **Designer + Illustrator:** Designer embeds Illustrator's art product, royalty auto-calculated and paid
+- **Multi-Product Embedding:** Designer can embed multiple products from different creators, all royalties tracked
+- **Designer + Designer:** Co-create product (future feature - formal collaboration invitations)
 
 ### Future (Physical Services)
-- **Modeler + Printer:** Modeler's STL → Printer fulfills orders → Revenue share TBD
-- **Printer + Painter:** Bundled service (print + paint) → Sequential fulfillment
-- **Designer + Printer + Painter:** Designer's product includes print/paint option → All three earn
+- **Modeler + Printer:** Modeler's STL product → Printer fulfills physical orders → Revenue share TBD
+- **Printer + Painter:** Bundled service (print + paint) → Sequential fulfillment workflow
+- **Designer + Printer + Painter:** Designer's product includes print/paint option → All three earn on transaction
 
 ---
 
@@ -392,19 +397,19 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ### Game Designer
 - Products public: Target 3-5 per active designer
 - Average product price: $15-25
-- Products using community assets: 60%+ (not just own assets)
+- Products embedding community products: 60%+ (collaborative revenue model)
 - Jam participation rate: 40% of designers
 
 ### 3D Modeler
-- Public assets: 70% of total assets (not stuck in draft)
-- Assets used in products: 30% utilization rate
-- Average royalty per asset: $3-5
-- Repeat usage: 2+ products per popular asset
+- Public embeddable products: 70% of total products (not stuck in draft)
+- Products embedded in other products: 30% utilization rate
+- Average royalty per embedded product: $3-5
+- Repeat usage: 2+ products embedding their work
 
 ### Illustrator
-- Public assets: 80% of total assets
-- Assets used in products: 40% utilization rate
-- Average royalty per asset: $2-4
+- Public embeddable products: 80% of total products
+- Products embedded in other products: 40% utilization rate
+- Average royalty per embedded product: $2-4
 - Portfolio engagement: 50+ profile views per month
 
 ### Consumer
@@ -413,21 +418,19 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Jam voting participation: 20% of buyers
 - Review rate: 15% of purchases
 
-### Printer (Future)
+### Printer
 - Orders fulfilled: 10+ per month (per printer)
 - Average order value: $20-25
 - Quality approval rate: 95%+ first submission
 - Customer satisfaction: 4.5+ star average
 
-### Painter (Future)
+### Painter
 - Paint jobs completed: 5+ per month (per painter)
 - Average order value: $15-20
 - First-submission approval: 90%+
 - Customer satisfaction: 4.7+ star average
 
 ---
-
-## Notes for Future Implementation
 
 **When adding Printer/Painter personas:**
 
@@ -464,9 +467,3 @@ This document defines all user personas for Game Loopers, their goals, pain poin
    - Quality standards documentation ("What is tabletop quality vs display quality?")
    - Shipping damage policy
    - Refund policy for physical goods
-
-**Decision Point:** Revisit this personas doc at Month 6 and decide:
-- Is there demand for physical services? (survey digital customers)
-- Do we have capacity to support operational complexity?
-- Can we recruit 10-20 quality printers/painters?
-- If YES to all three → Proceed with Phase 3

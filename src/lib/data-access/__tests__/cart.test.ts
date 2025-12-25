@@ -10,7 +10,7 @@ import {
   clearCart,
   getCartItemCount
 } from '../cart';
-import { createProduct, createVariant } from '../products';
+import { createProduct } from '../products';
 
 const supabase = createClient(
   process.env.PUBLIC_SUPABASE_URL!,
@@ -20,7 +20,6 @@ const supabase = createClient(
 describe('Cart Data Access Layer', () => {
   let testUserId: string;
   let testProductId: string;
-  let testVariantId: string;
   let testCartId: string;
   let testCartItemId: string;
   const testEmail = `test-cart-${Date.now()}@example.com`;
@@ -39,7 +38,7 @@ describe('Cart Data Access Layer', () => {
 
     testUserId = authData.user.id;
 
-    // Create a test product and variant
+    // Create a test product
     const product = await createProduct(testUserId, {
       title: 'Test Product for Cart',
       status: 'public',
@@ -47,14 +46,6 @@ describe('Cart Data Access Layer', () => {
 
     if (!product) throw new Error('Failed to create test product');
     testProductId = product.id;
-
-    const variant = await createVariant(testProductId, {
-      title: 'Test Variant',
-      sku: 'TEST-CART-001',
-    });
-
-    if (!variant) throw new Error('Failed to create test variant');
-    testVariantId = variant.id;
   });
 
   afterAll(async () => {
@@ -104,14 +95,12 @@ describe('Cart Data Access Layer', () => {
       const cartItem = await addToCart(
         testCartId,
         testProductId,
-        testVariantId,
         2
       );
 
       expect(cartItem).toBeDefined();
       expect(cartItem?.cart_id).toBe(testCartId);
       expect(cartItem?.product_id).toBe(testProductId);
-      expect(cartItem?.variant_id).toBe(testVariantId);
       expect(cartItem?.quantity).toBe(2);
 
       if (cartItem) {
@@ -124,7 +113,6 @@ describe('Cart Data Access Layer', () => {
       const cartItem = await addToCart(
         testCartId,
         testProductId,
-        testVariantId,
         3
       );
 
@@ -133,22 +121,21 @@ describe('Cart Data Access Layer', () => {
       expect(cartItem?.id).toBe(testCartItemId); // Same item, not new one
     });
 
-    it('should handle adding multiple different variants', async () => {
-      // Create another variant
-      const variant2 = await createVariant(testProductId, {
-        title: 'Second Variant',
-        sku: 'TEST-CART-002',
+    it('should handle adding multiple different products', async () => {
+      // Create another product
+      const product2 = await createProduct(testUserId, {
+        title: 'Second Product for Cart',
+        status: 'public',
       });
 
       const cartItem = await addToCart(
         testCartId,
-        testProductId,
-        variant2!.id,
+        product2!.id,
         1
       );
 
       expect(cartItem).toBeDefined();
-      expect(cartItem?.variant_id).toBe(variant2!.id);
+      expect(cartItem?.product_id).toBe(product2!.id);
       expect(cartItem?.quantity).toBe(1);
 
       // Verify we now have 2 items in cart
@@ -223,7 +210,6 @@ describe('Cart Data Access Layer', () => {
       const cartItem = await addToCart(
         testCartId,
         testProductId,
-        testVariantId,
         1
       );
 
@@ -242,7 +228,6 @@ describe('Cart Data Access Layer', () => {
       const cartItem = await addToCart(
         testCartId,
         testProductId,
-        testVariantId,
         1
       );
 
@@ -263,7 +248,7 @@ describe('Cart Data Access Layer', () => {
   describe('clearCart', () => {
     it('should remove all items from cart', async () => {
       // Add a few items first
-      await addToCart(testCartId, testProductId, testVariantId, 1);
+      await addToCart(testCartId, testProductId, 1);
 
       const itemsBefore = await getCartItems(testCartId);
       expect(itemsBefore.length).toBeGreaterThan(0);
@@ -288,7 +273,7 @@ describe('Cart Data Access Layer', () => {
     beforeAll(async () => {
       // Clear cart and add some items
       await clearCart(testCartId);
-      await addToCart(testCartId, testProductId, testVariantId, 1);
+      await addToCart(testCartId, testProductId, 1);
     });
 
     it('should return correct item count', async () => {
@@ -313,13 +298,13 @@ describe('Cart Data Access Layer', () => {
     it('should update count when items are added/removed', async () => {
       const countBefore = await getCartItemCount(testUserId);
 
-      // Create another variant to add
-      const variant3 = await createVariant(testProductId, {
-        title: 'Third Variant',
-        sku: 'TEST-CART-003',
+      // Create another product to add
+      const product3 = await createProduct(testUserId, {
+        title: 'Third Product for Cart',
+        status: 'public',
       });
 
-      await addToCart(testCartId, testProductId, variant3!.id, 1);
+      await addToCart(testCartId, product3!.id, 1);
 
       const countAfter = await getCartItemCount(testUserId);
       expect(countAfter).toBe(countBefore + 1);
@@ -336,7 +321,7 @@ describe('Cart Data Access Layer', () => {
       await clearCart(cart!.id);
 
       // 3. Add items
-      await addToCart(cart!.id, testProductId, testVariantId, 2);
+      await addToCart(cart!.id, testProductId, 2);
       let items = await getCartItems(cart!.id);
       expect(items.length).toBe(1);
       expect(items[0].quantity).toBe(2);

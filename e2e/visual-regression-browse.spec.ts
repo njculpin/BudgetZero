@@ -48,7 +48,7 @@ test.describe('Visual Regression - Browse Pages', () => {
       await page.waitForLoadState('networkidle');
 
       // Screenshot just the header area
-      const header = page.locator('.page-header-with-action').first();
+      const header = page.locator('.page-header--with-action').first();
       await expect(header).toHaveScreenshot('products-header.png');
     });
 
@@ -402,7 +402,7 @@ test.describe('Visual Regression - Browse Pages', () => {
 
       await page.waitForTimeout(500);
 
-      const header = page.locator('.page-header-with-action').first();
+      const header = page.locator('.page-header--with-action').first();
       await expect(header).toHaveScreenshot('products-header-light.png');
     });
 
@@ -418,7 +418,7 @@ test.describe('Visual Regression - Browse Pages', () => {
 
       await page.waitForTimeout(500);
 
-      const header = page.locator('.page-header-with-action').first();
+      const header = page.locator('.page-header--with-action').first();
       await expect(header).toHaveScreenshot('products-header-dark.png');
     });
   });

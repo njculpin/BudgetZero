@@ -211,7 +211,7 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
       // Auto-dismiss success message
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError("Unable to upload files. Please check your internet connection and try again.");
       setUploadQueue([]);
     }
   };
@@ -301,7 +301,7 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
       setSuccess("File order saved successfully!");
       setHasReordered(false);
     } catch (err) {
-      setError("An unexpected error occurred while saving order");
+      setError("Unable to save file order. Please try again.");
     }
   };
 
@@ -333,7 +333,7 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
       // Auto-dismiss success message
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError("An unexpected error occurred while deleting file");
+      setError("Unable to delete file. Please try again.");
     }
   };
 
@@ -389,7 +389,7 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
       // Auto-dismiss success message
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError("An unexpected error occurred while updating price");
+      setError("Unable to update price. Please try again.");
     }
   };
 
@@ -484,6 +484,19 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
         }}
         onDrop={handleFileDrop}
       >
+        {/* Empty state when no files */}
+        <Show when={files().length === 0 && uploadQueue().length === 0}>
+          <div class="file-list__empty">
+            <div class="file-list__empty-icon">📦</div>
+            <p class="file-list__empty-text">
+              No files uploaded yet. Add files to make this product available for purchase.
+            </p>
+            <p class="file-list__empty-hint">
+              Drag & drop files below or click to upload
+            </p>
+          </div>
+        </Show>
+
         {/* Render existing files */}
         <For each={files()}>
           {(file, index) => (

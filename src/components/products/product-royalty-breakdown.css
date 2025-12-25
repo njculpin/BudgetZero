@@ -96,6 +96,16 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.royalty-breakdown__item--platform {
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.royalty-breakdown__item--platform .royalty-breakdown__icon {
+  color: var(--secondary-foreground);
+}
+
 .royalty-breakdown__item-header {
   display: flex;
   align-items: center;

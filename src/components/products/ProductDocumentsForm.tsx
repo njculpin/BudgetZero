@@ -119,7 +119,6 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
       // Auto-dismiss success message
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      console.error("Add document error:", err);
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
     }
   };
@@ -259,7 +258,6 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
       // Auto-dismiss success message
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      console.error("Create document error:", err);
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setCreatingDocument(false);

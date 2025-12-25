@@ -69,7 +69,6 @@ export async function createCheckoutSession(
       livemode: false,
     } as Stripe.Checkout.Session;
 
-    console.log('🎭 MOCK STRIPE: Created mock checkout session:', mockSession.id);
     return mockSession;
   }
 
@@ -118,7 +117,6 @@ export function verifyWebhookSignature(
       type: parsedPayload.type || 'checkout.session.completed',
     } as Stripe.Event;
 
-    console.log('🎭 MOCK STRIPE: Verified mock webhook event:', mockEvent.id);
     return mockEvent;
   }
 
@@ -178,7 +176,6 @@ export async function getCheckoutSession(
       livemode: false,
     } as Stripe.Checkout.Session;
 
-    console.log('🎭 MOCK STRIPE: Retrieved mock checkout session:', sessionId);
     return mockSession;
   }
 

@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 import {
-  getAssetRoyalties,
+  getProductRoyalties,
   getRoyaltyById,
-  createAssetRoyalty,
-  updateAssetRoyalty,
-  deleteAssetRoyalty,
+  createProductRoyalty,
+  updateProductRoyalty,
+  deleteProductRoyalty,
   calculateTotalAssetCost,
   getUserRoyaltyTransactions,
   getUserEarningsSummary,
@@ -14,7 +14,7 @@ import {
   createRoyaltyTransactionsForSaleItemAsset,
   markSaleRoyaltiesAsRefunded
 } from '../royalties';
-import { createProduct, createVariant } from '../products';
+import { createProduct } from '../products';
 
 const supabase = createClient(
   process.env.PUBLIC_SUPABASE_URL!,
@@ -24,9 +24,7 @@ const supabase = createClient(
 describe('Royalty Data Access Layer', () => {
   let testUser1Id: string;
   let testUser2Id: string;
-  let testProductId: string;
-  let testVariantId: string;
-  let testAssetId: string;
+  let testProductId: string; // Product that will have royalties
   let testRoyalty1Id: string;
   let testRoyalty2Id: string;
   let testSaleId: string;
@@ -54,7 +52,7 @@ describe('Royalty Data Access Layer', () => {
     testUser1Id = user1Data.user.id;
     testUser2Id = user2Data.user.id;
 
-    // Create a test product and variant
+    // Create a test product for royalty testing
     const product = await createProduct(testUser1Id, {
       title: 'Test Product for Royalties',
       status: 'public',
@@ -62,34 +60,10 @@ describe('Royalty Data Access Layer', () => {
 
     if (!product) throw new Error('Failed to create test product');
     testProductId = product.id;
-
-    const variant = await createVariant(testProductId, {
-      title: 'Test Variant',
-      sku: 'TEST-ROYALTY-001',
-    });
-
-    if (!variant) throw new Error('Failed to create test variant');
-    testVariantId = variant.id;
-
-    // Create a test asset
-    const { data: asset } = await supabase
-      .from('assets')
-      .insert({
-        user_id: testUser1Id,
-        handle: 'test-asset-royalty',
-        title: 'Test Asset for Royalties',
-        description: 'Test asset',
-        status: 'private',
-      })
-      .select()
-      .single();
-
-    if (!asset) throw new Error('Failed to create test asset');
-    testAssetId = asset.id;
   });
 
   afterAll(async () => {
-    // Clean up test users (cascades to products, assets, royalties)
+    // Clean up test users (cascades to products, royalties)
     if (testUser1Id) {
       await supabase.auth.admin.deleteUser(testUser1Id);
     }

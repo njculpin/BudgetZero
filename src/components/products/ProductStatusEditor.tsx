@@ -64,41 +64,6 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
     }
   };
 
-  const getStatusIcon = (s: string) => {
-    switch (s) {
-      case "draft": return "📝";
-      case "private": return "🔒";
-      case "public": return "🌐";
-      case "archived": return "📦";
-      default: return "📄";
-    }
-  };
-
-  const getStatusLabel = (s: string) => {
-    switch (s) {
-      case "draft": return "Draft";
-      case "private": return "Private";
-      case "public": return "Public";
-      case "archived": return "Archived";
-      default: return s;
-    }
-  };
-
-  const getStatusDescription = (s: string) => {
-    switch (s) {
-      case "draft":
-        return "Work in progress. Only you can see this product.";
-      case "private":
-        return "Unlisted. Only you and people with the link can view.";
-      case "public":
-        return "Live in marketplace. Anyone can discover and purchase.";
-      case "archived":
-        return "Hidden from marketplace. Not available for purchase.";
-      default:
-        return "";
-    }
-  };
-
   const getStatusActionDescription = (s: string) => {
     switch (s) {
       case "draft":
@@ -124,19 +89,6 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
         <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
       </Show>
 
-      {/* Current Status Banner */}
-      <div class={`status-editor__banner status-editor__banner--${status()}`}>
-        <div class="status-editor__banner-icon">{getStatusIcon(status())}</div>
-        <div class="status-editor__banner-content">
-          <div class="status-editor__banner-label">
-            Current Status: <strong>{getStatusLabel(status())}</strong>
-          </div>
-          <div class="status-editor__banner-description">
-            {getStatusDescription(status())}
-          </div>
-        </div>
-      </div>
-
       {/* Status Options Grid */}
       <div class="status-editor__grid">
         {/* Draft */}
@@ -150,7 +102,6 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
             "status-editor__option--disabled": status() === "draft" || isLoading(),
           }}
         >
-          <div class="status-editor__option-icon">📝</div>
           <div class="status-editor__option-content">
             <div class="status-editor__option-title">Draft</div>
             <div class="status-editor__option-description">
@@ -173,7 +124,6 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
             "status-editor__option--disabled": status() === "private" || isLoading(),
           }}
         >
-          <div class="status-editor__option-icon">🔒</div>
           <div class="status-editor__option-content">
             <div class="status-editor__option-title">Private</div>
             <div class="status-editor__option-description">
@@ -196,7 +146,6 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
             "status-editor__option--disabled": status() === "public" || isLoading(),
           }}
         >
-          <div class="status-editor__option-icon">🌐</div>
           <div class="status-editor__option-content">
             <div class="status-editor__option-title">Public</div>
             <div class="status-editor__option-description">
@@ -219,7 +168,6 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
             "status-editor__option--disabled": status() === "archived" || isLoading(),
           }}
         >
-          <div class="status-editor__option-icon">📦</div>
           <div class="status-editor__option-content">
             <div class="status-editor__option-title">Archived</div>
             <div class="status-editor__option-description">
