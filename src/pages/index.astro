@@ -41,8 +41,8 @@ const getProductCards = async (products: typeof allProducts) => {
   );
 };
 
-const newLaunches = await getProductCards(allProducts.slice(0, 12));
-const trending = await getProductCards(allProducts.slice(12, 24));
+const newLaunches = await getProductCards(allProducts.slice(0, 6));
+const trending = await getProductCards(allProducts.slice(6, 12));
 
 const activeJam = await getActiveJam();
 
@@ -104,34 +104,10 @@ const categories = [
                 <img src={product.imageUrl} alt={product.title} />
               </div>
               <div class="product-card__content">
-                <h3 class="product-card__title">{product.title}</h3>
                 <p class="product-card__creator">
-                  by <a href={`/users/${product.ownerHandle}`} class="product-card__creator-link" onclick="event.stopPropagation()">{product.ownerName}</a>
+                  by {product.ownerName}
                 </p>
-                <p class="product-card__description">{product.description}</p>
-
-                {(product.fileCount > 0 || product.documentCount > 0 || product.componentCount > 0) && (
-                  <div class="product-card__includes">
-                    <span class="product-card__includes-label">Includes:</span>
-                    <div class="product-card__includes-items">
-                      {product.fileCount > 0 && (
-                        <span class="product-card__includes-item">
-                          📁 {product.fileCount} {product.fileCount === 1 ? 'file' : 'files'}
-                        </span>
-                      )}
-                      {product.documentCount > 0 && (
-                        <span class="product-card__includes-item">
-                          📄 {product.documentCount} {product.documentCount === 1 ? 'document' : 'documents'}
-                        </span>
-                      )}
-                      {product.componentCount > 0 && (
-                        <span class="product-card__includes-item">
-                          🧩 {product.componentCount} {product.componentCount === 1 ? 'component' : 'components'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <h3 class="product-card__title">{product.title}</h3>
               </div>
             </a>
           ))}
@@ -151,34 +127,10 @@ const categories = [
                 <img src={product.imageUrl} alt={product.title} />
               </div>
               <div class="product-card__content">
-                <h3 class="product-card__title">{product.title}</h3>
                 <p class="product-card__creator">
-                  by <a href={`/users/${product.ownerHandle}`} class="product-card__creator-link" onclick="event.stopPropagation()">{product.ownerName}</a>
+                  by {product.ownerName}
                 </p>
-                <p class="product-card__description">{product.description}</p>
-
-                {(product.fileCount > 0 || product.documentCount > 0 || product.componentCount > 0) && (
-                  <div class="product-card__includes">
-                    <span class="product-card__includes-label">Includes:</span>
-                    <div class="product-card__includes-items">
-                      {product.fileCount > 0 && (
-                        <span class="product-card__includes-item">
-                          📁 {product.fileCount} {product.fileCount === 1 ? 'file' : 'files'}
-                        </span>
-                      )}
-                      {product.documentCount > 0 && (
-                        <span class="product-card__includes-item">
-                          📄 {product.documentCount} {product.documentCount === 1 ? 'document' : 'documents'}
-                        </span>
-                      )}
-                      {product.componentCount > 0 && (
-                        <span class="product-card__includes-item">
-                          🧩 {product.componentCount} {product.componentCount === 1 ? 'component' : 'components'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <h3 class="product-card__title">{product.title}</h3>
               </div>
             </a>
           ))}
@@ -347,8 +299,8 @@ const categories = [
   /* ===== Product Grid ===== */
   .product-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--spacing-3xl);
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-4xl);
   }
 
   .product-card {
@@ -389,51 +341,23 @@ const categories = [
   .product-card__content {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-lg);
-  }
-
-  .product-card__title {
-    margin: 0;
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--leading-snug);
-    color: var(--foreground);
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xl);
   }
 
   .product-card__creator {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted-foreground);
-  }
-
-  .product-card__creator-link {
-    color: var(--primary);
-    text-decoration: none;
     font-weight: var(--font-weight-medium);
-    transition: color 0.2s ease;
   }
 
-  .product-card__creator-link:hover {
-    color: var(--primary);
-    text-decoration: underline;
-  }
-
-  .product-card__description {
+  .product-card__title {
     margin: 0;
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-    line-height: var(--leading-relaxed);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .product-card__meta {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-xs);
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+    color: var(--foreground);
   }
 
   /* ===== CTA Section ===== */
@@ -477,8 +401,8 @@ const categories = [
   /* ===== Responsive ===== */
   @media (max-width: 1024px) {
     .product-grid {
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: var(--spacing-2xl);
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-3xl);
     }
   }
 
@@ -500,8 +424,8 @@ const categories = [
     }
 
     .product-grid {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: var(--spacing-xl);
+      grid-template-columns: 1fr;
+      gap: var(--spacing-2xl);
     }
 
     .cta-section {
@@ -525,9 +449,4 @@ const categories = [
     }
   }
 
-  @media (max-width: 480px) {
-    .product-grid {
-      grid-template-columns: 1fr;
-    }
-  }
 </style>

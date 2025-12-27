@@ -90,13 +90,20 @@ const currency = checkoutSession.currency || 'usd';
 
             <div class="success-actions">
               {currentUser ? (
-                <a href="/dashboard">
-                  <Button variant="primary" size="lg">
-                    <span slot="text">Go to Dashboard</span>
-                  </Button>
-                </a>
+                <>
+                  <a href="/purchases" class="success-action">
+                    <Button variant="primary" size="lg">
+                      <span slot="text">View My Purchases & Downloads</span>
+                    </Button>
+                  </a>
+                  <a href="/products" class="success-action">
+                    <Button variant="outline" size="lg">
+                      <span slot="text">Continue Shopping</span>
+                    </Button>
+                  </a>
+                </>
               ) : (
-                <a href="/products">
+                <a href="/products" class="success-action">
                   <Button variant="primary" size="lg">
                     <span slot="text">Continue Shopping</span>
                   </Button>
@@ -177,10 +184,16 @@ const currency = checkoutSession.currency || 'usd';
 
 .success-actions {
   margin-bottom: var(--spacing-3xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  width: 100%;
+  max-width: 400px;
 }
 
-.success-actions a {
+.success-action {
   text-decoration: none;
+  width: 100%;
 }
 
 .success-note {

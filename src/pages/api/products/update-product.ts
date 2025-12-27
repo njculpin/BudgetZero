@@ -1,6 +1,14 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
-import { updateProduct, getProductById, createProductImage } from "@/lib/data-access/products";
+import {
+  updateProduct,
+  getProductById,
+  createProductImage,
+  getProductFiles,
+  getProductComponents,
+  getProductDocuments,
+  getProductImages,
+} from "@/lib/data-access/products";
 import { uploadFile, generateFilePath } from "@/lib/storage";
 import { z } from "zod";
 
@@ -8,7 +16,7 @@ const updateProductSchema = z.object({
   productId: z.string().uuid(),
   title: z.string().min(1).max(200).optional(),
   description: z.string().optional(),
-  status: z.enum(["draft", "public", "archived"]).optional(),
+  status: z.enum(["draft", "private", "public", "archived"]).optional(),
   handle: z.string().optional(),
   tags: z.array(z.string()).optional(),
   isEmbeddable: z.boolean().optional(),
@@ -16,20 +24,63 @@ const updateProductSchema = z.object({
 
 /**
  * Check if a product can be published
- * Currently allows publishing with or without files/documents
- * This could be extended to require minimum content
+ * Validates that product meets publishing requirements
  */
-async function validatePublishStatus(productId: string): Promise<{ valid: boolean; error?: string }> {
-  // Products can be published as long as they have basic info (title, description)
-  // Files and documents are optional
+async function validatePublishStatus(
+  productId: string
+): Promise<{ valid: boolean; error?: string; warnings?: string[] }> {
+  // Get all data in parallel
+  const [files, components, documents, images, product] = await Promise.all([
+    getProductFiles(productId),
+    getProductComponents(productId),
+    getProductDocuments(productId),
+    getProductImages(productId),
+    getProductById(productId),
+  ]);
 
-  // Future validation ideas:
-  // - Require at least one file or document
-  // - Require product images
-  // - Require minimum description length
-  // - Check that all embedded products are public
+  const errors: string[] = [];
+  const warnings: string[] = [];
 
-  return { valid: true };
+  // REQUIREMENT 1: At least one file OR embedded component
+  if (files.length === 0 && components.length === 0) {
+    errors.push("Add at least one file or embed a product before publishing");
+  }
+
+  // REQUIREMENT 2: Product images (warning only)
+  if (!images || images.length === 0) {
+    warnings.push("Product should have at least one image");
+  }
+
+  // REQUIREMENT 3: Description minimum length (warning only)
+  if (!product?.description || product.description.trim().length < 20) {
+    warnings.push("Add a detailed description (at least 20 characters)");
+  }
+
+  // REQUIREMENT 4: Embedded products must be public
+  if (components.length > 0) {
+    const childProducts = await Promise.all(
+      components.map((c) => getProductById(c.child_product_id))
+    );
+
+    for (const child of childProducts) {
+      if (child && child.status !== "public") {
+        errors.push(
+          `Embedded product "${child.title}" must be published first`
+        );
+      }
+    }
+  }
+
+  // Return validation result
+  if (errors.length > 0) {
+    return {
+      valid: false,
+      error: errors[0], // Return first error
+      warnings,
+    };
+  }
+
+  return { valid: true, warnings };
 }
 
 export const PUT: APIRoute = async ({ request, cookies }) => {

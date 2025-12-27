@@ -88,7 +88,7 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
 
         <h2 style="color: #333; font-size: 20px; margin-top: 30px;">Get Started</h2>
         <ul style="color: #666; font-size: 16px; line-height: 1.8;">
-          <li><a href="${origin}/dashboard" style="color: #0070f3;">Complete your profile</a> - Add your bio, avatar, and connect your Stripe account</li>
+          <li><a href="${origin}/settings" style="color: #0070f3;">Complete your profile</a> - Add your bio, avatar, and connect your Stripe account</li>
           <li><a href="${origin}/products" style="color: #0070f3;">Browse products</a> - Discover what other creators are building</li>
           <li><a href="${origin}/jams" style="color: #0070f3;">Join a game jam</a> - Participate in community challenges</li>
           <li><a href="${origin}/assets/create" style="color: #0070f3;">Upload your first asset</a> - Share your work with the community</li>
@@ -118,12 +118,12 @@ export const POST: APIRoute = async ({ request, redirect, cookies }) => {
         </p>
       </div>
     `,
-    text: `Welcome to Game Loopers!\n\nThanks for creating your account! You're now part of a growing community of tabletop game creators.\n\nGet Started:\n- Complete your profile at ${origin}/dashboard\n- Browse products at ${origin}/products\n- Join a game jam at ${origin}/jams\n- Upload your first asset at ${origin}/assets/create\n\nWhat is Game Loopers?\nGame Loopers is a social commerce platform where tabletop game creators collaborate, publish digital downloads, manage licensing, and distribute royalties.\n\nSign in now: ${origin}/sign-in\n\nQuestions? Reply to this email and we'll be happy to help.\n\nGame Loopers - A social commerce platform for tabletop game creators`,
+    text: `Welcome to Game Loopers!\n\nThanks for creating your account! You're now part of a growing community of tabletop game creators.\n\nGet Started:\n- Complete your profile at ${origin}/settings\n- Browse products at ${origin}/products\n- Join a game jam at ${origin}/jams\n- Upload your first asset at ${origin}/assets/create\n\nWhat is Game Loopers?\nGame Loopers is a social commerce platform where tabletop game creators collaborate, publish digital downloads, manage licensing, and distribute royalties.\n\nSign in now: ${origin}/sign-in\n\nQuestions? Reply to this email and we'll be happy to help.\n\nGame Loopers - A social commerce platform for tabletop game creators`,
   }).catch((error) => {
     // Log email error but don't fail registration
     console.error('Failed to send welcome email:', error);
   });
 
-  // Redirect to dashboard after successful auto-login
-  return redirect("/dashboard");
+  // Redirect to products after successful auto-login
+  return redirect("/products");
 };

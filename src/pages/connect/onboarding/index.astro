@@ -32,7 +32,7 @@ const userId = session.data.user.id;
 const user = await getUserById(userId);
 
 if (!user) {
-  return Astro.redirect("/dashboard");
+  return Astro.redirect("/products");
 }
 
 const isOnboarded = user.stripe_connect_onboarded || false;
@@ -59,9 +59,9 @@ const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
                   Your bank account is connected and ready to receive payouts. You can now request payouts from your dashboard.
                 </p>
                 <div class="connect-success__actions">
-                  <a href="/dashboard">
+                  <a href="/products">
                     <Button variant="primary" size="lg">
-                      <span slot="text">Go to Dashboard</span>
+                      <span slot="text">Browse Products</span>
                     </Button>
                   </a>
                 </div>

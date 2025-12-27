@@ -30,7 +30,7 @@ export default function LoginForm() {
       }
 
       // Successful sign-in - redirect will happen from server
-      window.location.href = "/dashboard";
+      window.location.href = "/products";
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
       setIsLoading(false);

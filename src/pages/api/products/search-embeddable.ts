@@ -14,9 +14,10 @@ export const GET: APIRoute = async ({ url }) => {
 
   try {
     // Search for products that are:
-    // 1. Public OR owned by the user
-    // 2. Match the search query (title or handle)
-    // 3. Not deleted
+    // 1. Embeddable (is_embeddable = true)
+    // 2. Public OR owned by the user
+    // 3. Match the search query (title or handle)
+    // 4. Not deleted
     // TODO: Move to data access layer
     const { data: products, error } = await serverClient
       .from("products")
@@ -32,6 +33,7 @@ export const GET: APIRoute = async ({ url }) => {
         )
       `)
       .eq("deleted", false)
+      .eq("is_embeddable", true)
       .or(`status.eq.public,user_id.eq.${userId || "00000000-0000-0000-0000-000000000000"}`)
       .or(`title.ilike.%${query}%,handle.ilike.%${query}%`)
       .limit(20);

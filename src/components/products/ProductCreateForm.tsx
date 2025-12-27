@@ -148,7 +148,7 @@ export default function ProductCreateForm() {
           </div>
 
           <div class="product-create-form__actions">
-            <a href="/dashboard" class="product-create-form__cancel-link">
+            <a href="/products" class="product-create-form__cancel-link">
               <button
                 type="button"
                 class="button button--ghost button--md"

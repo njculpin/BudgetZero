@@ -5,7 +5,6 @@ import { setSession } from "@/lib/auth";
  * Routes that require authentication
  */
 const PROTECTED_ROUTES = [
-  "/dashboard",
   "/payouts",
   "/connect/dashboard",
   "/api/assets",

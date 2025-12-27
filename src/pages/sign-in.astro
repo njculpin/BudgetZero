@@ -16,7 +16,7 @@ if (accessToken && refreshToken) {
       access_token: accessToken.value,
     });
     if (!session.error && session.data.user) {
-      return redirect("/dashboard");
+      return redirect("/products");
     }
   } catch (error) {
     // Session invalid, continue to sign-in

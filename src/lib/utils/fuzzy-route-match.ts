@@ -63,7 +63,6 @@ export const AVAILABLE_ROUTES = [
   // Auth & Account
   { path: "/sign-in", label: "Sign In", description: "User authentication" },
   { path: "/sign-up", label: "Sign Up", description: "Create an account" },
-  { path: "/dashboard", label: "Dashboard", description: "User dashboard" },
 
   // Payouts
   { path: "/connect/onboarding", label: "Payouts", description: "Connect for payouts" },
