@@ -95,12 +95,21 @@ const unAuthedLinks = [
 
     {/* Main Navigation Links */}
     <div class="navigation__menu">
-      <a href="/products" class="navigation__link">Products</a>
+      <a href="/products" class="navigation__link">Explore</a>
+      <a href="/jams" class="navigation__link">Jams</a>
     </div>
 
     <div class="navigation__actions">
       {isAuthenticated ? (
         <>
+          <a href="/cart" class="navigation__cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span class="sr-only">Shopping cart</span>
+          </a>
           <a href="/notifications" class="navigation__notifications">
             <svg class="navigation__notifications-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -110,11 +119,6 @@ const unAuthedLinks = [
               <span class="navigation__notifications-badge">{unreadNotificationCount}</span>
             )}
             <span class="sr-only">Notifications {unreadNotificationCount > 0 ? `(${unreadNotificationCount} unread)` : ''}</span>
-          </a>
-          <a href="/cart">
-            <Button variant="ghost" size="sm">
-              <span slot="text">Cart</span>
-            </Button>
           </a>
           <NavigationUserMenu
             client:load
@@ -132,8 +136,8 @@ const unAuthedLinks = [
             </Button>
           </a>
           <a href="/sign-up">
-            <Button variant="accent" size="sm">
-              <span slot="text">Sign up</span>
+            <Button variant="primary" size="sm">
+              <span slot="text">Start Creating</span>
             </Button>
           </a>
         </>
@@ -150,6 +154,7 @@ const unAuthedLinks = [
   z-index: 50;
   background-color: var(--background);
   backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
 }
 
 .navigation__container {
@@ -158,8 +163,8 @@ const unAuthedLinks = [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-2xl) 0;
-  gap: 2rem;
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  gap: var(--spacing-3xl);
 }
 
 /* ===== Brand ===== */
@@ -188,8 +193,9 @@ const unAuthedLinks = [
 .navigation__menu {
   display: none;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-2xl);
   flex: 1;
+  justify-content: center;
 }
 
 @media (min-width: 768px) {
@@ -200,17 +206,17 @@ const unAuthedLinks = [
 
 .navigation__link {
   position: relative;
-  padding: var(--spacing-xs) 0.75rem;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--muted-foreground);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
   text-decoration: none;
   border-radius: var(--radius-md);
   transition: color 0.2s var(--ease-in-out), background-color 0.2s var(--ease-in-out);
 }
 
 .navigation__link:hover {
-  color: var(--foreground);
+  color: var(--primary);
   background-color: var(--accent);
 }
 
@@ -220,7 +226,7 @@ const unAuthedLinks = [
 }
 
 .navigation__link--active {
-  color: var(--foreground);
+  color: var(--primary);
   background-color: var(--accent);
 }
 
@@ -405,17 +411,45 @@ const unAuthedLinks = [
   background-color: var(--accent);
 }
 
-/* Show only notifications on mobile (other actions shown in drawer) */
+/* Show only cart and notifications on mobile (other actions shown in drawer) */
 @media (max-width: 767px) {
   .navigation__actions {
     display: flex;
     gap: var(--gap-xs);
   }
 
-  /* Hide everything except notifications bell */
-  .navigation__actions > *:not(.navigation__notifications) {
+  /* Hide everything except cart and notifications */
+  .navigation__actions > *:not(.navigation__cart):not(.navigation__notifications) {
     display: none;
   }
+}
+
+/* ===== Cart Icon ===== */
+.navigation__cart {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm);
+  color: var(--muted-foreground);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: color 0.2s var(--ease-in-out), background-color 0.2s var(--ease-in-out);
+}
+
+.navigation__cart:hover {
+  color: var(--foreground);
+  background-color: var(--accent);
+}
+
+.navigation__cart:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.navigation__cart svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* ===== Notifications Bell ===== */

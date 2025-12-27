@@ -13,7 +13,7 @@ import { getProductById, getProductFiles } from "@/lib/data-access/products";
 const { purchase: saleId } = Astro.params;
 
 if (!saleId) {
-  return Astro.redirect("/dashboard");
+  return Astro.redirect("/purchases");
 }
 
 // Check authentication
@@ -43,12 +43,12 @@ const userId = session.data.user.id;
 const sale = await getSaleById(saleId);
 
 if (!sale) {
-  return Astro.redirect("/dashboard");
+  return Astro.redirect("/purchases");
 }
 
 // Verify ownership
 if (sale.user_id !== userId) {
-  return Astro.redirect("/dashboard");
+  return Astro.redirect("/purchases");
 }
 
 // Get sale items
@@ -194,10 +194,10 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
           </Card>
         ))}
 
-        {/* Back to Dashboard */}
+        {/* Back to Purchases */}
         <div class="purchase-actions">
-          <a href="/dashboard" class="purchase-actions__link">
-            ← Back to Dashboard
+          <a href="/purchases" class="purchase-actions__link">
+            ← Back to Purchases
           </a>
         </div>
       </div>

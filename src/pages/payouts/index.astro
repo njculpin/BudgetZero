@@ -34,7 +34,7 @@ if (!currentUser) {
 const user = await getUserById(currentUser.id);
 
 if (!user) {
-  return Astro.redirect("/dashboard");
+  return Astro.redirect("/products");
 }
 ---
 
@@ -87,7 +87,7 @@ if (!user) {
                   </div>
                 </a>
 
-                <a href="/dashboard" class="action-link">
+                <a href="/products" class="action-link">
                   <div class="action-link__icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -95,8 +95,8 @@ if (!user) {
                     </svg>
                   </div>
                   <div class="action-link__content">
-                    <div class="action-link__title">Back to Dashboard</div>
-                    <div class="action-link__description">Return to main dashboard</div>
+                    <div class="action-link__title">Back to Products</div>
+                    <div class="action-link__description">Browse marketplace</div>
                   </div>
                 </a>
               </div>

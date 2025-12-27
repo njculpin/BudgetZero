@@ -169,9 +169,9 @@ export default function NotificationCenter(props: NotificationCenterProps) {
       case "document":
         return `/documents/${snapshot.document_handle}`;
       case "sale":
-        return `/dashboard?tab=sales`;
+        return `/purchases`;
       default:
-        return "/dashboard";
+        return "/products";
     }
   };
 

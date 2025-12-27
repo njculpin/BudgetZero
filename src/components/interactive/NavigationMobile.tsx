@@ -54,23 +54,18 @@ export default function NavigationMobile(props: NavigationMobileProps) {
 
         <div class="navigation__drawer-actions">
           {props.isAuthenticated ? (
-            <>
-              <a href="/dashboard" class="navigation__drawer-button navigation__drawer-button--primary" onClick={closeMenu}>
-                Dashboard
-              </a>
-              <form action="/api/auth/sign-out" method="post">
-                <button type="submit" class="navigation__drawer-button navigation__drawer-button--secondary">
-                  Sign out
-                </button>
-              </form>
-            </>
+            <form action="/api/auth/sign-out" method="post">
+              <button type="submit" class="navigation__drawer-button navigation__drawer-button--secondary">
+                Sign out
+              </button>
+            </form>
           ) : (
             <>
               <a href="/sign-in" class="navigation__drawer-button navigation__drawer-button--secondary" onClick={closeMenu}>
                 Sign in
               </a>
               <a href="/sign-up" class="navigation__drawer-button navigation__drawer-button--primary" onClick={closeMenu}>
-                Sign up
+                Start Creating
               </a>
             </>
           )}

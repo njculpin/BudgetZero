@@ -125,11 +125,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Redirect back to dashboard
+    // Redirect back to payouts
     return new Response(null, {
       status: 303,
       headers: {
-        Location: '/dashboard',
+        Location: '/payouts',
       },
     });
   } catch (error) {
