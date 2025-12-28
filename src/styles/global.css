@@ -608,8 +608,7 @@ blockquote {
 
 .page__container {
   flex: 1;
-  max-width: var(--container-7xl);
-  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
 }

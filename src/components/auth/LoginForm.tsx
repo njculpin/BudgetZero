@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { LoadingButton } from "@/components/interactive";
 import "./login-form.css";
 
 export default function LoginForm() {
@@ -92,15 +93,15 @@ export default function LoginForm() {
             />
           </div>
 
-          <button
+          <LoadingButton
             type="submit"
-            class="button button--primary button--md"
-            disabled={isLoading()}
+            variant="primary"
+            size="md"
+            isLoading={isLoading()}
+            loadingText="Signing in..."
           >
-            <span class="button__text">
-              {isLoading() ? "Signing in..." : "Sign in"}
-            </span>
-          </button>
+            Sign in
+          </LoadingButton>
         </form>
       </div>
 

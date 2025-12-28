@@ -2,6 +2,7 @@ import { createSignal, Show, For, createEffect } from "solid-js";
 import {
   ErrorMessage,
   SuccessMessage,
+  LoadingButton,
 } from "@/components/interactive";
 import "./product-images-form.css";
 
@@ -317,17 +318,18 @@ export default function ProductImagesForm(props: ProductImagesFormProps) {
                 <span class="image-grid__badge">Cover</span>
               )}
               <div class="image-grid__overlay">
-                <button
+                <LoadingButton
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleDeleteImage(image.id)}
-                  class="image-grid__delete"
                   aria-label={`Delete ${image.title}`}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"/>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                   </svg>
-                </button>
+                </LoadingButton>
               </div>
               <div class="image-grid__drag-handle">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -387,13 +389,14 @@ export default function ProductImagesForm(props: ProductImagesFormProps) {
 
       <Show when={hasReordered()}>
         <div class="image-grid-editor__actions">
-          <button
+          <LoadingButton
             type="button"
+            variant="primary"
+            size="md"
             onClick={handleSaveOrder}
-            class="image-grid-editor__save-button"
           >
             Save Order
-          </button>
+          </LoadingButton>
         </div>
       </Show>
 

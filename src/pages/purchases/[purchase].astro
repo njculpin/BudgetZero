@@ -7,7 +7,6 @@ import CardContent from "@/components/CardContent.astro";
 import Badge from "@/components/Badge.astro";
 import { setSession } from "@/lib/auth";
 import { getSaleById, getSaleItems } from "@/lib/data-access/sales";
-import Breadcrumb from "@/components/Breadcrumb.astro";
 import { getProductById, getProductFiles } from "@/lib/data-access/products";
 
 const { purchase: saleId } = Astro.params;
@@ -75,15 +74,6 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
 <Layout title={`Purchase #${saleId.slice(0, 8)} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
-      <!-- Breadcrumb Navigation -->
-      <Breadcrumb
-        items={[
-          { label: "Home", href: "/" },
-          { label: "My Purchases", href: "/purchases" },
-        ]}
-        currentPage={`Order #${saleId.slice(0, 8)}`}
-      />
-
       <div class="purchase-page">
         {/* Header */}
         <div class="purchase-header">

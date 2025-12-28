@@ -2,6 +2,7 @@ import { createSignal, Show, For, createEffect, createResource } from "solid-js"
 import {
   ErrorMessage,
   SuccessMessage,
+  LoadingButton,
 } from "@/components/interactive";
 import Modal from "@/components/Modal";
 import "./product-documents-form.css";
@@ -53,7 +54,7 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
   });
 
   // Fetch user's available documents
-  const [availableDocs] = createResource(
+  const [availableDocs, { refetch: refetchAvailableDocs }] = createResource(
     () => mounted() && showAddModal(),
     async () => {
       const response = await fetch(`/api/documents/user-documents?userId=${props.userId}`);
@@ -244,7 +245,7 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
         setError(data.error || "Document created but failed to add to product");
         setCreatingDocument(false);
         // Still refetch to show the document in the available list
-        availableDocs.refetch();
+        refetchAvailableDocs();
         return;
       }
 
@@ -275,10 +276,11 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
       </Show>
 
       <div class="product-documents-form__header">
-        <button
+        <LoadingButton
           type="button"
+          variant="primary"
+          size="sm"
           onClick={() => setShowAddModal(true)}
-          class="product-documents-form__add-button"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -290,12 +292,13 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
+            style="margin-right: 0.5rem"
           >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          <span>Add Document</span>
-        </button>
+          Add Document
+        </LoadingButton>
       </div>
 
       <Show when={documents().length > 0} fallback={
@@ -331,13 +334,14 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                         <span class="document-list__price-value">
                           {formatPrice(doc.price_cents)}
                         </span>
-                        <button
+                        <LoadingButton
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleStartEditPrice(doc)}
-                          class="document-list__edit-button"
                         >
                           Edit Price
-                        </button>
+                        </LoadingButton>
                       </div>
                     }
                   >
@@ -355,26 +359,30 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                         />
                       </label>
                       <div class="document-list__price-actions">
-                        <button
+                        <LoadingButton
                           type="button"
+                          variant="primary"
+                          size="sm"
                           onClick={() => handleSavePrice(doc.id)}
-                          class="document-list__save-price"
                         >
                           Save
-                        </button>
-                        <button
+                        </LoadingButton>
+                        <LoadingButton
                           type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={handleCancelEditPrice}
-                          class="document-list__cancel-price"
                         >
                           Cancel
-                        </button>
+                        </LoadingButton>
                       </div>
                     </div>
                   </Show>
 
-                  <button
+                  <LoadingButton
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleRemoveDocument(doc.id)}
                     class="document-list__remove-button"
                     aria-label={`Remove ${doc.document.title} from product`}
@@ -394,7 +402,7 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                       <line x1="18" y1="6" x2="6" y2="18" />
                       <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
-                  </button>
+                  </LoadingButton>
                 </div>
               </div>
             )}
@@ -419,14 +427,16 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                     <div class="modal-empty">
                       <p>No documents available to add</p>
                       <div class="modal-create-form">
-                        <button
+                        <LoadingButton
                           type="button"
+                          variant="link"
+                          size="md"
+                          isLoading={creatingDocument()}
+                          loadingText="Creating..."
                           onClick={handleCreateDocument}
-                          disabled={creatingDocument()}
-                          class="modal-create-link"
                         >
-                          {creatingDocument() ? "Creating..." : "Create a new document"}
-                        </button>
+                          Create a new document
+                        </LoadingButton>
                       </div>
                     </div>
                   }
@@ -446,13 +456,14 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                               </div>
                             </Show>
                           </div>
-                          <button
+                          <LoadingButton
                             type="button"
+                            variant="primary"
+                            size="sm"
                             onClick={() => handleSelectDocument(doc)}
-                            class="available-docs-list__add-button"
                           >
                             {selectedDocument()?.id === doc.id ? "Selected" : "Select"}
-                          </button>
+                          </LoadingButton>
                         </div>
                       )}
                     </For>
@@ -477,20 +488,22 @@ export default function ProductDocumentsForm(props: ProductDocumentsFormProps) {
                         </label>
                       </div>
                       <div class="add-document-price__actions">
-                        <button
+                        <LoadingButton
                           type="button"
+                          variant="primary"
+                          size="md"
                           onClick={handleConfirmAddDocument}
-                          class="add-document-price__confirm"
                         >
                           Add Document
-                        </button>
-                        <button
+                        </LoadingButton>
+                        <LoadingButton
                           type="button"
+                          variant="outline"
+                          size="md"
                           onClick={handleCancelAddDocument}
-                          class="add-document-price__cancel"
                         >
                           Cancel
-                        </button>
+                        </LoadingButton>
                       </div>
                     </div>
                   </Show>

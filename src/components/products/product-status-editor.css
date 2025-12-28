@@ -229,41 +229,4 @@
   margin-top: var(--spacing-md);
 }
 
-.status-editor__modal-button {
-  flex: 1;
-  padding: var(--spacing-md) var(--spacing-xl);
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-semibold);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-in-out);
-  border: var(--border-width-medium) solid;
-}
-
-.status-editor__modal-button--cancel {
-  background-color: transparent;
-  border-color: var(--border);
-  color: var(--foreground);
-}
-
-.status-editor__modal-button--cancel:hover {
-  background-color: var(--muted);
-  border-color: var(--muted-foreground);
-}
-
-.status-editor__modal-button--confirm {
-  background-color: var(--success);
-  border-color: var(--success);
-  color: var(--success-foreground);
-}
-
-.status-editor__modal-button--confirm:hover:not(:disabled) {
-  background-color: var(--success);
-  box-shadow: 0 4px 12px oklch(from var(--success) l c h / 0.3);
-  transform: var(--transform-hover-lift-strong);
-}
-
-.status-editor__modal-button--confirm:disabled {
-  opacity: var(--opacity-60);
-  cursor: not-allowed;
-}
+/* Modal buttons - using LoadingButton */

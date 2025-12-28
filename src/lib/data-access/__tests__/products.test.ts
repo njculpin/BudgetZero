@@ -30,6 +30,43 @@ describe('Product Data Access Layer', () => {
   const testEmail = `test-products-${Date.now()}@example.com`;
 
   beforeAll(async () => {
+    // Clean up any orphaned test products from previous failed runs
+    const testHandles = [
+      'test-product-for-e2e',
+      'draft-product-for-testing',
+      'unique-title-test',
+      'another-unique-title',
+      'product-to-update',
+      'product-to-delete',
+      'product-with-tags',
+      'test-public-product',
+      'test-draft-product',
+      'test-private-product',
+      'test-archived-product',
+      'to-be-deleted',
+      'handle-deletion-test',
+      'product-without-status',
+      'collision-test-1',
+      'different-title',
+      'product-a',
+      'product-b',
+      'to-delete',
+      'user-products-delete-test',
+      'tag-test-product',
+      'updated-test-product',
+      'product-for-description-update',
+      'product-for-status-update',
+      'archived-product'
+    ];
+
+    for (const handle of testHandles) {
+      // Delete all products with these base handles (including -1, -2, etc.)
+      await supabase
+        .from('products')
+        .delete()
+        .like('handle', `${handle}%`);
+    }
+
     // Create a test user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: testEmail,
@@ -219,28 +256,43 @@ describe('Product Data Access Layer', () => {
   });
 
   describe('P0 SECURITY: getProductsByTag - Status Filtering', () => {
-    beforeEach(async () => {
-      // Add tags to test products
-      await createProductTag(testProductId, 'security-test');
-      await createProductTag(draftProductId, 'security-test');
-    });
-
     it('should only return public products when filtering by tag', async () => {
-      const products = await getProductsByTag('security-test');
+      // Create fresh products for this test to avoid pollution
+      const publicProduct = await createProduct(testUserId, {
+        title: 'Public Product with Tag',
+        status: 'public',
+      });
+
+      const draftProduct = await createProduct(testUserId, {
+        title: 'Draft Product with Tag',
+        status: 'draft',
+      });
+
+      // Add tags to both products
+      await createProductTag(publicProduct!.id, 'tag-filter-test');
+      await createProductTag(draftProduct!.id, 'tag-filter-test');
+
+      const products = await getProductsByTag('tag-filter-test');
 
       // Should include public product
-      const haspublic = products.some(p => p.id === testProductId);
-      expect(haspublic).toBe(true);
+      const hasPublic = products.some(p => p.id === publicProduct!.id);
+      expect(hasPublic).toBe(true);
 
       // Should NOT include draft product
-      const hasDraft = products.some(p => p.id === draftProductId);
+      const hasDraft = products.some(p => p.id === draftProduct!.id);
       expect(hasDraft).toBe(false);
     });
   });
 
   describe('updateProduct', () => {
     it('should update product title and generate new handle', async () => {
-      const updatedProduct = await updateProduct(testProductId, {
+      // Create a separate product for this test to avoid polluting testProductId
+      const tempProduct = await createProduct(testUserId, {
+        title: 'Product to Update',
+        status: 'public',
+      });
+
+      const updatedProduct = await updateProduct(tempProduct!.id, {
         title: 'Updated Test Product',
       });
 
@@ -250,7 +302,13 @@ describe('Product Data Access Layer', () => {
     });
 
     it('should update product description', async () => {
-      const updatedProduct = await updateProduct(testProductId, {
+      // Create a separate product for this test
+      const tempProduct = await createProduct(testUserId, {
+        title: 'Product for Description Update',
+        status: 'public',
+      });
+
+      const updatedProduct = await updateProduct(tempProduct!.id, {
         description: 'Updated description',
       });
 
@@ -258,14 +316,17 @@ describe('Product Data Access Layer', () => {
     });
 
     it('should update product status', async () => {
-      const updatedProduct = await updateProduct(testProductId, {
+      // Create a separate product for this test
+      const tempProduct = await createProduct(testUserId, {
+        title: 'Product for Status Update',
+        status: 'public',
+      });
+
+      const updatedProduct = await updateProduct(tempProduct!.id, {
         status: 'draft',
       });
 
       expect(updatedProduct?.status).toBe('draft');
-
-      // Restore to public for other tests
-      await updateProduct(testProductId, { status: 'public' });
     });
 
     it('should handle handle collision when updating title', async () => {

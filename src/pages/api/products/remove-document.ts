@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Verify ownership
     const { data: productDoc } = await serverClient
       .from("product_documents")
-      .select("product_id, products(user_id)")
+      .select("product_id, products!inner(user_id)")
       .eq("id", validatedData.productDocumentId)
       .single();
 
@@ -59,7 +59,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    const productUserId = (productDoc.products as { user_id: string })?.user_id;
+    const productUserId = (productDoc.products as unknown as { user_id: string })?.user_id;
     if (productUserId !== userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 403,

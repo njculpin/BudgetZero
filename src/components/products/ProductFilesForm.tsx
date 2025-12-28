@@ -2,6 +2,7 @@ import { createSignal, Show, For, createEffect } from "solid-js";
 import {
   ErrorMessage,
   SuccessMessage,
+  LoadingButton,
 } from "@/components/interactive";
 import "./product-files-form.css";
 
@@ -450,20 +451,22 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
             </For>
           </div>
           <div class="pending-files__actions">
-            <button
+            <LoadingButton
               type="button"
+              variant="primary"
+              size="md"
               onClick={confirmUpload}
-              class="pending-files__upload-button"
             >
               Upload All ({pendingFiles().length} file{pendingFiles().length !== 1 ? 's' : ''})
-            </button>
-            <button
+            </LoadingButton>
+            <LoadingButton
               type="button"
+              variant="outline"
+              size="md"
               onClick={() => setPendingFiles([])}
-              class="pending-files__cancel-button"
             >
               Cancel
-            </button>
+            </LoadingButton>
           </div>
         </div>
       </Show>
@@ -534,14 +537,15 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
                   <div class="file-list__price">
                     <span class="file-list__price-label">Price:</span>
                     <span class="file-list__price-value">{formatPrice(file.price_cents)}</span>
-                    <button
+                    <LoadingButton
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleStartEditPrice(file)}
-                      class="file-list__edit-price"
                       aria-label="Edit price"
                     >
                       Edit
-                    </button>
+                    </LoadingButton>
                   </div>
                 }>
                   <div class="file-list__price-edit">
@@ -558,26 +562,30 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
                       />
                     </label>
                     <div class="file-list__price-actions">
-                      <button
+                      <LoadingButton
                         type="button"
+                        variant="primary"
+                        size="sm"
                         onClick={() => handleSavePrice(file.id)}
-                        class="file-list__save-price"
                       >
                         Save
-                      </button>
-                      <button
+                      </LoadingButton>
+                      <LoadingButton
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={handleCancelEditPrice}
-                        class="file-list__cancel-price"
                       >
                         Cancel
-                      </button>
+                      </LoadingButton>
                     </div>
                   </div>
                 </Show>
               </div>
-              <button
+              <LoadingButton
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => handleDeleteFile(file.id)}
                 class="file-list__delete"
                 aria-label={`Delete ${file.title}`}
@@ -586,7 +594,7 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
                   <polyline points="3 6 5 6 21 6"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                 </svg>
-              </button>
+              </LoadingButton>
             </div>
           )}
         </For>
@@ -642,13 +650,14 @@ export default function ProductFilesForm(props: ProductFilesFormProps) {
 
       <Show when={hasReordered()}>
         <div class="file-list-editor__actions">
-          <button
+          <LoadingButton
             type="button"
+            variant="primary"
+            size="md"
             onClick={handleSaveOrder}
-            class="file-list-editor__save-button"
           >
             Save Order
-          </button>
+          </LoadingButton>
         </div>
       </Show>
 

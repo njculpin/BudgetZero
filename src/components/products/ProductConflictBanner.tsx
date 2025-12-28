@@ -1,4 +1,5 @@
 import { createSignal, Show } from "solid-js";
+import { LoadingButton } from "@/components/interactive";
 import "./product-conflict-banner.css";
 
 interface ProductConflictBannerProps {
@@ -69,16 +70,19 @@ export default function ProductConflictBanner(
           </p>
         </div>
         <div class="product-conflict-banner__actions">
-          <button
-            class="product-conflict-banner__button product-conflict-banner__button--primary"
+          <LoadingButton
+            type="button"
+            variant="primary"
+            size="md"
             onClick={handleResolve}
-            disabled={resolving()}
+            isLoading={resolving()}
+            loadingText="Resolving..."
           >
-            {resolving() ? "Resolving..." : "Mark as Resolved"}
-          </button>
+            Mark as Resolved
+          </LoadingButton>
           <a
             href={`/products/${props.productHandle}`}
-            class="product-conflict-banner__button product-conflict-banner__button--secondary"
+            class="product-conflict-banner__link"
           >
             Edit Product
           </a>

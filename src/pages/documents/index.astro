@@ -81,13 +81,24 @@ const formatDate = (dateStr: string) => {
       {currentUser && documents.length === 0 && (
         <Card>
           <CardContent>
-            <EmptyState
-              icon="documents"
-              title="No documents yet"
-              description="Create your first document to start collaborating on rulebooks, reference cards, and more."
-              actionText="Create Your First Document"
-              actionHref="/api/documents/create-document"
-            />
+            <div class="empty-state">
+              <div class="empty-state__icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              </div>
+              <h3 class="empty-state__title">No documents yet</h3>
+              <p class="empty-state__description">Create your first document to start collaborating on rulebooks, reference cards, and more.</p>
+              <div class="empty-state__action">
+                <FormSubmitButton
+                  client:load
+                  action="/api/documents/create-document"
+                  method="post"
+                  variant="primary"
+                  size="lg"
+                >
+                  Create Your First Document
+                </FormSubmitButton>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -144,34 +155,49 @@ const formatDate = (dateStr: string) => {
 }
 
 /* ===== Empty State ===== */
-.documents-empty {
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: var(--spacing-5xl) var(--spacing-3xl);
+  padding: var(--spacing-6xl) var(--spacing-2xl);
+  min-height: 400px;
 }
 
-.documents-empty__icon {
+.empty-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
   margin-bottom: var(--spacing-xl);
   color: var(--muted-foreground);
+  opacity: 0.4;
 }
 
-.documents-empty__title {
-  margin: 0 0 var(--spacing-sm);
-  font-size: var(--text-xl);
-  font-weight: var(--font-weight-semibold);
+.empty-state__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.empty-state__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
   color: var(--foreground);
+  margin: 0 0 var(--spacing-md) 0;
 }
 
-.documents-empty__text {
-  margin: 0 0 var(--spacing-2xl);
+.empty-state__description {
   font-size: var(--text-base);
   color: var(--muted-foreground);
+  margin: 0 0 var(--spacing-2xl) 0;
   max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
+  line-height: 1.6;
 }
 
-.documents-empty__action {
-  display: inline-block;
+.empty-state__action {
+  margin-top: var(--spacing-md);
 }
 
 /* ===== Documents Grid ===== */

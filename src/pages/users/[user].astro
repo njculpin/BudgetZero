@@ -1,13 +1,13 @@
 ---
-import ProfileLayout from "@/layouts/ProfileLayout.astro";
+import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
+import PageHeader from "@/components/PageHeader.astro";
 import { getUserByHandle, getUserTags } from "@/lib/data-access/users";
 import { getUserProducts, getProductImages } from "@/lib/data-access/products";
 import { setSession } from "@/lib/auth";
-import Breadcrumb from "@/components/Breadcrumb.astro";
 
 const { user } = Astro.params;
 
@@ -82,16 +82,13 @@ const contentItems: ContentItem[] = await Promise.all(
 contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 ---
 
-<ProfileLayout
+<Layout
   title={`${profileUser.name || profileUser.handle} - Game Loopers`}
-  showCTA={!currentUser}
 >
   <div class="page">
     <div class="page__container">
-      <div class="page-columns__column">
-
       <!-- Public Profile Card -->
-      <Card className="profile-card">
+      <Card>
         <CardHeader>
           <div class="profile-header">
             <div class="profile-header__avatar">
@@ -151,6 +148,7 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
       </Card>
 
       <!-- Content Grid -->
+      <div style="margin-top: var(--spacing-4xl);">
       {contentItems.length > 0 ? (
         <div class="profile-content-grid">
           {contentItems.map((item) => (
@@ -191,33 +189,11 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
         </Card>
       )}
       </div>
-
-      </div>
     </div>
   </div>
-</ProfileLayout>
+</Layout>
 
 <style>
-/* ===== Profile Page Layout ===== */
-.profile-page {
-  min-height: 100vh;
-  background-color: var(--color-background, #f9fafb);
-  padding: var(--spacing-4xl) var(--spacing-2xl);
-}
-
-.profile-page__container {
-  max-width: 960px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3xl)
-}
-
-/* ===== Profile Card ===== */
-.profile-card {
-  margin-bottom: var(--spacing-4xl);
-}
-
 /* ===== Profile Header ===== */
 .profile-header {
   display: flex;
@@ -343,7 +319,6 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--gap-md);
-  margin-top: var(--spacing-4xl);
 }
 
 @media (min-width: 640px) {

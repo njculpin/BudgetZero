@@ -7,7 +7,6 @@ import type {
   ProductDocument,
   ProductComponent,
   ProductRoyalty,
-  Asset,
   User,
   Document
 } from '@/types';
@@ -160,8 +159,8 @@ export const updateProduct = async (
   const updatesToApply = { ...updates };
 
   // If updating title, generate new handle from it
-  if (updates.title) {
-    // Generate handle from title: lowercase, remove special chars, spaces to dashes
+  if (updates.title && !updates.handle) {
+    // Auto-generate handle from title only if no custom handle is provided
     const titleSlug = updates.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with dashes
@@ -188,12 +187,13 @@ export const updateProduct = async (
     }
   }
 
-  // Check if manually provided handle is available
-  if (updates.handle && updates.handle !== updatesToApply.handle) {
+  // If manually providing a custom handle, verify it's available
+  if (updates.handle) {
     const isAvailable = await checkHandleAvailability(updates.handle, productId);
     if (!isAvailable) {
       throw new Error('Handle is already taken');
     }
+    updatesToApply.handle = updates.handle;
   }
 
   const updateData: Record<string, unknown> = {
@@ -273,6 +273,7 @@ export const getAllProducts = async (
     .from('products')
     .select('*')
     .eq('deleted', false)
+    .eq('status', 'public')
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -457,15 +458,14 @@ export const getProductsByTag = async (tag: string): Promise<Product[]> => {
 
   if (!data) return [];
 
-  // Extract unique products
+  // Extract unique products from the joined results
   const productMap = new Map<string, Product>();
-  // TODO: Fix This
-  // for (const item of data) {
-  //   const product = item.products as Product[];
-  //   if (!productMap.has(product.id)) {
-  //     productMap.set(product.id, product);
-  //   }
-  // }
+  for (const item of data as any[]) {
+    const product = item.products as Product;
+    if (!productMap.has(product.id)) {
+      productMap.set(product.id, product);
+    }
+  }
 
   return Array.from(productMap.values());
 };

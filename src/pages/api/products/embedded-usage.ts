@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { supabase } from "@/lib/data-access/client";
+import { serverClient } from "@/lib/data-access/client";
 
 export const GET: APIRoute = async ({ request, url }) => {
   const userId = url.searchParams.get("userId");
@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 
   try {
     // Get all products owned by the user that are embeddable
-    const { data: userProducts, error: userProductsError } = await supabase
+    const { data: userProducts, error: userProductsError } = await serverClient
       .from("products")
       .select("id")
       .eq("owner_id", userId)
@@ -35,10 +35,10 @@ export const GET: APIRoute = async ({ request, url }) => {
       );
     }
 
-    const userProductIds = userProducts.map(p => p.id);
+    const userProductIds = userProducts.map((p: { id: string }) => p.id);
 
     // Find all parent products that embed the user's products
-    const { data: components, error: componentsError } = await supabase
+    const { data: components, error: componentsError } = await serverClient
       .from("product_components")
       .select(`
         parent_product_id,
@@ -102,7 +102,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     // Fetch royalty transactions for these parent products
     const parentIds = Array.from(parentProductMap.keys());
 
-    const { data: royalties, error: royaltiesError } = await supabase
+    const { data: royalties, error: royaltiesError } = await serverClient
       .from("sale_royalty_transactions")
       .select("product_id, amount_cents")
       .in("product_id", parentIds)

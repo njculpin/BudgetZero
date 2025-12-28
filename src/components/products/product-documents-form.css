@@ -9,23 +9,7 @@
   justify-content: flex-end;
 }
 
-.product-documents-form__add-button {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--primary-foreground);
-  background: var(--primary);
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.product-documents-form__add-button:hover {
-  background: oklch(from var(--primary) calc(l * 0.9) c h);
-}
+/* Button styles removed - using design system LoadingButton component */
 
 .product-documents-form__empty {
   padding: var(--spacing-xl);
@@ -102,19 +86,7 @@
   color: var(--foreground);
 }
 
-.document-list__edit-button {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--text-sm);
-  color: var(--primary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-}
-
-.document-list__edit-button:hover {
-  background: var(--muted);
-}
+/* Edit button - using LoadingButton */
 
 .document-list__price-edit {
   display: flex;
@@ -148,47 +120,11 @@
   gap: var(--gap-sm);
 }
 
-.document-list__save-price,
-.document-list__cancel-price {
-  padding: var(--spacing-xs) var(--spacing-md);
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+/* Save/cancel buttons - using LoadingButton */
 
-.document-list__save-price {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-}
-
-.document-list__save-price:hover {
-  background: oklch(from var(--primary) calc(l * 0.9) c h);
-}
-
-.document-list__cancel-price {
-  background-color: var(--muted);
-  color: var(--foreground);
-}
-
-.document-list__cancel-price:hover {
-  background: oklch(from var(--muted) calc(l * 0.9) c h);
-}
-
+/* Remove button - using LoadingButton, keep color override */
 .document-list__remove-button {
-  padding: var(--spacing-sm);
-  background: transparent;
-  border: none;
   color: var(--destructive);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-}
-
-.document-list__remove-button:hover {
-  background: var(--destructive-background, oklch(0.95 0.05 25));
 }
 
 /* Modal Styles */
@@ -203,27 +139,7 @@
   margin-top: var(--spacing-md);
 }
 
-.modal-create-link {
-  display: inline-block;
-  padding: 0;
-  background: none;
-  border: none;
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--text-base);
-  cursor: pointer;
-}
-
-.modal-create-link:hover {
-  text-decoration: underline;
-}
-
-.modal-create-link:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
+/* Create link - using LoadingButton variant="link" */
 
 .available-docs-list {
   display: flex;
@@ -257,21 +173,7 @@
   color: var(--muted-foreground);
 }
 
-.available-docs-list__add-button {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--primary-foreground);
-  background: var(--primary);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.available-docs-list__add-button:hover {
-  background: oklch(from var(--primary) calc(l * 0.9) c h);
-}
+/* Add button - using LoadingButton */
 
 .available-docs-list__item--selected {
   border-color: var(--primary);
@@ -327,46 +229,4 @@
   gap: var(--gap-md);
 }
 
-.add-document-price__confirm {
-  padding: var(--spacing-md) var(--spacing-xl);
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--primary-foreground);
-  background: var(--primary);
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.add-document-price__confirm:hover {
-  background: oklch(from var(--primary) calc(l * 0.9) c h);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.add-document-price__confirm:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.add-document-price__cancel {
-  padding: var(--spacing-md) var(--spacing-xl);
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-  background: var(--muted);
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.add-document-price__cancel:hover {
-  background: oklch(from var(--muted) calc(l * 0.95) c h);
-}
-
-.add-document-price__cancel:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
+/* Confirm/cancel buttons - using LoadingButton */
