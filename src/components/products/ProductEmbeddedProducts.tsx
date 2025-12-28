@@ -295,7 +295,7 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
               </p>
 
               <div class="embedded-products__create-product">
-                <form action="/api/products/create-product" method="POST" class="embedded-products__create-form">
+                <form action="/api/products/create-product" method="post" class="embedded-products__create-form">
                   <button type="submit" class="embedded-products__create-button">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="12" y1="5" x2="12" y2="19"/>

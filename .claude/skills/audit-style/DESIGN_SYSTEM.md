@@ -1,7 +1,7 @@
 # Game Loopers Design System
 
-**Version**: 1.4
-**Last Updated**: 2025-12-21
+**Version**: 1.5
+**Last Updated**: 2025-12-27
 **Framework**: Astro 5.15 + SolidJS Islands
 
 ---
@@ -319,6 +319,139 @@ Based on a modular scale (1.25 ratio):
 --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+```
+
+### Animation System
+
+**New in Version 1.5**: Comprehensive animation tokens for smooth, delightful micro-interactions.
+
+#### Duration Tokens
+
+```css
+--duration-fast: 150ms;    /* Quick interactions (hover, focus) */
+--duration-normal: 300ms;  /* Standard transitions (modals, dropdowns) */
+--duration-slow: 500ms;    /* Emphasis animations (success states) */
+```
+
+#### Easing Functions
+
+```css
+--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);     /* Smooth start and end */
+--ease-out: cubic-bezier(0, 0, 0.2, 1);          /* Fast start, slow end */
+--ease-in: cubic-bezier(0.4, 0, 1, 1);           /* Slow start, fast end */
+--ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Playful bounce */
+```
+
+#### Animation Patterns
+
+**Button Interactions:**
+```css
+.button {
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+```
+
+**Modal Entrance:**
+```css
+.dialog {
+  animation: dialog-fade-in var(--duration-normal) var(--ease-out);
+}
+
+.dialog__content {
+  animation: dialog-scale-in var(--duration-normal) var(--ease-spring);
+}
+
+@keyframes dialog-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialog-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+```
+
+**Loading Skeletons:**
+```css
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    oklch(from var(--muted) calc(l + 0.05) c h) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+```
+
+**Success/Error Feedback:**
+```css
+@keyframes checkmark-draw {
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes scale-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+```
+
+#### Animation Guidelines
+
+1. **Prefer transforms over position** - Use `transform: translateY()` instead of `top/bottom` for better performance
+2. **Use will-change sparingly** - Only on elements that will definitely animate
+3. **Respect user preferences** - Honor `prefers-reduced-motion` media query
+4. **Keep animations subtle** - 2-4px movements, not dramatic effects
+5. **Consistent timing** - Use design tokens, not arbitrary durations
+
+**Accessibility:**
+```css
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 ```
 
 ---

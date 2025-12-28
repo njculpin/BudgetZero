@@ -165,3 +165,11 @@
 .avatar-upload__input {
   display: none;
 }
+
+/* ===== Divider ===== */
+.edit-profile-form__divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border);
+  margin: var(--spacing-2xl) 0;
+}

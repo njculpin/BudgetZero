@@ -4,7 +4,7 @@ import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
-import { getUserByHandle } from "@/lib/data-access/users";
+import { getUserByHandle, getUserTags } from "@/lib/data-access/users";
 import { getUserProducts, getProductImages } from "@/lib/data-access/products";
 import { setSession } from "@/lib/auth";
 import Breadcrumb from "@/components/Breadcrumb.astro";
@@ -44,6 +44,12 @@ if (accessToken && refreshToken) {
 // Fetch user's products (public only for public profile)
 const userProducts = await getUserProducts(profileUser.id);
 
+// Fetch user tags
+const userTags = await getUserTags(profileUser.id);
+
+// Check if viewing own profile
+const canEdit = currentUser?.id === profileUser.id;
+
 // Filter for public only
 const publicProducts = userProducts.filter(product => product.status === 'public');
 
@@ -82,15 +88,6 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
 >
   <div class="page">
     <div class="page__container">
-      <!-- Breadcrumb Navigation -->
-      <Breadcrumb
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Creators", href: "/users" },
-        ]}
-        currentPage={profileUser.name || profileUser.handle}
-      />
-
       <div class="page-columns__column">
 
       <!-- Public Profile Card -->
@@ -111,12 +108,28 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
               )}
             </div>
             <div class="profile-header__info">
-              <CardTitle>
-                {profileUser.name || profileUser.handle}
-              </CardTitle>
+              <div class="profile-header__title-row">
+                <CardTitle>
+                  {profileUser.name || profileUser.handle}
+                </CardTitle>
+                {canEdit && (
+                  <a href="/settings" class="profile-edit-button">
+                    Edit Profile
+                  </a>
+                )}
+              </div>
               <p class="profile-header__handle">@{profileUser.handle}</p>
               {profileUser.bio && (
                 <p class="profile-header__bio">{profileUser.bio}</p>
+              )}
+
+              <!-- Creator Tags -->
+              {userTags.length > 0 && (
+                <div class="profile-tags">
+                  {userTags.map((tag) => (
+                    <span class="profile-tag">{tag}</span>
+                  ))}
+                </div>
               )}
 
               <!-- Profile Stats -->
@@ -240,6 +253,31 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
   flex: 1;
 }
 
+.profile-header__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-md);
+}
+
+.profile-edit-button {
+  padding: var(--spacing-xs) var(--spacing-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-in-out);
+  white-space: nowrap;
+}
+
+.profile-edit-button:hover {
+  border-color: var(--primary);
+  background-color: oklch(from var(--primary) l c h / 0.05);
+}
+
 .profile-header__handle {
   color: var(--muted-foreground);
   font-size: var(--text-sm);
@@ -255,6 +293,25 @@ contentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.created
 
 .profile-header__actions {
   flex-shrink: 0;
+}
+
+/* ===== Profile Tags ===== */
+.profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-xs);
+  margin: var(--spacing-md) 0;
+}
+
+.profile-tag {
+  display: inline-block;
+  padding: var(--spacing-xxs) var(--spacing-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--primary);
+  background-color: oklch(from var(--primary) l c h / 0.1);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-full);
 }
 
 /* ===== Profile Stats ===== */

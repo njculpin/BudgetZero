@@ -43,6 +43,18 @@ const icons = {
   text-align: center;
   padding: var(--spacing-6xl) var(--spacing-2xl);
   min-height: 400px;
+  animation: empty-state-fade-in var(--duration-normal) var(--ease-out);
+}
+
+@keyframes empty-state-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .empty-state__icon {
@@ -54,6 +66,16 @@ const icons = {
   margin-bottom: var(--spacing-xl);
   color: var(--muted-foreground);
   opacity: 0.4;
+  animation: icon-float 3s ease-in-out infinite;
+}
+
+@keyframes icon-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .empty-state__icon svg {
@@ -93,12 +115,16 @@ const icons = {
   border-radius: var(--radius-md);
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.2s var(--ease-out);
+  transition: all var(--duration-fast) var(--ease-in-out);
 }
 
 .empty-state__button:hover {
   opacity: 0.9;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+}
+
+.empty-state__button:active {
+  transform: scale(0.98);
 }
 
 .empty-state__button:focus-visible {

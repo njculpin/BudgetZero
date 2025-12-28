@@ -29,7 +29,7 @@
 }
 
 .add-to-cart__button:active:not(:disabled) {
-  transform: var(--transform-active-press);
+  transform: scale(0.98);
 }
 
 .add-to-cart__button:disabled {

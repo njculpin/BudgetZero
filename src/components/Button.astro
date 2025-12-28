@@ -1,16 +1,41 @@
 ---
-const { variant = "primary", size = "md", class: className, ...rest } = Astro.props;
-const classNames = [`button`, `button--${variant}`, `button--${size}`, className].filter(Boolean).join(' ');
+interface Props {
+  variant?: "primary" | "secondary" | "destructive" | "outline" | "ghost" | "ghost-secondary" | "accent" | "link";
+  size?: "sm" | "md" | "lg" | "icon";
+  loading?: boolean;
+  class?: string;
+  [key: string]: any;
+}
+
+const { variant = "primary", size = "md", loading = false, class: className, ...rest } = Astro.props;
+const classNames = [
+  `button`,
+  `button--${variant}`,
+  `button--${size}`,
+  loading && `button--loading`,
+  className
+].filter(Boolean).join(' ');
 ---
 
-<button class={classNames} {...rest}>
-  <slot name="icon" class="button__icon"></slot>
-  <slot name="text" class="button__text"></slot>
+<button class={classNames} disabled={loading || rest.disabled} {...rest}>
+  {loading && (
+    <span class="button__spinner" aria-hidden="true">
+      <svg class="button__spinner-icon" viewBox="0 0 24 24" fill="none">
+        <circle class="button__spinner-circle" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="button__spinner-path" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+    </span>
+  )}
+  <span class={loading ? "button__content button__content--hidden" : "button__content"}>
+    <slot name="icon" class="button__icon"></slot>
+    <slot name="text" class="button__text"></slot>
+  </span>
 </button>
 
 <style>
 /* ===== Base ===== */
 .button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -32,6 +57,54 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
 .button:disabled {
   opacity: var(--opacity-50);
   pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* ===== Loading State ===== */
+.button--loading {
+  position: relative;
+  cursor: wait;
+}
+
+.button__spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button__spinner-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  animation: button-spin 1s linear infinite;
+}
+
+.button__spinner-circle {
+  opacity: 0.25;
+}
+
+.button__spinner-path {
+  opacity: 0.75;
+}
+
+@keyframes button-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.button__content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xs);
+}
+
+.button__content--hidden {
+  visibility: hidden;
 }
 
 .button__icon {
@@ -39,7 +112,6 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-right: var(--spacing-xs);
 }
 
 .button__text {
@@ -53,7 +125,6 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
 }
 .button--primary:hover:not(:disabled) {
   background-color: oklch(from var(--primary) calc(l * 0.9) c h);
-  transform: var(--transform-scale-sm);
 }
 .button--primary:active:not(:disabled) {
   transform: scale(0.98);
@@ -65,7 +136,6 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
 }
 .button--secondary:hover:not(:disabled) {
   background-color: oklch(from var(--secondary) calc(l * 0.9) c h);
-  transform: var(--transform-scale-sm);
 }
 .button--secondary:active:not(:disabled) {
   transform: scale(0.98);
@@ -77,7 +147,6 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
 }
 .button--destructive:hover:not(:disabled) {
   background-color: oklch(from var(--destructive) calc(l * 0.9) c h);
-  transform: var(--transform-scale-sm);
 }
 .button--destructive:active:not(:disabled) {
   transform: scale(0.98);
@@ -90,7 +159,10 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
 }
 .button--outline:hover:not(:disabled) {
   background-color: var(--muted);
-  border-color: var(--border-strong);
+  border-color: var(--primary);
+}
+.button--outline:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .button--ghost {
@@ -99,6 +171,9 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
 }
 .button--ghost:hover:not(:disabled) {
   background-color: var(--muted);
+}
+.button--ghost:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .button--ghost-secondary {
@@ -109,6 +184,9 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
   background-color: var(--muted);
   color: var(--foreground);
 }
+.button--ghost-secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
 
 .button--accent {
   background-color: var(--accent);
@@ -116,7 +194,6 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
 }
 .button--accent:hover:not(:disabled) {
   background-color: oklch(from var(--accent) calc(l * 0.9) c h);
-  transform: var(--transform-scale-sm);
 }
 .button--accent:active:not(:disabled) {
   transform: scale(0.98);
@@ -131,6 +208,9 @@ const classNames = [`button`, `button--${variant}`, `button--${size}`, className
 }
 .button--link:hover:not(:disabled) {
   opacity: var(--opacity-80);
+}
+.button--link:active:not(:disabled) {
+  opacity: var(--opacity-60);
 }
 
 /* ===== Sizes ===== */

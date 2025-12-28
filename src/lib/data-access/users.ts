@@ -1,5 +1,5 @@
 import { serverClient } from "./client";
-import type { User } from "@/types";
+import type { User, UserTag } from "@/types";
 
 export interface UpdateUserProfileParams {
   name?: string;
@@ -149,4 +149,139 @@ export const searchUsers = async (query: string): Promise<User[]> => {
   }
 
   return data as User[];
+};
+
+/**
+ * Get all creators with optional search and tag filtering
+ * Returns users with their tags
+ */
+export const getCreators = async (params?: {
+  search?: string;
+  tags?: string[];
+  limit?: number;
+}): Promise<{ user: User; tags: string[] }[]> => {
+  const { search, tags, limit = 50 } = params || {};
+
+  // Build the query
+  let query = serverClient
+    .from("users")
+    .select(`
+      *,
+      user_tags (
+        value
+      )
+    `)
+    .eq("deleted", false)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  // Add search filter
+  if (search && search.trim().length > 0) {
+    const searchTerm = `%${search.trim()}%`;
+    query = query.or(`handle.ilike.${searchTerm},name.ilike.${searchTerm},bio.ilike.${searchTerm}`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching creators:", error);
+    return [];
+  }
+
+  if (!data) {
+    return [];
+  }
+
+  // Transform the data and apply tag filtering
+  const creators = data.map((row: any) => ({
+    user: {
+      id: row.id,
+      handle: row.handle,
+      email: row.email,
+      name: row.name,
+      bio: row.bio,
+      avatar_url: row.avatar_url,
+      stripe_account_id: row.stripe_account_id,
+      stripe_customer_id: row.stripe_customer_id,
+      stripe_connect_account_id: row.stripe_connect_account_id,
+      stripe_connect_onboarded: row.stripe_connect_onboarded,
+      stripe_connect_details_submitted: row.stripe_connect_details_submitted,
+      stripe_connect_charges_enabled: row.stripe_connect_charges_enabled,
+      stripe_connect_payouts_enabled: row.stripe_connect_payouts_enabled,
+      role: row.role,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      deleted: row.deleted,
+      deleted_at: row.deleted_at,
+    } as User,
+    tags: row.user_tags?.map((t: any) => t.value) || [],
+  }));
+
+  // Filter by tags if specified
+  if (tags && tags.length > 0) {
+    return creators.filter((creator) =>
+      tags.some((tag) => creator.tags.includes(tag))
+    );
+  }
+
+  return creators;
+};
+
+/**
+ * Get tags for a specific user
+ */
+export const getUserTags = async (userId: string): Promise<string[]> => {
+  const { data, error } = await serverClient
+    .from("user_tags")
+    .select("value")
+    .eq("user_id", userId)
+    .eq("deleted", false);
+
+  if (error) {
+    console.error("Error fetching user tags:", error);
+    return [];
+  }
+
+  return data?.map((tag) => tag.value) || [];
+};
+
+/**
+ * Add a tag to a user
+ */
+export const addUserTag = async (
+  userId: string,
+  tag: string
+): Promise<boolean> => {
+  const { error } = await serverClient.from("user_tags").insert({
+    user_id: userId,
+    value: tag,
+  });
+
+  if (error) {
+    console.error("Error adding user tag:", error);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Remove a tag from a user
+ */
+export const removeUserTag = async (
+  userId: string,
+  tag: string
+): Promise<boolean> => {
+  const { error } = await serverClient
+    .from("user_tags")
+    .update({ deleted: true, deleted_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("value", tag);
+
+  if (error) {
+    console.error("Error removing user tag:", error);
+    return false;
+  }
+
+  return true;
 };

@@ -15,5 +15,25 @@ const { className = "" } = Astro.props;
   color: var(--card-foreground);
   border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--duration-normal) var(--ease-in-out);
+}
+
+/* Hover effect for interactive cards */
+.card--interactive {
+  cursor: pointer;
+}
+
+.card--interactive:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Elevated variant for prominent cards */
+.card--elevated {
+  box-shadow: var(--shadow-md);
+}
+
+.card--elevated:hover {
+  box-shadow: var(--shadow-lg);
 }
 </style>
