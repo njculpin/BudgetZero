@@ -41,6 +41,7 @@ export default function ProductRoyaltyBreakdown(props: ProductRoyaltyBreakdownPr
         // Use provided owner info or default values
         return {
           totalPrice: priceData.totalPrice || 0,
+          platformFee: priceData.platformFee || 0,
           productOwner: {
             userId: props.productOwnerId || "",
             userHandle: props.productOwnerHandle || "Unknown",

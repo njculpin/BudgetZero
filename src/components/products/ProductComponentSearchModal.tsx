@@ -244,7 +244,7 @@ export default function ProductComponentSearchModal(props: ProductComponentSearc
                             <span class="product-component-card__royalty">
                               {formatRoyalty(product)}
                             </span>
-                            <Show when={product.file_count > 0}>
+                            <Show when={product.file_count && product.file_count > 0}>
                               <span class="product-component-card__files">
                                 {product.file_count} {product.file_count === 1 ? 'file' : 'files'}
                               </span>

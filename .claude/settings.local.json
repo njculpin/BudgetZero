@@ -61,7 +61,9 @@
       "Bash(for file in project-product-manager.md ux-flow-designer.md test-automation-engineer.md)",
       "Bash(do sed -i '' '/^model: sonnet$/d' \"$file\")",
       "Skill(persona-journey)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Skill(audit-style)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": []

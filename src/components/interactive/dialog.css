@@ -1,0 +1,152 @@
+/* ===== Dialog Container ===== */
+.dialog {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  animation: dialog-fade-in var(--duration-normal) var(--ease-out);
+}
+
+/* ===== Dialog Overlay ===== */
+.dialog__overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: overlay-fade-in var(--duration-fast) var(--ease-out);
+}
+
+/* ===== Dialog Content ===== */
+.dialog__content {
+  position: relative;
+  z-index: calc(var(--z-modal) + 1);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 90vh;
+  background-color: var(--card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
+  overflow: hidden;
+  animation: dialog-scale-in var(--duration-normal) var(--ease-spring);
+}
+
+/* Dialog Sizes */
+.dialog--sm {
+  max-width: var(--container-md);
+}
+
+.dialog--md {
+  max-width: var(--container-lg);
+}
+
+.dialog--lg {
+  max-width: var(--container-2xl);
+}
+
+/* ===== Dialog Header ===== */
+.dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-3xl);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.dialog__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.dialog__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+  flex-shrink: 0;
+}
+
+.dialog__close:hover {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.dialog__close:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.dialog__close svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ===== Dialog Body ===== */
+.dialog__body {
+  padding: var(--spacing-3xl);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ===== Animations ===== */
+@keyframes dialog-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 48rem) {
+  .dialog {
+    padding: var(--spacing-md);
+  }
+
+  .dialog__content {
+    max-height: 95vh;
+  }
+
+  .dialog__header {
+    padding: var(--spacing-2xl);
+  }
+
+  .dialog__body {
+    padding: var(--spacing-2xl);
+  }
+}

@@ -46,8 +46,8 @@ const {
   color: var(--foreground);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
-  box-shadow: var(--shadow-xs);
-  transition: color var(--duration-normal) var(--ease-in-out), box-shadow var(--duration-normal) var(--ease-in-out), border-color var(--duration-normal) var(--ease-in-out);
+  transition: border-color var(--duration-fast) var(--ease-in-out),
+    box-shadow var(--duration-fast) var(--ease-in-out);
   outline: none;
 }
 
@@ -57,7 +57,8 @@ const {
 
 .input:focus-visible {
   border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2),
+    inset 0 1px 2px oklch(from var(--foreground) l c h / 0.05);
 }
 
 .input:disabled {
@@ -72,6 +73,7 @@ const {
 
 .input--error:focus-visible {
   border-color: var(--destructive);
-  box-shadow: 0 0 0 3px oklch(from var(--destructive) l c h / 0.2);
+  box-shadow: 0 0 0 3px oklch(from var(--destructive) l c h / 0.2),
+    inset 0 1px 2px oklch(from var(--foreground) l c h / 0.05);
 }
 </style>

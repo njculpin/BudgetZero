@@ -1,10 +1,13 @@
 import { createSignal, Show, For } from "solid-js";
+import CreatorTypeSelector from "./CreatorTypeSelector";
 import "./onboarding-wizard.css";
+import "./creator-type-selector.css";
 
 interface OnboardingStep {
   title: string;
   description: string;
   icon: string;
+  showCreatorTypeSelector?: boolean;
   cta?: {
     label: string;
     action: () => void;

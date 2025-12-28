@@ -18,3 +18,5 @@ export { default as ProductPriceBreakdown } from './ProductPriceBreakdown';
 export { default as ProductRoyaltyBreakdown } from './ProductRoyaltyBreakdown';
 export { default as ProductRevenuePreview } from './ProductRevenuePreview';
 export { default as AddToCartButton } from './AddToCartButton';
+export { default as ProductPublishChecklist } from './ProductPublishChecklist';
+export { default as EmbeddedUsageDashboard } from './EmbeddedUsageDashboard';

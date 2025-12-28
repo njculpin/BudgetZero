@@ -56,6 +56,18 @@ const {
   font-size: var(--text-sm);
   color: var(--destructive);
   font-weight: var(--font-weight-medium);
+  animation: error-slide-in var(--duration-fast) var(--ease-out);
+}
+
+@keyframes error-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .form-field__help {

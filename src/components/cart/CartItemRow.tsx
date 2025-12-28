@@ -28,6 +28,12 @@ export default function CartItemRow(props: CartItemRowProps) {
     setError("");
     setIsUpdating(true);
 
+    // Store previous value for rollback
+    const previousQuantity = quantity();
+
+    // Optimistic update - update UI immediately
+    setQuantity(newQuantity);
+
     try {
       const response = await fetch("/api/cart/update", {
         method: "POST",
@@ -42,12 +48,13 @@ export default function CartItemRow(props: CartItemRowProps) {
 
       if (!response.ok) {
         const data = await response.json();
+        // Rollback on error
+        setQuantity(previousQuantity);
         setError(data.error || "Failed to update quantity");
         setIsUpdating(false);
         return;
       }
 
-      setQuantity(newQuantity);
       setIsUpdating(false);
 
       // Announce change to screen readers
@@ -60,7 +67,9 @@ export default function CartItemRow(props: CartItemRowProps) {
         props.onUpdate();
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      // Rollback on network error
+      setQuantity(previousQuantity);
+      setError("Network error - please try again");
       setIsUpdating(false);
     }
   };
@@ -108,8 +117,8 @@ export default function CartItemRow(props: CartItemRowProps) {
   };
 
   const unitPrice = () => {
-    // Use price_cents from cart item (product's total price)
-    return props.item.price_cents || 0;
+    // Use price_cents from product
+    return props.item.product?.price_cents || 0;
   };
 
   const totalPrice = () => {

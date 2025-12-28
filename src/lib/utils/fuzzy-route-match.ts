@@ -47,7 +47,7 @@ export const AVAILABLE_ROUTES = [
   { path: "/tags", label: "Tags", description: "Browse by tags" },
 
   // User & Social
-  { path: "/users", label: "Users", description: "Creator directory" },
+  { path: "/users", label: "Creators", description: "Creator directory - Find illustrators, designers, 3D modelers, and more" },
   { path: "/feed", label: "Feed", description: "Activity feed" },
 
   // Jams

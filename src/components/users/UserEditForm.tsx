@@ -1,5 +1,7 @@
 import { createSignal, onCleanup } from "solid-js";
+import CreatorTypeSelector from "./CreatorTypeSelector";
 import "./user-edit-form.css";
+import "./creator-type-selector.css";
 
 interface UserEditFormProps {
   handle: string;
@@ -7,6 +9,7 @@ interface UserEditFormProps {
   bio: string;
   avatarUrl: string;
   userHandle: string;
+  tags?: string[];
 }
 
 export default function UserEditForm(props: UserEditFormProps) {
@@ -216,6 +219,10 @@ export default function UserEditForm(props: UserEditFormProps) {
           disabled={isSaving()}
         >{bio()}</textarea>
       </div>
+
+      <div class="edit-profile-form__divider"></div>
+
+      <CreatorTypeSelector initialTags={props.tags} autoSave={true} />
     </div>
   );
 }

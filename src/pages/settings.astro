@@ -2,10 +2,13 @@
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
-import PageHeader from "@/components/PageHeader.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
 import { setSession } from "@/lib/auth";
+import { getUserById, getUserTags } from "@/lib/data-access/users";
 import { getNotificationSettings } from "@/lib/data-access/notifications";
+import { UserEditForm } from "@/components/users";
 import NotificationSettingsForm from "@/components/settings/NotificationSettingsForm";
 
 const { cookies, redirect } = Astro;
@@ -29,17 +32,50 @@ if (!session || session.error || !session.data.user) {
 
 const currentUser = session.data.user;
 
+// Fetch full user data
+const user = await getUserById(currentUser.id);
+
+if (!user) {
+  return redirect("/sign-in");
+}
+
+// Fetch user tags
+const userTags = await getUserTags(user.id);
+
 // Fetch notification settings
 const notificationSettings = await getNotificationSettings(currentUser.id);
 ---
 
-<Layout title="Notification Settings - Game Loopers">
+<Layout title="Settings - Game Loopers">
   <div class="page">
     <div class="page__container page__container--narrow">
-      <PageHeader
-        title="Notification Settings"
-        description="Manage how you receive notifications from Game Loopers"
-      />
+      <div class="settings-page">
+        <header class="settings-page__header">
+          <h1 class="settings-page__title">Settings</h1>
+          <p class="settings-page__description">
+            Manage your profile and notification preferences
+          </p>
+        </header>
+
+        <!-- Profile Settings -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UserEditForm
+              client:load
+              handle={user.handle}
+              name={user.name}
+              bio={user.bio}
+              avatarUrl={user.avatar_url}
+              userHandle={user.handle}
+              tags={userTags}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Notification Settings -->
 
       <Card>
         <CardHeader>
@@ -82,13 +118,40 @@ const notificationSettings = await getNotificationSettings(currentUser.id);
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   </div>
 </Layout>
 
 <style>
 .page__container--narrow {
-  max-width: 48rem;
+  max-width: var(--container-4xl);
+}
+
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-4xl);
+}
+
+.settings-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.settings-page__title {
+  margin: 0;
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.settings-page__description {
+  margin: 0;
+  font-size: var(--text-lg);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
 }
 
 .settings-info {
@@ -107,5 +170,15 @@ const notificationSettings = await getNotificationSettings(currentUser.id);
 .settings-info__text strong {
   color: var(--foreground);
   font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 768px) {
+  .settings-page__title {
+    font-size: var(--text-3xl);
+  }
+
+  .settings-page__description {
+    font-size: var(--text-base);
+  }
 }
 </style>

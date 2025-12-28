@@ -283,13 +283,14 @@
   /* ===== Transitions ===== */
   --duration-fastest: 75ms;
   --duration-fast: 150ms;
-  --duration-normal: 200ms;
-  --duration-slow: 300ms;
-  --duration-slower: 500ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 1000ms;
 
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
   /* ===== Z-Index Scale ===== */
   --z-base: 0;
@@ -1146,6 +1147,94 @@ blockquote {
 
   .browse-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Success & Error Animations ===== */
+
+/* Checkmark draw animation */
+@keyframes checkmark-draw {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.success-checkmark {
+  stroke-dasharray: 100;
+  animation: checkmark-draw 0.6s var(--ease-out) forwards;
+}
+
+/* Shake animation for errors */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+.shake-error {
+  animation: shake 0.4s var(--ease-in-out);
+}
+
+/* Fade in animation for notifications/alerts */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fade-in var(--duration-normal) var(--ease-out);
+}
+
+/* Scale pop animation for success states */
+@keyframes scale-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.scale-pop {
+  animation: scale-pop var(--duration-normal) var(--ease-spring);
+}
+
+/* ===== Mobile Touch Targets ===== */
+@media (pointer: coarse) {
+  /* Ensure minimum 44px touch targets on touch devices */
+  .button,
+  .navigation__link,
+  .filter-tag,
+  .browse-tags__tag,
+  input[type="checkbox"],
+  input[type="radio"],
+  .dialog__close {
+    min-height: 44px;
+  }
+
+  /* Icon-only buttons need both dimensions */
+  .button--icon,
+  .icon-button {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
