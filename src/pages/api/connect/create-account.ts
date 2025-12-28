@@ -56,8 +56,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       const accountLink = await createAccountLink(
         user.stripe_connect_account_id,
-        `${origin}/connect/onboarding`,
-        `${origin}/connect/onboarding/complete`
+        `${origin}/settings`,
+        `${origin}/settings`
       );
 
       return new Response(
@@ -96,8 +96,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const accountLink = await createAccountLink(
       account.id,
-      `${origin}/connect/onboarding`,
-      `${origin}/connect/onboarding/complete`
+      `${origin}/settings`,
+      `${origin}/settings`
     );
 
     return new Response(

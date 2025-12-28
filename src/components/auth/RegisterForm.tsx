@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { LoadingButton } from "@/components/interactive";
 import "./register-form.css";
 
 export default function RegisterForm() {
@@ -92,15 +93,15 @@ export default function RegisterForm() {
             />
           </div>
 
-          <button
+          <LoadingButton
             type="submit"
-            class="button button--primary button--md"
-            disabled={isLoading()}
+            variant="primary"
+            size="md"
+            isLoading={isLoading()}
+            loadingText="Creating account..."
           >
-            <span class="button__text">
-              {isLoading() ? "Creating account..." : "Create account"}
-            </span>
-          </button>
+            Create account
+          </LoadingButton>
         </form>
       </div>
 

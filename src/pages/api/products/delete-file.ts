@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const { data: file, error: fetchError } = await serverClient
       .from("product_files")
-      .select("product_id, products(user_id)")
+      .select("product_id, products!inner(user_id)")
       .eq("id", validatedData.fileId)
       .single();
 
@@ -58,7 +58,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    const productUserId = (file.products as { user_id: string })?.user_id;
+    const productUserId = (file.products as unknown as { user_id: string })?.user_id;
 
     if (productUserId !== userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {

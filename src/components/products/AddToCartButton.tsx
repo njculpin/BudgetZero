@@ -1,4 +1,5 @@
 import { createSignal, Show } from "solid-js";
+import { LoadingButton } from "@/components/interactive";
 import Modal, { ModalHeader, ModalFooter } from "@/components/Modal";
 import "./add-to-cart-button.css";
 
@@ -60,38 +61,34 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
 
   return (
     <div class="add-to-cart">
-      <button
-        class="add-to-cart__button"
+      <LoadingButton
+        type="button"
+        variant="primary"
+        size="lg"
         onClick={handleAddToCart}
-        disabled={isLoading()}
+        isLoading={isLoading()}
+        loadingText="Adding to cart..."
+        class="add-to-cart__button"
       >
-        <Show
-          when={!isLoading()}
-          fallback={
-            <span class="add-to-cart__loading">Adding to cart...</span>
-          }
+        <svg
+          class="add-to-cart__icon"
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          style="margin-right: 0.5rem"
         >
-          <svg
-            class="add-to-cart__icon"
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="9" cy="21" r="1" />
-            <circle cx="20" cy="21" r="1" />
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-          </svg>
-          <span class="add-to-cart__text">
-            {props.isAuthenticated ? "Add to Cart" : "Sign In to Purchase"}
-          </span>
-        </Show>
-      </button>
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+        {props.isAuthenticated ? "Add to Cart" : "Sign In to Purchase"}
+      </LoadingButton>
 
       <Show when={error()}>
         <div class="add-to-cart__error">{error()}</div>
@@ -129,10 +126,11 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
         </ModalHeader>
 
         <ModalFooter justify="center">
-          <button
+          <LoadingButton
             type="button"
+            variant="primary"
+            size="md"
             onClick={handleViewCart}
-            class="button button--primary button--md add-to-cart__view-cart-button"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -145,20 +143,22 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
               stroke-linecap="round"
               stroke-linejoin="round"
               aria-hidden="true"
+              style="margin-right: 0.5rem"
             >
               <circle cx="9" cy="21" r="1" />
               <circle cx="20" cy="21" r="1" />
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
             </svg>
-            <span class="button__text">View Cart</span>
-          </button>
-          <button
+            View Cart
+          </LoadingButton>
+          <LoadingButton
             type="button"
+            variant="ghost"
+            size="md"
             onClick={handleCloseModal}
-            class="button button--ghost button--md"
           >
-            <span class="button__text">Continue Shopping</span>
-          </button>
+            Continue Shopping
+          </LoadingButton>
         </ModalFooter>
       </Modal>
     </div>

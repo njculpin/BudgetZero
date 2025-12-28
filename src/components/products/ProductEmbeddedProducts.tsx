@@ -30,6 +30,7 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
   const [searchResults, setSearchResults] = createSignal<any[]>([]);
   const [isSearching, setIsSearching] = createSignal(false);
   const [unlinkingId, setUnlinkingId] = createSignal<string | null>(null);
+  const [embeddingId, setEmbeddingId] = createSignal<string | null>(null);
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal("");
 
@@ -98,6 +99,7 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
   };
 
   const handleEmbedProduct = async (childProductId: string, priceInheritedCents: number) => {
+    setEmbeddingId(childProductId);
     setError("");
     setSuccess("");
 
@@ -115,6 +117,7 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
       if (!response.ok) {
         const data = await response.json();
         setError(data.error || "Failed to embed product");
+        setEmbeddingId(null);
         return;
       }
 
@@ -122,6 +125,7 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
       setSearchQuery("");
       setSearchResults([]);
       setIsModalOpen(false);
+      setEmbeddingId(null);
 
       // Refetch embedded products
       await refetch();
@@ -130,6 +134,7 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError("Unable to embed product. Please try again.");
+      setEmbeddingId(null);
     }
   };
 
@@ -247,31 +252,34 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
                     </div>
                   </div>
                 </a>
-                <button
+                <LoadingButton
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleUnembedProduct(product.component_id)}
-                  class="embedded-products__item-remove"
-                  disabled={unlinkingId() === product.component_id}
+                  isLoading={unlinkingId() === product.component_id}
+                  loadingText="Removing..."
                 >
-                  {unlinkingId() === product.component_id ? "Removing..." : "Remove"}
-                </button>
+                  Remove
+                </LoadingButton>
               </div>
             )}
           </For>
         </div>
       </Show>
 
-      <button
+      <LoadingButton
         type="button"
+        variant="primary"
+        size="sm"
         onClick={() => setIsModalOpen(true)}
-        class="embedded-products__add-button"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
         Embed Product
-      </button>
+      </LoadingButton>
 
       {/* Search Modal */}
       <Show when={isModalOpen()}>
@@ -296,13 +304,17 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
 
               <div class="embedded-products__create-product">
                 <form action="/api/products/create-product" method="post" class="embedded-products__create-form">
-                  <button type="submit" class="embedded-products__create-button">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <LoadingButton
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem">
                       <line x1="12" y1="5" x2="12" y2="19"/>
                       <line x1="5" y1="12" x2="19" y2="12"/>
                     </svg>
                     Create New Product to Embed
-                  </button>
+                  </LoadingButton>
                   <p class="embedded-products__create-hint">
                     Don't see the product you need? Create a new one and embed it here.
                   </p>
@@ -354,13 +366,16 @@ export default function ProductEmbeddedProducts(props: ProductEmbeddedProductsPr
                             </span>
                           </div>
                         </div>
-                        <button
+                        <LoadingButton
                           type="button"
+                          variant="primary"
+                          size="sm"
                           onClick={() => handleEmbedProduct(result.id, result.total_price_cents)}
-                          class="embedded-products__result-embed-button"
+                          isLoading={embeddingId() === result.id}
+                          loadingText="Embedding..."
                         >
                           Embed
-                        </button>
+                        </LoadingButton>
                       </div>
                     )}
                   </For>

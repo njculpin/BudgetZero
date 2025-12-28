@@ -60,7 +60,6 @@ const userMenuLinks = [
   { href: `/users/${userHandle}`, label: "Profile" },
   { isDivider: true, label: "" },
   { href: "/purchases", label: "Purchases" },
-  { href: "/connect/onboarding", label: "Payouts" },
   { isDivider: true, label: "" },
   { href: "/settings", label: "Settings" },
   { isSignOut: true, label: "Sign out" },
@@ -72,7 +71,6 @@ const authedLinks = [
   { href: "/cart", label: "Cart" },
   { href: `/users/${userHandle}`, label: "Profile" },
   { href: "/purchases", label: "Purchases" },
-  { href: "/connect/onboarding", label: "Payouts" },
   { href: "/settings", label: "Settings" },
 ];
 
@@ -159,8 +157,7 @@ const unAuthedLinks = [
 }
 
 .navigation__container {
-  max-width: var(--container-7xl);
-  margin: 0 auto;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;

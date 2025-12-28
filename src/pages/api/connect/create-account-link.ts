@@ -48,8 +48,8 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     }
 
     const origin = url.origin;
-    const refreshUrl = `${origin}/connect/onboarding`;
-    const returnUrl = `${origin}/connect/dashboard`;
+    const refreshUrl = `${origin}/settings`;
+    const returnUrl = `${origin}/settings`;
 
     let stripeAccountId = user.stripe_connect_account_id;
 

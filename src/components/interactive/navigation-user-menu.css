@@ -80,7 +80,6 @@
   background-color: var(--background);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: var(--spacing-xs);
   z-index: 1000;
   animation: userMenuSlideIn 0.2s var(--ease-out);

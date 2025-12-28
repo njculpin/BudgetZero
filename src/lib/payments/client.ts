@@ -22,6 +22,6 @@ if (!USE_MOCK_STRIPE && !stripeSecretKey) {
 export const stripe = USE_MOCK_STRIPE
   ? (null as unknown as Stripe) // Mock mode - client not used
   : new Stripe(stripeSecretKey!, {
-      apiVersion: '2025-09-30.clover',
+      apiVersion: '2025-10-29.clover',
       typescript: true,
     });

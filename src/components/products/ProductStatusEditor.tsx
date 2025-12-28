@@ -2,6 +2,7 @@ import { createSignal, Show } from "solid-js";
 import {
   ErrorMessage,
   SuccessMessage,
+  LoadingButton,
 } from "@/components/interactive";
 import "./product-status-editor.css";
 
@@ -191,21 +192,24 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
               Make sure you've completed all requirements before publishing.
             </p>
             <div class="status-editor__modal-actions">
-              <button
+              <LoadingButton
                 type="button"
+                variant="outline"
+                size="md"
                 onClick={() => setShowPublishConfirm(false)}
-                class="status-editor__modal-button status-editor__modal-button--cancel"
               >
                 Cancel
-              </button>
-              <button
+              </LoadingButton>
+              <LoadingButton
                 type="button"
+                variant="primary"
+                size="md"
                 onClick={() => updateStatus("public")}
-                class="status-editor__modal-button status-editor__modal-button--confirm"
-                disabled={isLoading()}
+                isLoading={isLoading()}
+                loadingText="Publishing..."
               >
-                {isLoading() ? "Publishing..." : "Publish Product"}
-              </button>
+                Publish Product
+              </LoadingButton>
             </div>
           </div>
         </div>

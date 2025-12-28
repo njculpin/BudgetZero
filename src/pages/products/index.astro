@@ -196,9 +196,15 @@ const productTags = allTags
                 <h3 class="empty-state__title">No products yet</h3>
                 <p class="empty-state__description">Be the first to create a product and share it with the community.</p>
                 <div class="empty-state__action">
-                  <form action="/api/products/create-product" method="POST">
-                    <button type="submit" class="empty-state__button">Create Product</button>
-                  </form>
+                  <FormSubmitButton
+                    client:load
+                    action="/api/products/create-product"
+                    method="post"
+                    variant="primary"
+                    size="lg"
+                  >
+                    Create Product
+                  </FormSubmitButton>
                 </div>
               </div>
             ) : (

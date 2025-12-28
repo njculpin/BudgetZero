@@ -4,7 +4,7 @@ import Badge from "@/components/Badge.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import { ProductBasicInfoForm, ProductStatusEditor, ProductEmbeddableToggle, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductDocumentsForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown, ProductRoyaltyBreakdown, ProductRevenuePreview, AddToCartButton } from "@/components/products";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductEmbeddableToggle, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductDocumentsForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown, ProductRoyaltyBreakdown, ProductRevenuePreview, AddToCartButton, ProductDeleteButton } from "@/components/products";
 import ProductContributors from "@/components/products/ProductContributors.astro";
 import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributors, getProductComponents } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
@@ -20,8 +20,6 @@ import CardContent from "@/components/CardContent.astro";
 import CardFooter from "@/components/CardFooter.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
 import ProductReviewList from "@/components/products/ProductReviewList.astro";
-import { EditableBreadcrumb } from "@/components/interactive";
-import Breadcrumb from "@/components/Breadcrumb.astro";
 import Avatar from "@/components/users/Avatar.astro";
 
 const { product } = Astro.params;
@@ -122,28 +120,6 @@ if (jamId) {
             </div>
           </div>
         </div>
-      )}
-
-      <!-- Breadcrumb Navigation -->
-      {isEditMode ? (
-        <EditableBreadcrumb
-          client:load
-          entityId={productData.id}
-          entityType="product"
-          currentTitle={productData.title}
-          breadcrumbItems={[
-            { label: "Home", href: "/" },
-            { label: "Products", href: "/products" },
-          ]}
-        />
-      ) : (
-        <Breadcrumb
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Products", href: "/products" },
-          ]}
-          currentPage={productData.title}
-        />
       )}
 
       <div class="page-columns">
@@ -461,6 +437,21 @@ if (jamId) {
                 />
               </CardContent>
             </Card>
+
+            <!-- Delete Product Card (Edit Mode) -->
+            <Card>
+              <CardHeader>
+                <CardTitle>Delete Product</CardTitle>
+                <CardDescription>Permanently remove this product and all associated data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProductDeleteButton
+                  client:load
+                  productId={productData.id}
+                  productTitle={productData.title}
+                />
+              </CardContent>
+            </Card>
           </>
         )}
 
@@ -592,57 +583,6 @@ if (jamId) {
 </Layout>
 
 <style>
-  /* ===== Breadcrumb Navigation ===== */
-  .breadcrumb {
-    margin-bottom: var(--spacing-2xl);
-  }
-
-  .breadcrumb__list {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-sm);
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    flex-wrap: wrap;
-  }
-
-  .breadcrumb__item {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-sm);
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-  }
-
-  .breadcrumb__item:not(:last-child)::after {
-    content: '/';
-    color: var(--border);
-    margin-left: var(--gap-sm);
-  }
-
-  .breadcrumb__link {
-    color: var(--muted-foreground);
-    text-decoration: none;
-    transition: color var(--duration-fast) var(--ease-in-out);
-  }
-
-  .breadcrumb__link:hover {
-    color: var(--foreground);
-    text-decoration: underline;
-  }
-
-  .breadcrumb__link:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-
-  .breadcrumb__current {
-    color: var(--foreground);
-    font-weight: var(--font-weight-medium);
-  }
-
   /* ===== Page Header (Compact) ===== */
   .page-header {
     padding: var(--spacing-2xl) 0;

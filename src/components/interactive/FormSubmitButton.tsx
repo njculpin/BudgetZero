@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js";
 import LoadingButton from "./LoadingButton";
+import "./loading-button.css";
 
 interface FormSubmitButtonProps {
   action: string;

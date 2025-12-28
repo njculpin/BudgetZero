@@ -3,8 +3,10 @@ import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
-import Breadcrumb from "@/components/Breadcrumb.astro";
+import PageHeader from "@/components/PageHeader.astro";
+import Button from "@/components/Button.astro";
 import { setSession } from "@/lib/auth";
 import { getUserById, getUserTags } from "@/lib/data-access/users";
 import { getNotificationSettings } from "@/lib/data-access/notifications";
@@ -44,18 +46,21 @@ const userTags = await getUserTags(user.id);
 
 // Fetch notification settings
 const notificationSettings = await getNotificationSettings(currentUser.id);
+
+// Check Stripe Connect status
+const isOnboarded = user.stripe_connect_onboarded || false;
+const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
 ---
 
 <Layout title="Settings - Game Loopers">
   <div class="page">
-    <div class="page__container page__container--narrow">
+    <div class="page__container">
+      <PageHeader
+        title="Settings"
+        description="Manage your creator profile, bank account for payouts, and notification preferences"
+      />
+
       <div class="settings-page">
-        <header class="settings-page__header">
-          <h1 class="settings-page__title">Settings</h1>
-          <p class="settings-page__description">
-            Manage your profile and notification preferences
-          </p>
-        </header>
 
         <!-- Profile Settings -->
         <Card>
@@ -75,110 +80,222 @@ const notificationSettings = await getNotificationSettings(currentUser.id);
           </CardContent>
         </Card>
 
+        <!-- Payouts Settings -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Payouts & Bank Account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isOnboarded && payoutsEnabled ? (
+              <div class="payout-status">
+                <div class="payout-status__success">
+                  <svg class="payout-status__icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="m9 12 2 2 4-4"></path>
+                  </svg>
+                  <div class="payout-status__content">
+                    <h3 class="payout-status__title">Bank Account Connected</h3>
+                    <p class="payout-status__message">
+                      Your bank account is connected and ready to receive payouts.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div class="payout-setup">
+                <p class="payout-setup__description">
+                  To receive royalty payments, connect your bank account through Stripe. This secure process takes just a few minutes.
+                </p>
+
+                <div class="payout-features">
+                  <div class="payout-feature">
+                    <svg class="payout-feature__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span class="payout-feature__text">Secure & powered by Stripe</span>
+                  </div>
+                  <div class="payout-feature">
+                    <svg class="payout-feature__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span class="payout-feature__text">Setup takes just a few minutes</span>
+                  </div>
+                  <div class="payout-feature">
+                    <svg class="payout-feature__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="1" x2="12" y2="23"></line>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    <span class="payout-feature__text">Request payouts anytime</span>
+                  </div>
+                </div>
+
+                <form id="connect-form" method="post" action="/api/connect/create-account" class="payout-setup__form">
+                  <Button type="submit" variant="primary" size="lg">
+                    Connect Bank Account
+                  </Button>
+                </form>
+
+                <p class="payout-setup__note">
+                  You'll be redirected to Stripe to securely connect your bank account. Your information is never stored on our servers.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <!-- Notification Settings -->
-
-      <Card>
-        <CardHeader>
-          <h2>Email Notifications</h2>
-          <p>Choose which notifications you want to receive via email</p>
-        </CardHeader>
-        <CardContent>
-          <NotificationSettingsForm
-            client:load
-            userId={currentUser.id}
-            settings={notificationSettings}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <h2>Notification Preferences</h2>
-        </CardHeader>
-        <CardContent>
-          <div class="settings-info">
-            <p class="settings-info__text">
-              <strong>Asset Changes:</strong> Notifies you when assets used in your products are updated
-            </p>
-            <p class="settings-info__text">
-              <strong>Product Conflicts:</strong> Alerts when asset changes cause pricing conflicts with your products
-            </p>
-            <p class="settings-info__text">
-              <strong>Sales:</strong> Notifies you when someone purchases your products
-            </p>
-            <p class="settings-info__text">
-              <strong>Royalty Payments:</strong> Alerts when you receive royalty payments from sales
-            </p>
-            <p class="settings-info__text">
-              <strong>Document Shares:</strong> Notifies you when someone shares a document with you
-            </p>
-            <p class="settings-info__text">
-              <strong>Jam Updates:</strong> Alerts for game jam submissions, reviews, and announcements
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Email Notifications</CardTitle>
+            <CardDescription>Choose which notifications you want to receive via email</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <NotificationSettingsForm
+              client:load
+              userId={currentUser.id}
+              settings={notificationSettings}
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   </div>
 </Layout>
 
-<style>
-.page__container--narrow {
-  max-width: var(--container-4xl);
-}
+<script>
+  const form = document.getElementById('connect-form');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
+      const button = form.querySelector('button');
+      if (button) {
+        button.setAttribute('disabled', 'true');
+        button.textContent = 'Connecting...';
+      }
+
+      try {
+        const response = await fetch('/api/connect/create-account', {
+          method: 'POST',
+        });
+
+        const data = await response.json();
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert('Failed to create Connect account. Please try again.');
+          if (button) {
+            button.removeAttribute('disabled');
+            button.textContent = 'Connect Bank Account';
+          }
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+        if (button) {
+          button.removeAttribute('disabled');
+          button.textContent = 'Connect Bank Account';
+        }
+      }
+    });
+  }
+</script>
+
+<style>
 .settings-page {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-4xl);
+  gap: var(--gap-2xl);
 }
 
-.settings-page__header {
+/* ===== Payout Status ===== */
+.payout-status {
+  padding: var(--spacing-xl) 0;
+}
+
+.payout-status__success {
+  display: flex;
+  gap: var(--gap-lg);
+  align-items: flex-start;
+  padding: var(--spacing-2xl);
+  background-color: oklch(from var(--success) l c h / 0.1);
+  border: var(--border-width-default) solid var(--success);
+  border-radius: var(--radius-md);
+}
+
+.payout-status__icon {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.payout-status__content {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-md);
+  gap: var(--gap-sm);
 }
 
-.settings-page__title {
+.payout-status__title {
   margin: 0;
-  font-size: var(--text-4xl);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--foreground);
 }
 
-.settings-page__description {
+.payout-status__message {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--text-sm);
   color: var(--muted-foreground);
   line-height: var(--leading-relaxed);
 }
 
-.settings-info {
+/* ===== Payout Setup ===== */
+.payout-setup {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-md);
+  gap: var(--gap-2xl);
+  padding: var(--spacing-xl) 0;
 }
 
-.settings-info__text {
+.payout-setup__description {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.payout-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.payout-feature {
+  display: flex;
+  gap: var(--gap-md);
+  align-items: center;
+}
+
+.payout-feature__icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.payout-feature__text {
+  font-size: var(--text-sm);
+  color: var(--foreground);
+}
+
+.payout-setup__form {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: var(--spacing-lg);
+}
+
+.payout-setup__note {
   margin: 0;
   font-size: var(--text-sm);
   color: var(--muted-foreground);
-  line-height: var(--leading-normal);
-}
-
-.settings-info__text strong {
-  color: var(--foreground);
-  font-weight: var(--font-weight-semibold);
-}
-
-@media (max-width: 768px) {
-  .settings-page__title {
-    font-size: var(--text-3xl);
-  }
-
-  .settings-page__description {
-    font-size: var(--text-base);
-  }
+  line-height: var(--leading-relaxed);
 }
 </style>
