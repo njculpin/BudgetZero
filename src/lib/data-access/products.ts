@@ -25,6 +25,7 @@ export interface UpdateProductParams {
   tags?: string[];
   publicAt?: string;
   isEmbeddable?: boolean;
+  embeddingRoyaltyCents?: number;
 }
 
 /**
@@ -206,6 +207,7 @@ export const updateProduct = async (
   if (updatesToApply.handle !== undefined) updateData.handle = updatesToApply.handle;
   if (updatesToApply.publicAt !== undefined) updateData.public_at = updatesToApply.publicAt;
   if (updatesToApply.isEmbeddable !== undefined) updateData.is_embeddable = updatesToApply.isEmbeddable;
+  if (updatesToApply.embeddingRoyaltyCents !== undefined) updateData.embedding_royalty_cents = updatesToApply.embeddingRoyaltyCents;
 
   const { error } = await serverClient
     .from('products')
@@ -268,14 +270,35 @@ export const getAllProducts = async (
   tags?: string[],
   limit: number = 50,
   offset: number = 0,
+  sortBy: string = 'newest'
 ): Promise<Product[]> => {
   let query = serverClient
     .from('products')
     .select('*')
     .eq('deleted', false)
-    .eq('status', 'public')
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+    .eq('status', 'public');
+
+  // Apply sorting based on sortBy parameter
+  switch (sortBy) {
+    case 'oldest':
+      query = query.order('created_at', { ascending: true });
+      break;
+    case 'popular':
+      query = query.order('view_count', { ascending: false });
+      break;
+    case 'title-az':
+      query = query.order('title', { ascending: true });
+      break;
+    case 'title-za':
+      query = query.order('title', { ascending: false });
+      break;
+    case 'newest':
+    default:
+      query = query.order('created_at', { ascending: false });
+      break;
+  }
+
+  query = query.range(offset, offset + limit - 1);
 
   if (searchQuery && searchQuery.trim()) {
     query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
@@ -460,8 +483,8 @@ export const getProductsByTag = async (tag: string): Promise<Product[]> => {
 
   // Extract unique products from the joined results
   const productMap = new Map<string, Product>();
-  for (const item of data as any[]) {
-    const product = item.products as Product;
+  for (const item of data as Array<{ products: Product }>) {
+    const product = item.products;
     if (!productMap.has(product.id)) {
       productMap.set(product.id, product);
     }
@@ -640,6 +663,122 @@ export const getProductContributors = async (productId: string): Promise<User[]>
   }
 
   return users as User[];
+};
+
+/**
+ * Enhanced contributor information with role context
+ */
+export interface ProductContributorWithRole {
+  user: User;
+  contributedVia: string; // The embedded product title
+  role: string; // Inferred from embedded product or tags
+}
+
+/**
+ * Get contributors with role information based on embedded products
+ * Returns contributors with context about what they contributed
+ */
+export const getProductContributorsWithRoles = async (
+  productId: string
+): Promise<ProductContributorWithRole[]> => {
+  // Get all royalties with user info
+  const { data: royalties, error: royaltiesError } = await serverClient
+    .from('product_royalties')
+    .select('user_id')
+    .eq('product_id', productId)
+    .eq('deleted', false);
+
+  if (royaltiesError || !royalties || royalties.length === 0) {
+    return [];
+  }
+
+  // Get unique user IDs
+  const userIds = [...new Set(royalties.map(r => r.user_id))];
+
+  // Fetch user data
+  const { data: users, error: usersError } = await serverClient
+    .from('users')
+    .select('*')
+    .in('id', userIds);
+
+  if (usersError || !users) {
+    return [];
+  }
+
+  // Get embedded products for this parent product
+  const { data: components, error: componentsError } = await serverClient
+    .from('product_components')
+    .select('child_product_id, inherited_price_cents')
+    .eq('parent_product_id', productId)
+    .eq('deleted', false);
+
+  // Map contributors to their embedded products
+  const contributorsWithRoles: ProductContributorWithRole[] = [];
+
+  for (const user of users) {
+    // Find which embedded product this user owns
+    let contributedVia = '';
+    let role = 'Contributor';
+
+    if (components && components.length > 0) {
+      for (const component of components) {
+        const childProduct = await getProductById(component.child_product_id);
+        if (childProduct && childProduct.user_id === user.id) {
+          contributedVia = childProduct.title;
+
+          // Infer role from product title or tags
+          const title = childProduct.title.toLowerCase();
+          const tags = await getProductTags(childProduct.id);
+          const tagValues = tags.map(t => t.value.toLowerCase());
+
+          if (
+            title.includes('stl') ||
+            title.includes('3d') ||
+            title.includes('model') ||
+            tagValues.some(t => t.includes('stl') || t.includes('3d'))
+          ) {
+            role = '3D Modeler';
+          } else if (
+            title.includes('art') ||
+            title.includes('illustration') ||
+            title.includes('character') ||
+            tagValues.some(t =>
+              t.includes('art') || t.includes('illustration')
+            )
+          ) {
+            role = 'Illustrator';
+          } else if (
+            title.includes('map') ||
+            tagValues.some(t => t.includes('map'))
+          ) {
+            role = 'Map Designer';
+          } else if (
+            title.includes('music') ||
+            title.includes('sound') ||
+            tagValues.some(t => t.includes('music') || t.includes('audio'))
+          ) {
+            role = 'Sound Designer';
+          } else if (
+            title.includes('document') ||
+            title.includes('rule') ||
+            title.includes('guide')
+          ) {
+            role = 'Writer';
+          }
+
+          break;
+        }
+      }
+    }
+
+    contributorsWithRoles.push({
+      user,
+      contributedVia,
+      role,
+    });
+  }
+
+  return contributorsWithRoles;
 };
 
 // ===== Product Files (replaces Asset Files) =====
@@ -1028,6 +1167,22 @@ export const getProductPriceBreakdown = async (productId: string): Promise<{
   );
 
   const subtotal = filePriceTotal + documentPriceTotal + embeddedPriceTotal;
+
+  /**
+   * Platform fee calculation with rounding strategy:
+   * - Calculation: subtotal * 10% (PLATFORM_FEE_PERCENTAGE)
+   * - Rounding: Math.round() rounds to nearest integer (0.5 rounds up)
+   * - Rationale: Avoids fractional cents in pricing
+   *
+   * Examples:
+   * - $10.00 (1000¢) → fee: 100¢ ($1.00) ✓ exact
+   * - $10.01 (1001¢) → fee: 100¢ ($1.00) ✓ rounds down
+   * - $10.05 (1005¢) → fee: 101¢ ($1.01) ✓ rounds up
+   * - $10.99 (1099¢) → fee: 110¢ ($1.10) ✓ rounds up
+   *
+   * Impact: Platform fee may vary by ±0.5¢ from exact percentage
+   * Maximum variance: $0.005 (negligible at typical price points)
+   */
   const platformFee = Math.round(subtotal * PLATFORM_FEE_PERCENTAGE);
   const totalPrice = subtotal + platformFee;
 

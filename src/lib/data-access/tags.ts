@@ -7,6 +7,11 @@ export interface TagWithCount {
   productCount: number;
 }
 
+export interface JamTagWithCount {
+  value: string;
+  jamCount: number;
+}
+
 /**
  * Get all unique tags from both products and assets with counts
  */
@@ -63,4 +68,38 @@ export const getAllTags = async (): Promise<TagWithCount[]> => {
       count: counts.assetCount + counts.productCount,
     }))
     .sort((a, b) => b.count - a.count);
+};
+
+/**
+ * Get all unique jam tags with counts
+ */
+export const getJamTags = async (): Promise<JamTagWithCount[]> => {
+  // Fetch jam tags
+  const { data: jamTagsData, error: jamError } = await serverClient
+    .from('jam_tags')
+    .select('value')
+    .eq('deleted', false);
+
+  if (jamError) {
+    console.error('Error fetching jam tags:', jamError);
+    return [];
+  }
+
+  // Count jam tags
+  const tagCounts = new Map<string, number>();
+
+  if (jamTagsData) {
+    for (const tag of jamTagsData) {
+      const currentCount = tagCounts.get(tag.value) || 0;
+      tagCounts.set(tag.value, currentCount + 1);
+    }
+  }
+
+  // Convert to array and sort by count
+  return Array.from(tagCounts.entries())
+    .map(([value, jamCount]) => ({
+      value,
+      jamCount,
+    }))
+    .sort((a, b) => b.jamCount - a.jamCount);
 };

@@ -110,6 +110,91 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* Royalty Rate Section */
+.embeddable-toggle__royalty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+  padding: var(--spacing-xl);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.embeddable-toggle__royalty-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.embeddable-toggle__royalty-label {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.embeddable-toggle__royalty-description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.embeddable-toggle__royalty-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.embeddable-toggle__royalty-input-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+}
+
+.embeddable-toggle__royalty-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+}
+
+.embeddable-toggle__royalty-input-prefix {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--muted-foreground);
+}
+
+.embeddable-toggle__royalty-input-field {
+  flex: 1;
+  max-width: 200px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--text-base);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: border-color var(--duration-fast) var(--ease-in-out);
+}
+
+.embeddable-toggle__royalty-input-field:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
+}
+
+.embeddable-toggle__royalty-input-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.embeddable-toggle__royalty-input-hint {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .embeddable-toggle__content {
@@ -119,5 +204,14 @@
 
   .embeddable-toggle__switch {
     align-self: flex-end;
+  }
+
+  .embeddable-toggle__royalty-input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .embeddable-toggle__royalty-input-field {
+    max-width: none;
   }
 }

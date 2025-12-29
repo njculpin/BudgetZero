@@ -15,7 +15,6 @@ export interface CreateSaleParams {
 export interface CreateSaleItemParams {
   saleId: string;
   productId: string;
-  variantId?: string; // Optional for backward compatibility
   priceCents: number;
   currency: string;
   quantity: number;
@@ -62,7 +61,6 @@ export const createSaleItem = async (
     .insert({
       sale_id: params.saleId,
       product_id: params.productId,
-      variant_id: params.variantId || null,
       price_cents: params.priceCents,
       currency: params.currency,
       quantity: params.quantity,
@@ -247,6 +245,44 @@ export const createSaleItemAsset = async (
 };
 
 /**
+ * Check if user has purchased a specific product
+ */
+export const hasUserPurchasedProduct = async (
+  userId: string,
+  productId: string
+): Promise<boolean> => {
+  // Get user's paid sales
+  const { data: sales, error: salesError } = await serverClient
+    .from('sales')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('status', 'paid')
+    .eq('deleted', false);
+
+  if (salesError || !sales || sales.length === 0) {
+    return false;
+  }
+
+  const saleIds = sales.map(s => s.id);
+
+  // Check if any sale item has this product
+  const { data: saleItems, error: itemsError } = await serverClient
+    .from('sale_items')
+    .select('id')
+    .in('sale_id', saleIds)
+    .eq('product_id', productId)
+    .eq('deleted', false)
+    .limit(1);
+
+  if (itemsError) {
+    return false;
+  }
+
+  return saleItems && saleItems.length > 0;
+};
+
+/**
+ * @deprecated Use hasUserPurchasedProduct instead - asset system has been removed
  * Check if user has purchased a specific asset
  */
 export const hasUserPurchasedAsset = async (

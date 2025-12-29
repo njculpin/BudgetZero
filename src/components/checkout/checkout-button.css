@@ -9,3 +9,21 @@
 .checkout-button button {
   width: 100%;
 }
+
+.checkout-button__mock-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: oklch(from var(--warning) l c h / 0.1);
+  border: var(--border-width-default) solid var(--warning);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--warning-foreground);
+  font-weight: var(--font-weight-medium);
+}
+
+.checkout-button__mock-notice svg {
+  flex-shrink: 0;
+  color: var(--warning);
+}

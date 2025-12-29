@@ -1,11 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
-import CardHeader from "@/components/CardHeader.astro";
-import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import PageHeader from "@/components/PageHeader.astro";
-import Button from "@/components/Button.astro";
 import { setSession } from "@/lib/auth";
 import { getNotifications } from "@/lib/data-access/notifications";
 
@@ -129,14 +126,6 @@ function getNotificationColorClass(actionType: string): string {
 <Layout title="Notifications - Game Loopers">
   <div class="page">
     <div class="page__container">
-      <!-- Breadcrumb Navigation -->
-      <Breadcrumb
-        items={[
-          { label: "Home", href: "/" },
-        ]}
-        currentPage="Notifications"
-      />
-
       <!-- Page Header -->
       <div class="page-header--with-action">
         <PageHeader

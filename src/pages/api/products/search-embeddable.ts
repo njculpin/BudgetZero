@@ -1,6 +1,18 @@
 import type { APIRoute } from "astro";
 import { serverClient } from "@/lib/data-access/client";
 
+interface ProductWithUser {
+  id: string;
+  title: string;
+  handle: string;
+  status: string;
+  user_id: string;
+  users: {
+    name: string;
+    handle: string;
+  } | null;
+}
+
 export const GET: APIRoute = async ({ url }) => {
   const query = url.searchParams.get("q");
   const userId = url.searchParams.get("userId");
@@ -19,7 +31,7 @@ export const GET: APIRoute = async ({ url }) => {
     // 3. Match the search query (title or handle)
     // 4. Not deleted
     // TODO: Move to data access layer
-    const { data: products, error } = await serverClient
+    const { data: rawProducts, error } = await serverClient
       .from("products")
       .select(`
         id,
@@ -37,6 +49,8 @@ export const GET: APIRoute = async ({ url }) => {
       .or(`status.eq.public,user_id.eq.${userId || "00000000-0000-0000-0000-000000000000"}`)
       .or(`title.ilike.%${query}%,handle.ilike.%${query}%`)
       .limit(20);
+
+    const products = rawProducts as ProductWithUser[] | null;
 
     if (error) {
       console.error("Error searching products:", error);
@@ -103,15 +117,13 @@ export const GET: APIRoute = async ({ url }) => {
 
         const totalPriceCents = filePriceTotal + componentPriceTotal;
 
-        const creator = product.users as any;
-
         return {
           id: product.id,
           title: product.title,
           handle: product.handle,
           status: product.status,
-          creator_name: creator?.name || "Unknown",
-          creator_handle: creator?.handle || "unknown",
+          creator_name: product.users?.name || "Unknown",
+          creator_handle: product.users?.handle || "unknown",
           file_count: fileCountMap[product.id] || 0,
           total_price_cents: totalPriceCents,
         };

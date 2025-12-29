@@ -8,7 +8,7 @@ export interface Product extends BaseEntity {
   handle: string;
   title: string;
   user_id: string;
-  description: string;
+  description: string | null;
   status: ProductStatus;
   view_count: number;
   public_at: string | null;

@@ -4,9 +4,11 @@ import Badge from "@/components/Badge.astro";
 import Button from "@/components/Button.astro";
 import Tag from "@/components/Tag.astro";
 import TagList from "@/components/TagList.astro";
-import { ProductBasicInfoForm, ProductStatusEditor, ProductEmbeddableToggle, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductDocumentsForm, ProductChat, ProductEmbeddedProducts, ProductPriceBreakdown, ProductRoyaltyBreakdown, ProductRevenuePreview, AddToCartButton, ProductDeleteButton } from "@/components/products";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductEmbeddableToggle, ProductTagsForm, ProductImagesForm, ProductFilesForm, ProductDocumentsForm, ProductChat, ProductEmbeddedProducts, ProductRevenuePreview, AddToCartButton, ProductDeleteButton } from "@/components/products";
 import ProductContributors from "@/components/products/ProductContributors.astro";
-import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributors, getProductComponents } from "@/lib/data-access/products";
+import ProductPriceBreakdownSSR from "@/components/products/ProductPriceBreakdownSSR.astro";
+import ProductRoyaltyBreakdownSSR from "@/components/products/ProductRoyaltyBreakdownSSR.astro";
+import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributors, getProductContributorsWithRoles, getProductComponents, getProductById } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
 import { getJamById, getJamProductReviews } from "@/lib/data-access/jams";
@@ -59,10 +61,26 @@ if (accessToken && refreshToken) {
 
 const isOwner = currentUser?.id === productData.user_id;
 
-// Get product contributors (users with royalties on attached assets)
-const productContributors = await getProductContributors(productData.id);
-const contributorIds = productContributors.map(c => c.id);
+// Get product contributors with role information (users with royalties on embedded products)
+const productContributorsWithRoles = await getProductContributorsWithRoles(productData.id);
+const contributorIds = productContributorsWithRoles.map(c => c.user.id);
 const isContributor = currentUser ? contributorIds.includes(currentUser.id) || isOwner : false;
+
+// Prepare embedded products with creator names for SSR price breakdown
+const embeddedProductsWithCreators = await Promise.all(
+  productComponents.map(async (component) => {
+    const childProduct = await getProductById(component.child_product_id);
+    const childOwner = childProduct ? await getUserById(childProduct.user_id) : null;
+
+    return {
+      id: component.child_product_id,
+      title: childProduct?.title || "Unknown Product",
+      handle: childProduct?.handle || "",
+      inherited_price_cents: component.inherited_price_cents,
+      creator_name: childOwner?.full_name || childOwner?.handle || "Unknown",
+    };
+  })
+);
 
 // Products are publicly viewable regardless of status
 // Editing is only available to owners/contributors when logged in
@@ -325,12 +343,26 @@ if (jamId) {
             <CardDescription>Complete price breakdown</CardDescription>
           </CardHeader>
           <CardContent>
-            <ProductPriceBreakdown
-              client:load
-              productId={productData.id}
+            <ProductPriceBreakdownSSR
+              files={productFiles}
+              documents={productDocuments}
+              embeddedProducts={embeddedProductsWithCreators}
             />
           </CardContent>
         </Card>
+
+        <!-- Contributors Card (Moved to position #2 for better visibility) -->
+        {productContributorsWithRoles.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Contributors</CardTitle>
+              <CardDescription>Talented creators who made this possible</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductContributors contributorsWithRoles={productContributorsWithRoles} />
+            </CardContent>
+          </Card>
+        )}
 
         <!-- Royalty Breakdown Card -->
         <Card>
@@ -339,12 +371,11 @@ if (jamId) {
             <CardDescription>Your purchase supports all contributors</CardDescription>
           </CardHeader>
           <CardContent>
-            <ProductRoyaltyBreakdown
-              client:load
+            <ProductRoyaltyBreakdownSSR
               productId={productData.id}
               productOwnerId={productData.user_id}
               productOwnerHandle={owner?.handle}
-              productOwnerName={owner?.name || owner?.handle}
+              productOwnerName={owner?.full_name || owner?.handle}
             />
           </CardContent>
         </Card>
@@ -360,19 +391,6 @@ if (jamId) {
             />
           </CardContent>
         </Card>
-
-        <!-- Contributors Card -->
-        {productContributors.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Contributors</CardTitle>
-              <CardDescription>People who contributed to this product</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProductContributors contributors={productContributors} />
-            </CardContent>
-          </Card>
-        )}
 
         {isContributor && currentUser && (
           <Card>

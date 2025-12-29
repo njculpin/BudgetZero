@@ -1,4 +1,5 @@
 import { createSignal, Show, For, onCleanup } from "solid-js";
+import type { ProductStatus } from "@/types";
 import "./navigation-user-menu.css";
 
 export interface NavigationUserMenuLink {
@@ -12,7 +13,7 @@ export interface ProductSummary {
   id: string;
   handle: string;
   title: string;
-  status: 'draft' | 'published' | 'archived';
+  status: ProductStatus;
   updated_at: string;
   thumbnail_url: string | null;
 }
@@ -65,8 +66,9 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
   // Get status badge text
   const getStatusBadge = (status: string): string | null => {
     if (status === 'draft') return 'Draft';
+    if (status === 'private') return 'Private';
     if (status === 'archived') return 'Archived';
-    return null; // Don't show badge for published
+    return null; // Don't show badge for public
   };
 
   // Close menu when clicking outside

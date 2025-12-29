@@ -1,36 +1,50 @@
 ---
 import Avatar from "@/components/users/Avatar.astro";
 import type { User } from "@/types";
+import type { ProductContributorWithRole } from "@/lib/data-access/products";
 import "./product-contributors.css";
 
 export interface Props {
-  contributors: User[];
+  contributors?: User[];
+  contributorsWithRoles?: ProductContributorWithRole[];
 }
 
-const { contributors } = Astro.props;
+const { contributors, contributorsWithRoles } = Astro.props;
+
+// Support both old (User[]) and new (ProductContributorWithRole[]) formats
+const items = contributorsWithRoles || contributors?.map(c => ({ user: c, role: 'Contributor', contributedVia: '' })) || [];
 ---
 
 <div class="product-contributors">
-  {contributors.map((contributor) => (
-    <a
-      href={`/users/${contributor.handle}`}
-      class="product-contributors__item"
-    >
-      <Avatar
-        src={contributor.avatar_url}
-        alt={contributor.display_name || contributor.handle}
-        size="md"
-      />
-      <div class="product-contributors__info">
-        <div class="product-contributors__name">
-          {contributor.display_name || contributor.handle}
-        </div>
-        <div class="product-contributors__handle">@{contributor.handle}</div>
-      </div>
-    </a>
-  ))}
+  {items.map((item) => {
+    const user = 'user' in item ? item.user : item;
+    const role = 'role' in item ? item.role : 'Contributor';
+    const contributedVia = 'contributedVia' in item ? item.contributedVia : '';
 
-  {contributors.length === 0 && (
+    return (
+      <a
+        href={`/users/${user.handle}`}
+        class="product-contributors__item"
+      >
+        <Avatar
+          src={user.avatar_url}
+          alt={user.display_name || user.handle}
+          size="md"
+        />
+        <div class="product-contributors__info">
+          <div class="product-contributors__name">
+            {user.display_name || user.handle}
+          </div>
+          <div class="product-contributors__role">{role}</div>
+          {contributedVia && (
+            <div class="product-contributors__via">via {contributedVia}</div>
+          )}
+        </div>
+      </a>
+    );
+  })}
+
+  {items.length === 0 && (
     <p class="product-contributors__empty">No contributors yet</p>
   )}
 </div>

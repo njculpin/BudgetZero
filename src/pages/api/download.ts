@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
-import { hasUserPurchasedAsset } from "@/lib/data-access/sales";
+import { hasUserPurchasedProduct } from "@/lib/data-access/sales";
 import { getProductFileById } from "@/lib/data-access/products";
 import { createSignedUrl } from "@/lib/storage";
 
@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
   try {
     // Check if user has purchased this product
-    const hasPurchased = await hasUserPurchasedAsset(userId, productId);
+    const hasPurchased = await hasUserPurchasedProduct(userId, productId);
 
     if (!hasPurchased) {
       return new Response("You have not purchased this product", { status: 403 });

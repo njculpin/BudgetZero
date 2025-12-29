@@ -1,4 +1,5 @@
 import { createSignal, createEffect, For, Show } from "solid-js";
+import type { ProductFile, ProductComponent } from "@/types";
 import "./product-publish-checklist.css";
 
 interface Requirement {
@@ -14,8 +15,8 @@ export interface ProductPublishChecklistProps {
   title: string;
   description: string;
   price: number | null;
-  files: any[];
-  components: any[];
+  files: ProductFile[];
+  components: ProductComponent[];
   isEmbeddable: boolean;
   royaltyRate: number | null;
   coverImage: string | null;

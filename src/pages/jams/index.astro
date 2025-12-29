@@ -6,6 +6,7 @@ import PageHeader from "@/components/PageHeader.astro";
 import BrowseCTA from "@/components/home/BrowseCTA.astro";
 import { getAllJams } from "@/lib/data-access/jams";
 import { getUserById } from "@/lib/data-access/users";
+import { getJamTags } from "@/lib/data-access/tags";
 import Layout from "@/layouts/Layout.astro";
 import { setSession } from "@/lib/auth";
 import EmptyState from "@/components/EmptyState.astro";
@@ -46,6 +47,10 @@ const allProductOwnerIds = [...new Set(allJams.map(p => p.user_id))];
 const allProductOwners = await Promise.all(allProductOwnerIds.map(id => getUserById(id)));
 const allOwnersMap = new Map(allProductOwners.filter(o => o).map(o => [o!.id, o]));
 
+// Get popular tags for filtering (show top 10 jam tags)
+const allJamTags = await getJamTags();
+const jamTags = allJamTags.slice(0, 10);
+
 // Calculate jam statuses
 const now = new Date();
 const jamStatuses = new Map(allJams.map(jam => {
@@ -80,6 +85,54 @@ const jamStatuses = new Map(allJams.map(jam => {
           </FormSubmitButton>
         )}
       </div>
+
+      <!-- Search Form -->
+      <form method="get" action="/jams" class="browse-search">
+        <div class="browse-search__wrapper">
+          <input
+            type="text"
+            name="search"
+            value={searchQuery}
+            placeholder="Search jams..."
+            class="browse-search__input"
+            aria-label="Search jams"
+          />
+          <button type="submit" class="browse-search__btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span>Search</span>
+          </button>
+        </div>
+        {(searchQuery || tagFilter) && (
+          <a href="/jams" class="browse-search__clear">Clear filters</a>
+        )}
+      </form>
+
+      <!-- Tag Filters -->
+      {jamTags.length > 0 && (
+        <div class="browse-tags">
+          <span class="browse-tags__label">Filter by tag:</span>
+          <div class="browse-tags__list">
+            {jamTags.map((tag) => (
+              <a
+                href={tagFilter === tag.value
+                  ? `/jams${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}`
+                  : `/jams?tag=${encodeURIComponent(tag.value)}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`
+                }
+                class:list={[
+                  "browse-tags__tag",
+                  { "browse-tags__tag--active": tagFilter === tag.value }
+                ]}
+              >
+                {tag.value}
+                <span class="browse-tags__count">({tag.jamCount})</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
        <!-- All jams Section -->
       {allJams.length > 0 ? (

@@ -20,6 +20,7 @@ const updateProductSchema = z.object({
   handle: z.string().optional(),
   tags: z.array(z.string()).optional(),
   isEmbeddable: z.boolean().optional(),
+  embeddingRoyaltyCents: z.number().min(0).optional(),
 });
 
 /**
@@ -56,16 +57,16 @@ async function validatePublishStatus(
     warnings.push("Add a detailed description (at least 20 characters)");
   }
 
-  // REQUIREMENT 4: Embedded products must be public
+  // REQUIREMENT 4: Embedded products must be private or public (not draft/archived)
   if (components.length > 0) {
     const childProducts = await Promise.all(
       components.map((c) => getProductById(c.child_product_id))
     );
 
     for (const child of childProducts) {
-      if (child && child.status !== "public") {
+      if (child && child.status !== "public" && child.status !== "private") {
         errors.push(
-          `Embedded product "${child.title}" must be published first`
+          `Embedded product "${child.title}" must be private or published (not draft or archived)`
         );
       }
     }
@@ -155,6 +156,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       handle: validatedData.handle,
       tags: validatedData.tags,
       isEmbeddable: validatedData.isEmbeddable,
+      embeddingRoyaltyCents: validatedData.embeddingRoyaltyCents,
     });
 
     if (!updatedProduct) {
@@ -258,6 +260,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const status = formData.get("status") as string;
     const tagsJson = formData.get("tags") as string;
     const isEmbeddableString = formData.get("isEmbeddable") as string;
+    const embeddingRoyaltyCentsString = formData.get("embeddingRoyaltyCents") as string;
 
     // Handle both single cover image and multiple images
     const coverImageFile = formData.get("coverImage") as File | null;
@@ -337,6 +340,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       status?: "draft" | "private" | "public" | "archived";
       tags?: string[];
       isEmbeddable?: boolean;
+      embeddingRoyaltyCents?: number;
     } = {};
 
     if (title) {
@@ -353,6 +357,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
     if (isEmbeddableString !== null && isEmbeddableString !== undefined) {
       updateData.isEmbeddable = isEmbeddableString === 'true';
+    }
+    if (embeddingRoyaltyCentsString !== null && embeddingRoyaltyCentsString !== undefined) {
+      updateData.embeddingRoyaltyCents = parseInt(embeddingRoyaltyCentsString, 10);
     }
 
     const updatedProduct = await updateProduct(productId, updateData);
