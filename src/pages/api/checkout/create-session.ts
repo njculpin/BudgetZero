@@ -58,13 +58,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Build line items for Stripe
+    // Build line items for Stripe and validate products
     const lineItems = await Promise.all(
       cartItems.map(async (item) => {
         const product = await getProductById(item.product_id);
 
         if (!product) {
           throw new Error(`Product not found for cart item ${item.id}`);
+        }
+
+        // Validate product status - only private and public products can be purchased
+        if (product.status !== 'private' && product.status !== 'public') {
+          throw new Error(
+            `Product "${product.title}" cannot be purchased. Only products with status "private" or "public" can be purchased. Current status: ${product.status}`
+          );
         }
 
         // Get product price breakdown (files + documents + embedded products)

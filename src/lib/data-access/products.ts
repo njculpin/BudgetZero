@@ -1261,6 +1261,48 @@ export const addDocumentToProduct = async (
 };
 
 /**
+ * Ensure all documents attached to a product have PDFs generated
+ * Called when a product is purchased to make documents downloadable
+ * Only generates PDFs for documents that don't already have them
+ */
+export const ensureProductDocumentPDFs = async (
+  productId: string
+): Promise<void> => {
+  const productDocuments = await getProductDocuments(productId);
+
+  for (const productDoc of productDocuments) {
+    // Skip if PDF already exists
+    if (productDoc.pdf_url && productDoc.pdf_storage_path) {
+      continue;
+    }
+
+    // Generate mock PDF URL for now
+    // TODO: Implement actual PDF generation using Puppeteer/Playwright
+    // This would:
+    // 1. Fetch document content (TipTap JSON)
+    // 2. Convert to HTML
+    // 3. Render HTML to PDF
+    // 4. Upload to Supabase Storage
+    // 5. Update product_documents with real PDF URL
+
+    const storagePath = `products/${productId}/documents/${productDoc.document_id}.pdf`;
+    const mockPdfUrl = `https://placeholder-pdf-url/${productId}/${productDoc.document_id}.pdf`;
+
+    const { error } = await serverClient
+      .from('product_documents')
+      .update({
+        pdf_url: mockPdfUrl,
+        pdf_storage_path: storagePath,
+      })
+      .eq('id', productDoc.id);
+
+    if (error) {
+      console.error(`Failed to update PDF for product_document ${productDoc.id}:`, error);
+    }
+  }
+};
+
+/**
  * Remove a document from a product (soft delete)
  */
 export const removeDocumentFromProduct = async (

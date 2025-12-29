@@ -8,8 +8,8 @@ Game Loopers is a social commerce platform for tabletop game creators (designers
 
 **Key Documentation:**
 - `/ROADMAP.md` - Product roadmap, phasing strategy, and success metrics
-- `/PERSONAS.md` - Detailed user personas (current + future)
-- `/.claude/skills/CSS/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
+- `/.claude/skills/persona-journey/PERSONAS.md` - Detailed user personas (current + future)
+- `/.claude/skills/audit-style/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
 - `/CLAUDE.md` - This file (development guidelines)
 
 **Current Status:** ~90-95% complete toward MVP launch (see ROADMAP.md for details)
@@ -272,7 +272,7 @@ export default function SignInForm() {
 
 ## User Personas
 
-**See `/PERSONAS.md` for comprehensive persona documentation.**
+**See `/.claude/skills/persona-journey/PERSONAS.md` for comprehensive persona documentation.**
 
 **Current Personas (MVP - Digital Marketplace):**
 - **Game Designers:** Create products, hire collaborators, earn from sales

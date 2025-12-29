@@ -57,7 +57,7 @@ When reviewing UI components, you will:
 
 ### 2. Design System Maintenance
 
-You are responsible for keeping `/.claude/skills/CSS/DESIGN_SYSTEM.md` current:
+You are responsible for keeping `/.claude/skills/audit-style/DESIGN_SYSTEM.md` current:
 
 **Document New Patterns**:
 - When you create or identify reusable components, add them to the design system documentation
@@ -140,7 +140,7 @@ When reviewing UI/UX, structure your response as:
 - Updated component examples with BEM structure
 
 **5. Documentation Updates**:
-- Changes needed in `/.claude/skills/CSS/DESIGN_SYSTEM.md`
+- Changes needed in `/.claude/skills/audit-style/DESIGN_SYSTEM.md`
 - Updates to `CLAUDE.md` examples
 
 Always provide concrete code examples showing the improved BEM structure and component composition. Your suggestions must be actionable and align with the project's established architecture (Astro, SolidJS islands, TypeScript strict mode).

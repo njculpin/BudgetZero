@@ -52,14 +52,16 @@ const purchasesWithDetails = await Promise.all(
         // Get files from the main product
         const mainProductFiles = product ? await getProductFiles(product.id) : [];
 
-        // Get documents from the main product
+        // Get documents from the main product (all will have PDFs generated on purchase)
         const mainProductDocuments = product ? await getProductDocuments(product.id) : [];
-        const mainProductDocumentFiles = mainProductDocuments.map(doc => ({
+        const mainProductDocumentFiles = mainProductDocuments
+          .filter(doc => doc.pdf_url) // Only include documents with PDFs
+          .map(doc => ({
             id: doc.id,
             document_id: doc.document_id,
             title: doc.document?.title || 'Document',
             description: doc.document?.description || '',
-            file_url: doc.pdf_url || `/documents/${doc.document?.handle}`, // Fallback to document view if no PDF
+            file_url: doc.pdf_url!,
             storage_path: doc.pdf_storage_path || '',
             file_size_bytes: 0, // PDFs don't have size stored
             mime_type: 'application/pdf',
@@ -67,7 +69,6 @@ const purchasesWithDetails = await Promise.all(
             price_cents: doc.price_cents,
             source_product_title: product?.title || 'Unknown Product',
             is_document: true,
-            has_pdf: !!doc.pdf_url,
           }));
 
         // Get embedded products and their files + documents
@@ -78,12 +79,14 @@ const purchasesWithDetails = await Promise.all(
             const childFiles = childProduct ? await getProductFiles(childProduct.id) : [];
             const childDocuments = childProduct ? await getProductDocuments(childProduct.id) : [];
 
-            const childDocumentFiles = childDocuments.map(doc => ({
+            const childDocumentFiles = childDocuments
+              .filter(doc => doc.pdf_url) // Only include documents with PDFs
+              .map(doc => ({
                 id: doc.id,
                 document_id: doc.document_id,
                 title: doc.document?.title || 'Document',
                 description: doc.document?.description || '',
-                file_url: doc.pdf_url || `/documents/${doc.document?.handle}`,
+                file_url: doc.pdf_url!,
                 storage_path: doc.pdf_storage_path || '',
                 file_size_bytes: 0,
                 mime_type: 'application/pdf',
@@ -91,7 +94,6 @@ const purchasesWithDetails = await Promise.all(
                 price_cents: doc.price_cents,
                 source_product_title: childProduct?.title || 'Unknown Product',
                 is_document: true,
-                has_pdf: !!doc.pdf_url,
               }));
 
             return [
@@ -184,9 +186,7 @@ const purchasesWithDetails = await Promise.all(
                                   <div class="file-download__name-row">
                                     <span class="file-download__name">{file.title}</span>
                                     {file.is_document && (
-                                      <span class="file-download__badge">
-                                        {file.has_pdf ? 'PDF' : 'DOCUMENT'}
-                                      </span>
+                                      <span class="file-download__badge">PDF</span>
                                     )}
                                   </div>
                                   {file.source_product_title && file.source_product_title !== item.product?.title && (
@@ -204,30 +204,17 @@ const purchasesWithDetails = await Promise.all(
                                   )}
                                 </div>
                                 {file.is_document ? (
-                                  file.has_pdf ? (
-                                    <a
-                                      href={file.file_url}
-                                      download
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      class="file-download__button"
-                                    >
-                                      <Button variant="outline" size="sm">
-                                        <span slot="text">Download PDF</span>
-                                      </Button>
-                                    </a>
-                                  ) : (
-                                    <a
-                                      href={file.file_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      class="file-download__button"
-                                    >
-                                      <Button variant="outline" size="sm">
-                                        <span slot="text">View Document</span>
-                                      </Button>
-                                    </a>
-                                  )
+                                  <a
+                                    href={file.file_url}
+                                    download
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="file-download__button"
+                                  >
+                                    <Button variant="outline" size="sm">
+                                      <span slot="text">Download PDF</span>
+                                    </Button>
+                                  </a>
                                 ) : (
                                   <form method="POST" action="/api/download">
                                     <input type="hidden" name="file_id" value={file.id} />
