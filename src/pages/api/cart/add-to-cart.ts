@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
 import { getOrCreateCart, addToCart } from "@/lib/data-access/cart";
+import { getProductById } from "@/lib/data-access/products";
 import { z } from "zod";
 
 const addToCartSchema = z.object({
@@ -44,6 +45,31 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const body = await request.json();
     const validatedData = addToCartSchema.parse(body);
+
+    // Validate product exists and can be purchased
+    const product = await getProductById(validatedData.productId);
+    if (!product) {
+      return new Response(
+        JSON.stringify({ error: "Product not found" }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Validate product status - only private and public products can be purchased
+    if (product.status !== 'private' && product.status !== 'public') {
+      return new Response(
+        JSON.stringify({
+          error: `This product cannot be purchased. Only products with status "private" or "public" can be added to cart. Current status: ${product.status}`,
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Get or create cart for user
     const cart = await getOrCreateCart(userId);

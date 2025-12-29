@@ -658,9 +658,9 @@
 ## Resources & References
 
 **Key Documents:**
-- `/PERSONAS.md` - All user personas (current + future)
+- `/.claude/skills/persona-journey/PERSONAS.md` - All user personas (current + future)
 - `/CLAUDE.md` - Development guidelines and architecture
-- `/.claude/skills/CSS/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
+- `/.claude/skills/audit-style/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
 - `/TODO.md` - Granular task tracking (not yet created)
 
 **External Resources:**

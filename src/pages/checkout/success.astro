@@ -99,14 +99,16 @@ const purchasedProducts: Array<{
     // Get files from main product
     const mainProductFiles = product ? await getProductFiles(product.id) : [];
 
-    // Get documents from main product
+    // Get documents from main product (all will have PDFs generated on purchase)
     const mainProductDocuments = product ? await getProductDocuments(product.id) : [];
-    const mainProductDocumentFiles = mainProductDocuments.map(doc => ({
+    const mainProductDocumentFiles = mainProductDocuments
+      .filter(doc => doc.pdf_url) // Only include documents with PDFs
+      .map(doc => ({
         id: doc.id,
         document_id: doc.document_id,
         title: doc.document?.title || 'Document',
         description: doc.document?.description || '',
-        file_url: doc.pdf_url || `/documents/${doc.document?.handle}`,
+        file_url: doc.pdf_url!,
         storage_path: doc.pdf_storage_path || '',
         file_size_bytes: 0,
         mime_type: 'application/pdf',
@@ -119,7 +121,6 @@ const purchasedProducts: Array<{
         deleted_at: null,
         source_product_title: product?.title || 'Unknown Product',
         is_document: true,
-        has_pdf: !!doc.pdf_url,
       }));
 
     // Get embedded products and their files + documents
@@ -130,12 +131,14 @@ const purchasedProducts: Array<{
         const childFiles = childProduct ? await getProductFiles(childProduct.id) : [];
         const childDocuments = childProduct ? await getProductDocuments(childProduct.id) : [];
 
-        const childDocumentFiles = childDocuments.map(doc => ({
+        const childDocumentFiles = childDocuments
+          .filter(doc => doc.pdf_url) // Only include documents with PDFs
+          .map(doc => ({
             id: doc.id,
             document_id: doc.document_id,
             title: doc.document?.title || 'Document',
             description: doc.document?.description || '',
-            file_url: doc.pdf_url || `/documents/${doc.document?.handle}`,
+            file_url: doc.pdf_url!,
             storage_path: doc.pdf_storage_path || '',
             file_size_bytes: 0,
             mime_type: 'application/pdf',
@@ -148,7 +151,6 @@ const purchasedProducts: Array<{
             deleted_at: null,
             source_product_title: childProduct?.title || 'Unknown Product',
             is_document: true,
-            has_pdf: !!doc.pdf_url,
           }));
 
         return [

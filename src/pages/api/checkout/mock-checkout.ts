@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
 import { getOrCreateCart, getCartItems, clearCart } from "@/lib/data-access/cart";
-import { getProductById, getProductPriceBreakdown } from "@/lib/data-access/products";
+import { getProductById, getProductPriceBreakdown, ensureProductDocumentPDFs, getProductComponents } from "@/lib/data-access/products";
 import { createSale, createSaleItem } from "@/lib/data-access/sales";
 
 /**
@@ -63,13 +63,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Calculate total price
+    // Calculate total price and validate products
     let totalPriceCents = 0;
     const itemsWithPrices = await Promise.all(
       cartItems.map(async (item) => {
         const product = await getProductById(item.product_id);
         if (!product) {
           throw new Error(`Product not found for cart item ${item.id}`);
+        }
+
+        // Validate product status - only private and public products can be purchased
+        if (product.status !== 'private' && product.status !== 'public') {
+          throw new Error(
+            `Product "${product.title}" cannot be purchased. Only products with status "private" or "public" can be purchased. Current status: ${product.status}`
+          );
         }
 
         const priceBreakdown = await getProductPriceBreakdown(product.id);
@@ -112,7 +119,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Create sale items for each cart item
+    // Create sale items and generate PDFs for each cart item
     for (const { cartItem, product, priceBreakdown } of itemsWithPrices) {
       const saleItem = await createSaleItem({
         saleId: sale.id,
@@ -133,6 +140,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       if (!saleItem) {
         console.error(`Failed to create sale item for product ${product.id}`);
+      }
+
+      // Generate PDFs for product documents (if not already generated)
+      await ensureProductDocumentPDFs(product.id);
+
+      // Also generate PDFs for embedded products' documents
+      const embeddedProducts = await getProductComponents(product.id);
+      for (const component of embeddedProducts) {
+        await ensureProductDocumentPDFs(component.child_product_id);
       }
     }
 
