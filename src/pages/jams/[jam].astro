@@ -156,14 +156,6 @@ const productsMap = new Map(sortedProducts.map((p) => [p.id, p]));
 <Layout title={`${jam.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
-      <!-- Breadcrumb Navigation -->
-      <Breadcrumb
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Jams", href: "/jams" },
-        ]}
-        currentPage={jam.title}
-      />
 
       <!-- Jam Header -->
       {isPreviewMode && (

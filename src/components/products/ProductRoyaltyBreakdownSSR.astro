@@ -1,0 +1,138 @@
+---
+import type { ProductRoyalty } from "@/types";
+import { getUserById } from "@/lib/data-access/users";
+import { getProductPriceBreakdown, getProductRoyalties } from "@/lib/data-access/products";
+import "./product-royalty-breakdown.css";
+
+export interface Props {
+  productId: string;
+  productOwnerId: string;
+  productOwnerHandle?: string;
+  productOwnerName?: string;
+}
+
+const { productId, productOwnerId, productOwnerHandle, productOwnerName } = Astro.props;
+
+// Fetch price breakdown and royalties server-side
+const priceBreakdown = await getProductPriceBreakdown(productId);
+const royalties = await getProductRoyalties(productId);
+
+// Fetch user info for each royalty
+const royaltiesWithUserInfo = await Promise.all(
+  royalties.map(async (royalty) => {
+    const user = await getUserById(royalty.user_id);
+    return {
+      ...royalty,
+      user_handle: user?.handle || "unknown",
+      user_name: user?.full_name || user?.handle || "Unknown",
+    };
+  })
+);
+
+const formatPrice = (cents: number) => {
+  if (cents === 0) return "$0.00";
+  return `$${(cents / 100).toFixed(2)}`;
+};
+
+const calculateOwnerShare = () => {
+  const totalRoyalties = royaltiesWithUserInfo.reduce(
+    (sum, r) => sum + (r.royalty_value || 0),
+    0
+  );
+  // Owner gets the subtotal (before platform fee) minus royalties
+  return Math.max(0, priceBreakdown.subtotal - totalRoyalties);
+};
+
+const getPercentage = (amount: number) => {
+  if (priceBreakdown.totalPrice === 0) return "0.0";
+  return ((amount / priceBreakdown.totalPrice) * 100).toFixed(1);
+};
+
+const getPlatformFeePercentage = () => {
+  if (!priceBreakdown.platformFee || priceBreakdown.totalPrice === 0) return "10.0";
+  return ((priceBreakdown.platformFee / priceBreakdown.totalPrice) * 100).toFixed(1);
+};
+
+const ownerShare = calculateOwnerShare();
+---
+
+<div class="royalty-breakdown">
+  <div class="royalty-breakdown__content">
+    {priceBreakdown.totalPrice === 0 ? (
+      <div class="royalty-breakdown__empty">
+        <span class="royalty-breakdown__empty-icon">💰</span>
+        <p class="royalty-breakdown__empty-text">Free Product</p>
+        <p class="royalty-breakdown__empty-hint">
+          This product is free. Set prices on files, documents, or embedded products to see revenue splits.
+        </p>
+      </div>
+    ) : (
+      <>
+        <div class="royalty-breakdown__section">
+          <h3 class="royalty-breakdown__section-title">Who Gets Paid</h3>
+          <div class="royalty-breakdown__recipients">
+            <!-- Product Owner -->
+            <div class="royalty-breakdown__recipient">
+              <div class="royalty-breakdown__recipient-info">
+                <div class="royalty-breakdown__recipient-name">
+                  <a href={`/users/${productOwnerHandle}`} class="royalty-breakdown__recipient-link">
+                    {productOwnerName || productOwnerHandle || "Product Owner"}
+                  </a>
+                </div>
+                <div class="royalty-breakdown__recipient-role">Product Owner</div>
+              </div>
+              <div class="royalty-breakdown__recipient-amount">
+                <div class="royalty-breakdown__recipient-value">{formatPrice(ownerShare)}</div>
+                <div class="royalty-breakdown__recipient-percentage">{getPercentage(ownerShare)}%</div>
+              </div>
+            </div>
+
+            <!-- Contributors (Royalty Recipients) -->
+            {royaltiesWithUserInfo.map((royalty) => (
+              <div class="royalty-breakdown__recipient">
+                <div class="royalty-breakdown__recipient-info">
+                  <div class="royalty-breakdown__recipient-name">
+                    <a href={`/users/${royalty.user_handle}`} class="royalty-breakdown__recipient-link">
+                      {royalty.user_name}
+                    </a>
+                  </div>
+                  <div class="royalty-breakdown__recipient-role">Contributor</div>
+                </div>
+                <div class="royalty-breakdown__recipient-amount">
+                  <div class="royalty-breakdown__recipient-value">{formatPrice(royalty.royalty_value)}</div>
+                  <div class="royalty-breakdown__recipient-percentage">{getPercentage(royalty.royalty_value)}%</div>
+                </div>
+              </div>
+            ))}
+
+            <!-- Platform Fee -->
+            <div class="royalty-breakdown__recipient royalty-breakdown__recipient--platform">
+              <div class="royalty-breakdown__recipient-info">
+                <div class="royalty-breakdown__recipient-name">Game Loopers Platform</div>
+                <div class="royalty-breakdown__recipient-role">Platform Fee</div>
+              </div>
+              <div class="royalty-breakdown__recipient-amount">
+                <div class="royalty-breakdown__recipient-value">{formatPrice(priceBreakdown.platformFee)}</div>
+                <div class="royalty-breakdown__recipient-percentage">{getPlatformFeePercentage()}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="royalty-breakdown__total">
+          <span class="royalty-breakdown__total-label">Total Price</span>
+          <span class="royalty-breakdown__total-value">{formatPrice(priceBreakdown.totalPrice)}</span>
+        </div>
+
+        <div class="royalty-breakdown__note">
+          <svg class="royalty-breakdown__note-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 7V11M8 5H8.01M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="royalty-breakdown__note-text">
+            Your purchase directly supports all creators who contributed to this product. Revenue is automatically distributed based on these splits.
+          </p>
+        </div>
+      </>
+    )}
+  </div>
+</div>

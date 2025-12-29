@@ -97,27 +97,6 @@ const formatDate = (dateStr: string) => {
 <Layout title={`${document.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
-      <!-- Editable Breadcrumb Navigation -->
-      {canEdit ? (
-        <EditableBreadcrumb
-          client:load
-          entityId={document.id}
-          entityType="document"
-          currentTitle={document.title}
-          breadcrumbItems={[
-            { label: "Home", href: "/" },
-            { label: "Documents", href: "/documents" },
-          ]}
-        />
-      ) : (
-        <Breadcrumb
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Documents", href: "/documents" },
-          ]}
-          currentPage={document.title}
-        />
-      )}
 
       <!-- Page Header -->
       <header class="page-header">

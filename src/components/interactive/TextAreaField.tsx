@@ -15,6 +15,7 @@ interface TextAreaFieldProps {
 }
 
 export default function TextAreaField(props: TextAreaFieldProps) {
+  let textareaRef: HTMLTextAreaElement | undefined;
   const fieldId = props.id || props.name;
   const hasError = !!props.error;
 
@@ -25,6 +26,7 @@ export default function TextAreaField(props: TextAreaFieldProps) {
         {props.required && <span class="form-field__required">*</span>}
       </label>
       <textarea
+        ref={textareaRef}
         name={props.name}
         id={fieldId}
         class={`form-field__textarea ${hasError ? "form-field__textarea--error" : ""}`}

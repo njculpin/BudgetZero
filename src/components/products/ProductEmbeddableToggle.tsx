@@ -10,15 +10,25 @@ export interface ProductEmbeddableToggleProps {
   productId: string;
   isEmbeddable: boolean;
   productStatus: string;
+  embeddingRoyaltyCents: number | null;
 }
 
 export default function ProductEmbeddableToggle(props: ProductEmbeddableToggleProps) {
   const [isEmbeddable, setIsEmbeddable] = createSignal(props.isEmbeddable);
+  const [royaltyCents, setRoyaltyCents] = createSignal(props.embeddingRoyaltyCents || 0);
   const [isLoading, setIsLoading] = createSignal(false);
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal("");
 
   const isPublic = () => props.productStatus === 'public';
+
+  const royaltyDollars = () => (royaltyCents() / 100).toFixed(2);
+
+  const handleRoyaltyChange = (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    const dollars = parseFloat(input.value) || 0;
+    setRoyaltyCents(Math.round(dollars * 100));
+  };
 
   const handleToggle = async () => {
     setError("");
@@ -31,6 +41,7 @@ export default function ProductEmbeddableToggle(props: ProductEmbeddableTogglePr
       const formData = new FormData();
       formData.append("productId", props.productId);
       formData.append("isEmbeddable", newValue.toString());
+      formData.append("embeddingRoyaltyCents", royaltyCents().toString());
 
       const response = await fetch("/api/products/update-product", {
         method: "POST",
@@ -46,6 +57,46 @@ export default function ProductEmbeddableToggle(props: ProductEmbeddableTogglePr
 
       setIsEmbeddable(newValue);
       setSuccess("Embeddable setting updated successfully!");
+      setIsLoading(false);
+
+      // Reload page after brief delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (err) {
+      setError("An unexpected error occurred");
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveRoyalty = async () => {
+    if (!isEmbeddable()) {
+      setError("Enable embedding first to set royalty rate");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setIsLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("productId", props.productId);
+      formData.append("embeddingRoyaltyCents", royaltyCents().toString());
+
+      const response = await fetch("/api/products/update-product", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || "Failed to update royalty rate");
+        setIsLoading(false);
+        return;
+      }
+
+      setSuccess("Royalty rate updated successfully!");
       setIsLoading(false);
 
       // Reload page after brief delay
@@ -103,6 +154,48 @@ export default function ProductEmbeddableToggle(props: ProductEmbeddableTogglePr
           </span>
         </button>
       </div>
+
+      <Show when={isEmbeddable()}>
+        <div class="embeddable-toggle__royalty">
+          <div class="embeddable-toggle__royalty-info">
+            <h4 class="embeddable-toggle__royalty-label">Embedding Royalty Rate</h4>
+            <p class="embeddable-toggle__royalty-description">
+              Set how much you earn when this product is embedded in another product. This amount is added to the buyer's total when someone purchases a product that includes yours.
+            </p>
+          </div>
+
+          <div class="embeddable-toggle__royalty-input">
+            <label for="royalty-input" class="embeddable-toggle__royalty-input-label">
+              Royalty per sale
+            </label>
+            <div class="embeddable-toggle__royalty-input-wrapper">
+              <span class="embeddable-toggle__royalty-input-prefix">$</span>
+              <input
+                id="royalty-input"
+                type="number"
+                min="0"
+                step="0.01"
+                value={royaltyDollars()}
+                onInput={handleRoyaltyChange}
+                class="embeddable-toggle__royalty-input-field"
+                placeholder="0.00"
+                disabled={isLoading()}
+              />
+              <LoadingButton
+                onClick={handleSaveRoyalty}
+                isLoading={isLoading()}
+                variant="primary"
+                size="md"
+              >
+                Save Rate
+              </LoadingButton>
+            </div>
+            <p class="embeddable-toggle__royalty-input-hint">
+              You'll earn ${royaltyDollars()} each time someone purchases a product containing this one
+            </p>
+          </div>
+        </div>
+      </Show>
     </div>
   );
 }

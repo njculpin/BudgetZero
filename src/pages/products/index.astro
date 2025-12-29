@@ -8,6 +8,7 @@ import { getAllProducts, getProductImages } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { getAllTags } from "@/lib/data-access/tags";
 import { setSession } from "@/lib/auth";
+import { serverClient } from "@/lib/data-access/client";
 import Button from "@/components/Button.astro";
 import EmptyState from "@/components/EmptyState.astro";
 import { FormSubmitButton } from "@/components/interactive";
@@ -38,24 +39,50 @@ const userId = currentUser?.id;
 
 const searchQuery = searchParams.get('search') || '';
 const tagFilter = searchParams.get('tag') || '';
+const sortBy = searchParams.get('sort') || 'newest';
 const page = parseInt(searchParams.get('page') || '1');
 const limit = 20;
 const offset = (page - 1) * limit;
 
 const tagArray = tagFilter ? [tagFilter] : undefined;
-const allProducts = await getAllProducts(searchQuery, tagArray, limit, offset);
+const allProducts = await getAllProducts(searchQuery, tagArray, limit, offset, sortBy);
 
-// Fetch images for each product
+// Fetch images and calculate prices for each product
 const productsWithDetails = await Promise.all(
   allProducts.map(async (product) => {
     const images = await getProductImages(product.id);
 
+    // Calculate total price (sum of file prices + component prices)
+    const { data: files } = await serverClient
+      .from('product_files')
+      .select('price_cents')
+      .eq('product_id', product.id)
+      .eq('deleted', false);
+
+    const { data: components } = await serverClient
+      .from('product_components')
+      .select('inherited_price_cents')
+      .eq('parent_product_id', product.id)
+      .eq('deleted', false);
+
+    const filePriceTotal = (files || []).reduce((sum, f) => sum + (f.price_cents || 0), 0);
+    const componentPriceTotal = (components || []).reduce((sum, c) => sum + (c.inherited_price_cents || 0), 0);
+    const totalPriceCents = filePriceTotal + componentPriceTotal;
+
     return {
       ...product,
       cover_image_url: images[0]?.file_url || null,
+      total_price_cents: totalPriceCents,
     };
   })
 );
+
+// Apply price-based sorting if needed (since prices are calculated client-side)
+if (sortBy === 'price-low') {
+  productsWithDetails.sort((a, b) => a.total_price_cents - b.total_price_cents);
+} else if (sortBy === 'price-high') {
+  productsWithDetails.sort((a, b) => b.total_price_cents - a.total_price_cents);
+}
 
 // Get owners for all products
 const allProductOwnerIds = [...new Set(productsWithDetails.map(p => p.user_id))];
@@ -114,29 +141,50 @@ const productTags = allTags
         )}
       </form>
 
-      <!-- Tag Filters -->
-      {productTags.length > 0 && (
-        <div class="browse-tags">
-          <span class="browse-tags__label">Filter by tag:</span>
-          <div class="browse-tags__list">
-            {productTags.map((tag) => (
-              <a
-                href={tagFilter === tag.value
-                  ? `/products${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}`
-                  : `/products?tag=${encodeURIComponent(tag.value)}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`
-                }
-                class:list={[
-                  "browse-tags__tag",
-                  { "browse-tags__tag--active": tagFilter === tag.value }
-                ]}
-              >
-                {tag.value}
-                <span class="browse-tags__count">({tag.productCount})</span>
-              </a>
-            ))}
-          </div>
+      <!-- Sort and Filter Bar -->
+      <div class="browse-controls">
+        <!-- Sort Dropdown -->
+        <div class="browse-sort">
+          <label for="sort-select" class="browse-sort__label">Sort by:</label>
+          <select
+            id="sort-select"
+            class="browse-sort__select"
+            onchange="window.location.href = '/products?sort=' + this.value + (new URLSearchParams(window.location.search).get('search') ? '&search=' + encodeURIComponent(new URLSearchParams(window.location.search).get('search')) : '') + (new URLSearchParams(window.location.search).get('tag') ? '&tag=' + encodeURIComponent(new URLSearchParams(window.location.search).get('tag')) : '')"
+          >
+            <option value="newest" selected={sortBy === 'newest'}>Newest First</option>
+            <option value="oldest" selected={sortBy === 'oldest'}>Oldest First</option>
+            <option value="price-low" selected={sortBy === 'price-low'}>Price: Low to High</option>
+            <option value="price-high" selected={sortBy === 'price-high'}>Price: High to Low</option>
+            <option value="popular" selected={sortBy === 'popular'}>Most Viewed</option>
+            <option value="title-az" selected={sortBy === 'title-az'}>Title: A-Z</option>
+            <option value="title-za" selected={sortBy === 'title-za'}>Title: Z-A</option>
+          </select>
         </div>
-      )}
+
+        <!-- Tag Filters -->
+        {productTags.length > 0 && (
+          <div class="browse-tags">
+            <span class="browse-tags__label">Filter by tag:</span>
+            <div class="browse-tags__list">
+              {productTags.map((tag) => (
+                <a
+                  href={tagFilter === tag.value
+                    ? `/products${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}${sortBy !== 'newest' ? `${searchQuery ? '&' : '?'}sort=${sortBy}` : ''}`
+                    : `/products?tag=${encodeURIComponent(tag.value)}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${sortBy !== 'newest' ? `&sort=${sortBy}` : ''}`
+                  }
+                  class:list={[
+                    "browse-tags__tag",
+                    { "browse-tags__tag--active": tagFilter === tag.value }
+                  ]}
+                >
+                  {tag.value}
+                  <span class="browse-tags__count">({tag.productCount})</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {!currentUser && (
         <Card>
@@ -171,6 +219,14 @@ const productTags = allTags
                         {product.description}
                       </p>
                     )}
+                    <div class="product-card__footer">
+                      <span class="product-card__price">
+                        {product.total_price_cents === 0
+                          ? 'Free'
+                          : `$${(product.total_price_cents / 100).toFixed(2)}`
+                        }
+                      </span>
+                    </div>
                   </div>
                 </a>
               );

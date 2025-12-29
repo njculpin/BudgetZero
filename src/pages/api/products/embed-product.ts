@@ -71,7 +71,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Check that child product exists and is accessible
     const { data: childProduct, error: childError } = await serverClient
       .from("products")
-      .select("id, status, user_id")
+      .select("id, status, user_id, is_embeddable")
       .eq("id", validatedData.childProductId)
       .eq("deleted", false)
       .single();
@@ -81,6 +81,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
+    }
+
+    // Check if product is marked as embeddable
+    if (!childProduct.is_embeddable) {
+      return new Response(
+        JSON.stringify({ error: "This product is not available for embedding" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Verify user has access to embed this product
