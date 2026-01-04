@@ -22,25 +22,62 @@ export default function FormSubmitButton(props: FormSubmitButtonProps) {
     try {
       const response = await fetch(props.action, {
         method: props.method || "post",
+        headers: {
+          "Accept": "application/json",
+        },
         body: new FormData(form),
+        redirect: 'manual', // Don't auto-follow redirects
       });
 
-      if (response.ok) {
-        // Redirect to the response URL or handle success
-        const redirectUrl = response.url;
-        if (redirectUrl && redirectUrl !== window.location.href) {
-          window.location.href = redirectUrl;
+      // Handle redirect responses (3xx)
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("Location");
+        if (location) {
+          window.location.href = location;
         } else {
-          // If no redirect, reload the page
+          window.location.reload();
+        }
+        return;
+      }
+
+      if (response.ok) {
+        // Check content type before parsing
+        const contentType = response.headers.get("content-type");
+
+        if (contentType && contentType.includes("application/json")) {
+          // Parse JSON response
+          const data = await response.json();
+
+          // Check if there's a redirect URL in the response
+          if (data.document && data.document.handle) {
+            window.location.href = `/documents/${data.document.handle}`;
+          } else if (data.product && data.product.handle) {
+            window.location.href = `/products/${data.product.handle}`;
+          } else {
+            // If no specific redirect, reload the page
+            window.location.reload();
+          }
+        } else {
+          // Not JSON, just reload
           window.location.reload();
         }
       } else {
-        // Handle error - for now just reload
+        // Handle error
+        const contentType = response.headers.get("content-type");
+        let errorMessage = "An error occurred. Please try again.";
+
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json().catch(() => ({ error: errorMessage }));
+          errorMessage = errorData.error || errorMessage;
+        }
+
+        console.error("Form submission error:", errorMessage);
+        alert(errorMessage);
         setIsLoading(false);
-        window.location.reload();
       }
     } catch (error) {
       console.error("Form submission error:", error);
+      alert("An error occurred. Please try again.");
       setIsLoading(false);
     }
   };

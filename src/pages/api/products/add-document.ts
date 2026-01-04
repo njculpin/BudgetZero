@@ -43,10 +43,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const userId = session.data.user.id;
 
   try {
-    const formData = await request.formData();
-    const productId = formData.get("productId") as string;
-    const documentId = formData.get("documentId") as string;
-    const priceCents = parseInt(formData.get("priceCents") as string, 10);
+    const body = await request.json();
+    const productId = body.productId;
+    const documentId = body.documentId;
+    const priceCents = body.priceCents;
 
     const validatedData = addDocumentSchema.parse({
       productId,

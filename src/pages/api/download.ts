@@ -55,7 +55,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
     // Create signed download URL (expires in 24 hours)
     const signedUrl = await createSignedUrl(
-      'product-files',
+      'asset-files',
       file.storage_path,
       86400
     );

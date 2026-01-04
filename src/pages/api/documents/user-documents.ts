@@ -3,6 +3,7 @@ import { serverClient } from "@/lib/data-access/client";
 
 export const GET: APIRoute = async ({ url }) => {
   const userId = url.searchParams.get("userId");
+  const limit = parseInt(url.searchParams.get("limit") || "3", 10);
 
   if (!userId) {
     return new Response(JSON.stringify({ error: "User ID is required" }), {
@@ -17,7 +18,8 @@ export const GET: APIRoute = async ({ url }) => {
       .select("id, handle, title, description")
       .eq("user_id", userId)
       .eq("deleted", false)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
     if (error) {
       console.error("Error fetching user documents:", error);
