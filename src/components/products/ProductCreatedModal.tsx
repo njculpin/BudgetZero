@@ -10,7 +10,7 @@ export interface ProductCreatedModalProps {
 
 export default function ProductCreatedModal(props: ProductCreatedModalProps) {
   const handleGoToProduct = () => {
-    window.location.href = `/products/${props.productHandle}`;
+    window.location.href = `/products/${props.productHandle}/edit`;
   };
 
   return (

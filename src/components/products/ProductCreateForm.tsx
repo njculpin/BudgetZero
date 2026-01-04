@@ -55,6 +55,9 @@ export default function ProductCreateForm() {
         });
         setIsLoading(false);
         setShowSuccessModal(true);
+
+        // Dispatch event to update navigation menu
+        window.dispatchEvent(new CustomEvent('product:created'));
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");

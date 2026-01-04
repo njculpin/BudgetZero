@@ -40,6 +40,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const formData = await request.formData();
     const productId = formData.get("productId") as string;
     const files = formData.getAll("files") as File[];
+    const prices = formData.getAll("prices") as string[];
+    const titles = formData.getAll("titles") as string[];
 
     if (!productId) {
       return new Response(JSON.stringify({ error: "Product ID is required" }), {
@@ -73,7 +75,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Upload each file
     const uploadedFiles = [];
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const priceCents = prices[i] ? parseInt(prices[i], 10) : 0;
+      const title = titles[i] || file.name;
+
       // Generate file path
       const filePath = generateFilePath(
         userId,
@@ -94,14 +100,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         continue; // Skip this file but continue with others
       }
 
-      // Create database record
+      // Create database record with price
       const productFile = await createProductFile(productId, {
-        title: file.name,
+        title,
         description: "",
         file_url: uploadResult.url,
         storage_path: filePath,
         file_size_bytes: file.size,
         mime_type: file.type || "application/octet-stream",
+        price_cents: priceCents,
       });
 
       if (productFile) {

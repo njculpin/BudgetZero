@@ -795,6 +795,7 @@ export const createProductFile = async (
     storage_path: string;
     file_size_bytes: number;
     mime_type: string;
+    price_cents?: number;
   }
 ): Promise<ProductFile | null> => {
   // Get current max position
@@ -821,7 +822,7 @@ export const createProductFile = async (
       file_size_bytes: fileData.file_size_bytes,
       mime_type: fileData.mime_type,
       position: nextPosition,
-      price_cents: 0,
+      price_cents: fileData.price_cents ?? 0,
     })
     .select()
     .single();

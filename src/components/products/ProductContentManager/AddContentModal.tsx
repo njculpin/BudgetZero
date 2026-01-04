@@ -32,7 +32,6 @@ export default function AddContentModal(props: AddContentModalProps) {
   const [pendingFiles, setPendingFiles] = createSignal<PendingFile[]>([]);
 
   // Document attachment state
-  const [searchQuery, setSearchQuery] = createSignal("");
   const [selectedDocId, setSelectedDocId] = createSignal<string | null>(null);
   const [docPrice, setDocPrice] = createSignal("0.00");
 
@@ -45,7 +44,7 @@ export default function AddContentModal(props: AddContentModalProps) {
     () => selectedType() === "document" && props.userId,
     async (userId) => {
       try {
-        const response = await fetch(`/api/users/${userId}/documents`);
+        const response = await fetch(`/api/documents/user-documents?userId=${userId}`);
         if (!response.ok) throw new Error("Failed to fetch documents");
         const data = await response.json();
         return data.documents || [];
@@ -105,7 +104,10 @@ export default function AddContentModal(props: AddContentModalProps) {
 
       pendingFiles().forEach((pf, index) => {
         formData.append(`files`, pf.file);
-        formData.append(`prices`, String(Math.round(parseFloat(pf.price) * 100)));
+        // Parse price, default to 0 if invalid or empty
+        const priceValue = parseFloat(pf.price) || 0;
+        const priceCents = Math.round(priceValue * 100);
+        formData.append(`prices`, String(priceCents));
         formData.append(`titles`, pf.title);
       });
 
@@ -254,13 +256,6 @@ export default function AddContentModal(props: AddContentModalProps) {
     }
   };
 
-  const filteredDocuments = () => {
-    const docs = userDocuments() || [];
-    const query = searchQuery().toLowerCase();
-    return docs.filter((d: any) =>
-      d.title.toLowerCase().includes(query)
-    );
-  };
 
   return (
     <Modal
@@ -362,39 +357,55 @@ export default function AddContentModal(props: AddContentModalProps) {
                   Set Prices for New Files
                 </h4>
                 <For each={pendingFiles()}>
-                  {(pf, index) => (
-                    <div class="add-content-modal__pending-file">
-                      <div class="add-content-modal__pending-file-info">
-                        <span class="add-content-modal__pending-file-name">
-                          {pf.file.name}
-                        </span>
-                        <span class="add-content-modal__pending-file-size">
-                          {(pf.file.size / 1024 / 1024).toFixed(2)} MB
-                        </span>
+                  {(pf, index) => {
+                    // Local state for this input to prevent re-renders on each keystroke
+                    const [localPrice, setLocalPrice] = createSignal(pf.price);
+
+                    const handlePriceBlur = () => {
+                      handleUpdateFilePrice(index(), localPrice());
+                    };
+
+                    const handlePriceKeyDown = (e: KeyboardEvent) => {
+                      if (e.key === 'Enter') {
+                        handleUpdateFilePrice(index(), localPrice());
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    };
+
+                    return (
+                      <div class="add-content-modal__pending-file">
+                        <div class="add-content-modal__pending-file-info">
+                          <span class="add-content-modal__pending-file-name">
+                            {pf.file.name}
+                          </span>
+                          <span class="add-content-modal__pending-file-size">
+                            {(pf.file.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </div>
+                        <div class="add-content-modal__pending-file-price">
+                          <span>$</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={localPrice()}
+                            onInput={(e) => setLocalPrice(e.currentTarget.value)}
+                            onBlur={handlePriceBlur}
+                            onKeyDown={handlePriceKeyDown}
+                            class="add-content-modal__price-input"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          class="add-content-modal__pending-file-remove"
+                          onClick={() => handleRemovePendingFile(index())}
+                          aria-label="Remove file"
+                        >
+                          ✕
+                        </button>
                       </div>
-                      <div class="add-content-modal__pending-file-price">
-                        <span>$</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={pf.price}
-                          onInput={(e) =>
-                            handleUpdateFilePrice(index(), e.currentTarget.value)
-                          }
-                          class="add-content-modal__price-input"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        class="add-content-modal__pending-file-remove"
-                        onClick={() => handleRemovePendingFile(index())}
-                        aria-label="Remove file"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )}
+                    );
+                  }}
                 </For>
                 <LoadingButton
                   type="button"
@@ -426,46 +437,55 @@ export default function AddContentModal(props: AddContentModalProps) {
             </LoadingButton>
 
             <div class="add-content-modal__divider">
-              <span>or select existing</span>
+              <span>or select from recent</span>
             </div>
-
-            <input
-              type="text"
-              placeholder="Search your documents..."
-              class="add-content-modal__search-input"
-              value={searchQuery()}
-              onInput={(e) => setSearchQuery(e.currentTarget.value)}
-            />
 
             <Show
               when={!userDocuments.loading}
               fallback={<div>Loading documents...</div>}
             >
-              <div class="add-content-modal__document-list">
-                <For each={filteredDocuments()}>
-                  {(doc: any) => (
-                    <div
-                      class="add-content-modal__document-item"
-                      classList={{
-                        "add-content-modal__document-item--selected":
-                          selectedDocId() === doc.id,
-                      }}
-                      onClick={() => setSelectedDocId(doc.id)}
-                    >
-                      <div class="add-content-modal__document-info">
-                        <span class="add-content-modal__document-title">
-                          {doc.title}
-                        </span>
-                        <Show when={doc.description}>
-                          <span class="add-content-modal__document-description">
-                            {doc.description}
+              <Show
+                when={userDocuments() && userDocuments()!.length > 0}
+                fallback={
+                  <div class="add-content-modal__empty">
+                    <p>No documents yet. Create your first document above!</p>
+                  </div>
+                }
+              >
+                <div class="add-content-modal__document-list">
+                  <For each={userDocuments()}>
+                    {(doc: any) => (
+                      <div
+                        class="add-content-modal__document-item"
+                        classList={{
+                          "add-content-modal__document-item--selected":
+                            selectedDocId() === doc.id,
+                        }}
+                        onClick={() => setSelectedDocId(doc.id)}
+                      >
+                        <div class="add-content-modal__document-info">
+                          <span class="add-content-modal__document-title">
+                            {doc.title}
                           </span>
-                        </Show>
+                          <Show when={doc.description}>
+                            <span class="add-content-modal__document-description">
+                              {doc.description}
+                            </span>
+                          </Show>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </For>
-              </div>
+                    )}
+                  </For>
+                </div>
+
+                <a
+                  href="/documents"
+                  target="_blank"
+                  class="add-content-modal__view-all"
+                >
+                  View all documents →
+                </a>
+              </Show>
             </Show>
 
             <Show when={selectedDocId()}>

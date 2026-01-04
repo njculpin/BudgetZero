@@ -140,8 +140,7 @@ export default function ProductContentManager(props: ProductContentManagerProps)
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            productId: props.productId,
-            documentId: itemId,
+            productDocumentId: itemId,
             priceCents: newPrice,
           }),
         });

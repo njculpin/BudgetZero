@@ -67,6 +67,9 @@ export default function ProductBasicInfoForm(props: ProductBasicInfoFormProps) {
       // Use pushState for seamless URL update without reload
       window.history.pushState({}, '', newUrl);
     }
+
+    // Dispatch event to update navigation menu
+    window.dispatchEvent(new CustomEvent('product:updated'));
   };
 
   const autoSave = useAutoSave({

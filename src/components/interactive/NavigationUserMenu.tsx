@@ -1,4 +1,4 @@
-import { createSignal, Show, For, onCleanup } from "solid-js";
+import { createSignal, Show, For, onCleanup, onMount, createEffect } from "solid-js";
 import type { ProductStatus } from "@/types";
 import "./navigation-user-menu.css";
 
@@ -34,7 +34,38 @@ export interface NavigationUserMenuProps {
 
 export default function NavigationUserMenu(props: NavigationUserMenuProps) {
   const [isOpen, setIsOpen] = createSignal(false);
+  const [products, setProducts] = createSignal<ProductSummary[]>(props.recentProducts || []);
+  const [productCount, setProductCount] = createSignal(props.totalProductCount || 0);
   let menuRef: HTMLDivElement | undefined;
+
+  // Refresh products from server
+  const refreshProducts = async () => {
+    try {
+      const response = await fetch('/api/users/me/recent-products?limit=3');
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data.products || []);
+        setProductCount(data.totalCount || 0);
+      }
+    } catch (error) {
+      console.error('Failed to refresh products:', error);
+    }
+  };
+
+  // Listen for product updates via custom event
+  onMount(() => {
+    const handleProductUpdate = () => {
+      refreshProducts();
+    };
+
+    window.addEventListener('product:updated', handleProductUpdate);
+    window.addEventListener('product:created', handleProductUpdate);
+
+    onCleanup(() => {
+      window.removeEventListener('product:updated', handleProductUpdate);
+      window.removeEventListener('product:created', handleProductUpdate);
+    });
+  });
 
   const toggleMenu = () => {
     setIsOpen(!isOpen());
@@ -155,7 +186,7 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
 
           {/* Projects Section */}
           <Show
-            when={props.recentProducts && props.recentProducts.length > 0}
+            when={products() && products().length > 0}
             fallback={
               <div class="nav-user-menu__empty-state">
                 <svg
@@ -179,7 +210,7 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
             }
           >
             <div class="nav-user-menu__projects">
-              <For each={props.recentProducts}>
+              <For each={products()}>
                 {(product) => (
                   <a
                     href={`/products/${product.handle}`}
@@ -218,14 +249,14 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
             </div>
 
             {/* View All Link (only show if more than 3 products) */}
-            <Show when={props.totalProductCount && props.totalProductCount > 3}>
+            <Show when={productCount() && productCount() > 3}>
               <a
                 href="/products"
                 class="nav-user-menu__view-all"
                 role="menuitem"
                 onClick={closeMenu}
               >
-                View all {props.totalProductCount} projects →
+                View all {productCount()} projects →
               </a>
             </Show>
           </Show>
