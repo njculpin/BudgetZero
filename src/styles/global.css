@@ -633,6 +633,16 @@ blockquote {
   .page__container {
     gap: var(--spacing-4xl);
   }
+
+  /* Stack columns on mobile */
+  .page-columns {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-2xl);
+  }
+
+  .page-columns__column {
+    gap: var(--spacing-2xl);
+  }
 }
 
 /* ===== Status Badge Component ===== */

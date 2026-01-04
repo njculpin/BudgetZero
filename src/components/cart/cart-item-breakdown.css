@@ -75,7 +75,7 @@
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .cart-item-breakdown__item {
     flex-wrap: wrap;
   }

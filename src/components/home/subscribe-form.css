@@ -103,7 +103,7 @@
 }
 
 /* Responsive: Single column on mobile */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .subscribe-card {
     grid-template-columns: 1fr;
   }

@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from "astro";
-import { getSession } from "@/lib/auth";
+import { setSession } from "@/lib/auth";
 import { updateNotificationSettings } from "@/lib/data-access/notifications";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -19,19 +19,27 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   }
 
-  const session = await getSession(
-    accessToken.value,
-    refreshToken.value
-  );
+  let session;
+  try {
+    session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
 
-  if (!session || !session.user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    if (session.error || !session.data.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Authentication failed" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  const userId = session.user.id;
+  const userId = session.data.user.id;
 
   // Parse request body
   let settings;

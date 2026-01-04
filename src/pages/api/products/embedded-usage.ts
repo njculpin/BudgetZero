@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const { data: userProducts, error: userProductsError } = await serverClient
       .from("products")
       .select("id")
-      .eq("owner_id", userId)
+      .eq("user_id", userId)
       .eq("is_embeddable", true)
       .eq("deleted", false);
 
@@ -49,8 +49,8 @@ export const GET: APIRoute = async ({ request, url }) => {
           title,
           handle,
           cover_image_url,
-          owner_id,
-          users!products_owner_id_fkey (
+          user_id,
+          users!products_user_id_fkey (
             name,
             handle
           )

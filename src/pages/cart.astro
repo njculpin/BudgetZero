@@ -7,10 +7,12 @@ import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import CartItemRow from "@/components/cart/CartItemRow";
 import CheckoutButton from "@/components/checkout/CheckoutButton";
+import CreditsCheckout from "@/components/checkout/CreditsCheckout";
 import { setSession } from "@/lib/auth";
 import EmptyState from "@/components/EmptyState.astro";
 import { getOrCreateCart, getCartItems } from "@/lib/data-access/cart";
 import { getProductById, getProductPriceBreakdown } from "@/lib/data-access/products";
+import { getUserById } from "@/lib/data-access/users";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -73,8 +75,18 @@ const subtotal = cartItemsWithDetails.reduce((total, item) => {
   return total + (itemPrice * item.quantity);
 }, 0);
 
+// Check if cart contains service products (for shipping address requirement)
+const hasServiceProducts = cartItemsWithDetails.some(
+  item => item.product?.product_type === 'print_service' || item.product?.product_type === 'paint_service'
+);
+
+// Get user's credits balance
+const user = await getUserById(userId);
+const userCredits = user?.credits_balance || 0;
+
 const showAddedMessage = Astro.url.searchParams.get('added') === 'true';
 const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
+const useCredits = Astro.url.searchParams.get('use_credits') === 'true';
 ---
 
 <Layout title="Shopping Cart - Game Loopers">
@@ -130,8 +142,33 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
                   </div>
 
                   <div class="cart-summary__checkout">
-                    <CheckoutButton client:load variant="primary" size="lg" />
+                    {useCredits ? (
+                      <CreditsCheckout
+                        client:load
+                        userCredits={userCredits}
+                        totalCents={subtotal}
+                        hasServiceProducts={hasServiceProducts}
+                      />
+                    ) : (
+                      <CheckoutButton client:load variant="primary" size="lg" />
+                    )}
                   </div>
+
+                  {!useCredits && (
+                    <div class="cart-summary__credits-toggle">
+                      <a href="/cart?use_credits=true" class="cart-summary__credits-link">
+                        Use Credits Instead ({userCredits.toLocaleString()} available)
+                      </a>
+                    </div>
+                  )}
+
+                  {useCredits && (
+                    <div class="cart-summary__credits-toggle">
+                      <a href="/cart" class="cart-summary__credits-link">
+                        Use Stripe Payment Instead
+                      </a>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -274,5 +311,23 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
 
 .cart-empty a {
   text-decoration: none;
+}
+
+.cart-summary__credits-toggle {
+  text-align: center;
+  margin-top: var(--spacing-md);
+}
+
+.cart-summary__credits-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-duration-fast) var(--transition-timing-default);
+}
+
+.cart-summary__credits-link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
 }
 </style>

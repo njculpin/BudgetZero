@@ -1,0 +1,302 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Button from "@/components/Button.astro";
+import { ProductBasicInfoForm, ProductStatusEditor, ProductEmbeddableToggle, ProductTagsForm, ProductImagesForm, ProductContentManager, ProductDeleteButton } from "@/components/products";
+import ProductContributors from "@/components/products/ProductContributors.astro";
+import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributorsWithRoles, getProductComponentsWithDetails } from "@/lib/data-access/products";
+import { getUserById } from "@/lib/data-access/users";
+import { setSession } from "@/lib/auth";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+
+const { product } = Astro.params;
+
+if (!product) {
+  return Astro.redirect('/404');
+}
+
+const productData = await getProductByHandle(product);
+
+if (!productData) {
+  return Astro.redirect('/404');
+}
+
+// Auth check
+let currentUser = null;
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch (error) {}
+}
+
+const isOwner = currentUser?.id === productData.user_id;
+
+// Redirect non-owners to view page
+if (!isOwner) {
+  return Astro.redirect(`/products/${product}`);
+}
+
+// Parallelize data fetching for better performance
+const [owner, tags, productImages, productFiles, productDocuments, embeddedProductsWithCreators] = await Promise.all([
+  getUserById(productData.user_id),
+  getProductTags(productData.id),
+  getProductImages(productData.id),
+  getProductFiles(productData.id),
+  getProductDocuments(productData.id),
+  getProductComponentsWithDetails(productData.id),
+]);
+
+// Null guard: redirect if owner not found
+if (!owner) {
+  return Astro.redirect('/404');
+}
+
+// Get product contributors with role information
+const productContributorsWithRoles = await getProductContributorsWithRoles(productData.id);
+---
+
+<Layout title={`Edit ${productData.title} - Game Loopers`}>
+  <div class="page">
+    <div class="page__container">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header__content">
+          <h1 class="page-header__title">Edit Product</h1>
+          <p class="page-header__description">
+            Manage your product content, pricing, and settings
+          </p>
+        </div>
+        <div class="page-header__actions">
+          <a href={`/products/${product}`}>
+            <Button variant="outline" size="md">
+              <span slot="text">View Product</span>
+            </Button>
+          </a>
+        </div>
+      </div>
+
+      <div class="page-columns">
+        <!-- Main Content Column -->
+        <div class="page-columns__column">
+          <!-- Product Images Form -->
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Images</CardTitle>
+              <CardDescription>
+                Upload and manage product images (up to 9). First image is the cover.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductImagesForm
+                client:load
+                productId={productData.id}
+                existingImages={productImages}
+              />
+            </CardContent>
+          </Card>
+
+          <!-- Product Content Manager -->
+          <Card>
+            <CardHeader>
+              <CardTitle>Content & Pricing</CardTitle>
+              <CardDescription>Manage all content, pricing, and revenue distribution</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductContentManager
+                client:load
+                productId={productData.id}
+                productTitle={productData.title}
+                userId={currentUser!.id}
+                isOwner={true}
+                isAuthenticated={true}
+                existingFiles={productFiles}
+                existingDocuments={productDocuments}
+                existingEmbeddedProducts={embeddedProductsWithCreators}
+                productOwnerId={productData.user_id}
+                productOwnerHandle={owner?.handle}
+                productOwnerName={owner?.name || owner?.handle}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="page-columns__column">
+          <!-- Basic Info Form -->
+          <Card>
+            <CardContent>
+              <ProductBasicInfoForm
+                client:load
+                productId={productData.id}
+                initialData={{
+                  title: productData.title,
+                  description: productData.description,
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          <!-- Tags Form -->
+          <Card>
+            <CardHeader>
+              <CardTitle>Tags</CardTitle>
+              <CardDescription>Help users discover your product</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductTagsForm
+                client:load
+                productId={productData.id}
+                initialTags={tags.map(t => t.value)}
+              />
+            </CardContent>
+          </Card>
+
+          <!-- Contributors -->
+          {productContributorsWithRoles.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Contributors</CardTitle>
+                <CardDescription>
+                  Creators earning royalties from embedded content
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProductContributors contributorsWithRoles={productContributorsWithRoles} />
+              </CardContent>
+            </Card>
+          )}
+
+          <!-- Embeddable Toggle -->
+          <Card>
+            <CardHeader>
+              <CardTitle>Embeddable</CardTitle>
+              <CardDescription>
+                Allow other creators to embed this product in their work
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductEmbeddableToggle
+                client:load
+                productId={productData.id}
+                isEmbeddable={productData.is_embeddable}
+                productStatus={productData.status}
+                embeddingRoyaltyCents={productData.embedding_royalty_cents}
+              />
+            </CardContent>
+          </Card>
+
+          <!-- Product Settings -->
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Settings</CardTitle>
+              <CardDescription>Manage visibility and lifecycle</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div class="product-settings">
+                <div class="product-settings__section">
+                  <h4 class="product-settings__section-title">Publish Status</h4>
+                  <ProductStatusEditor
+                    client:load
+                    productId={productData.id}
+                    currentStatus={productData.status}
+                  />
+                </div>
+
+                <div class="product-settings__section product-settings__section--danger">
+                  <h4 class="product-settings__section-title">Danger Zone</h4>
+                  <ProductDeleteButton
+                    client:load
+                    productId={productData.id}
+                    productTitle={productData.title}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  /* ===== Page Header ===== */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-xl);
+    margin-bottom: var(--spacing-4xl);
+  }
+
+  .page-header__content {
+    flex: 1;
+  }
+
+  .page-header__title {
+    margin: 0 0 var(--spacing-sm);
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+  }
+
+  .page-header__description {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--muted-foreground);
+  }
+
+  .page-header__actions {
+    flex-shrink: 0;
+  }
+
+  /* ===== Product Settings ===== */
+  .product-settings {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xl);
+  }
+
+  .product-settings__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .product-settings__section--danger {
+    padding-top: var(--spacing-xl);
+    border-top: var(--border-width-default) solid var(--destructive);
+  }
+
+  .product-settings__section-title {
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .product-settings__section--danger .product-settings__section-title {
+    color: var(--destructive);
+  }
+
+  @media (max-width: 48rem) {
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

@@ -268,7 +268,7 @@
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .product-component-modal {
     width: 95%;
     max-height: 95vh;

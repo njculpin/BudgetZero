@@ -48,3 +48,15 @@
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
 }
+
+.product-delete__actions {
+  display: flex;
+  gap: var(--gap-md);
+  justify-content: flex-end;
+}
+
+@media (max-width: 30rem) {
+  .product-delete__actions {
+    flex-direction: column;
+  }
+}

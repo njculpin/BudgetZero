@@ -65,16 +65,16 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
     }
   };
 
-  const getStatusActionDescription = (s: string) => {
+  const getStatusDescription = (s: string) => {
     switch (s) {
       case "draft":
         return "Continue editing without publishing";
       case "private":
         return "Share with select collaborators via link";
       case "public":
-        return "Make available for purchase in marketplace";
+        return "Available for purchase in marketplace";
       case "archived":
-        return "Hide from public view (preserve for reference)";
+        return "Hidden from public view";
       default:
         return "";
     }
@@ -90,95 +90,31 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
         <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
       </Show>
 
-      {/* Status Options Grid */}
-      <div class="status-editor__grid">
-        {/* Draft */}
-        <button
-          type="button"
-          onClick={() => handleStatusChange("draft")}
-          disabled={status() === "draft" || isLoading()}
-          class="status-editor__option"
-          classList={{
-            "status-editor__option--active": status() === "draft",
-            "status-editor__option--disabled": status() === "draft" || isLoading(),
-          }}
+      {/* Status Dropdown */}
+      <div class="status-editor__field">
+        <select
+          class="status-editor__select"
+          onChange={(e) =>
+            handleStatusChange(
+              e.currentTarget.value as "draft" | "private" | "public" | "archived"
+            )
+          }
+          disabled={isLoading()}
         >
-          <div class="status-editor__option-content">
-            <div class="status-editor__option-title">Draft</div>
-            <div class="status-editor__option-description">
-              {getStatusActionDescription("draft")}
-            </div>
-          </div>
-          <Show when={status() === "draft"}>
-            <div class="status-editor__option-badge">Current</div>
-          </Show>
-        </button>
-
-        {/* Private */}
-        <button
-          type="button"
-          onClick={() => handleStatusChange("private")}
-          disabled={status() === "private" || isLoading()}
-          class="status-editor__option"
-          classList={{
-            "status-editor__option--active": status() === "private",
-            "status-editor__option--disabled": status() === "private" || isLoading(),
-          }}
-        >
-          <div class="status-editor__option-content">
-            <div class="status-editor__option-title">Private</div>
-            <div class="status-editor__option-description">
-              {getStatusActionDescription("private")}
-            </div>
-          </div>
-          <Show when={status() === "private"}>
-            <div class="status-editor__option-badge">Current</div>
-          </Show>
-        </button>
-
-        {/* Public */}
-        <button
-          type="button"
-          onClick={() => handleStatusChange("public")}
-          disabled={status() === "public" || isLoading()}
-          class="status-editor__option status-editor__option--highlight"
-          classList={{
-            "status-editor__option--active": status() === "public",
-            "status-editor__option--disabled": status() === "public" || isLoading(),
-          }}
-        >
-          <div class="status-editor__option-content">
-            <div class="status-editor__option-title">Public</div>
-            <div class="status-editor__option-description">
-              {getStatusActionDescription("public")}
-            </div>
-          </div>
-          <Show when={status() === "public"}>
-            <div class="status-editor__option-badge">Current</div>
-          </Show>
-        </button>
-
-        {/* Archived */}
-        <button
-          type="button"
-          onClick={() => handleStatusChange("archived")}
-          disabled={status() === "archived" || isLoading()}
-          class="status-editor__option"
-          classList={{
-            "status-editor__option--active": status() === "archived",
-            "status-editor__option--disabled": status() === "archived" || isLoading(),
-          }}
-        >
-          <div class="status-editor__option-content">
-            <div class="status-editor__option-title">Archived</div>
-            <div class="status-editor__option-description">
-              {getStatusActionDescription("archived")}
-            </div>
-          </div>
-          <Show when={status() === "archived"}>
-            <div class="status-editor__option-badge">Current</div>
-          </Show>
-        </button>
+          <option value="draft" selected={status() === "draft"}>
+            Draft
+          </option>
+          <option value="private" selected={status() === "private"}>
+            Private
+          </option>
+          <option value="public" selected={status() === "public"}>
+            Public
+          </option>
+          <option value="archived" selected={status() === "archived"}>
+            Archived
+          </option>
+        </select>
+        <p class="status-editor__description">{getStatusDescription(status())}</p>
       </div>
 
       {/* Publish Confirmation Dialog */}

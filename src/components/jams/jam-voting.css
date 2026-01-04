@@ -225,7 +225,7 @@
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .jam-voting__categories {
     gap: var(--gap-xs);
   }

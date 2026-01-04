@@ -10,7 +10,7 @@ export interface ProductEmbeddableToggleProps {
   productId: string;
   isEmbeddable: boolean;
   productStatus: string;
-  embeddingRoyaltyCents: number | null;
+  embeddingRoyaltyCents: number | undefined | null;
 }
 
 export default function ProductEmbeddableToggle(props: ProductEmbeddableToggleProps) {

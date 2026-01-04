@@ -2,7 +2,7 @@
 
 This document defines all user personas for Game Loopers, their goals, pain points, and key user journeys.
 
-## Current Personas (MVP - Digital Marketplace)
+## Current Personas (MVP - Digital + Physical Services Marketplace)
 
 ### 1. Game Designer
 **Role:** Creates tabletop game products by combining assets
@@ -122,10 +122,8 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 
 ---
 
-## Future Personas (Phase 3 - Physical Services)
-
 ### 5. Printer (3D Printing Service Provider)
-**Status:** PLANNED - Defer until post-MVP (Month 7+)
+**Status:** CRITICAL - MVP Launch
 
 **Role:** Provides 3D printing services to turn digital STL files into physical miniatures/terrain
 
@@ -142,64 +140,58 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Shipping costs eat into profits
 - Quality disputes ("this doesn't look like the preview")
 
-**Key Features (Future):**
-- Service listing profile with:
+**Key Features:**
+- Product creation with product_type='print_service'
+- Service listing page (reuses product page structure):
   - Printer specs (build volume, resolution, materials)
   - Pricing tiers by size and material
-  - Portfolio of past prints (photos)
-  - Shipping zones and times
-  - Ratings and reviews
-- Order management dashboard
-- Integrated shipping labels
-- Escrow payment (released on customer approval)
-- Direct messaging with customers
+  - Portfolio of past prints (photos uploaded as product images)
+  - Shipping zones and estimated times (in description)
+  - Ratings and reviews (same as product reviews)
+- Order notifications with customer shipping address
+- Direct messaging with customers (existing chat system)
+- Payments handled through existing Stripe integration
 
-**User Flow (Future MVP):**
+**User Flow:**
 ```
-1. Printer creates account
-2. Complete verification (upload sample print photos)
-3. Create service listing
+1. Printer creates account (same as any creator)
+2. Create service "product"
+   - Product type: 'print_service'
    - Set pricing: Small ($8), Medium ($15), Large ($25)
-   - Select materials offered: PLA, PETG, Resin
-   - Set shipping zones: US only, or International
-4. Customer finds STL asset → clicks "Order Print"
-5. Printer receives order notification
-6. Printer downloads STL, prints model
-7. Printer uploads photo for quality review
-8. Customer approves quality
-9. Printer ships with tracking number
-10. Customer confirms receipt
-11. Payment released from escrow
-12. Customer leaves review
+   - Add portfolio photos (existing product images)
+   - Description: Materials offered (PLA, PETG, Resin), shipping zones
+3. Customer finds print service → adds to cart
+4. Checkout collects shipping address (new field for service products)
+5. Payment processes (existing Stripe integration)
+6. Printer receives order notification email with:
+   - STL file(s) ordered
+   - Customer shipping address
+   - Order details
+7. Printer downloads files, prints, ships directly to customer
+8. Customer can message printer through existing chat
+9. Customer leaves review (existing review system)
 ```
 
 **Revenue Model:**
 - Customer pays: $20 (for medium size resin print)
 - Platform fee (10%): $2
 - Printer receives: $18
-- Printer costs (material + time): ~$12
+- Printer costs (material + time + shipping): ~$12
 - Printer profit: $6
 
 **Success Metrics:**
-- Orders fulfilled per month
+- Service products listed (target: 5-10 printers at launch)
+- Orders fulfilled per month (per printer)
 - Average rating (target: 4.5+ stars)
 - Repeat customer rate
 - Revenue per month
-- Dispute rate (target: <5%)
 
-**Integration Points:**
-- Asset pages show "Available for Print" with printer options
-- Printer profiles linked from asset pages
-- Order tracking in customer account
-- Messaging integrated with existing chat system
-
-**Technical Requirements:**
-- `service_listings` table (printer capabilities, pricing)
-- `print_orders` table (order details, status, tracking)
-- Shipping API integration (EasyPost or ShipStation)
-- Escrow payment flow (Stripe supports this)
-- Photo upload for quality review
-- Rating/review system for services (separate from product reviews)
+**Technical Requirements (Minimal):**
+- Add `product_type` field to products table: 'digital' | 'print_service' | 'paint_service'
+- Add `shipping_address` JSONB field to sales table
+- Collect shipping address at checkout when cart contains service products
+- Include shipping address in order notification emails
+- Reuse existing: products, sales, reviews, chat, file uploads
 
 ---
 
@@ -221,65 +213,58 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Shipping painted minis (risk of damage)
 - Color preferences hard to communicate
 
-**Key Features (Future):**
-- Service listing profile with:
-  - Painting quality tiers (tabletop $5/mini, display $15/mini, competition $30/mini)
-  - Portfolio gallery of painted minis
-  - Color scheme templates ("Grimdark", "Bright Fantasy", "Realistic")
-  - Turnaround times
-  - Ratings and reviews
-- Order management dashboard
-- Customer color preference uploads
-- Escrow payment (released on photo approval)
-- Progress photo updates during painting
+**Key Features:**
+- Product creation with product_type='paint_service'
+- Service listing page (reuses product page structure):
+  - Painting quality tiers (tabletop $8/mini, display $20/mini, competition $40/mini)
+  - Portfolio gallery of painted minis (product images)
+  - Color scheme examples in description
+  - Turnaround times (in description)
+  - Ratings and reviews (same as product reviews)
+- Order notifications with customer shipping address + preferences
+- Direct messaging for color coordination (existing chat system)
+- File upload for customer reference photos (existing file attachment system)
 
-**User Flow (Future MVP):**
+**User Flow:**
 ```
-1. Painter creates account
-2. Complete verification (upload portfolio of 10+ painted minis)
-3. Create service listing
+1. Painter creates account (same as any creator)
+2. Create service "product"
+   - Product type: 'paint_service'
    - Set pricing tiers: Tabletop ($8), Display ($20), Competition ($40)
-   - Upload portfolio photos (before/after shots)
-   - Set turnaround times: 5-7 days per mini
-4. Customer orders print → adds paint service at checkout
-5. Printer ships unpainted mini to painter (not customer)
-6. Painter receives mini + customer color preferences
-7. Painter paints mini, uploads WIP photos
-8. Painter uploads final photos for approval
-9. Customer approves or requests minor changes
-10. Painter ships painted mini to customer
-11. Payment released from escrow
-12. Customer leaves review with photos
+   - Upload portfolio photos (existing product images)
+   - Description: Quality levels explained, turnaround times, color schemes offered
+3. Customer finds paint service → adds to cart
+4. Checkout collects shipping address + optional reference photos/notes
+5. Payment processes (existing Stripe integration)
+6. Painter receives order notification email with:
+   - Miniature details
+   - Customer preferences (color scheme, quality tier)
+   - Shipping address
+   - Reference photos if provided
+7. Painter paints mini, ships directly to customer
+8. Customer can message painter through existing chat (WIP photos, questions)
+9. Customer leaves review with photos (existing review system)
 ```
 
 **Revenue Model (Example: Tabletop Quality):**
 - Customer pays: $15 (for tabletop quality paint job)
 - Platform fee (10%): $1.50
 - Painter receives: $13.50
-- Painter costs (paint, time): ~$5
+- Painter costs (paint, time + shipping): ~$5
 - Painter profit: $8.50
 
 **Success Metrics:**
-- Paint jobs completed per month
-- Average rating (target: 4.5+ stars)
-- Photo approval rate on first submission (target: 90%+)
+- Service products listed (target: 3-5 painters at launch)
+- Paint jobs completed per month (per painter)
+- Average rating (target: 4.7+ stars)
 - Repeat customer rate
 - Revenue per month
 
-**Integration Points:**
-- Checkout flow: "Want this printed AND painted?"
-- Order routing: STL → Printer → Painter → Customer
-- Messaging for color preferences
-- Portfolio gallery on painter profile
-- WIP photo updates visible to customer
-
-**Technical Requirements:**
-- `service_listings` table (shared with printers, add `service_type` field)
-- `paint_orders` table (includes color preferences, reference photos)
-- Multi-stop shipping workflow (printer → painter → customer)
-- Photo upload and approval workflow
-- Color scheme templates (predefined palettes)
-- Tiered pricing by quality level
+**Technical Requirements (Minimal):**
+- Same as Printer (product_type='paint_service', shipping_address field)
+- Optional: Customer notes field at checkout for color preferences
+- Optional: File upload at checkout for reference photos
+- Reuse existing: products, sales, reviews, chat, messaging
 
 ---
 
@@ -308,7 +293,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 
 ---
 
-### Physical Services (Future - Phase 3)
+### Physical Services (Current - MVP)
 
 | Creator Type | Creates | Consumers | Earns From |
 |-------------|---------|-----------|------------|
@@ -317,22 +302,17 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 | Painter | Painted Minis | Consumers | Paint service fees |
 | Consumer | Reviews | N/A | N/A |
 
-**Example Transaction (Print + Paint):**
-- Consumer finds 3D Modeler's STL product "Dragon Mini" ($5 digital)
-- Adds print service from Printer ($20)
-- Adds paint service from Painter ($15)
-- Total: $40
+**Example Transaction (Print + Paint - Bundled Services):**
+- Consumer finds Printer's service "Medium Resin Print + Tabletop Paint" ($35 bundled)
+- Downloads 3D Modeler's STL file "Dragon Mini" ($5 digital) separately
+- Sends STL to Printer via order notes/chat
+- Total: $40 ($5 digital + $35 service)
 - **Revenue split (with 10% platform fee):**
-  - 3D Modeler product sale: $5.00 (digital product purchase)
-  - Platform fee on services: $3.50 (10% of $35 in services)
-  - Printer: $18.00 (after 10% platform fee)
-  - Painter: $13.50 (after 10% platform fee)
+  - 3D Modeler (digital product): $4.50 (after platform fee)
+  - Printer+Painter (bundled service): $31.50 (after platform fee)
+  - Platform: $4.00 total
 
-**Open Question:** Should 3D Modeler also earn royalty on physical prints?
-- **Option A:** No royalty (they already earned from digital product sale)
-- **Option B:** $1-2 per print (incentivizes creating print-friendly models)
-- **Recommendation:** Start with Option A, add Option B if print-optimized models become an issue
-- **Note:** This decision deferred to Phase 3 community feedback
+**Note:** Customer can purchase STL separately or printer may bundle popular STLs with service. Flexible marketplace model - let creators experiment with what works.
 
 ---
 
@@ -344,51 +324,46 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - **Multi-Product Embedding:** Designer can embed multiple products from different creators, all royalties tracked
 - **Designer + Designer:** Co-create product (future feature - formal collaboration invitations)
 
-### Future (Physical Services)
-- **Modeler + Printer:** Modeler's STL product → Printer fulfills physical orders → Revenue share TBD
-- **Printer + Painter:** Bundled service (print + paint) → Sequential fulfillment workflow
-- **Designer + Printer + Painter:** Designer's product includes print/paint option → All three earn on transaction
+### Current (Physical Services)
+- **Modeler + Printer:** Customer buys Modeler's STL → separately orders print service from Printer → Printer fulfills
+- **Printer + Painter:** Printer can offer bundled print+paint service product → Painter handles fulfillment or collaborates
+- **Customer Flexibility:** Can mix and match (buy STL from Modeler A, print from Printer B, paint from Painter C)
 
 ---
 
 ## Persona Prioritization
 
-### Phase 1 (MVP - Now): Digital Marketplace
+### Phase 1 (MVP - Now): Digital + Physical Services Marketplace
 **Focus Personas:**
 1. ✅ Game Designer (primary)
 2. ✅ 3D Modeler (primary)
 3. ✅ Illustrator (primary)
 4. ✅ Consumer (primary)
+5. ✅ Printer (beta - invite 5-10 providers)
+6. ✅ Painter (beta - invite 3-5 providers)
 
-**Why:** Validate core marketplace mechanics, automated royalties, product assembly
+**Why:**
+- Validate core marketplace mechanics with digital products
+- Test physical service demand from day 1 with controlled beta group
+- Differentiate from competitors (only platform with integrated print/paint services)
+- Same technical infrastructure (products, sales, reviews, chat)
 
----
-
-### Phase 2 (Growth - Months 2-6): Scale Digital
-**Focus Personas:**
-- Same as Phase 1, but add:
-  - 🎯 Power users (creators with 10+ products)
-  - 🎯 Jam organizers (community leaders)
-
-**Why:** Achieve product-market fit before adding complexity
-
----
-
-### Phase 3 (Expansion - Months 7-10): Physical Services MVP
-**Add Personas:**
-1. 🔜 Printer (invite-only, 10-20 verified providers)
-2. 🔜 Painter (invite-only, 5-10 verified providers)
-
-**Why:** Test physical service demand with controlled group
+**Beta Approach:**
+- Manually recruit 5-10 trusted printers + 3-5 painters
+- Launch with "Services" tab in marketplace
+- Low volume initially, learn operational issues
+- Promote as unique differentiator in marketing
 
 ---
 
-### Phase 4 (Scale - Months 11+): Full Physical Marketplace
-**Open Personas:**
-- ✅ Printer (open applications with verification)
-- ✅ Painter (open applications with verification)
+### Phase 2 (Growth - Months 2-6): Scale All Personas
+**Focus:**
+- Open printer/painter applications (with portfolio verification)
+- Grow digital creators (10+ products per creator)
+- Jam organizers (community leaders)
+- International expansion (printers/painters in EU, UK, AUS)
 
-**Why:** Scale physical services if Phase 3 validates demand
+**Why:** Scale what works, optimize based on Phase 1 learnings
 
 ---
 
@@ -432,38 +407,45 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 
 ---
 
-**When adding Printer/Painter personas:**
+## Implementation for Printer/Painter Personas (MVP)
 
-1. **Database Changes:**
-   - Add `service_listings` table
-   - Add `service_type` enum: 'printing' | 'painting'
-   - Add `print_orders` and `paint_orders` tables
-   - Add shipping and tracking fields
+### Database Changes (Minimal)
+```sql
+-- Add product_type to existing products table
+ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT 'digital';
+-- Types: 'digital' | 'print_service' | 'paint_service'
 
-2. **UI Components Needed:**
-   - `ServiceListingCard.astro` (display printer/painter offerings)
-   - `ServiceCheckout.tsx` (custom order flow with file upload)
-   - `OrderDashboard.tsx` (printer/painter order management)
-   - `OrderStatusTimeline.astro` (customer order tracking)
-   - `PortfolioGallery.astro` (showcase past work)
+-- Add shipping_address to existing sales table
+ALTER TABLE sales ADD COLUMN shipping_address JSONB;
+-- Collected at checkout if cart contains service products
 
-3. **API Endpoints:**
-   - `/api/services/create-listing` (printer/painter setup)
-   - `/api/services/search` (find printers by location, material, price)
-   - `/api/orders/create-print-order` (customer places order)
-   - `/api/orders/[orderId]/upload-proof` (quality review photos)
-   - `/api/orders/[orderId]/approve` (customer approval)
-   - `/api/orders/[orderId]/ship` (tracking number submission)
+-- Add order_notes to existing sales table
+ALTER TABLE sales ADD COLUMN order_notes TEXT;
+-- Customer can specify color preferences, reference photos, etc.
+```
 
-4. **Third-Party Integrations:**
-   - Shipping API (EasyPost or ShipStation) for label generation
-   - Address validation (SmartyStreets)
-   - Escrow payments (Stripe supports holds)
-   - Possibly: Insurance for high-value orders
+### UI Components (Reuse Existing)
+- ✅ Product pages (already exists - just different content for services)
+- ✅ Product creation form (already exists - add product_type selector)
+- ✅ Cart/Checkout (add shipping address field when cart has services)
+- ✅ Purchase history (already exists - shows shipping address for service orders)
+- ✅ Reviews (already exists - works same for services)
+- ✅ Chat (already exists - for coordinating with service providers)
+- ✅ File uploads (already exists - for reference photos, STL files)
 
-5. **Operational Requirements:**
-   - Service provider verification process (manual review of portfolios)
-   - Dispute resolution workflow (customer service team needed)
-   - Quality standards documentation ("What is tabletop quality vs display quality?")
-   - Shipping damage policy
-   - Refund policy for physical goods
+**New Components Needed:**
+- `ShippingAddressForm.tsx` (checkout step, ~3 hours)
+- Service type badge on product cards (1 hour)
+
+### API Changes (Minimal)
+- Modify `/api/checkout/*` to collect shipping address when cart contains services
+- Modify order notification emails to include shipping address
+- No new endpoints needed - reuse existing product/sales APIs
+
+### Operational Requirements (MVP Beta)
+- Manual verification of 5-10 printers + 3-5 painters (portfolio review)
+- Basic quality guidelines documented in Help/FAQ
+- Customer service handled via existing support email
+- Disputes handled case-by-case (defer formal policy until volume increases)
+
+**Estimated Build Time: 1 week** (vs 4-6 weeks for full logistics platform)

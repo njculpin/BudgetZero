@@ -1,5 +1,5 @@
 import { serverClient } from './client';
-import type { Sale, SaleItem, SaleStatus, SaleItemAsset } from '@/types';
+import type { Sale, SaleItem, SaleStatus, SaleItemAsset, PaymentMethod, ShippingAddress } from '@/types';
 
 export interface CreateSaleParams {
   userId: string;
@@ -9,6 +9,10 @@ export interface CreateSaleParams {
   currency: string;
   stripeChargeId: string;
   status?: SaleStatus;
+  paymentMethod?: PaymentMethod;
+  shippingAddress?: ShippingAddress | null;
+  orderNotes?: string | null;
+  completedAt?: string | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -37,7 +41,10 @@ export const createSale = async (
       currency: params.currency,
       stripe_charge_id: params.stripeChargeId,
       status: params.status || 'pending',
-      completed_at: params.status === 'paid' ? new Date().toISOString() : null,
+      payment_method: params.paymentMethod || 'stripe',
+      shipping_address: params.shippingAddress || null,
+      order_notes: params.orderNotes || null,
+      completed_at: params.completedAt || (params.status === 'paid' ? new Date().toISOString() : null),
     })
     .select()
     .single();

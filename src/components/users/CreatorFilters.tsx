@@ -9,10 +9,10 @@ const CREATOR_TYPES = [
   "Illustrator",
   "3D Modeler",
   "Painter",
-  "Printer",
+  "2D Printer",
+  "3D Printer",
   "Writer",
-  "Sound Designer",
-  "Programmer",
+  "Designer",
 ];
 
 export default function CreatorFilters(props: CreatorFiltersProps) {

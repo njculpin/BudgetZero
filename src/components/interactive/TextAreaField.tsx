@@ -26,7 +26,13 @@ export default function TextAreaField(props: TextAreaFieldProps) {
         {props.required && <span class="form-field__required">*</span>}
       </label>
       <textarea
-        ref={textareaRef}
+        ref={(el) => {
+          textareaRef = el;
+          // Set initial value directly on element for proper hydration
+          if (el && props.value !== undefined) {
+            el.value = props.value;
+          }
+        }}
         name={props.name}
         id={fieldId}
         class={`form-field__textarea ${hasError ? "form-field__textarea--error" : ""}`}

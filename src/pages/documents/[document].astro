@@ -18,7 +18,6 @@ import {
 import { getUserById } from "@/lib/data-access/users";
 import DocumentEditor from "@/components/documents/DocumentEditor";
 import DocumentDeleteButton from "@/components/documents/DocumentDeleteButton";
-import DocumentChat from "@/components/documents/DocumentChat";
 import { DocumentAttachmentsForm } from "@/components/documents";
 import Badge from "@/components/Badge.astro";
 
@@ -157,25 +156,6 @@ const formatDate = (dateStr: string) => {
 
         <!-- Sidebar Column -->
         <div class="page-columns__column">
-          <!-- Chat (only for collaborators) -->
-          {canView && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Chat</CardTitle>
-                <CardDescription>
-                  Discussion between document collaborators
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DocumentChat
-                  client:visible
-                  userId={currentUser?.id}
-                  documentId={document.id}
-                />
-              </CardContent>
-            </Card>
-          )}
-
           <!-- Contributors -->
           <Card>
             <CardHeader>

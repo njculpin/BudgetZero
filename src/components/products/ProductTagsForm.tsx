@@ -1,10 +1,9 @@
-import { createSignal, Show, For } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import { useAutoSave } from "@/lib/hooks/useAutoSave";
 import { ErrorMessage } from "@/components/interactive";
 import TagInput from "@/components/interactive/TagInput";
 import "@/components/interactive/base.css";
 import "@/styles/save-status.css";
-import "./product-tags-form.css";
 
 export interface ProductTagsFormProps {
   productId: string;
@@ -93,19 +92,9 @@ export default function ProductTagsForm(props: ProductTagsFormProps) {
 
       <div class="form-field">
         <label class="form-field__label">Tags</label>
-        <Show when={props.initialTags.length > 0}>
-          <div class="product-tags-form__existing-tags">
-            <p class="product-tags-form__label">Current tags:</p>
-            <div class="product-tags-form__tag-list">
-              <For each={props.initialTags}>
-                {(tag) => <span class="product-tags-form__tag">{tag}</span>}
-              </For>
-            </div>
-          </div>
-        </Show>
         <TagInput
           name="tags"
-          placeholder="Add new tags (press Enter)"
+          placeholder="Add tags (press Enter)"
           initialTags={tags()}
           onChange={handleTagsChange}
         />

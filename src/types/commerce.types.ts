@@ -2,7 +2,18 @@ import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
 import type { RoyaltyType } from "./products.types";
 
 export type SaleStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type PaymentMethod = 'stripe' | 'credits';
 export type RoyaltyTransactionStatus = 'pending' | 'ready_to_pay' | 'paid' | 'failed' | 'refunded';
+
+export interface ShippingAddress {
+  name: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+}
 
 export interface Cart extends BaseEntityWithoutDelete {
   user_id: string;
@@ -22,6 +33,9 @@ export interface Sale extends BaseEntity {
   currency: string;
   stripe_charge_id: string;
   status: SaleStatus;
+  payment_method: PaymentMethod;
+  shipping_address: ShippingAddress | null;
+  order_notes: string | null;
   refund_reason: string | null;
   completed_at: string | null;
 }

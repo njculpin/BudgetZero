@@ -11,10 +11,10 @@ const CREATOR_TYPES = [
   "Illustrator",
   "3D Modeler",
   "Painter",
-  "Printer",
+  "2D Printer",
+  "3D Printer",
   "Writer",
-  "Sound Designer",
-  "Programmer",
+  "Designer",
 ];
 
 export default function CreatorTypeSelector(props: CreatorTypeSelectorProps) {
@@ -52,6 +52,7 @@ export default function CreatorTypeSelector(props: CreatorTypeSelectorProps) {
       const response = await fetch("/api/users/update-tags", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
 
       if (!response.ok) {

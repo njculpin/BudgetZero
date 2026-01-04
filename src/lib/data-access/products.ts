@@ -1119,6 +1119,55 @@ export const getProductComponents = async (productId: string): Promise<ProductCo
   return data as ProductComponent[];
 };
 
+/**
+ * Get embedded products with full product and creator details
+ * Optimized to avoid N+1 queries by using a single join query
+ */
+export const getProductComponentsWithDetails = async (productId: string): Promise<Array<{
+  id: string;
+  title: string;
+  handle: string;
+  inherited_price_cents: number;
+  creator_name: string;
+}>> => {
+  const { data, error } = await serverClient
+    .from('product_components')
+    .select(`
+      child_product_id,
+      inherited_price_cents,
+      child_product:products!product_components_child_product_id_fkey (
+        id,
+        title,
+        handle,
+        user_id,
+        creator:users!products_user_id_fkey (
+          id,
+          name,
+          handle
+        )
+      )
+    `)
+    .eq('parent_product_id', productId)
+    .eq('deleted', false);
+
+  if (error) {
+    console.error('Error fetching product components with details:', error);
+    return [];
+  }
+
+  if (!data) return [];
+
+  return data.map((component: any) => ({
+    id: component.child_product?.id || '',
+    title: component.child_product?.title || 'Unknown Product',
+    handle: component.child_product?.handle || '',
+    inherited_price_cents: component.inherited_price_cents,
+    creator_name: component.child_product?.creator?.name ||
+                  component.child_product?.creator?.handle ||
+                  'Unknown',
+  }));
+};
+
 // Platform fee percentage (10%)
 const PLATFORM_FEE_PERCENTAGE = 0.10;
 
@@ -1249,7 +1298,10 @@ export const addDocumentToProduct = async (
       price_cents: priceCents,
       position: nextPosition,
     })
-    .select()
+    .select(`
+      *,
+      document:documents(*)
+    `)
     .single();
 
   if (error) {

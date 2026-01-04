@@ -134,7 +134,6 @@ export default function ProductBasicInfoForm(props: ProductBasicInfoFormProps) {
         placeholder="Enter product title"
         required
         disabled={false}
-        helpText="A descriptive title for your product. The URL handle will update based on this."
       />
 
       <TextAreaField

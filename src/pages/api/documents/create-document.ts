@@ -1,30 +1,42 @@
 import type { APIRoute } from "astro";
 import { createDocument } from "@/lib/data-access/documents";
-import { getUser } from "@/lib/auth";
+import { setSession } from "@/lib/auth";
 
-export const POST: APIRoute = async ({ cookies }) => {
-  const { data: userData } = await getUser();
-  const currentUser = userData?.user;
-
-  if (!currentUser) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const accessToken = cookies.get("sb-access-token")?.value;
-  const refreshToken = cookies.get("sb-refresh-token")?.value;
+export const POST: APIRoute = async ({ request, cookies }) => {
+  const accessToken = cookies.get("sb-access-token");
+  const refreshToken = cookies.get("sb-refresh-token");
 
   if (!accessToken || !refreshToken) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    return new Response(JSON.stringify({ error: "Not authenticated" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });
   }
 
+  let session;
   try {
-    const document = await createDocument(currentUser.id);
+    session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+
+    if (session.error || !session.data.user) {
+      return new Response(JSON.stringify({ error: "Invalid session" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Authentication failed" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const userId = session.data.user.id;
+
+  try {
+    const document = await createDocument(userId);
 
     if (!document) {
       return new Response(JSON.stringify({ error: "Failed to create document" }), {

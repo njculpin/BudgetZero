@@ -300,6 +300,25 @@ export const getJamProducts = async (jamId: string): Promise<Product[]> => {
 };
 
 /**
+ * Check if a product is submitted to a jam
+ */
+export const isProductInJam = async (jamId: string, productId: string): Promise<boolean> => {
+  const { data, error } = await serverClient
+    .from("jam_products")
+    .select("id")
+    .eq("jam_id", jamId)
+    .eq("product_id", productId)
+    .eq("deleted", false)
+    .single();
+
+  if (error) {
+    return false;
+  }
+
+  return !!data;
+};
+
+/**
  * Get reviews for products in a jam
  */
 export const getJamProductReviews = async (
