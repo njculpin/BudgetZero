@@ -275,134 +275,142 @@ export default function ProductImagesForm(props: ProductImagesFormProps) {
         <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
       </Show>
 
-      <div
-        class="image-grid"
-        classList={{ "image-grid--dragging": isDraggingFiles() }}
-        onDragOver={(e) => {
-          // Only show dragging state for file drops, not image reordering
-          if (draggedIndex() === null) {
-            e.preventDefault();
-            setIsDraggingFiles(true);
-          }
-        }}
-        onDragLeave={() => {
-          if (draggedIndex() === null) {
-            setIsDraggingFiles(false);
-          }
-        }}
-        onDrop={handleFileDrop}
-      >
-        {/* Render existing images */}
-        <For each={images()}>
-          {(image, index) => (
-            <div
-              class="image-grid__item"
-              classList={{
-                "image-grid__item--dragging": draggedIndex() === index(),
-                "image-grid__item--drag-over": dragOverIndex() === index(),
-                "image-grid__item--cover": index() === 0,
-              }}
-              draggable={true}
-              onDragStart={(e) => handleDragStart(e, index())}
-              onDragOver={(e) => handleDragOver(e, index())}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleImageDrop(e, index())}
-              onDragEnd={handleDragEnd}
-            >
-              <img
-                src={image.file_url}
-                alt={image.title}
-                class="image-grid__image"
-              />
-              {index() === 0 && (
-                <span class="image-grid__badge">Cover</span>
-              )}
-              <div class="image-grid__overlay">
-                <LoadingButton
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteImage(image.id)}
-                  aria-label={`Delete ${image.title}`}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                </LoadingButton>
-              </div>
-              <div class="image-grid__drag-handle">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="4" y1="8" x2="20" y2="8"/>
-                  <line x1="4" y1="16" x2="20" y2="16"/>
-                </svg>
-              </div>
-            </div>
-          )}
-        </For>
-
-        {/* Render upload progress placeholders */}
-        <For each={uploadQueue()}>
-          {(upload) => (
-            <div class="image-grid__item image-grid__item--uploading">
-              <img
-                src={upload.preview}
-                alt="Uploading..."
-                class="image-grid__image"
-              />
-              <div class="image-grid__progress">
-                <div class="image-grid__progress-bar">
-                  <div
-                    class="image-grid__progress-fill"
-                    style={`width: ${upload.progress}%`}
-                  />
+      {/* Show grid only if there are images */}
+      <Show when={images().length > 0 || uploadQueue().length > 0}>
+        <div
+          class="image-grid"
+          classList={{ "image-grid--dragging": isDraggingFiles() }}
+          onDragOver={(e) => {
+            if (draggedIndex() === null) {
+              e.preventDefault();
+              setIsDraggingFiles(true);
+            }
+          }}
+          onDragLeave={() => {
+            if (draggedIndex() === null) {
+              setIsDraggingFiles(false);
+            }
+          }}
+          onDrop={handleFileDrop}
+        >
+          {/* Render existing images */}
+          <For each={images()}>
+            {(image, index) => (
+              <div
+                class="image-grid__item"
+                classList={{
+                  "image-grid__item--dragging": draggedIndex() === index(),
+                  "image-grid__item--drag-over": dragOverIndex() === index(),
+                  "image-grid__item--cover": index() === 0 && images().length > 1,
+                }}
+                draggable={true}
+                onDragStart={(e) => handleDragStart(e, index())}
+                onDragOver={(e) => handleDragOver(e, index())}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleImageDrop(e, index())}
+                onDragEnd={handleDragEnd}
+              >
+                <img
+                  src={image.file_url}
+                  alt={image.title}
+                  class="image-grid__image"
+                />
+                {index() === 0 && (
+                  <span class="image-grid__badge">Cover</span>
+                )}
+                <div class="image-grid__overlay">
+                  <LoadingButton
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteImage(image.id)}
+                    aria-label={`Delete ${image.title}`}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </LoadingButton>
                 </div>
-                <span class="image-grid__progress-text">Uploading...</span>
+                <div class="image-grid__drag-handle">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="4" y1="8" x2="20" y2="8"/>
+                    <line x1="4" y1="16" x2="20" y2="16"/>
+                  </svg>
+                </div>
               </div>
-            </div>
-          )}
-        </For>
+            )}
+          </For>
 
-        {/* Render empty placeholders */}
-        <For each={Array(availableSlots() - uploadQueue().length).fill(null)}>
-          {() => (
-            <label class="image-grid__item image-grid__item--empty">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileSelect}
-                class="image-grid__input"
-              />
-              <div class="image-grid__empty-content">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-                <span class="image-grid__empty-text">+</span>
+          {/* Render upload progress placeholders */}
+          <For each={uploadQueue()}>
+            {(upload) => (
+              <div class="image-grid__item image-grid__item--uploading">
+                <img
+                  src={upload.preview}
+                  alt="Uploading..."
+                  class="image-grid__image"
+                />
+                <div class="image-grid__progress">
+                  <div class="image-grid__progress-bar">
+                    <div
+                      class="image-grid__progress-fill"
+                      style={`width: ${upload.progress}%`}
+                    />
+                  </div>
+                  <span class="image-grid__progress-text">Uploading...</span>
+                </div>
               </div>
-            </label>
-          )}
-        </For>
-      </div>
-
-      <Show when={hasReordered()}>
-        <div class="image-grid-editor__actions">
-          <LoadingButton
-            type="button"
-            variant="primary"
-            size="md"
-            onClick={handleSaveOrder}
-          >
-            Save Order
-          </LoadingButton>
+            )}
+          </For>
         </div>
+
+        <Show when={images().length > 1}>
+          <p class="image-grid-editor__help">
+            Drag images to reorder • First image is the cover
+          </p>
+        </Show>
+
+        <Show when={hasReordered()}>
+          <div class="image-grid-editor__actions">
+            <LoadingButton
+              type="button"
+              variant="primary"
+              size="md"
+              onClick={handleSaveOrder}
+            >
+              Save Order
+            </LoadingButton>
+          </div>
+        </Show>
       </Show>
 
-      <p class="image-grid-editor__help">
-        Drag images to reorder • First image is the cover • Drag files here or click + to upload
-      </p>
+      {/* Upload button */}
+      <Show when={availableSlots() > 0 && uploadQueue().length === 0}>
+        <label class="image-grid-editor__upload-btn">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileSelect}
+            class="image-grid__input"
+          />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <span>
+            {images().length === 0 ? 'Add Images' : `Add More Images (${availableSlots()} remaining)`}
+          </span>
+        </label>
+      </Show>
+
+      <Show when={availableSlots() === 0}>
+        <p class="image-grid-editor__limit">
+          Maximum of {MAX_IMAGES} images reached
+        </p>
+      </Show>
     </div>
   );
 }

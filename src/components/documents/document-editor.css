@@ -330,7 +330,7 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .document-editor__toolbar {
     padding: var(--spacing-sm);
   }

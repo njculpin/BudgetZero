@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Button from "@/components/Button.astro";
-import { getAllProducts, getProductImages, getProductFiles, getProductDocuments, getProductComponents } from "@/lib/data-access/products";
+import { getAllProducts, getProductImages, getProductFiles, getProductDocuments, getProductComponents, getProductPriceBreakdown } from "@/lib/data-access/products";
 import { getActiveJam } from "@/lib/data-access/jams";
 import { getUserById } from "@/lib/data-access/users";
 
@@ -22,6 +22,7 @@ const getProductCards = async (products: typeof allProducts) => {
       const files = await getProductFiles(product.id);
       const documents = await getProductDocuments(product.id);
       const components = await getProductComponents(product.id);
+      const prices = await getProductPriceBreakdown(product.id)
 
       return {
         id: product.id,
@@ -36,6 +37,7 @@ const getProductCards = async (products: typeof allProducts) => {
         fileCount: files.length,
         documentCount: documents.length,
         componentCount: components.length,
+        prices: prices
       };
     })
   );
@@ -45,6 +47,10 @@ const newLaunches = await getProductCards(allProducts.slice(0, 6));
 const trending = await getProductCards(allProducts.slice(6, 12));
 
 const activeJam = await getActiveJam();
+
+const formatPrice = (cents: number): string => {
+  return `$${(cents / 100).toFixed(2)}`;
+};
 ---
 
 <Layout title="Game Loopers - Bring Creative Projects to Life">
@@ -82,6 +88,7 @@ const activeJam = await getActiveJam();
                   by {product.ownerName}
                 </p>
                 <h3 class="product-card__title">{product.title}</h3>
+                {formatPrice(product.prices.totalPrice)}
               </div>
             </a>
           ))}

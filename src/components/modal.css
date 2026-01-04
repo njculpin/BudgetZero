@@ -177,7 +177,7 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .modal__overlay {
     padding: var(--spacing-sm);
   }

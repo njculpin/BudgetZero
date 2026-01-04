@@ -22,7 +22,7 @@
   border-bottom: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .cart-item-row__content {
     grid-template-columns: 1fr;
     gap: var(--gap-md);
@@ -121,7 +121,7 @@
   color: var(--foreground);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .cart-item-row__total {
     text-align: left;
   }

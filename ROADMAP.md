@@ -1,9 +1,18 @@
 # Game Loopers Product Roadmap
 
-**Last Updated:** 2025-12-27
-**Current Status:** 96-98% complete toward MVP (Week 9+)
-**Target MVP Launch:** Beta-ready pending final testing + production config (2-4 days estimated)
-**Recent Completion:** shadcn/ui quality improvements (design system, animations, 4 new components)
+**Last Updated:** 2026-01-02
+**Current Status:** 96-98% complete toward digital MVP (Week 8) + Physical services planned for Week 9
+**Target MVP Launch:**
+- Digital marketplace: 2-4 days (pending final testing)
+- Physical services beta: +1 week after digital launch
+**Recent Completions:**
+- Product status validation (draft/archived products can't be purchased)
+- Document PDF generation on purchase (mock implementation, needs Puppeteer/Playwright)
+- Settings page migration (replaced dashboard)
+**Strategic Shift:**
+- Moved Printer/Painter personas from Phase 3 (Month 7+) to MVP Week 9
+- Minimal technical lift (reuses products/sales infrastructure)
+- Unique market differentiation vs digital-only competitors
 
 ---
 
@@ -40,6 +49,7 @@
 - Product management with file uploads
 - Product embedding system (product-in-product with royalties)
 - Product status system (draft, private, public, archived)
+- Product status validation (only private/public products can be purchased)
 - Product documents with pricing
 - Product files with individual pricing
 - Product price breakdown component (files + documents + embedded products)
@@ -57,6 +67,8 @@
 **Collaboration:**
 - Document collaboration (TipTap editor with image upload)
 - Document file attachments
+- Document PDF generation on purchase (one-time generation, reused for subsequent purchases)
+- Documents appear as downloadable PDFs in purchases/downloads
 - Real-time chat (products, documents)
 - Auto-attach documents created from products
 
@@ -64,7 +76,7 @@
 - Search and discovery with tags
 - Game jam system with reviews and voting
 - User profiles with avatars
-- Dashboard with content filtering and first-time onboarding
+- Settings page (profile, payouts, notifications)
 
 **Infrastructure:**
 - Row-Level Security policies
@@ -76,7 +88,7 @@
 - Design token system: 89 tokens defined (26 colors, 17 typography, 16 spacing, 6 radius, 4 shadows, 6 animation)
 - Design token compliance: 100% (up from 94%, all hardcoded values replaced)
 - Animation system: Comprehensive tokens for duration, easing, and pattern definitions
-- CSS audit completed: 12 violations identified and fixed (see `/CSS_AUDIT_REPORT.md`)
+- CSS audit completed: 12 violations identified and fixed
 - Code quality score: 96/100 (up from 88/100)
 - TypeScript production code: 0 errors (down from 11, 7 remaining in tests only)
 - shadcn/ui-level polish: Achieved (delightful animations, loading states, consistent interactions)
@@ -92,10 +104,10 @@
 ### 🚧 In Progress Features (2-4%)
 - End-to-end payment testing (Stripe test mode configuration needed)
 - Authentication edge case fixes (10 failing notification tests)
-- ✅ COMPLETE: Visual regression validation (design system audit completed, see `/CSS_AUDIT_REPORT.md`)
-- ✅ COMPLETE: Code cleanup (TypeScript errors fixed, production code clean, see `/CODE_QUALITY_AUDIT.md`)
+- ✅ COMPLETE: Visual regression validation (design system audit completed)
+- ✅ COMPLETE: Code cleanup (TypeScript errors fixed, production code clean)
 - ✅ COMPLETE: Design token migration (100% compliance achieved)
-- ✅ COMPLETE: Component polish (shadcn/ui quality achieved, see `/SHADCN_QUALITY_IMPROVEMENTS.md`)
+- ✅ COMPLETE: Component polish (shadcn/ui quality achieved)
 
 ### ⚠️ Critical Path to Launch
 
@@ -124,7 +136,7 @@
    - ✅ Component polish completed: 8 components enhanced, 4 new components added
    - ✅ Animation system implemented: Consistent timing, delightful micro-interactions
    - ⚠️ **Action Recommended:** Quick manual verification in dev mode (optional but recommended)
-   - **Pages to Check:** /, /products, /products/[product], /cart, /dashboard, /users, /create
+   - **Pages to Check:** /, /products, /products/[product], /cart, /settings, /users, /create
    - **New Components to Verify:** Dialog, Skeleton, ProductPublishChecklist, EmbeddedUsageDashboard
    - **Devices:** Mobile, tablet, desktop (responsive behavior)
    - **Estimated Time:** 30-60 minutes (reduced from 1-2 hours due to automated audit)
@@ -162,18 +174,20 @@
    - **Effort:** 1.5 weeks
    - **Deferral Rationale:** Core collaboration works through product embedding and royalties
 
-8. **Document PDF Export**
-   - Currently: Documents are viewable but not exportable as PDFs
-   - Missing: `/api/documents/[docId]/export-pdf` endpoint
-   - **Impact:** Document system fully functional, PDF export is enhancement
-   - **Effort:** 1 week
-   - **Deferral Rationale:** Can add after validating document collaboration demand
+8. ~~**Document PDF Export**~~ ✅ COMPLETED
+   - ✅ Documents are converted to PDFs when products are purchased
+   - ✅ PDFs generated once and reused for subsequent purchases
+   - ✅ Documents appear as downloadable PDFs in purchases/downloads pages
+   - **Implementation:** `ensureProductDocumentPDFs()` in `/src/lib/data-access/products.ts`
+   - **Status:** Mock PDF URLs in place, TODO: implement actual PDF generation with Puppeteer/Playwright
 
 ---
 
-## Phase 1: MVP Launch (Weeks 1-8)
+## Phase 1: MVP Launch (Weeks 1-9)
 
-**Goal:** Launch functional digital marketplace with core commerce features
+**Goal:** Launch functional digital + physical services marketplace with core commerce features
+
+**Unique Differentiator:** Only platform combining digital asset sales with physical printing/painting services
 
 ### Week 1-3: Payment Processing ✅ COMPLETE
 **Features:**
@@ -282,15 +296,89 @@
 - [ ] Configure production environment variables
 - [ ] Set up Stripe webhook endpoints in dashboard
 
-**Estimated Time to Launch-Ready: 1-2 days (5-9 hours of focused work)**
+**Estimated Time to Launch-Ready (Digital Only): 1-2 days (5-9 hours of focused work)**
 
 **Launch Activities:**
 - [ ] Recruit 20-50 beta creators (offer incentives, early adopter badges)
+- [ ] Recruit 5-10 printer service providers (beta partners)
+- [ ] Recruit 3-5 painter service providers (beta partners)
 - [ ] Launch seed jam: "Create a One-Page Dungeon in 7 Days"
 - [ ] Monitor first 10 transactions closely for bugs
 - [ ] Collect feedback via in-app surveys
 - [ ] Fix critical issues within 24 hours
 - [ ] Document common user questions for FAQ
+
+---
+
+### Week 9: Physical Services Beta (Print/Paint) 🆕 MVP SCOPE
+
+**Goal:** Add printer/painter service providers as beta feature to differentiate from digital-only marketplaces
+
+**Status:** Not yet started (add after Week 8 digital launch)
+
+**Strategic Rationale:**
+- **Unique differentiation** - Only platform with STL → Print → Paint integrated marketplace
+- **Minimal technical lift** - Reuses existing product/sales infrastructure (just adds product_type + shipping_address)
+- **High transaction value** - $5 digital STL → $40 with print+paint services (8x revenue per transaction)
+- **Network effects** - Physical services create repeat business and lock-in
+
+**Technical Implementation (1 week estimated):**
+
+```sql
+-- Database migrations (2 hours)
+ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT 'digital';
+-- Values: 'digital' | 'print_service' | 'paint_service'
+
+ALTER TABLE sales ADD COLUMN shipping_address JSONB;
+ALTER TABLE sales ADD COLUMN order_notes TEXT;
+```
+
+**Features:**
+- [ ] Product type selector on product creation (digital/print_service/paint_service)
+- [ ] Shipping address form at checkout (when cart has service products)
+- [ ] Service product creation guide (same flow as digital, different content)
+- [ ] Order emails include shipping address for service providers
+- [ ] Service badge on product cards ("Print Service", "Paint Service")
+- [ ] Optional: "Services" filter tab in marketplace
+
+**Components Needed:**
+- [ ] `ShippingAddressForm.tsx` - Checkout step (~3 hours)
+- [ ] Service type badge styling (~1 hour)
+
+**API Modifications:**
+- [ ] Modify `/api/checkout/*` to collect shipping when needed
+- [ ] Update order notification template with shipping address
+- [ ] No new endpoints (reuses products/sales/reviews/chat)
+
+**Operational Setup:**
+- [ ] Create service provider application form
+- [ ] Define quality guidelines (print quality tiers, painting examples)
+- [ ] Manual portfolio review for beta providers
+- [ ] Customer service email setup for disputes
+
+**Testing:**
+- [ ] E2E test: Customer purchases print service + receives order confirmation
+- [ ] Provider receives email with shipping address + STL files
+- [ ] Chat coordination works (customer can message provider)
+- [ ] Reviews work for service products
+
+**Beta Launch Plan:**
+- Invite-only: 5-10 printers, 3-5 painters (manually vetted)
+- Low initial volume (learn operational challenges)
+- Marketing angle: "First platform where you can buy STL AND get it printed/painted"
+- Monitor quality, shipping times, customer satisfaction
+- Iterate based on feedback before opening to all
+
+**Success Metrics (First Month):**
+- 5-10 printer services listed
+- 3-5 painter services listed
+- 10+ service orders completed
+- 4.5+ star average rating
+- Zero major disputes/refunds
+
+**Estimated Build Time: 40 hours (1 week)**
+
+---
 
 **Technical Debt (P1 - Can defer to post-launch):**
 - [ ] Code cleanup: Remove unused imports and variables from recent refactors
@@ -397,98 +485,71 @@
 
 ---
 
-## Phase 3: Physical Services MVP (Months 7-10)
+## Phase 3: International Expansion & Service Scaling (Months 7-10)
 
-**Status:** DEFERRED - Only proceed if Phase 2 validates demand
+**Status:** Future work - Pending Phase 1 & 2 success
 
-**Goal:** Test physical printing/painting services with controlled group
+**Goal:** Scale proven marketplace model to international markets and grow service provider network
 
-### Month 7: Service Listings
+### Month 7-8: International Service Providers
+**Focus:** Expand service provider network to Europe, UK, Australia
+
 **Features:**
-- [ ] Printer/painter profile creation
-- [ ] Service listing setup (pricing, materials, shipping zones)
-- [ ] Portfolio gallery (photos of past work)
-- [ ] Verification process (manual review of portfolios)
-- [ ] Contact info display (email printers directly, no platform transactions yet)
-
-**Deliverable:** Directory of verified printers/painters
-
-**Files to Create:**
-- Create: `/src/pages/services/index.astro` (service marketplace)
-- Create: `/src/pages/services/[handle].astro` (service provider profile)
-- Create: `/src/components/ServiceListingCard.astro`
-- Create: `/src/components/PortfolioGallery.astro`
-- Update: `/src/pages/products/[product].astro` (add "Order Print" section)
+- [ ] Multi-currency support (EUR, GBP, AUD)
+- [ ] International shipping zones in service product descriptions
+- [ ] Recruit 10+ EU printers
+- [ ] Recruit 5+ UK printers
+- [ ] Recruit 5+ AUS printers
+- [ ] Local payment processing (Stripe Connect supports this)
 
 **Metrics:**
-- 10+ verified printers recruited
-- 5+ verified painters recruited
-- 50+ service listing views per week
+- 20+ international service providers
+- 50+ international service orders
+- <15% cross-border dispute rate
 
 ---
 
-### Month 8-9: Simple Order Flow
-**Features:**
-- [ ] "Request Quote" button on service listings
-- [ ] Platform messaging for quotes (extend existing chat)
-- [ ] Payment through platform (standard Stripe, not escrow yet)
-- [ ] Order status tracking (pending → printing → shipped)
-- [ ] Shipping notification with tracking number
-- [ ] Basic rating/review for services
+### Month 9-10: Advanced Service Features (if demand validates)
+**Goal:** Add quality automation and customer protections
 
-**Deliverable:** Platform-coordinated print/paint orders
-
-**Files to Create:**
-- Create: `/src/pages/api/services/request-quote.ts`
-- Create: `/src/pages/api/orders/create-service-order.ts`
-- Create: `/src/components/islands/OrderDashboard.tsx`
-- Create: `/src/components/islands/OrderStatusTimeline.tsx`
-- New tables: `service_listings`, `service_orders`, `order_shipments`
-
-**Metrics:**
-- 20+ print orders fulfilled
-- 10+ paint orders fulfilled
-- $500+ GMV from services
-- 4.0+ star average service rating
-- <10% dispute rate
-
----
-
-### Month 10: Data Collection & Iteration
-**Activities:**
-- [ ] Survey customers: satisfaction with print/paint quality, pricing, shipping times
-- [ ] Survey service providers: profitability, platform experience, pain points
-- [ ] Analyze data: order volumes, average prices, repeat usage, dispute reasons
-- [ ] Decide: Scale to Phase 4 or pivot?
-
-**Decision Criteria for Phase 4:**
-- 50+ successful orders with <5% dispute rate
-- 80%+ customer satisfaction
-- 70%+ service provider satisfaction
-- Positive unit economics (platform fees > operational costs)
-
----
-
-## Phase 4: Scale Physical Services (Months 11+)
-
-**Status:** CONDITIONAL - Only if Phase 3 validates model
-
-**Goal:** Automated fulfillment system for physical products
-
-### Features:
-- [ ] Automated pricing (instant quotes based on size/material)
-- [ ] Escrow payments (released on customer photo approval)
-- [ ] Quality review workflow (printer uploads photos → customer approves → payment releases)
-- [ ] Integrated shipping labels (EasyPost or ShipStation API)
-- [ ] Multi-stop shipping (printer → painter → customer)
-- [ ] Dispute resolution system
+**Features (Optional - Only if Month 1-6 shows strong service demand):**
+- [ ] Automated pricing calculator (upload STL → instant quote based on size/material)
+- [ ] Photo approval workflow (printer uploads → customer approves → payment releases)
+- [ ] Escrow payment holds (Stripe supports this)
+- [ ] Integrated shipping labels (EasyPost API)
 - [ ] Insurance options for high-value orders
+- [ ] Multi-stop shipping UI (printer → painter → customer routing)
+
+**Deliverable:** Automated quality controls for physical services
+
+**Decision Criteria:**
+- 100+ service orders per month from Phase 1 beta
+- 4.5+ star average rating
+- <5% dispute rate
+- Service providers requesting automation features
+
+---
+
+## Phase 4: Platform Maturity (Months 11+)
+
+**Status:** Future work - Long-term growth features
+
+**Goal:** Mature marketplace with advanced creator tools and revenue optimization
+
+### Potential Features:
+- [ ] Creator analytics dashboard (traffic, conversion, revenue trends)
+- [ ] Product bundles (multi-product packages with discounts)
+- [ ] Subscription products (monthly STL packs, ongoing access)
+- [ ] Advanced royalty models (tiered splits, performance bonuses)
+- [ ] Affiliate program (creators earn commission referring customers)
+- [ ] White-label services (creators can brand their own storefronts)
+- [ ] API for third-party integrations
 
 ### Success Metrics:
-- 200+ print orders per month
-- 100+ paint orders per month
-- $10,000+ monthly GMV from services
-- 95%+ first-time quality approval rate
+- 1000+ active creators
+- $100,000+ monthly GMV
+- 50%+ of creators earning $100+ per month
+- 30%+ repeat purchase rate
 - 4.5+ star average service rating
 
 ---
@@ -577,7 +638,7 @@
 
 | Date | Decision | Rationale | Owner |
 |------|----------|-----------|-------|
-| 2025-01-27 | Defer physical services (Printer/Painter personas) until Month 7+ | Platform 60% complete, must finish digital MVP first to validate core mechanics | Product |
+| 2026-01-02 | Move physical services (Printer/Painter personas) from Phase 3 to MVP Week 9 | Technical analysis revealed minimal lift (reuses products/sales infrastructure), strong differentiator vs competitors | Product |
 | 2025-01-27 | Use sequential implementation (digital → physical) instead of parallel | Limited resources, reduce complexity, validate product-market fit first | Product |
 | 2025-12-11 | Replace cart toast with modal confirmation | 3-second toast was easy to miss, modal improves conversion confidence | UX |
 | 2025-12-11 | Add documents to product price breakdown | Price transparency critical for buyer trust | Product |
@@ -588,7 +649,7 @@
 | 2025-12-20 | Add revenue preview calculator for creators | Transparency is core value prop; creators need to see exact splits before publishing | Product |
 | 2025-12-24 | Complete CSS refactoring to 100% BEM compliance | Week 8 pre-launch polish; ensures maintainability and consistency before scaling | Architecture |
 | 2025-12-24 | Prioritize payment testing over additional polish | Payment bugs are critical launch blocker; visual polish has diminishing returns | Product |
-| TBD | Should product creators earn royalties on physical prints of embedded 3D models? | Needs community feedback and pricing model validation (deferred to Phase 3) | Product |
+| TBD | Should product creators earn royalties on physical prints of embedded 3D models? | Needs community feedback after Week 9 physical services beta launch | Product |
 
 ---
 
@@ -606,7 +667,7 @@
 
 2. **Visual Regression Validation** (P0 BLOCKING - 1-2 hours)
    - Run `npm run dev` and manually verify pages after CSS refactoring
-   - Pages: /, /products, /products/[product], /cart, /dashboard, /create
+   - Pages: /, /products, /products/[product], /cart, /settings, /create
    - Check: Mobile, tablet, desktop responsive behavior
    - Impact: Layout bugs, visual regressions, poor UX
 

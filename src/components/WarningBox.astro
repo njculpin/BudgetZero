@@ -1,0 +1,49 @@
+---
+interface Props {
+  className?: string;
+}
+
+const { className = "" } = Astro.props;
+---
+
+<div class={`warning-box ${className}`}>
+  <svg class="warning-box__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M10 6V10M10 14H10.01M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div class="warning-box__content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .warning-box {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-md);
+    padding: var(--spacing-xl);
+    background-color: oklch(from var(--warning, #f59e0b) l c h / 0.1);
+    border: var(--border-width-default) solid var(--warning, #f59e0b);
+    border-radius: var(--radius-md);
+  }
+
+  .warning-box__icon {
+    flex-shrink: 0;
+    color: var(--warning, #f59e0b);
+    margin-top: 2px;
+  }
+
+  .warning-box__content {
+    flex: 1;
+    font-size: var(--text-sm);
+    color: var(--foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  .warning-box__content :global(p) {
+    margin: 0;
+  }
+
+  .warning-box__content :global(p:not(:last-child)) {
+    margin-bottom: var(--spacing-sm);
+  }
+</style>

@@ -12,6 +12,7 @@ import { getUserById, getUserTags } from "@/lib/data-access/users";
 import { getNotificationSettings } from "@/lib/data-access/notifications";
 import { UserEditForm } from "@/components/users";
 import NotificationSettingsForm from "@/components/settings/NotificationSettingsForm";
+import EmbeddedUsageDashboard from "@/components/products/EmbeddedUsageDashboard";
 
 const { cookies, redirect } = Astro;
 
@@ -76,6 +77,16 @@ const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
               avatarUrl={user.avatar_url}
               userHandle={user.handle}
               tags={userTags}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Royalty Earnings -->
+        <Card>
+          <CardContent>
+            <EmbeddedUsageDashboard
+              client:load
+              userId={user.id}
             />
           </CardContent>
         </Card>

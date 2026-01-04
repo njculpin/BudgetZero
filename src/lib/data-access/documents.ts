@@ -350,7 +350,7 @@ export const getDocumentCollaborators = async (
 };
 
 /**
- * Get collaborator users for a document (for chat access check)
+ * Get collaborator users for a document
  */
 export const getDocumentCollaboratorUsers = async (
   documentId: string

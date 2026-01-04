@@ -196,7 +196,7 @@
 }
 
 /* Mobile responsiveness */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .embeddable-toggle__content {
     flex-direction: column;
     align-items: flex-start;

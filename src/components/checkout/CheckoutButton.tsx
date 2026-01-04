@@ -19,7 +19,7 @@ export default function CheckoutButton(props: CheckoutButtonProps) {
     // Check if mock_checkout parameter is present in URL
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
-      const mockCheckout = urlParams.get("mock_checkout") === "true" || props.useMockCheckout;
+      const mockCheckout = (urlParams.get("mock_checkout") === "true") || !!props.useMockCheckout;
       setIsMockMode(mockCheckout);
     }
   });

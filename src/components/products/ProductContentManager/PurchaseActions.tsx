@@ -1,21 +1,19 @@
 import { createSignal, Show } from "solid-js";
 import { LoadingButton } from "@/components/interactive";
 import Modal, { ModalHeader, ModalFooter } from "@/components/Modal";
-import "./add-to-cart-button.css";
 
-export interface AddToCartButtonProps {
+export interface PurchaseActionsProps {
   productId: string;
   productTitle: string;
   isAuthenticated: boolean;
 }
 
-export default function AddToCartButton(props: AddToCartButtonProps) {
+export default function PurchaseActions(props: PurchaseActionsProps) {
   const [isLoading, setIsLoading] = createSignal(false);
   const [showSuccessModal, setShowSuccessModal] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
 
   const handleAddToCart = async () => {
-    // If not authenticated, redirect to sign in
     if (!props.isAuthenticated) {
       window.location.href = `/sign-in?redirect=/products/${props.productId}`;
       return;
@@ -27,9 +25,7 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
     try {
       const response = await fetch("/api/cart/add-to-cart", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId: props.productId,
           quantity: 1,
@@ -37,12 +33,8 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to add to cart");
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to add to cart");
-      }
-
-      // Show success modal
       setShowSuccessModal(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add to cart");
@@ -51,16 +43,13 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
     }
   };
 
-  const handleCloseModal = () => {
-    setShowSuccessModal(false);
-  };
-
+  const handleCloseModal = () => setShowSuccessModal(false);
   const handleViewCart = () => {
     window.location.href = "/cart";
   };
 
   return (
-    <div class="add-to-cart">
+    <div class="purchase-actions">
       <LoadingButton
         type="button"
         variant="primary"
@@ -68,10 +57,10 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
         onClick={handleAddToCart}
         isLoading={isLoading()}
         loadingText="Adding to cart..."
-        class="add-to-cart__button"
+        class="purchase-actions__button"
       >
         <svg
-          class="add-to-cart__icon"
+          class="purchase-actions__button-icon"
           xmlns="http://www.w3.org/2000/svg"
           width="20"
           height="20"
@@ -91,7 +80,7 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
       </LoadingButton>
 
       <Show when={error()}>
-        <div class="add-to-cart__error">{error()}</div>
+        <div class="purchase-actions__error">{error()}</div>
       </Show>
 
       {/* Success Modal */}
@@ -119,8 +108,8 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
             </svg>
           }
         >
-          <h3 class="add-to-cart__success-title">Added to Cart!</h3>
-          <p class="add-to-cart__success-description">
+          <h3 class="purchase-actions__success-title">Added to Cart!</h3>
+          <p class="purchase-actions__success-description">
             "{props.productTitle}" has been added to your cart
           </p>
         </ModalHeader>
@@ -142,7 +131,6 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
-              aria-hidden="true"
               style="margin-right: 0.5rem"
             >
               <circle cx="9" cy="21" r="1" />

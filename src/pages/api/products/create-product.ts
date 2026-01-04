@@ -3,8 +3,26 @@ import { setSession } from "@/lib/auth";
 import { createProduct, createProductTag } from "@/lib/data-access/products";
 import { z } from "zod";
 
+/**
+ * Generate a unique default product title with timestamp
+ */
+const generateDefaultTitle = (): string => {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+  return `New Product - ${dateStr} ${timeStr}`;
+};
+
 const createProductSchema = z.object({
-  title: z.string().min(1).max(200).default("Untitled Product"),
+  title: z.string().min(1).max(200),
   description: z.string().optional(),
   status: z.enum(["draft", "public", "archived"]).default("draft"),
   tags: z.array(z.string()).optional(),
@@ -55,7 +73,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       // Handle FormData (from HTML form submission)
       const formData = await request.formData();
       data = {
-        title: formData.get("title") || "Untitled Product",
+        title: formData.get("title") || generateDefaultTitle(),
         description: formData.get("description") || undefined,
         status: formData.get("status") || "draft",
       };
@@ -68,6 +86,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           .map((t) => t.trim())
           .filter(Boolean);
       }
+    }
+
+    // Apply default title for JSON requests without a title
+    if (!data.title || data.title.trim() === '') {
+      data.title = generateDefaultTitle();
     }
 
     const validatedData = createProductSchema.parse(data);

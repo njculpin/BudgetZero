@@ -59,97 +59,46 @@
   line-height: var(--leading-relaxed);
 }
 
-/* ===== Status Options Grid ===== */
-.status-editor__grid {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: var(--gap-lg);
-}
-
-@media (max-width: 768px) {
-  .status-editor__grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ===== Status Option Card ===== */
-.status-editor__option {
-  position: relative;
+/* ===== Status Field ===== */
+.status-editor__field {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--gap-md);
-  padding: var(--spacing-xl);
-  background-color: var(--card);
-  border: var(--border-width-medium) solid var(--border);
+  gap: var(--gap-sm);
+}
+
+.status-editor__select {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--foreground);
+  background-color: var(--background);
+  border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-in-out);
-  text-align: left;
+  transition: all var(--duration-fast) var(--ease-in-out);
 }
 
-.status-editor__option:hover:not(.status-editor__option--disabled) {
+.status-editor__select:hover:not(:disabled) {
   border-color: var(--primary);
-  transform: var(--transform-hover-lift-strong);
-  box-shadow: var(--shadow-md);
 }
 
-.status-editor__option--active {
+.status-editor__select:focus {
+  outline: none;
   border-color: var(--primary);
-  background-color: oklch(from var(--primary) l c h / 0.05);
+  box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 0.1);
 }
 
-.status-editor__option--highlight {
-  border-color: var(--success);
-}
-
-.status-editor__option--highlight:hover:not(.status-editor__option--disabled) {
-  border-color: var(--success);
-  background-color: oklch(from var(--success) l c h / 0.05);
-  box-shadow: 0 4px 16px oklch(from var(--success) l c h / 0.2);
-}
-
-.status-editor__option--disabled {
+.status-editor__select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.status-editor__option-icon {
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.status-editor__option-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-xs);
-}
-
-.status-editor__option-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
-
-.status-editor__option-description {
+.status-editor__description {
+  margin: 0;
   font-size: var(--text-sm);
   color: var(--muted-foreground);
   line-height: var(--leading-relaxed);
-}
-
-.status-editor__option-badge {
-  position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  font-size: var(--text-xs);
-  font-weight: var(--font-weight-semibold);
-  border-radius: var(--radius-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 /* ===== Confirmation Modal ===== */
