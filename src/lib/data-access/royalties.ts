@@ -438,16 +438,15 @@ export async function createRoyaltyTransactionsForSaleItemAsset(params: {
 /**
  * Create royalty transactions for a product sale
  * Handles both direct product royalties and embedded product royalties
+ * Product-centric model (December 2024)
  */
 export async function createRoyaltyTransactionsForProduct(params: {
   saleId: string;
   saleItemId: string;
-  saleItemAssetId: string;
   productId: string;
   saleItemPriceCents: number;
-  currency: string;
 }): Promise<SaleRoyaltyTransaction[]> {
-  const { saleId, saleItemId, saleItemAssetId, productId, saleItemPriceCents, currency } = params;
+  const { saleId, saleItemId, productId, saleItemPriceCents } = params;
 
   // Get all royalties for this product
   const productRoyalties = await getProductRoyalties(productId);
@@ -479,21 +478,18 @@ export async function createRoyaltyTransactionsForProduct(params: {
       continue;
     }
 
-    // Create the royalty transaction
+    // Create the royalty transaction (product-centric model)
     const { data, error } = await serverClient
       .from('sale_royalty_transactions')
       .insert({
         sale_id: saleId,
         sale_item_id: saleItemId,
-        sale_item_asset_id: saleItemAssetId,
-        asset_royalty_id: royalty.id,
+        product_royalty_id: royalty.id,
         recipient_user_id: royalty.user_id,
         royalty_type: royalty.royalty_type,
         royalty_value: royalty.royalty_value,
         calculated_cents: calculatedCents,
         status: 'ready_to_pay',
-        stripe_transfer_id: '',
-        paid_at: null,
       })
       .select()
       .single();
