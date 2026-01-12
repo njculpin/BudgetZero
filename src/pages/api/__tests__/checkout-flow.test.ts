@@ -95,9 +95,11 @@ beforeAll(async () => {
     .from('product_files')
     .insert({
       product_id: testEmbeddedProductId,
-      file_name: 'miniature.stl',
+      title: 'miniature.stl',
       file_url: 'https://example.com/miniature.stl',
-      file_size: 2048000,
+      storage_path: 'test/miniature.stl',
+      file_size_bytes: 2048000,
+      mime_type: 'model/stl',
       price_cents: 500, // $5.00
     })
     .select()
@@ -129,9 +131,11 @@ beforeAll(async () => {
   // Create file for main product
   await supabase.from('product_files').insert({
     product_id: testProductWithEmbedId,
-    file_name: 'game-rules.pdf',
+    title: 'game-rules.pdf',
     file_url: 'https://example.com/game-rules.pdf',
-    file_size: 1024000,
+    storage_path: 'test/game-rules.pdf',
+    file_size_bytes: 1024000,
+    mime_type: 'application/pdf',
     price_cents: 1500, // $15.00
   });
 
@@ -161,9 +165,11 @@ beforeAll(async () => {
     .from('product_files')
     .insert({
       product_id: testProductId,
-      file_name: 'rules.pdf',
+      title: 'rules.pdf',
       file_url: 'https://example.com/rules.pdf',
-      file_size: 512000,
+      storage_path: 'test/rules.pdf',
+      file_size_bytes: 512000,
+      mime_type: 'application/pdf',
       price_cents: 1000, // $10.00
     })
     .select()
@@ -597,9 +603,11 @@ describe('Checkout Flow Integration Tests', () => {
       // Add file to draft product
       await supabase.from('product_files').insert({
         product_id: draftProduct!.id,
-        file_name: 'test.pdf',
+        title: 'test.pdf',
         file_url: 'https://example.com/test.pdf',
-        file_size: 100,
+        storage_path: 'test/test.pdf',
+        file_size_bytes: 102400, // 100 KB
+        mime_type: 'application/pdf',
         price_cents: 500,
       });
 

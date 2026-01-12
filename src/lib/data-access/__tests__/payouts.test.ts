@@ -42,6 +42,7 @@ describe('Payout System', () => {
   let testUser2Id: string;
   let testContributorId: string;
   let testProductId: string;
+  let productRoyaltyId: string;
   let payoutId: string;
   let royaltyTransaction1Id: string;
   let royaltyTransaction2Id: string;
@@ -93,14 +94,29 @@ describe('Payout System', () => {
       .from('product_files')
       .insert({
         product_id: testProductId,
-        name: 'Test File.pdf',
+        title: 'Test File.pdf',
         file_url: 'https://example.com/test.pdf',
         storage_path: 'test/file.pdf',
-        file_size_kb: 1000,
+        file_size_bytes: 1024000, // 1000 KB
         mime_type: 'application/pdf',
         position: 0,
         price_cents: 10000, // $100.00
       });
+
+    // Create product royalty for contributor
+    const { data: productRoyalty } = await supabase
+      .from('product_royalties')
+      .insert({
+        product_id: testProductId,
+        user_id: testContributorId,
+        royalty_type: 'fixed',
+        royalty_value: 5000, // $50.00
+      })
+      .select()
+      .single();
+
+    if (!productRoyalty) throw new Error('Failed to create product royalty');
+    productRoyaltyId = productRoyalty.id;
 
     // Create mock sale
     const { data: sale } = await supabase
@@ -135,29 +151,17 @@ describe('Payout System', () => {
       .select()
       .single();
 
-    // Create sale_item_asset
-    const { data: saleItemAsset } = await supabase
-      .from('sale_item_assets')
-      .insert({
-        sale_item_id: saleItem!.id,
-        asset_id: testProductId,
-      })
-      .select()
-      .single();
-
     // Create royalty transactions for contributor (ready to pay)
     const { data: royalty1 } = await supabase
       .from('sale_royalty_transactions')
       .insert({
         sale_id: sale.id,
         sale_item_id: saleItem!.id,
-        sale_item_asset_id: saleItemAsset!.id,
-        asset_royalty_id: testProductId,
+        product_royalty_id: productRoyaltyId,
         recipient_user_id: testContributorId,
         royalty_type: 'fixed',
         royalty_value: 5000,
         calculated_cents: 5000, // $50.00
-        currency: 'usd',
         status: 'ready_to_pay',
       })
       .select()
@@ -168,13 +172,11 @@ describe('Payout System', () => {
       .insert({
         sale_id: sale.id,
         sale_item_id: saleItem!.id,
-        sale_item_asset_id: saleItemAsset!.id,
-        asset_royalty_id: testProductId,
+        product_royalty_id: productRoyaltyId,
         recipient_user_id: testContributorId,
         royalty_type: 'fixed',
         royalty_value: 3000,
         calculated_cents: 3000, // $30.00
-        currency: 'usd',
         status: 'ready_to_pay',
       })
       .select()
@@ -193,13 +195,11 @@ describe('Payout System', () => {
       .insert({
         sale_id: sale.id,
         sale_item_id: saleItem!.id,
-        sale_item_asset_id: saleItemAsset!.id,
-        asset_royalty_id: testProductId,
+        product_royalty_id: productRoyaltyId,
         recipient_user_id: testUser2Id,
         royalty_type: 'fixed',
         royalty_value: 2000,
         calculated_cents: 2000, // $20.00
-        currency: 'usd',
         status: 'ready_to_pay',
       });
   });
@@ -275,27 +275,16 @@ describe('Payout System', () => {
         .select()
         .single();
 
-      const { data: newSaleItemAsset } = await supabase
-        .from('sale_item_assets')
-        .insert({
-          sale_item_id: newSaleItem!.id,
-          asset_id: testProductId,
-        })
-        .select()
-        .single();
-
       await supabase
         .from('sale_royalty_transactions')
         .insert({
           sale_id: newSale!.id,
           sale_item_id: newSaleItem!.id,
-          sale_item_asset_id: newSaleItemAsset!.id,
-          asset_royalty_id: testProductId,
+          product_royalty_id: productRoyaltyId,
           recipient_user_id: testContributorId,
           royalty_type: 'fixed',
           royalty_value: 1000,
           calculated_cents: 1000,
-          currency: 'usd',
           status: 'pending', // Not ready_to_pay
         });
 

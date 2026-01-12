@@ -80,10 +80,10 @@ describe('Stripe Webhook Handler (Product-Centric Model)', () => {
       .from('product_files')
       .insert({
         product_id: embeddedProductId,
-        name: 'Embedded Asset File.pdf',
+        title: 'Embedded Asset File.pdf',
         file_url: 'https://example.com/embedded-file.pdf',
         storage_path: 'test/embedded-file.pdf',
-        file_size_kb: 500,
+        file_size_bytes: 512000, // 500 KB
         mime_type: 'application/pdf',
         position: 0,
         price_cents: 1000, // $10.00 for embedded file
@@ -118,10 +118,10 @@ describe('Stripe Webhook Handler (Product-Centric Model)', () => {
       .from('product_files')
       .insert({
         product_id: testProductId,
-        name: 'Main Product File.pdf',
+        title: 'Main Product File.pdf',
         file_url: 'https://example.com/main-file.pdf',
         storage_path: 'test/main-file.pdf',
-        file_size_kb: 1000,
+        file_size_bytes: 1024000, // 1000 KB
         mime_type: 'application/pdf',
         position: 0,
         price_cents: 3000, // $30.00 for main file
@@ -528,10 +528,10 @@ describe('Stripe Webhook Handler (Product-Centric Model)', () => {
         .from('product_files')
         .insert({
           product_id: product2!.id,
-          name: 'Second Product File.pdf',
+          title: 'Second Product File.pdf',
           file_url: 'https://example.com/file2.pdf',
           storage_path: 'test/file2.pdf',
-          file_size_kb: 500,
+          file_size_bytes: 512000, // 500 KB
           mime_type: 'application/pdf',
           position: 0,
           price_cents: 2000, // $20.00
