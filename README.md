@@ -443,86 +443,6 @@ SaleRoyaltyTransactions {
   deleted_at: timestamp
 }
 
-Jams {
-    id: uuid
-    handle: string // unique and global
-    title: string
-    description: string
-    rules: string
-    user_id: uuid ref to Users // creator of the jam
-    status: 'upcoming' | 'active' | 'ended'
-    start_date: timestamp
-    end_date: timestamp
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
-JamAttachments {
-    id: uuid
-    jam_id: uuid ref to Jams
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp 
-}
-
-JamPrizes {
-    id: uuid
-    jam_id: uuid ref to Jams
-    title: string
-    description: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp 
-}
-
-JamPrizeAttachments {
-    id: uuid
-    prize_id: uuid ref to JamPrizes
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp 
-}
-
-JamProducts {
-    id: uuid
-    jam_id: uuid ref to Jams
-    product_id: uuid ref to Products
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
-JamProductReviews {
-    id: uuid
-    jam_id: uuid ref to Jams
-    user_id: uuid ref to Users
-    product_id: uuid ref to Products
-    review_rating: number // 0 to 5
-    review_text: string // max 120 chars
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
-}
-
 Notifications {
     id: uuid
     user_id: uuid ref to Users // who receives it
@@ -622,10 +542,6 @@ LogEvents {
 "/tags" - allows a user to view and search for tags of products
 "/tags/[handle]" - allows a user to view products within a particular tag
 "/tags/[handle]/feed" - allows viewing tag activity on a particular tag
-
-"/jams" - allows a user to view and search for game jams
-"/jams/[handle]" - allows a user to view game jams
-"/jams/[handle]/feed" - allows viewing jam activity on a particular jam
 
 "/cart" - view your current cart and checkout
 

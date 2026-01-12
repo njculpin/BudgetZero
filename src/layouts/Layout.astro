@@ -3,7 +3,35 @@ import '@fontsource/inter';
 import '@/styles/global.css'
 import Navigation from '@/components/Navigation.astro';
 import Footer from '@/components/Footer.astro';
+import OnboardingModal from '@/components/auth/OnboardingModal';
+import { setSession } from '@/lib/auth';
+import { getUserById } from '@/lib/data-access/users';
+
 const { title } = Astro.props;
+
+// Check if user needs onboarding
+let showOnboarding = false;
+
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+
+    if (!session.error && session.data.user) {
+      const user = await getUserById(session.data.user.id);
+      if (user && !user.onboarding_completed) {
+        showOnboarding = true;
+      }
+    }
+  } catch (error) {
+    console.error("Error checking onboarding status:", error);
+  }
+}
 ---
 
 <!doctype html>
@@ -25,6 +53,9 @@ const { title } = Astro.props;
 		<footer role="contentinfo">
 			<Footer/>
 		</footer>
+		{showOnboarding && (
+			<OnboardingModal client:load />
+		)}
 	</body>
 </html>
 

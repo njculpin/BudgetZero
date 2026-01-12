@@ -1,13 +1,10 @@
 import { createSignal, Show, For } from "solid-js";
-import CreatorTypeSelector from "./CreatorTypeSelector";
 import "./onboarding-wizard.css";
-import "./creator-type-selector.css";
 
 interface OnboardingStep {
   title: string;
   description: string;
   icon: string;
-  showCreatorTypeSelector?: boolean;
   cta?: {
     label: string;
     action: () => void;
@@ -64,7 +61,7 @@ export default function OnboardingWizard(props: Props) {
     {
       title: "Pro Tips for Success",
       description:
-        "Add high-quality images, write clear descriptions, use relevant tags, and engage with the community through game jams!",
+        "Add high-quality images, write clear descriptions, use relevant tags.",
       icon: "💡",
     },
   ];
@@ -79,7 +76,7 @@ export default function OnboardingWizard(props: Props) {
     {
       title: "Browse the Marketplace",
       description:
-        "Explore complete game products, individual assets, and jam entries. Use tags and search to find exactly what you need.",
+        "Explore complete game products and individual assets. Use tags and search to find exactly what you need.",
       icon: "🔍",
       cta: {
         label: "Browse Products",
@@ -93,18 +90,6 @@ export default function OnboardingWizard(props: Props) {
       description:
         "When you purchase, you see exactly who gets paid. Transparent royalty splits ensure fair compensation for all contributors.",
       icon: "💰",
-    },
-    {
-      title: "Join Game Jams",
-      description:
-        "Participate in community jams, leave reviews, and help discover the next great tabletop game!",
-      icon: "🎉",
-      cta: {
-        label: "View Active Jams",
-        action: () => {
-          window.location.href = "/jams";
-        },
-      },
     },
   ];
 

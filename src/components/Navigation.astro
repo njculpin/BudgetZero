@@ -5,7 +5,6 @@ import NavigationUserMenu from "@/components/interactive/NavigationUserMenu";
 import { setSession } from '@/lib/auth';
 import { getUserById } from '@/lib/data-access/users';
 import { getRecentProducts, getUserProducts, type ProductSummary } from '@/lib/data-access/products';
-import { getRecentDocuments, getUserDocuments, type DocumentSummary } from '@/lib/data-access/documents';
 import { getUnreadNotificationCount } from '@/lib/data-access/notifications';
 
 // Check authentication via cookies
@@ -14,8 +13,6 @@ let userId: string | null = null;
 let userHandle = '';
 let recentProducts: ProductSummary[] = [];
 let totalProductCount = 0;
-let recentDocuments: DocumentSummary[] = [];
-let totalDocumentCount = 0;
 let unreadNotificationCount = 0;
 
 const accessToken = Astro.cookies.get("sb-access-token");
@@ -41,11 +38,6 @@ if (accessToken && refreshToken) {
       recentProducts = await getRecentProducts(userId, 3);
       const allProducts = await getUserProducts(userId);
       totalProductCount = allProducts.length;
-
-      // Fetch recent documents for navigation dropdown
-      recentDocuments = await getRecentDocuments(userId, 2);
-      const allDocuments = await getUserDocuments(userId);
-      totalDocumentCount = allDocuments.length;
 
       // Fetch unread notification count for badge
       unreadNotificationCount = await getUnreadNotificationCount(userId);
@@ -94,7 +86,6 @@ const unAuthedLinks = [
     {/* Main Navigation Links */}
     <div class="navigation__menu">
       <a href="/products" class="navigation__link">Products</a>
-      <a href="/jams" class="navigation__link">Jams</a>
       <a href="/users" class="navigation__link">Creators</a>
       <a href="/tags" class="navigation__link">Tags</a>
     </div>

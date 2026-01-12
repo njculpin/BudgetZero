@@ -16,3 +16,4 @@ export { default as ProductContentManager } from './ProductContentManager';
 export { default as ProductContentViewer } from './ProductContentViewer';
 export { default as ProductPublishChecklist } from './ProductPublishChecklist';
 export { default as EmbeddedUsageDashboard } from './EmbeddedUsageDashboard';
+export { default as AddToCartButton } from './AddToCartButton';

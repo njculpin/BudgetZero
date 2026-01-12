@@ -155,51 +155,6 @@ test.describe('Visual Regression - Browse Pages', () => {
     });
   });
 
-  test.describe('Jams Page', () => {
-    test('jams browse page matches baseline', async ({ page }) => {
-      await page.goto('/jams');
-      await page.waitForLoadState('networkidle');
-
-      // Hide dynamic content
-      await page.evaluate(() => {
-        document.querySelectorAll('[data-timestamp]').forEach(el => {
-          (el as HTMLElement).textContent = '2024-01-01';
-        });
-        document.querySelectorAll('.jam-dates').forEach(el => {
-          (el as HTMLElement).textContent = '01/01/2024 - 01/31/2024';
-        });
-      });
-
-      await page.waitForTimeout(1000);
-
-      await expect(page).toHaveScreenshot('jams-browse-full.png', {
-        fullPage: true,
-      });
-    });
-
-    test('jam card with status badges matches baseline', async ({ page }) => {
-      await page.goto('/jams');
-      await page.waitForLoadState('networkidle');
-
-      const firstCard = page.locator('.browse-card').first();
-
-      if (await firstCard.isVisible()) {
-        await firstCard.evaluate(card => {
-          const author = card.querySelector('.browse-card__author');
-          if (author) {
-            (author as HTMLElement).textContent = 'by Test User';
-          }
-          const dates = card.querySelector('.jam-dates');
-          if (dates) {
-            (dates as HTMLElement).textContent = '01/01/2024 - 01/31/2024';
-          }
-        });
-
-        await expect(firstCard).toHaveScreenshot('jam-card.png');
-      }
-    });
-  });
-
   test.describe('BrowseCTA Component', () => {
     test('browse CTA matches baseline (desktop)', async ({ page }) => {
       await page.goto('/products');

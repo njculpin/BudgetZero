@@ -6,6 +6,7 @@ import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import CartItemRow from "@/components/cart/CartItemRow";
+import PaymentMethodSelector from "@/components/cart/PaymentMethodSelector";
 import CheckoutButton from "@/components/checkout/CheckoutButton";
 import CreditsCheckout from "@/components/checkout/CreditsCheckout";
 import { setSession } from "@/lib/auth";
@@ -141,6 +142,12 @@ const useCredits = Astro.url.searchParams.get('use_credits') === 'true';
                     <span class="cart-summary__value">USD {(subtotal / 100).toFixed(2)}</span>
                   </div>
 
+                  <PaymentMethodSelector
+                    client:load
+                    userCredits={userCredits}
+                    initialMethod={useCredits ? "credits" : "stripe"}
+                  />
+
                   <div class="cart-summary__checkout">
                     {useCredits ? (
                       <CreditsCheckout
@@ -153,22 +160,6 @@ const useCredits = Astro.url.searchParams.get('use_credits') === 'true';
                       <CheckoutButton client:load variant="primary" size="lg" />
                     )}
                   </div>
-
-                  {!useCredits && (
-                    <div class="cart-summary__credits-toggle">
-                      <a href="/cart?use_credits=true" class="cart-summary__credits-link">
-                        Use Credits Instead ({userCredits.toLocaleString()} available)
-                      </a>
-                    </div>
-                  )}
-
-                  {useCredits && (
-                    <div class="cart-summary__credits-toggle">
-                      <a href="/cart" class="cart-summary__credits-link">
-                        Use Stripe Payment Instead
-                      </a>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -311,23 +302,5 @@ const useCredits = Astro.url.searchParams.get('use_credits') === 'true';
 
 .cart-empty a {
   text-decoration: none;
-}
-
-.cart-summary__credits-toggle {
-  text-align: center;
-  margin-top: var(--spacing-md);
-}
-
-.cart-summary__credits-link {
-  color: var(--accent);
-  text-decoration: none;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  transition: color var(--transition-duration-fast) var(--transition-timing-default);
-}
-
-.cart-summary__credits-link:hover {
-  color: var(--accent-hover);
-  text-decoration: underline;
 }
 </style>

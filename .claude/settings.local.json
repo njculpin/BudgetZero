@@ -64,7 +64,12 @@
       "Bash(git checkout:*)",
       "Skill(audit-style)",
       "Bash(npx eslint:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git -C /Users/nicholasculpin/Documents/GitHub/BudgetZero log --oneline --since=\"2 days ago\")",
+      "Bash(echo:*)",
+      "Bash(npx supabase migration:*)",
+      "Bash(npx supabase:*)",
+      "Bash(timeout 120 npm test:*)"
     ],
     "deny": [],
     "ask": []

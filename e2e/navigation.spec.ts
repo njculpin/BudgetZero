@@ -10,7 +10,6 @@ test.describe('Navigation', () => {
     // Should show main navigation links
     await expect(page.locator('a[href="/products"]')).toBeVisible();
     await expect(page.locator('a[href="/assets"]')).toBeVisible();
-    await expect(page.locator('a[href="/jams"]')).toBeVisible();
     await expect(page.locator('a[href="/users"]')).toBeVisible();
 
     // Should show sign in and sign up buttons

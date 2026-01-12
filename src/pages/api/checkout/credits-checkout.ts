@@ -3,8 +3,7 @@ import { setSession } from "@/lib/auth";
 import { getOrCreateCart, getCartItems, clearCart } from "@/lib/data-access/cart";
 import { getProductById, getProductPriceBreakdown, getProductComponents, ensureProductDocumentPDFs } from "@/lib/data-access/products";
 import { createSale, createSaleItem } from "@/lib/data-access/sales";
-import { getUserById } from "@/lib/data-access/users";
-import { serverClient } from "@/lib/data-access/client";
+import { getUserById, updateUserCreditsBalance } from "@/lib/data-access/users";
 import type { ShippingAddress } from "@/types";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -120,16 +119,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Deduct credits from buyer
-    const { error: deductError } = await serverClient
-      .from('users')
-      .update({
-        credits_balance: user.credits_balance - totalPriceCents,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
+    const updatedBuyer = await updateUserCreditsBalance(
+      userId,
+      user.credits_balance - totalPriceCents
+    );
 
-    if (deductError) {
-      throw new Error(`Failed to deduct credits: ${deductError.message}`);
+    if (!updatedBuyer) {
+      throw new Error('Failed to deduct credits from buyer');
     }
 
     // Create a mock charge ID for credits payment
@@ -152,13 +148,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (!sale) {
       // Refund credits if sale creation failed
-      await serverClient
-        .from('users')
-        .update({
-          credits_balance: user.credits_balance,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId);
+      await updateUserCreditsBalance(userId, user.credits_balance);
 
       return new Response(JSON.stringify({ error: "Failed to create sale" }), {
         status: 500,
@@ -207,13 +197,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       if (ownerShare > 0) {
         const productOwner = await getUserById(product.user_id);
         if (productOwner) {
-          await serverClient
-            .from('users')
-            .update({
-              credits_balance: productOwner.credits_balance + ownerShare,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', product.user_id);
+          await updateUserCreditsBalance(
+            product.user_id,
+            productOwner.credits_balance + ownerShare
+          );
         }
       }
 
@@ -225,13 +212,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           const embeddedOwner = await getUserById(embeddedProduct.user_id);
 
           if (embeddedOwner) {
-            await serverClient
-              .from('users')
-              .update({
-                credits_balance: embeddedOwner.credits_balance + royaltyAmount,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', embeddedProduct.user_id);
+            await updateUserCreditsBalance(
+              embeddedProduct.user_id,
+              embeddedOwner.credits_balance + royaltyAmount
+            );
           }
         }
       }

@@ -106,7 +106,6 @@ export async function sendPurchaseConfirmation(
       <li>Your files are instantly available for download</li>
       <li>You can re-download your purchases anytime from your account</li>
       <li>Check out the creator profiles to see their other work</li>
-      <li>Join game jams and connect with the community</li>
     </ul>
   </div>
 
@@ -153,7 +152,6 @@ What's Next?
 - Your files are instantly available for download
 - You can re-download your purchases anytime from your account
 - Check out the creator profiles to see their other work
-- Join game jams and connect with the community
 
 Need help? Having issues with your download? Reply to this email and we'll be happy to help!
 
