@@ -18,7 +18,6 @@ import { getOrCreateCart, addToCart, getCartItems, clearCart } from '@/lib/data-
 import { createCheckoutSession } from '@/lib/payments/checkout';
 import { verifyWebhookSignature } from '@/lib/payments/checkout';
 import { getSaleByStripeChargeId } from '@/lib/data-access/sales';
-import { getRoyaltyTransactionsBySaleId } from '@/lib/data-access/royalties';
 
 // Admin Supabase client for test data setup/cleanup
 const supabase = createClient(
@@ -45,6 +44,10 @@ let testProductWithEmbedId: string;
 // Test file IDs
 let testFileId: string;
 let testEmbeddedFileId: string;
+
+// Test royalty IDs
+let embeddedProductRoyaltyId: string;
+let standaloneProductRoyaltyId: string;
 
 // Test cart IDs
 let testCartId: string;
@@ -107,12 +110,17 @@ beforeAll(async () => {
   testEmbeddedFileId = embeddedFile!.id;
 
   // Create royalty for embedded product (contributor gets 20%)
-  await supabase.from('product_royalties').insert({
-    product_id: testEmbeddedProductId,
-    user_id: testContributorUserId,
-    royalty_type: 'percentage',
-    royalty_value: 20, // 20% of sale price
-  });
+  const { data: embeddedRoyalty } = await supabase
+    .from('product_royalties')
+    .insert({
+      product_id: testEmbeddedProductId,
+      user_id: testContributorUserId,
+      royalty_type: 'percentage',
+      royalty_value: 20, // 20% of sale price
+    })
+    .select()
+    .single();
+  embeddedProductRoyaltyId = embeddedRoyalty!.id;
 
   // Create main product with embedded component
   const { data: mainProduct } = await supabase
@@ -175,6 +183,19 @@ beforeAll(async () => {
     .select()
     .single();
   testFileId = standaloneFile!.id;
+
+  // Create royalty for standalone product (seller gets fixed $5 royalty)
+  const { data: standaloneRoyalty } = await supabase
+    .from('product_royalties')
+    .insert({
+      product_id: testProductId,
+      user_id: testSellerUserId,
+      royalty_type: 'fixed',
+      royalty_value: 500, // $5.00 fixed
+    })
+    .select()
+    .single();
+  standaloneProductRoyaltyId = standaloneRoyalty!.id;
 });
 
 beforeEach(async () => {
@@ -189,7 +210,6 @@ afterEach(async () => {
 
   // Clean up sales, sale items, and royalty transactions
   await supabase.from('sale_royalty_transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  await supabase.from('sale_item_assets').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('sale_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('sales').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 });
@@ -295,17 +315,8 @@ describe('Checkout Flow Integration Tests', () => {
 
       expect(saleItem).toBeDefined();
 
-      // Create download access (sale_item_asset)
-      const { data: saleItemAsset } = await supabase
-        .from('sale_item_assets')
-        .insert({
-          sale_item_id: saleItem!.id,
-          asset_id: testProductId,
-        })
-        .select()
-        .single();
-
-      expect(saleItemAsset).toBeDefined();
+      // Product-centric model: Download access is granted via sale_items.product_id
+      // No need for sale_item_assets table
 
       // 5. Clear cart
       await clearCart(testCartId);
@@ -408,25 +419,8 @@ describe('Checkout Flow Integration Tests', () => {
         .select()
         .single();
 
-      // Create download access for main product
-      const { data: mainSaleItemAsset } = await supabase
-        .from('sale_item_assets')
-        .insert({
-          sale_item_id: saleItem!.id,
-          asset_id: testProductWithEmbedId,
-        })
-        .select()
-        .single();
-
-      // Create download access for embedded product
-      const { data: embeddedSaleItemAsset } = await supabase
-        .from('sale_item_assets')
-        .insert({
-          sale_item_id: saleItem!.id,
-          asset_id: testEmbeddedProductId,
-        })
-        .select()
-        .single();
+      // Product-centric model: Download access granted via sale_items.product_id
+      // Embedded products downloadable via product_components relationship
 
       // Create royalty transaction for embedded product (20% of $5 = $1)
       const inheritedPrice = 500; // $5.00
@@ -438,26 +432,27 @@ describe('Checkout Flow Integration Tests', () => {
         .insert({
           sale_id: sale!.id,
           sale_item_id: saleItem!.id,
-          sale_item_asset_id: embeddedSaleItemAsset!.id,
-          user_id: testContributorUserId,
+          product_royalty_id: embeddedProductRoyaltyId,
+          recipient_user_id: testContributorUserId,
           royalty_type: 'percentage',
           royalty_value: royaltyPercentage,
-          sale_item_price_cents: inheritedPrice,
           calculated_cents: calculatedCents,
-          currency: 'usd',
-          status: 'pending',
+          status: 'ready_to_pay',
         })
         .select()
         .single();
 
       expect(royaltyTransaction).toBeDefined();
       expect(royaltyTransaction!.calculated_cents).toBe(100); // $1.00
-      expect(royaltyTransaction!.user_id).toBe(testContributorUserId);
+      expect(royaltyTransaction!.recipient_user_id).toBe(testContributorUserId);
 
       // Verify royalty transactions can be queried
-      const royalties = await getRoyaltyTransactionsBySaleId(sale!.id);
-      expect(royalties.length).toBeGreaterThan(0);
-      expect(royalties.some(r => r.user_id === testContributorUserId)).toBe(true);
+      const { data: royalties } = await supabase
+        .from('sale_royalty_transactions')
+        .select('*')
+        .eq('sale_id', sale!.id);
+      expect(royalties!.length).toBeGreaterThan(0);
+      expect(royalties!.some(r => r.recipient_user_id === testContributorUserId)).toBe(true);
     });
 
     it('should handle multiple products in cart', async () => {
@@ -720,15 +715,7 @@ describe('Checkout Flow Integration Tests', () => {
         .select()
         .single();
 
-      // Create download access
-      const { data: saleItemAsset } = await supabase
-        .from('sale_item_assets')
-        .insert({
-          sale_item_id: saleItem!.id,
-          asset_id: testProductId,
-        })
-        .select()
-        .single();
+      // Product-centric model: Download access via sale_items.product_id
 
       // Create pending royalty transaction
       const { data: royaltyTransaction } = await supabase
@@ -736,19 +723,17 @@ describe('Checkout Flow Integration Tests', () => {
         .insert({
           sale_id: sale!.id,
           sale_item_id: saleItem!.id,
-          sale_item_asset_id: saleItemAsset!.id,
-          user_id: testSellerUserId,
+          product_royalty_id: standaloneProductRoyaltyId,
+          recipient_user_id: testSellerUserId,
           royalty_type: 'fixed',
           royalty_value: 500,
-          sale_item_price_cents: 1000,
           calculated_cents: 500,
-          currency: 'usd',
-          status: 'pending',
+          status: 'ready_to_pay',
         })
         .select()
         .single();
 
-      expect(royaltyTransaction!.status).toBe('pending');
+      expect(royaltyTransaction!.status).toBe('ready_to_pay');
 
       // Simulate charge.refunded webhook
       const webhookPayload = JSON.stringify({
@@ -791,7 +776,7 @@ describe('Checkout Flow Integration Tests', () => {
         .from('sale_royalty_transactions')
         .update({ status: 'refunded' })
         .eq('sale_id', sale!.id)
-        .eq('status', 'pending');
+        .eq('status', 'ready_to_pay');
 
       // Verify royalty was marked as refunded
       const { data: refundedRoyalty } = await supabase
@@ -835,15 +820,7 @@ describe('Checkout Flow Integration Tests', () => {
         .select()
         .single();
 
-      // Create download access
-      const { data: saleItemAsset } = await supabase
-        .from('sale_item_assets')
-        .insert({
-          sale_item_id: saleItem!.id,
-          asset_id: testProductId,
-        })
-        .select()
-        .single();
+      // Product-centric model: Download access via sale_items.product_id
 
       // Create PAID royalty transaction (already paid out)
       const { data: paidRoyalty } = await supabase
@@ -851,13 +828,11 @@ describe('Checkout Flow Integration Tests', () => {
         .insert({
           sale_id: sale!.id,
           sale_item_id: saleItem!.id,
-          sale_item_asset_id: saleItemAsset!.id,
-          user_id: testSellerUserId,
+          product_royalty_id: standaloneProductRoyaltyId,
+          recipient_user_id: testSellerUserId,
           royalty_type: 'fixed',
           royalty_value: 500,
-          sale_item_price_cents: 1000,
           calculated_cents: 500,
-          currency: 'usd',
           status: 'paid', // Already paid
         })
         .select()
@@ -869,12 +844,12 @@ describe('Checkout Flow Integration Tests', () => {
         .update({ status: 'refunded' })
         .eq('id', sale!.id);
 
-      // Only mark PENDING royalties as refunded (not paid ones)
+      // Only mark READY_TO_PAY royalties as refunded (not paid ones)
       await supabase
         .from('sale_royalty_transactions')
         .update({ status: 'refunded' })
         .eq('sale_id', sale!.id)
-        .eq('status', 'pending'); // Only pending
+        .eq('status', 'ready_to_pay'); // Only ready_to_pay
 
       // Verify paid royalty status unchanged
       const { data: unchangedRoyalty } = await supabase
@@ -907,7 +882,7 @@ describe('Checkout Flow Integration Tests', () => {
           price_cents: 1000,
           tax_cents: 0,
           currency: 'usd',
-          stripe_charge_id: null, // No Stripe charge
+          stripe_charge_id: `credits_${Date.now()}`, // Special ID for credit purchases
           status: 'paid',
           payment_method: 'credits', // Paid with credits
         })
@@ -915,7 +890,7 @@ describe('Checkout Flow Integration Tests', () => {
         .single();
 
       expect(sale!.payment_method).toBe('credits');
-      expect(sale!.stripe_charge_id).toBeNull();
+      expect(sale!.stripe_charge_id).toContain('credits_');
 
       // Deduct credits from user
       await supabase
