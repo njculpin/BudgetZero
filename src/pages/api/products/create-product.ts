@@ -89,7 +89,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Apply default title for JSON requests without a title
-    if (!data.title || data.title.trim() === '') {
+    if (!data.title) {
       data.title = generateDefaultTitle();
     }
 
@@ -130,6 +130,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
   } catch (error) {
+    console.error("Error creating product:", error);
     if (error instanceof z.ZodError) {
       return new Response(
         JSON.stringify({ error: "Validation failed", details: error.errors }),

@@ -96,6 +96,54 @@ export const updateUserProfile = async (
 };
 
 /**
+ * Mark user's onboarding as completed
+ */
+export const completeOnboarding = async (
+  userId: string
+): Promise<User | null> => {
+  const { error } = await serverClient
+    .from("users")
+    .update({
+      onboarding_completed: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  // Fetch and return the updated user
+  return getUserById(userId);
+};
+
+/**
+ * Update user's credits balance
+ * @param userId - The user ID
+ * @param newBalance - The new credits balance in cents
+ * @returns The updated user or null if update failed
+ */
+export const updateUserCreditsBalance = async (
+  userId: string,
+  newBalance: number
+): Promise<User | null> => {
+  const { error } = await serverClient
+    .from("users")
+    .update({
+      credits_balance: newBalance,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  // Fetch and return the updated user
+  return getUserById(userId);
+};
+
+/**
  * Check if a handle is available
  * @param handle - The handle to check
  * @param currentUserId - Optional: ID of current user (to allow keeping their own handle)

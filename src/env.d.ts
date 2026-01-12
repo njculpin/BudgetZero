@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_STRIPE_PUBLISHABLE_KEY: string
   readonly STRIPE_WEBHOOK_SECRET: string
   readonly RESEND_API_KEY: string
+  readonly MOCK_STRIPE?: string
+  readonly MODE: string
 }
 
 interface ImportMeta {

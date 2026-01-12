@@ -23,7 +23,7 @@ This skill tests user journeys for all current personas defined in `PERSONAS.md`
 1. **Game Designer** - Creates products by combining assets, manages royalties
 2. **3D Modeler** - Publishes embeddable STL products, earns royalties
 3. **Illustrator/Artist** - Licenses artwork via embeddable products
-4. **Consumer/Buyer** - Purchases complete game packages, discovers through jams
+4. **Consumer/Buyer** - Purchases complete game packages
 
 ### Future Personas (Deferred)
 Documented but not tested until Phase 3:

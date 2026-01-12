@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, Show, For } from "solid-js";
 import {
   ErrorMessage,
   SuccessMessage,
@@ -10,6 +10,45 @@ export interface ProductStatusEditorProps {
   productId: string;
   currentStatus: "draft" | "private" | "public" | "archived";
 }
+
+type StatusOption = {
+  value: "draft" | "private" | "public" | "archived";
+  label: string;
+  icon: string;
+  description: string;
+  color: "muted" | "info" | "success" | "warning";
+};
+
+const statusOptions: StatusOption[] = [
+  {
+    value: "draft",
+    label: "Draft",
+    icon: "📝",
+    description: "Continue editing without publishing",
+    color: "muted",
+  },
+  {
+    value: "private",
+    label: "Private",
+    icon: "🔒",
+    description: "Share with select collaborators via link",
+    color: "info",
+  },
+  {
+    value: "public",
+    label: "Public",
+    icon: "🌐",
+    description: "Available for purchase in marketplace",
+    color: "success",
+  },
+  {
+    value: "archived",
+    label: "Archived",
+    icon: "📦",
+    description: "Hidden from public view",
+    color: "warning",
+  },
+];
 
 export default function ProductStatusEditor(props: ProductStatusEditorProps) {
   const [status, setStatus] = createSignal(props.currentStatus);
@@ -65,21 +104,6 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
     }
   };
 
-  const getStatusDescription = (s: string) => {
-    switch (s) {
-      case "draft":
-        return "Continue editing without publishing";
-      case "private":
-        return "Share with select collaborators via link";
-      case "public":
-        return "Available for purchase in marketplace";
-      case "archived":
-        return "Hidden from public view";
-      default:
-        return "";
-    }
-  };
-
   return (
     <div class="status-editor">
       <Show when={error()}>
@@ -90,31 +114,29 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
         <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
       </Show>
 
-      {/* Status Dropdown */}
-      <div class="status-editor__field">
-        <select
-          class="status-editor__select"
-          onChange={(e) =>
-            handleStatusChange(
-              e.currentTarget.value as "draft" | "private" | "public" | "archived"
-            )
-          }
-          disabled={isLoading()}
-        >
-          <option value="draft" selected={status() === "draft"}>
-            Draft
-          </option>
-          <option value="private" selected={status() === "private"}>
-            Private
-          </option>
-          <option value="public" selected={status() === "public"}>
-            Public
-          </option>
-          <option value="archived" selected={status() === "archived"}>
-            Archived
-          </option>
-        </select>
-        <p class="status-editor__description">{getStatusDescription(status())}</p>
+      {/* Status Options Grid */}
+      <div class="status-editor__grid">
+        <For each={statusOptions}>
+          {(option) => (
+            <button
+              type="button"
+              class={`status-editor__option status-editor__option--${option.color} ${
+                status() === option.value ? "status-editor__option--active" : ""
+              }`}
+              onClick={() => handleStatusChange(option.value)}
+              disabled={isLoading()}
+            >
+              <div class="status-editor__option-header">
+                <span class="status-editor__option-icon">{option.icon}</span>
+                <span class="status-editor__option-label">{option.label}</span>
+                {status() === option.value && (
+                  <span class="status-editor__option-badge">Current</span>
+                )}
+              </div>
+              <p class="status-editor__option-description">{option.description}</p>
+            </button>
+          )}
+        </For>
       </div>
 
       {/* Publish Confirmation Dialog */}

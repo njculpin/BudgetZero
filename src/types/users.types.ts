@@ -14,6 +14,7 @@ export interface User extends BaseEntity {
   stripe_connect_charges_enabled: boolean;
   stripe_connect_payouts_enabled: boolean;
   credits_balance: number;
+  onboarding_completed: boolean;
   role: 'user' | 'admin';
 }
 

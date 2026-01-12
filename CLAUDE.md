@@ -87,7 +87,6 @@ src/types/
 ├── documents.types.ts   # Document, DocumentBlock, DocumentCollaborator
 ├── products.types.ts    # Product, ProductFile, ProductComponent, ProductRoyalty
 ├── commerce.types.ts    # Cart, Sale, SaleItem, Wishlist
-├── jams.types.ts        # Jam, JamPrize, JamProduct
 ├── system.types.ts      # Notification, ActivityFeed, Session
 └── index.ts             # Barrel exports
 ```
@@ -144,7 +143,6 @@ src/components/
 ├── users/                           # /users/*.astro
 ├── cart/                            # /cart.astro
 ├── checkout/                        # /checkout/*.astro
-├── jams/                            # /jams/*.astro
 ├── dashboard/                       # /dashboard.astro
 ├── settings/                        # /settings/*.astro
 ├── home/                            # /index.astro (landing page)
@@ -183,8 +181,6 @@ Astro file-based routing in `/src/pages/`:
 - `/products` - Product marketplace
 - `/products/[handle]` - Product detail
 - `/documents/[handle]` - Document editor (private, collaborators only)
-- `/jams` - Game jam directory
-- `/jams/[handle]` - Jam detail
 - `/tags/[tag]` - Products by tag
 - `/cart` - Shopping cart
 
@@ -205,7 +201,6 @@ Astro file-based routing in `/src/pages/`:
 - **Users**: Creators and customers with handles, bios, Stripe IDs for payouts
 - **Products**: Sellable items with files, documents, and embeddable components (product-in-product)
 - **Documents**: Private collaborative docs (Notion-like blocks) that can be attached to products
-- **Jams**: Game jams with products, prizes, reviews
 - **Cart/Sales**: E-commerce with line items, file downloads, royalty transactions
 
 **Key Relationships:**

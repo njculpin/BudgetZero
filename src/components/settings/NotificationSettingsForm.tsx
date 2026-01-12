@@ -30,9 +30,6 @@ export default function NotificationSettingsForm(
   const [emailDocumentShares, setEmailDocumentShares] = createSignal(
     props.settings?.email_document_shares ?? true
   );
-  const [emailJamUpdates, setEmailJamUpdates] = createSignal(
-    props.settings?.email_jam_updates ?? false
-  );
   const [emailMarketing, setEmailMarketing] = createSignal(
     props.settings?.email_marketing ?? false
   );
@@ -53,9 +50,6 @@ export default function NotificationSettingsForm(
   const [inappDocumentShares, setInappDocumentShares] = createSignal(
     props.settings?.inapp_document_shares ?? true
   );
-  const [inappJamUpdates, setInappJamUpdates] = createSignal(
-    props.settings?.inapp_jam_updates ?? true
-  );
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -69,14 +63,12 @@ export default function NotificationSettingsForm(
       email_sales: emailSales(),
       email_royalty_payments: emailRoyaltyPayments(),
       email_document_shares: emailDocumentShares(),
-      email_jam_updates: emailJamUpdates(),
       email_marketing: emailMarketing(),
       inapp_asset_changes: inappAssetChanges(),
       inapp_product_conflicts: inappProductConflicts(),
       inapp_sales: inappSales(),
       inapp_royalty_payments: inappRoyaltyPayments(),
       inapp_document_shares: inappDocumentShares(),
-      inapp_jam_updates: inappJamUpdates(),
     };
 
     try {
@@ -186,20 +178,6 @@ export default function NotificationSettingsForm(
           <label class="notification-settings-form__checkbox">
             <input
               type="checkbox"
-              checked={emailJamUpdates()}
-              onInput={(e) => setEmailJamUpdates(e.currentTarget.checked)}
-            />
-            <span>Game Jam Updates</span>
-          </label>
-          <p class="notification-settings-form__help">
-            Get notified about jam submissions, reviews, and announcements
-          </p>
-        </div>
-
-        <div class="notification-settings-form__group">
-          <label class="notification-settings-form__checkbox">
-            <input
-              type="checkbox"
               checked={emailMarketing()}
               onInput={(e) => setEmailMarketing(e.currentTarget.checked)}
             />
@@ -270,17 +248,6 @@ export default function NotificationSettingsForm(
               onInput={(e) => setInappDocumentShares(e.currentTarget.checked)}
             />
             <span>Document Shares</span>
-          </label>
-        </div>
-
-        <div class="notification-settings-form__group">
-          <label class="notification-settings-form__checkbox">
-            <input
-              type="checkbox"
-              checked={inappJamUpdates()}
-              onInput={(e) => setInappJamUpdates(e.currentTarget.checked)}
-            />
-            <span>Game Jam Updates</span>
           </label>
         </div>
       </div>

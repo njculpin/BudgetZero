@@ -99,7 +99,6 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Find high-quality TTRPG content
 - Support creators directly
 - Get complete game packages (not piecemeal assets)
-- Discover new games through jams
 
 **Pain Points:**
 - Existing marketplaces have poor discovery

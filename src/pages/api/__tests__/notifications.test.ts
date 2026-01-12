@@ -492,7 +492,7 @@ describe('Notification API Endpoints', () => {
     });
   });
 
-  describe('POST /api/products/[id]/resolve-conflict', () => {
+  describe('POST /api/products/[productId]/resolve-conflict', () => {
     it('should return 400 when product ID is missing', async () => {
       const productId = undefined;
 

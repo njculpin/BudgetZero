@@ -1,0 +1,301 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardContent from "@/components/CardContent.astro";
+import Button from "@/components/Button.astro";
+import { setSession } from "@/lib/auth";
+import { getUserById } from "@/lib/data-access/users";
+
+// Check authentication
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+let currentUser = null;
+let userCredits = 0;
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+
+    if (!session.error && session.data.user) {
+      const user = await getUserById(session.data.user.id);
+      if (user) {
+        currentUser = user;
+        userCredits = user.credits_balance || 0;
+      }
+    }
+  } catch (error) {
+    console.error("Error getting user:", error);
+  }
+}
+
+// Get error code from query param
+const errorCode = Astro.url.searchParams.get("error") || "unknown";
+
+// Map Stripe error codes to user-friendly messages
+const errorMessages: Record<string, { title: string; description: string; canRetry: boolean }> = {
+  card_declined: {
+    title: "Card Declined",
+    description: "Your card was declined. Please try a different payment method or contact your bank.",
+    canRetry: true,
+  },
+  insufficient_funds: {
+    title: "Insufficient Funds",
+    description: "Your card has insufficient funds. Please try a different payment method.",
+    canRetry: true,
+  },
+  expired_card: {
+    title: "Expired Card",
+    description: "Your card has expired. Please use a different payment method.",
+    canRetry: true,
+  },
+  incorrect_cvc: {
+    title: "Incorrect Security Code",
+    description: "The card security code (CVC) you entered is incorrect. Please try again.",
+    canRetry: true,
+  },
+  processing_error: {
+    title: "Processing Error",
+    description: "There was an error processing your payment. Please try again.",
+    canRetry: true,
+  },
+  cancelled: {
+    title: "Payment Cancelled",
+    description: "You cancelled the payment. Your items are still in your cart.",
+    canRetry: true,
+  },
+  session_expired: {
+    title: "Session Expired",
+    description: "Your checkout session has expired. Please start checkout again from your cart.",
+    canRetry: true,
+  },
+  unknown: {
+    title: "Payment Failed",
+    description: "We couldn't process your payment. Please try again or contact support.",
+    canRetry: true,
+  },
+};
+
+const errorInfo = errorMessages[errorCode] || errorMessages.unknown;
+---
+
+<Layout title="Payment Failed - Game Loopers">
+  <div class="page">
+    <div class="page__container">
+      <div class="payment-failed">
+        <Card>
+          <CardContent>
+            <div class="payment-failed__content">
+              <!-- Error Icon -->
+              <div class="payment-failed__icon">
+                <svg
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+              </div>
+
+              <!-- Error Message -->
+              <h1 class="payment-failed__title">{errorInfo.title}</h1>
+              <p class="payment-failed__description">
+                {errorInfo.description}
+              </p>
+
+              <!-- Actions -->
+              <div class="payment-failed__actions">
+                {errorInfo.canRetry && (
+                  <a href="/cart">
+                    <Button variant="primary" size="lg">
+                      <span slot="text">Try Again</span>
+                    </Button>
+                  </a>
+                )}
+
+                {currentUser && userCredits > 0 && (
+                  <a href="/cart?use_credits=true">
+                    <Button variant="outline" size="lg">
+                      <span slot="text">Use Credits ({userCredits.toLocaleString()} available)</span>
+                    </Button>
+                  </a>
+                )}
+
+                <a href="/products">
+                  <Button variant="ghost" size="lg">
+                    <span slot="text">Continue Shopping</span>
+                  </Button>
+                </a>
+              </div>
+
+              <!-- Support Link -->
+              <div class="payment-failed__support">
+                <p class="payment-failed__support-text">
+                  Need help?{" "}
+                  <a href="mailto:support@gameloopers.com" class="payment-failed__support-link">
+                    Contact Support
+                  </a>
+                </p>
+              </div>
+
+              <!-- Error Code -->
+              <div class="payment-failed__error-code">
+                <p class="payment-failed__error-code-text">
+                  Error Code: <code>{errorCode}</code>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .payment-failed {
+    max-width: 600px;
+    margin: var(--spacing-6xl) auto;
+  }
+
+  .payment-failed__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-4xl) var(--spacing-2xl);
+  }
+
+  .payment-failed__icon {
+    margin-bottom: var(--spacing-2xl);
+    color: var(--destructive);
+    animation: error-shake 0.5s ease-in-out;
+  }
+
+  @keyframes error-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-10px);
+    }
+    75% {
+      transform: translateX(10px);
+    }
+  }
+
+  .payment-failed__title {
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+    line-height: var(--leading-tight);
+  }
+
+  .payment-failed__description {
+    margin: 0 0 var(--spacing-4xl) 0;
+    font-size: var(--text-lg);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+    max-width: 50ch;
+  }
+
+  .payment-failed__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: var(--spacing-3xl);
+  }
+
+  .payment-failed__actions a {
+    text-decoration: none;
+    width: 100%;
+  }
+
+  .payment-failed__actions a > :global(button) {
+    width: 100%;
+  }
+
+  .payment-failed__support {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .payment-failed__support-text {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .payment-failed__support-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    transition: color var(--duration-fast) var(--ease-in-out);
+  }
+
+  .payment-failed__support-link:hover {
+    color: oklch(from var(--primary) calc(l * 0.9) c h);
+    text-decoration: underline;
+  }
+
+  .payment-failed__error-code {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: var(--muted);
+    border-radius: var(--radius-md);
+    border: var(--border-width-default) solid var(--border);
+  }
+
+  .payment-failed__error-code-text {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--muted-foreground);
+  }
+
+  .payment-failed__error-code-text code {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--accent);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-family-mono);
+    font-size: var(--text-xs);
+    color: var(--foreground);
+  }
+
+  /* Responsive */
+  @media (max-width: 48rem) {
+    .payment-failed {
+      margin: var(--spacing-3xl) auto;
+    }
+
+    .payment-failed__content {
+      padding: var(--spacing-3xl) var(--spacing-lg);
+    }
+
+    .payment-failed__title {
+      font-size: var(--text-2xl);
+    }
+
+    .payment-failed__description {
+      font-size: var(--text-base);
+    }
+
+    .payment-failed__icon svg {
+      width: 48px;
+      height: 48px;
+    }
+  }
+</style>

@@ -25,7 +25,6 @@ export const POST: APIRoute = async ({ request }) => {
             Thanks for subscribing to our mailing list! You'll be the first to know about:
           </p>
           <ul style="color: #666; font-size: 16px; line-height: 1.8;">
-            <li>New game jams and competitions</li>
             <li>Featured creators and products</li>
             <li>Platform updates and new features</li>
             <li>Tips for tabletop game creators</li>
@@ -39,7 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
           </p>
         </div>
       `,
-      text: `Welcome to Game Loopers!\n\nThanks for subscribing! You'll receive updates about new game jams, featured creators, platform updates, and tips for tabletop game creators.\n\nReady to get started? Create your free account at ${new URL(request.url).origin}/sign-up\n\nGame Loopers - A social commerce platform for tabletop game creators`,
+      text: `Welcome to Game Loopers!\n\nThanks for subscribing! You'll receive updates about featured creators, platform updates, and tips for tabletop game creators.\n\nReady to get started? Create your free account at ${new URL(request.url).origin}/sign-up\n\nGame Loopers - A social commerce platform for tabletop game creators`,
     });
 
     if (!result.success) {

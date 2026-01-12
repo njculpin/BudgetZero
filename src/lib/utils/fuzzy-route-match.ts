@@ -50,9 +50,6 @@ export const AVAILABLE_ROUTES = [
   { path: "/users", label: "Creators", description: "Creator directory - Find illustrators, designers, 3D modelers, and more" },
   { path: "/feed", label: "Feed", description: "Activity feed" },
 
-  // Jams
-  { path: "/jams", label: "Jams", description: "Game jams and competitions" },
-
   // Documents (authenticated)
   { path: "/documents", label: "Documents", description: "Collaborative document editor" },
 
@@ -143,11 +140,6 @@ export function detectPatternMatch(requestedPath: string): string | null {
   // Pattern: /users/:something -> suggest /users
   if (segments[0] === "users" && segments.length > 1) {
     return "/users";
-  }
-
-  // Pattern: /jams/:something -> suggest /jams
-  if (segments[0] === "jams" && segments.length > 1) {
-    return "/jams";
   }
 
   // Pattern: /documents/:something -> suggest /documents

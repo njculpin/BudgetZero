@@ -2,7 +2,6 @@
 import Layout from "@/layouts/Layout.astro";
 import Button from "@/components/Button.astro";
 import { getAllProducts, getProductImages, getProductFiles, getProductDocuments, getProductComponents, getProductPriceBreakdown } from "@/lib/data-access/products";
-import { getActiveJam } from "@/lib/data-access/jams";
 import { getUserById } from "@/lib/data-access/users";
 
 // Fetch products with full details
@@ -46,8 +45,6 @@ const getProductCards = async (products: typeof allProducts) => {
 const newLaunches = await getProductCards(allProducts.slice(0, 6));
 const trending = await getProductCards(allProducts.slice(6, 12));
 
-const activeJam = await getActiveJam();
-
 const formatPrice = (cents: number): string => {
   return `$${(cents / 100).toFixed(2)}`;
 };
@@ -58,18 +55,6 @@ const formatPrice = (cents: number): string => {
 
     <div class="page">
       <div class="page__container">
-
-      <!-- Active Jam Banner -->
-      {activeJam && (
-        <a href={`/jams/${activeJam.handle}`} class="jam-banner">
-          <div class="jam-banner__content">
-            <h3 class="jam-banner__title">{activeJam.title}</h3>
-          </div>
-          <div class="jam-banner__cta">
-            View Jam →
-          </div>
-        </a>
-      )}
 
       <!-- New Launches Section -->
       <section class="section">
@@ -149,51 +134,6 @@ const formatPrice = (cents: number): string => {
   /* ===== Home Wrapper ===== */
   .home-wrapper {
     width: 100%;
-  }
-
-  /* ===== Jam Banner ===== */
-  .jam-banner {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xl);
-    padding: var(--spacing-2xl);
-    margin-bottom: var(--spacing-5xl);
-    background: linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l * 0.9) c h) 100%);
-    border-radius: var(--radius-lg);
-    text-decoration: none;
-    color: var(--primary-foreground);
-    transition: transform 0.2s var(--ease-in-out);
-  }
-
-  .jam-banner:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .jam-banner__icon {
-    font-size: var(--text-4xl);
-    flex-shrink: 0;
-  }
-
-  .jam-banner__content {
-    flex: 1;
-  }
-
-  .jam-banner__title {
-    margin: 0 0 var(--spacing-xs) 0;
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--background);
-  }
-
-  .jam-banner__description {
-    margin: 0;
-    opacity: 0.9;
-  }
-
-  .jam-banner__cta {
-    font-weight: var(--font-weight-semibold);
-    white-space: nowrap;
   }
 
   /* ===== Sections ===== */
@@ -339,12 +279,6 @@ const formatPrice = (cents: number): string => {
   @media (max-width: 768px) {
     .categories__inner {
       padding: var(--spacing-md) var(--spacing-lg);
-    }
-
-    .jam-banner {
-      flex-direction: column;
-      text-align: center;
-      gap: var(--spacing-lg);
     }
 
     .section__header {

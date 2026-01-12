@@ -1,24 +1,18 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Button from "@/components/Button.astro";
-import { ProductContentViewer } from "@/components/products";
+import { ProductContentViewer, AddToCartButton } from "@/components/products";
 import ProductContributors from "@/components/products/ProductContributors.astro";
 import ProductImageGallery from "@/components/products/ProductImageGallery.astro";
 import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributorsWithRoles, getProductComponentsWithDetails } from "@/lib/data-access/products";
 import { getUserById } from "@/lib/data-access/users";
 import { setSession } from "@/lib/auth";
-import { getJamById, getJamProductReviews, isProductInJam } from "@/lib/data-access/jams";
-import { JamReviewForm } from "@/components/jams";
-import type { JamProductReview } from "@/types";
 import Card from "@/components/Card.astro";
 import CardHeader from "@/components/CardHeader.astro";
 import CardTitle from "@/components/CardTitle.astro";
 import CardDescription from "@/components/CardDescription.astro";
 import CardContent from "@/components/CardContent.astro";
-import CardFooter from "@/components/CardFooter.astro";
-import ProductReviewList from "@/components/products/ProductReviewList.astro";
 import Avatar from "@/components/users/Avatar.astro";
-import WarningBox from "@/components/WarningBox.astro";
 
 const { product } = Astro.params;
 
@@ -68,35 +62,6 @@ const isOwner = currentUser?.id === productData.user_id;
 // Get product contributors with role information
 const productContributorsWithRoles = await getProductContributorsWithRoles(productData.id);
 
-// Check for jam submission flow
-const urlParams = new URL(Astro.request.url).searchParams;
-const jamId = urlParams.get('jam');
-let targetJam: Awaited<ReturnType<typeof getJamById>> = null;
-let userReview: JamProductReview | null = null;
-let productInJam = false;
-let allJamReviews: JamProductReview[] = [];
-
-if (jamId) {
-  // Parallelize jam data fetching
-  const [jam, inJam] = await Promise.all([
-    getJamById(jamId),
-    isProductInJam(jamId, productData.id),
-  ]);
-
-  targetJam = jam;
-  productInJam = inJam;
-
-  // Get jam reviews if product is in jam
-  if (targetJam && productInJam) {
-    allJamReviews = await getJamProductReviews(jamId, productData.id);
-
-    // Get user's existing review if they're logged in and not the owner
-    if (currentUser && !isOwner) {
-      userReview = allJamReviews.find(r => r.user_id === currentUser.id) ?? null;
-    }
-  }
-}
-
 // Helper: Check if we should show the content viewer (has content)
 const shouldShowContentViewer = productFiles.length > 0 ||
   productDocuments.length > 0 ||
@@ -107,18 +72,6 @@ const shouldShowContentViewer = productFiles.length > 0 ||
 <Layout title={`${productData.title} - Game Loopers`}>
   <div class="page">
     <div class="page__container">
-      <!-- Jam Context Banner (minimal, at top) -->
-      {targetJam && currentUser && !isOwner && productInJam && (
-        <div class="jam-context-banner">
-          <div class="jam-context-banner__content">
-            <span class="jam-context-banner__emoji">🎮</span>
-            <div class="jam-context-banner__text">
-              <strong>Game Jam Review:</strong> You're reviewing this product for <strong>{targetJam.title}</strong>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div class="page-columns">
         <!-- Main Content Column -->
         <div class="page-columns__column">
@@ -130,20 +83,6 @@ const shouldShowContentViewer = productFiles.length > 0 ||
                 alt: img.title
               }))}
             />
-          )}
-
-          <!-- Reviews Section (Jam Context) -->
-          {jamId && targetJam && productInJam && (
-            <Card>
-              <CardContent>
-                <ProductReviewList
-                  reviews={allJamReviews}
-                  jam={targetJam}
-                  jamHandle={targetJam.handle}
-                  currentUserId={currentUser?.id}
-                />
-              </CardContent>
-            </Card>
           )}
         </div>
 
@@ -174,6 +113,21 @@ const shouldShowContentViewer = productFiles.length > 0 ||
               </div>
             )}
           </div>
+
+          <!-- Add to Cart Button -->
+          <Card>
+            <CardContent>
+              <AddToCartButton
+                client:load
+                productId={productData.id}
+                productTitle={productData.title}
+                priceCents={productData.price_cents}
+                status={productData.status}
+                isOwner={isOwner}
+                isAuthenticated={!!currentUser}
+              />
+            </CardContent>
+          </Card>
 
           <!-- Product Content Viewer -->
           {shouldShowContentViewer && (
@@ -231,65 +185,6 @@ const shouldShowContentViewer = productFiles.length > 0 ||
             </>
           )}
         </Card>
-
-        <!-- Jam Review Form (for non-owners reviewing product in jam) -->
-        {targetJam && currentUser && !isOwner && productInJam && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Submit Review</CardTitle>
-              <CardDescription>
-                Share your thoughts on this product for <strong>{targetJam.title}</strong>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <JamReviewForm
-                client:load
-                jamId={targetJam.id}
-                jamTitle={targetJam.title}
-                productId={productData.id}
-                existingReview={userReview}
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        <!-- Jam Submission Form (for owners submitting product to jam) -->
-        {targetJam && isOwner && !productInJam && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Submit to {targetJam.title}</CardTitle>
-              <CardDescription>
-                Submit this product to compete in the game jam
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {productData.status !== 'public' && (
-                <WarningBox>
-                  <p>
-                    Your product must be published before you can submit it to a jam.
-                    Change the status to "Public" first.
-                  </p>
-                </WarningBox>
-              )}
-
-              {productData.status === 'public' && (
-                <form method="POST" action="/api/jams/add-product" class="jam-submit-form">
-                  <input type="hidden" name="jam_id" value={targetJam.id} />
-                  <input type="hidden" name="product_id" value={productData.id} />
-
-                  <p class="jam-submit-form__description">
-                    By submitting this product, you agree to participate in <strong>{targetJam.title}</strong>
-                    and allow community members to review and rate your work.
-                  </p>
-
-                  <Button type="submit" variant="primary" size="md">
-                    <span slot="text">Submit to Jam</span>
-                  </Button>
-                </form>
-              )}
-            </CardContent>
-          </Card>
-        )}
         </div>
       </div>
     </div>
@@ -406,46 +301,6 @@ const shouldShowContentViewer = productFiles.length > 0 ||
   .creator-profile__bio {
     margin: var(--spacing-sm) 0 0;
     font-size: var(--text-sm);
-    color: var(--muted-foreground);
-    line-height: var(--leading-relaxed);
-  }
-
-  /* ===== Jam Context Banner ===== */
-  .jam-context-banner {
-    padding: var(--spacing-xl) var(--spacing-2xl);
-    margin-bottom: var(--spacing-3xl);
-    background: linear-gradient(135deg, oklch(from var(--primary) l c h / 0.1) 0%, var(--background) 100%);
-    border: var(--border-width-medium) solid var(--primary);
-    border-radius: var(--radius-lg);
-  }
-
-  .jam-context-banner__content {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-md);
-  }
-
-  .jam-context-banner__emoji {
-    font-size: var(--text-2xl);
-    line-height: 1;
-  }
-
-  .jam-context-banner__text {
-    font-size: var(--text-base);
-    color: var(--foreground);
-    line-height: var(--leading-relaxed);
-  }
-
-  /* ===== Jam Submit Form ===== */
-  .jam-submit-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-lg);
-  }
-
-  .jam-submit-form__description {
-    margin: 0;
-    font-size: var(--text-base);
     color: var(--muted-foreground);
     line-height: var(--leading-relaxed);
   }

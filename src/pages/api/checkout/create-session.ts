@@ -115,7 +115,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       lineItems,
       customerEmail: userEmail,
       successUrl: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${origin}/cart`,
+      cancelUrl: `${origin}/checkout/failed?error=cancelled`,
       metadata: {
         userId: userId,
         cartId: cart.id,

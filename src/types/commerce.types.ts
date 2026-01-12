@@ -49,16 +49,10 @@ export interface SaleItem extends BaseEntity {
   snapshot: Record<string, unknown>;
 }
 
-export interface SaleItemAsset extends BaseEntity {
-  sale_item_id: string;
-  asset_id: string;
-}
-
 export interface SaleRoyaltyTransaction extends BaseEntity {
   sale_id: string;
   sale_item_id: string;
-  sale_item_asset_id: string;
-  asset_royalty_id: string;
+  product_royalty_id: string;
   recipient_user_id: string;
   royalty_type: RoyaltyType;
   royalty_value: number;

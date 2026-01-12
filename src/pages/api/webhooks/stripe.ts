@@ -6,8 +6,8 @@ import { getProductById, getProductPriceBreakdown, getProductFiles, getProductCo
 import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
 import { markSaleRoyaltiesAsRefunded, createRoyaltyTransactionsForProduct } from "@/lib/data-access/royalties";
 
-// Mock mode flag - set to true to bypass Stripe signature verification
-const USE_MOCK_STRIPE = true;
+// Mock mode flag - automatically enabled in development, or set MOCK_STRIPE=true
+const USE_MOCK_STRIPE = import.meta.env.MODE === 'development' || import.meta.env.MOCK_STRIPE === 'true';
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 

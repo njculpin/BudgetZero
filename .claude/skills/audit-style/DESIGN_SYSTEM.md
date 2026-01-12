@@ -500,7 +500,7 @@ Based on a modular scale (1.25 ratio):
 
 ### Browse Components (Refactored 2024-11-24)
 
-Shared components for browsing products and jams.
+Shared components for browsing products.
 
 #### BrowseCTA Component
 
@@ -1386,7 +1386,7 @@ Defined in `/src/styles/global.css` (as of 2024-11-24):
 - `.browse-empty` - Empty state message
 - `.browse-pagination` - Page navigation
 
-**Used by**: `/src/pages/products/index.astro`, `/src/pages/assets/index.astro`, `/src/pages/jams/index.astro`
+**Used by**: `/src/pages/products/index.astro`, `/src/pages/assets/index.astro`
 
 ---
 
@@ -1398,7 +1398,7 @@ Defined in `/src/styles/global.css` (as of 2024-11-24):
    - **Removed**: Large hero sections that consumed ~250px vertical space
    - **Added**: `PageHeader.astro` component with compact title + description
    - **Impact**: Improved content density, faster access to primary content
-   - **Pages affected**: Products, documents, jams, create, user directory
+   - **Pages affected**: Products, documents, create, user directory
    - **UX Benefit**: Users see actual content faster, less scrolling required
 
 2. **Revenue Transparency Components**:
