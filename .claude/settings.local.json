@@ -69,7 +69,8 @@
       "Bash(echo:*)",
       "Bash(npx supabase migration:*)",
       "Bash(npx supabase:*)",
-      "Bash(timeout 120 npm test:*)"
+      "Bash(timeout 120 npm test:*)",
+      "Bash(npx vitest:*)"
     ],
     "deny": [],
     "ask": []
