@@ -160,7 +160,7 @@ export default function PurchaseCard(props: PurchaseCardProps) {
                               <Show
                                 when={file.is_document}
                                 fallback={
-                                  <form method="POST" action="/api/download">
+                                  <form method="post" action="/api/download">
                                     <input type="hidden" name="file_id" value={file.id} />
                                     <input type="hidden" name="product_id" value={item.product_id} />
                                     <button type="submit" class="button button--outline button--sm">
@@ -171,7 +171,7 @@ export default function PurchaseCard(props: PurchaseCardProps) {
                               >
                                 <a
                                   href={file.file_url}
-                                  download
+                                  download={true}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   class="button button--outline button--sm"

@@ -15,9 +15,6 @@ export default function NotificationSettingsForm(
   const [error, setError] = createSignal<string | null>(null);
 
   // Email settings
-  const [emailAssetChanges, setEmailAssetChanges] = createSignal(
-    props.settings?.email_asset_changes ?? true
-  );
   const [emailProductConflicts, setEmailProductConflicts] = createSignal(
     props.settings?.email_product_conflicts ?? true
   );
@@ -35,9 +32,6 @@ export default function NotificationSettingsForm(
   );
 
   // In-app settings
-  const [inappAssetChanges, setInappAssetChanges] = createSignal(
-    props.settings?.inapp_asset_changes ?? true
-  );
   const [inappProductConflicts, setInappProductConflicts] = createSignal(
     props.settings?.inapp_product_conflicts ?? true
   );
@@ -58,13 +52,11 @@ export default function NotificationSettingsForm(
     setSuccess(false);
 
     const settings = {
-      email_asset_changes: emailAssetChanges(),
       email_product_conflicts: emailProductConflicts(),
       email_sales: emailSales(),
       email_royalty_payments: emailRoyaltyPayments(),
       email_document_shares: emailDocumentShares(),
       email_marketing: emailMarketing(),
-      inapp_asset_changes: inappAssetChanges(),
       inapp_product_conflicts: inappProductConflicts(),
       inapp_sales: inappSales(),
       inapp_royalty_payments: inappRoyaltyPayments(),
@@ -102,20 +94,6 @@ export default function NotificationSettingsForm(
         <h3 class="notification-settings-form__section-title">
           Email Notifications
         </h3>
-        <div class="notification-settings-form__group">
-          <label class="notification-settings-form__checkbox">
-            <input
-              type="checkbox"
-              checked={emailAssetChanges()}
-              onInput={(e) => setEmailAssetChanges(e.currentTarget.checked)}
-            />
-            <span>Asset Changes</span>
-          </label>
-          <p class="notification-settings-form__help">
-            Get notified when assets used in your products are updated
-          </p>
-        </div>
-
         <div class="notification-settings-form__group">
           <label class="notification-settings-form__checkbox">
             <input
@@ -194,17 +172,6 @@ export default function NotificationSettingsForm(
         <h3 class="notification-settings-form__section-title">
           In-App Notifications
         </h3>
-        <div class="notification-settings-form__group">
-          <label class="notification-settings-form__checkbox">
-            <input
-              type="checkbox"
-              checked={inappAssetChanges()}
-              onInput={(e) => setInappAssetChanges(e.currentTarget.checked)}
-            />
-            <span>Asset Changes</span>
-          </label>
-        </div>
-
         <div class="notification-settings-form__group">
           <label class="notification-settings-form__checkbox">
             <input

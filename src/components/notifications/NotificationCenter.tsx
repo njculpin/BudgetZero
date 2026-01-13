@@ -164,8 +164,6 @@ export default function NotificationCenter(props: NotificationCenterProps) {
     switch (entityType) {
       case "product":
         return `/products/${snapshot.product_handle}`;
-      case "asset":
-        return `/assets/${snapshot.asset_handle}`;
       case "document":
         return `/documents/${snapshot.document_handle}`;
       case "sale":
