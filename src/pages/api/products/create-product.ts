@@ -95,11 +95,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const validatedData = createProductSchema.parse(data);
 
+    console.log(validatedData)
+
     const product = await createProduct(userId, {
       title: validatedData.title,
       description: validatedData.description,
       status: validatedData.status || "draft",
     });
+
+    console.log("Created product:", product);
 
     if (!product) {
       return new Response(
@@ -116,12 +120,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Redirect to edit page for form submissions, return JSON for API calls
+
+    console.log("Final product data:", product);
+    console.log("Request content type:", contentType);
+
     if (contentType?.includes("application/json")) {
       return new Response(JSON.stringify({ product }), {
         status: 201,
         headers: { "Content-Type": "application/json" },
       });
     } else {
+      console.log("Redirecting to edit page for product:", product);
+      console.log(`/products/${product.handle}/edit`)
       return new Response(null, {
         status: 303,
         headers: {

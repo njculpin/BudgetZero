@@ -27,16 +27,6 @@ export const getAllTags = async (): Promise<TagWithCount[]> => {
     console.error('Error fetching product tags:', productError);
   }
 
-  // Fetch asset tags
-  const { data: assetTagsData, error: assetError } = await serverClient
-    .from('asset_tags')
-    .select('value')
-    .eq('deleted', false);
-
-  if (assetError) {
-    console.error('Error fetching asset tags:', assetError);
-  }
-
   // Count tags
   const tagCounts = new Map<string, { assetCount: number; productCount: number }>();
 
@@ -47,16 +37,6 @@ export const getAllTags = async (): Promise<TagWithCount[]> => {
         tagCounts.set(tag.value, { assetCount: 0, productCount: 0 });
       }
       tagCounts.get(tag.value)!.productCount++;
-    }
-  }
-
-  // Count asset tags
-  if (assetTagsData) {
-    for (const tag of assetTagsData) {
-      if (!tagCounts.has(tag.value)) {
-        tagCounts.set(tag.value, { assetCount: 0, productCount: 0 });
-      }
-      tagCounts.get(tag.value)!.assetCount++;
     }
   }
 
