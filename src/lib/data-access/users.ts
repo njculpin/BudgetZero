@@ -1,5 +1,5 @@
 import { serverClient } from "./client";
-import type { User, UserTag } from "@/types";
+import type { User } from "@/types";
 
 export interface UpdateUserProfileParams {
   name?: string;

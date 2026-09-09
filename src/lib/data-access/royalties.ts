@@ -1,5 +1,5 @@
 import { serverClient } from './client';
-import type { ProductRoyalty, SaleRoyaltyTransaction, RoyaltyType } from '@/types';
+import type { ProductRoyalty, SaleRoyaltyTransaction } from '@/types';
 
 export interface CreateRoyaltyParams {
   productId: string;
