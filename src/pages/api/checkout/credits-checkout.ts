@@ -3,7 +3,7 @@ import { setSession } from "@/lib/auth";
 import { getOrCreateCart, getCartItems, clearCart } from "@/lib/data-access/cart";
 import { getProductById, getProductPriceBreakdown, getProductComponents, ensureProductDocumentPDFs } from "@/lib/data-access/products";
 import { createSale, createSaleItem } from "@/lib/data-access/sales";
-import { getUserById, updateUserCreditsBalance } from "@/lib/data-access/users";
+import { getUserById, spendUserCredits, grantUserCredits } from "@/lib/data-access/users";
 import type { ShippingAddress } from "@/types";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -102,8 +102,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Check if user has enough credits
-    if (user.credits_balance < totalPriceCents) {
+    // Deduct credits from the buyer. The sufficiency check happens inside the same
+    // statement as the deduction; a null result means the balance was too low.
+    // Checking first and deducting after would let two concurrent checkouts both
+    // pass the check and spend the same credits.
+    const remainingBalance = await spendUserCredits(userId, totalPriceCents);
+
+    if (remainingBalance === null) {
       return new Response(
         JSON.stringify({
           error: "Insufficient credits",
@@ -116,16 +121,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           headers: { "Content-Type": "application/json" },
         }
       );
-    }
-
-    // Deduct credits from buyer
-    const updatedBuyer = await updateUserCreditsBalance(
-      userId,
-      user.credits_balance - totalPriceCents
-    );
-
-    if (!updatedBuyer) {
-      throw new Error('Failed to deduct credits from buyer');
     }
 
     // Create a mock charge ID for credits payment
@@ -147,8 +142,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
 
     if (!sale) {
-      // Refund credits if sale creation failed
-      await updateUserCreditsBalance(userId, user.credits_balance);
+      // Return exactly what was taken. Restoring the balance read at the start of
+      // the request would discard any concurrent change to it.
+      await grantUserCredits(userId, totalPriceCents);
 
       return new Response(JSON.stringify({ error: "Failed to create sale" }), {
         status: 500,
@@ -195,13 +191,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       // Pay product owner
       if (ownerShare > 0) {
-        const productOwner = await getUserById(product.user_id);
-        if (productOwner) {
-          await updateUserCreditsBalance(
-            product.user_id,
-            productOwner.credits_balance + ownerShare
-          );
-        }
+        await grantUserCredits(product.user_id, ownerShare);
       }
 
       // Pay royalties to embedded product owners
@@ -209,14 +199,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         const embeddedProduct = await getProductById(component.child_product_id);
         if (embeddedProduct && embeddedProduct.embedding_royalty_cents) {
           const royaltyAmount = embeddedProduct.embedding_royalty_cents;
-          const embeddedOwner = await getUserById(embeddedProduct.user_id);
-
-          if (embeddedOwner) {
-            await updateUserCreditsBalance(
-              embeddedProduct.user_id,
-              embeddedOwner.credits_balance + royaltyAmount
-            );
-          }
+          await grantUserCredits(embeddedProduct.user_id, royaltyAmount);
         }
       }
     }
@@ -229,7 +212,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         success: true,
         saleId: sale.id,
         totalPriceCents,
-        creditsRemaining: user.credits_balance - totalPriceCents,
+        creditsRemaining: remainingBalance,
         redirectUrl: `/checkout/success?sale_id=${sale.id}`,
       }),
       {

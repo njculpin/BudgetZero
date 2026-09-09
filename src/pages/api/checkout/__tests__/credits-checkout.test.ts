@@ -16,6 +16,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { POST } from '../credits-checkout';
 import * as auth from '@/lib/auth';
+import type { Product, SaleItem, User } from '@/types';
+import { mockAuthError } from '@/test/supabase-fixtures';
 import * as cart from '@/lib/data-access/cart';
 import * as products from '@/lib/data-access/products';
 import * as sales from '@/lib/data-access/sales';
@@ -104,8 +106,8 @@ describe('POST /api/checkout/credits-checkout', () => {
     it('should return 401 when session is invalid', async () => {
       vi.mocked(auth.setSession).mockResolvedValue({
         data: { user: null, session: null },
-        error: { message: 'Invalid session', name: 'AuthError', status: 401 },
-      } as any);
+        error: mockAuthError('Invalid session', 401),
+      });
 
       mockRequest = new Request('http://localhost/api/checkout/credits-checkout', {
         method: 'POST',
@@ -207,7 +209,7 @@ describe('POST /api/checkout/credits-checkout', () => {
         id: VALID_PRODUCT_ID,
         title: 'Draft Product',
         status: 'draft',
-      } as any);
+      } as unknown as Product);
 
       mockRequest = new Request('http://localhost/api/checkout/credits-checkout', {
         method: 'POST',
@@ -237,7 +239,7 @@ describe('POST /api/checkout/credits-checkout', () => {
         id: VALID_PRODUCT_ID,
         title: 'Archived Product',
         status: 'archived',
-      } as any);
+      } as unknown as Product);
 
       mockRequest = new Request('http://localhost/api/checkout/credits-checkout', {
         method: 'POST',
@@ -306,7 +308,9 @@ describe('POST /api/checkout/credits-checkout', () => {
         id: 'user-123',
         email: 'buyer@example.com',
         credits_balance: 1000, // Not enough for 1999 cent purchase
-      } as any);
+      } as unknown as User);
+      // A null return is how the atomic deduction reports an insufficient balance.
+      vi.mocked(users.spendUserCredits).mockResolvedValue(null);
 
       mockRequest = new Request('http://localhost/api/checkout/credits-checkout', {
         method: 'POST',
@@ -331,12 +335,8 @@ describe('POST /api/checkout/credits-checkout', () => {
         credits_balance: 1999,
       } as any);
 
-      // Mock updateUserCreditsBalance for buyer deduction
-      vi.mocked(users.updateUserCreditsBalance).mockResolvedValue({
-        id: 'user-123',
-        email: 'buyer@example.com',
-        credits_balance: 0,
-      } as any);
+      // spendUserCredits returns the buyer's remaining balance.
+      vi.mocked(users.spendUserCredits).mockResolvedValue(0);
 
       vi.mocked(products.getProductComponents).mockResolvedValue([]);
       vi.mocked(products.ensureProductDocumentPDFs).mockResolvedValue(undefined);
@@ -376,12 +376,8 @@ describe('POST /api/checkout/credits-checkout', () => {
         credits_balance: 5000,
       } as any);
 
-      // Mock updateUserCreditsBalance for buyer deduction
-      vi.mocked(users.updateUserCreditsBalance).mockResolvedValue({
-        id: 'user-123',
-        email: 'buyer@example.com',
-        credits_balance: 3001,
-      } as any);
+      // spendUserCredits returns the buyer's remaining balance.
+      vi.mocked(users.spendUserCredits).mockResolvedValue(3001);
 
       vi.mocked(products.getProductComponents).mockResolvedValue([]);
       vi.mocked(products.ensureProductDocumentPDFs).mockResolvedValue(undefined);
@@ -450,12 +446,8 @@ describe('POST /api/checkout/credits-checkout', () => {
         credits_balance: 5000,
       } as any);
 
-      // Mock updateUserCreditsBalance for buyer deduction
-      vi.mocked(users.updateUserCreditsBalance).mockResolvedValue({
-        id: 'user-123',
-        email: 'buyer@example.com',
-        credits_balance: 3001,
-      } as any);
+      // spendUserCredits returns the buyer's remaining balance.
+      vi.mocked(users.spendUserCredits).mockResolvedValue(3001);
 
       vi.mocked(products.getProductComponents).mockResolvedValue([]);
       vi.mocked(products.ensureProductDocumentPDFs).mockResolvedValue(undefined);
@@ -575,12 +567,8 @@ describe('POST /api/checkout/credits-checkout', () => {
         credits_balance: 5000,
       } as any);
 
-      // Mock updateUserCreditsBalance for buyer deduction
-      vi.mocked(users.updateUserCreditsBalance).mockResolvedValue({
-        id: 'user-123',
-        email: 'buyer@example.com',
-        credits_balance: 3001,
-      } as any);
+      // spendUserCredits returns the buyer's remaining balance.
+      vi.mocked(users.spendUserCredits).mockResolvedValue(3001);
 
       vi.mocked(products.getProductComponents).mockResolvedValue([]);
       vi.mocked(products.ensureProductDocumentPDFs).mockResolvedValue(undefined);
@@ -597,7 +585,7 @@ describe('POST /api/checkout/credits-checkout', () => {
       vi.mocked(sales.createSaleItem).mockResolvedValue({
         id: 'sale-item-123',
         sale_id: VALID_SALE_ID,
-      } as any);
+      } as unknown as SaleItem);
 
       mockRequest = new Request('http://localhost/api/checkout/credits-checkout', {
         method: 'POST',
@@ -646,7 +634,7 @@ describe('POST /api/checkout/credits-checkout', () => {
       vi.mocked(sales.createSaleItem).mockResolvedValue({
         id: 'sale-item-123',
         sale_id: VALID_SALE_ID,
-      } as any);
+      } as unknown as SaleItem);
 
       mockRequest = new Request('http://localhost/api/checkout/credits-checkout', {
         method: 'POST',
@@ -677,7 +665,7 @@ describe('POST /api/checkout/credits-checkout', () => {
       vi.mocked(sales.createSaleItem).mockResolvedValue({
         id: 'sale-item-123',
         sale_id: VALID_SALE_ID,
-      } as any);
+      } as unknown as SaleItem);
 
       mockRequest = new Request('http://localhost/api/checkout/credits-checkout', {
         method: 'POST',
@@ -700,7 +688,7 @@ describe('POST /api/checkout/credits-checkout', () => {
       vi.mocked(sales.createSaleItem).mockResolvedValue({
         id: 'sale-item-123',
         sale_id: VALID_SALE_ID,
-      } as any);
+      } as unknown as SaleItem);
 
       mockRequest = new Request('http://localhost/api/checkout/credits-checkout', {
         method: 'POST',
