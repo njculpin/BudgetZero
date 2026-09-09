@@ -1,7 +1,13 @@
 import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
 import type { RoyaltyType } from "./products.types";
 
-export type SaleStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type SaleStatus =
+  | 'pending'
+  | 'paid'
+  | 'failed'
+  | 'refunded'
+  /** A partial refund. Entitlement is retained — the customer keeps what they bought. */
+  | 'partially_refunded';
 // Credits checkout is deferred past v1; Stripe is the only payment method.
 export type PaymentMethod = 'stripe';
 /**

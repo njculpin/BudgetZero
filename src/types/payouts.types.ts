@@ -1,4 +1,11 @@
-export type PayoutStatus = 'pending' | 'processing' | 'paid' | 'failed' | 'cancelled';
+export type PayoutStatus =
+  | 'pending'
+  | 'processing'
+  | 'paid'
+  | 'failed'
+  | 'cancelled'
+  /** Stripe reversed the transfer; the royalties became owed again. */
+  | 'reversed';
 
 export interface Payout {
   id: string;
