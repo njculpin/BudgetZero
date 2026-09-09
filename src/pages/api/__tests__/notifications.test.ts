@@ -5,6 +5,7 @@
  * Mocks authentication and database layers
  */
 
+import type { Mock } from 'vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Notification, NotificationSettings } from '@/types';
 
@@ -31,11 +32,13 @@ vi.mock('@/lib/data-access/notifications', () => ({
 }));
 
 describe('Notification API Endpoints', () => {
-  let mockGetSession: ReturnType<typeof vi.fn>;
+  // Vitest 5 resolves a bare `ReturnType<typeof vi.fn>` to a union that is not
+  // callable, so these mocks carry their call signatures explicitly.
+  let mockGetSession: Mock<(...args: unknown[]) => unknown>;
   let mockCookies: {
-    get: ReturnType<typeof vi.fn>;
-    set: ReturnType<typeof vi.fn>;
-    delete: ReturnType<typeof vi.fn>;
+    get: Mock<(name: string) => { value: string } | undefined>;
+    set: Mock<(...args: unknown[]) => void>;
+    delete: Mock<(...args: unknown[]) => void>;
   };
 
   beforeEach(async () => {
@@ -565,7 +568,9 @@ describe('Notification API Endpoints', () => {
         expires_at: 0,
       } as never);
 
-      const session = await mockGetSession('expired', 'token');
+      const session = (await mockGetSession('expired', 'token')) as {
+        user: unknown;
+      } | null;
       expect(session?.user).toBeFalsy();
     });
 
