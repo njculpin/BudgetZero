@@ -208,10 +208,25 @@ afterEach(async () => {
   // Clean up cart items after each test
   await clearCart(testCartId);
 
-  // Clean up sales, sale items, and royalty transactions
-  await supabase.from('sale_royalty_transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  await supabase.from('sale_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  await supabase.from('sales').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  // Clean up this suite's sales only.
+  //
+  // These were previously `.neq('id', '<zero uuid>')`, which matches EVERY row —
+  // so each of the nine afterEach runs truncated sales, sale_items and
+  // sale_royalty_transactions for every other suite too. That is why the whole
+  // suite had to run with fileParallelism disabled, and it meant a developer whose
+  // .env.local pointed anywhere real would have lost every sale in that database.
+  const { data: ownSales } = await supabase
+    .from('sales')
+    .select('id')
+    .eq('user_id', testBuyerUserId);
+
+  const saleIds = (ownSales ?? []).map((row) => row.id);
+
+  if (saleIds.length > 0) {
+    await supabase.from('sale_royalty_transactions').delete().in('sale_id', saleIds);
+    await supabase.from('sale_items').delete().in('sale_id', saleIds);
+    await supabase.from('sales').delete().in('id', saleIds);
+  }
 });
 
 describe('Checkout Flow Integration Tests', () => {

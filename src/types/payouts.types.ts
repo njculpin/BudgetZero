@@ -17,6 +17,8 @@ export interface Payout {
 }
 
 export interface PayoutItem {
+  /** True when the parent payout failed and this line returned to the balance. */
+  voided?: boolean;
   id: string;
   payout_id: string;
   royalty_transaction_id: string;
