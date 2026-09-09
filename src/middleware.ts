@@ -12,6 +12,9 @@ import { setSession } from "@/lib/auth";
 const PROTECTED_ROUTES = [
   "/payouts",
   "/connect/dashboard",
+  // Admin pages verify the admin role themselves; this gate only ensures an
+  // anonymous visitor is sent to sign-in rather than reaching the page at all.
+  "/admin",
   "/api",
 ];
 
