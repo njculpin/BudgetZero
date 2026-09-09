@@ -14,7 +14,7 @@
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
     "supabase:reset": "supabase db reset",
-    "email": "start http://127.0.0.1:54324",
+    "email": "start http://127.0.0.1:55324",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",

@@ -21,6 +21,12 @@ const testConfig: { test: ViteUserConfig['test'] } = {
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', 'dist', '.astro', 'e2e'],
     isolate: true,
+    // Test files run in parallel by default, but the integration suites all share
+    // ONE local Postgres. `isolate` separates module state, not database state, so
+    // parallel files interleave inserts against the same tables — payouts and
+    // royalties in particular both reserve and settle the same kinds of rows.
+    // Correctness beats speed here; the whole suite still runs in a few seconds.
+    fileParallelism: false,
     env: {
       MOCK_STRIPE: 'true',
     },

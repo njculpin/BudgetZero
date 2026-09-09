@@ -178,53 +178,11 @@ export async function claimPayoutForProcessing(
   return (data?.length ?? 0) > 0;
 }
 
-/**
- * Update payout status
- */
-export async function updatePayoutStatus(
-  payoutId: string,
-  status: PayoutStatus,
-  stripeTransferId?: string,
-  failedReason?: string
-): Promise<boolean> {
-  const updateData: {
-    status: PayoutStatus;
-    processed_at?: string;
-    paid_at?: string;
-    stripe_transfer_id?: string;
-    failed_reason?: string;
-  } = {
-    status,
-  };
-
-  if (status === 'processing') {
-    updateData.processed_at = new Date().toISOString();
-  }
-
-  if (status === 'paid') {
-    updateData.paid_at = new Date().toISOString();
-  }
-
-  if (stripeTransferId) {
-    updateData.stripe_transfer_id = stripeTransferId;
-  }
-
-  if (failedReason) {
-    updateData.failed_reason = failedReason;
-  }
-
-  const { error } = await serverClient
-    .from('payouts')
-    .update(updateData)
-    .eq('id', payoutId);
-
-  if (error) {
-    console.error('Error updating payout status:', error);
-    return false;
-  }
-
-  return true;
-}
+// `updatePayoutStatus` was removed. It could set a payout to 'failed' without
+// releasing the royalty transactions that payout had reserved, stranding a
+// creator's earnings in a state nothing would ever pay out. The lifecycle is now
+// only reachable through claimPayoutForProcessing / settlePayout / releasePayout,
+// each of which keeps the payout row and its reservations consistent.
 
 /**
  * Calculate available balance for payout.
