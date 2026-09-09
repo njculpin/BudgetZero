@@ -1,0 +1,75 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardHeader from "@/components/CardHeader.astro";
+import CardTitle from "@/components/CardTitle.astro";
+import CardDescription from "@/components/CardDescription.astro";
+import CardContent from "@/components/CardContent.astro";
+import PageHeader from "@/components/PageHeader.astro";
+import PayoutQueue from "@/components/admin/PayoutQueue";
+import type { PayoutQueueEntry } from "@/components/admin/PayoutQueue";
+import { verifyAdmin } from "@/lib/auth/admin";
+import { getPendingPayoutsForAdmin } from "@/lib/data-access/payouts";
+
+// The execute endpoint enforces admin authorization itself; this check keeps the
+// page from rendering the queue to anyone who cannot act on it.
+const authResult = await verifyAdmin(Astro.cookies);
+
+if (!authResult.authorized) {
+  if (authResult.error === "Not authenticated" || authResult.error === "Invalid session") {
+    return Astro.redirect("/sign-in?redirect=/admin/payouts");
+  }
+  return Astro.redirect("/");
+}
+
+const pendingPayouts = await getPendingPayoutsForAdmin();
+
+const queueEntries: PayoutQueueEntry[] = pendingPayouts
+  .filter((payout) => payout.recipient !== null)
+  .map((payout) => ({
+    id: payout.id,
+    amountCents: payout.amount_cents,
+    requestedAt: payout.requested_at,
+    notes: payout.notes,
+    itemCount: payout.item_count,
+    recipientHandle: payout.recipient!.handle,
+    recipientName: payout.recipient!.name,
+    payoutsEnabled: payout.recipient!.stripe_connect_payouts_enabled,
+  }));
+
+const totalOwedCents = queueEntries.reduce(
+  (sum, entry) => sum + entry.amountCents,
+  0
+);
+
+const formatCurrency = (cents: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(cents / 100);
+---
+
+<Layout title="Payout Queue - Game Loopers">
+  <div class="page">
+    <div class="page__container">
+      <PageHeader
+        title="Payout Queue"
+        description="Pending payout requests, oldest first. Executing a payout transfers funds through Stripe Connect and marks the underlying royalties paid."
+      />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pending</CardTitle>
+          <CardDescription>
+            {queueEntries.length}
+            {queueEntries.length === 1 ? " payout" : " payouts"} totalling{" "}
+            {formatCurrency(totalOwedCents)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PayoutQueue client:load payouts={queueEntries} />
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</Layout>

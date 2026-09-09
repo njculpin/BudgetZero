@@ -275,3 +275,63 @@ export async function getAvailablePayoutBalance(userId: string): Promise<{
 
   return { totalCents, transactionIds };
 }
+
+export interface PendingPayoutWithRecipient extends Payout {
+  recipient: {
+    id: string;
+    handle: string;
+    name: string | null;
+    email: string;
+    stripe_connect_account_id: string | null;
+    stripe_connect_payouts_enabled: boolean;
+  } | null;
+  /** How many royalty transactions this payout reserved. */
+  item_count: number;
+}
+
+/**
+ * The admin payout queue: pending payouts oldest first, with enough recipient
+ * detail to decide whether each one can actually be paid.
+ *
+ * Connect status is included because a payout to a recipient without payouts
+ * enabled will fail at the transfer step, and an admin should be able to see that
+ * before triggering it rather than after.
+ */
+export async function getPendingPayoutsForAdmin(): Promise<
+  PendingPayoutWithRecipient[]
+> {
+  const { data, error } = await serverClient
+    .from('payouts')
+    .select(`
+      *,
+      users!payouts_user_id_fkey (
+        id,
+        handle,
+        name,
+        email,
+        stripe_connect_account_id,
+        stripe_connect_payouts_enabled
+      ),
+      payout_items (id)
+    `)
+    .eq('status', 'pending')
+    .order('requested_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching admin payout queue:', error);
+    return [];
+  }
+
+  type JoinedUser = PendingPayoutWithRecipient['recipient'];
+
+  return (data || []).map((row) => {
+    const users = (row as { users?: JoinedUser | JoinedUser[] }).users;
+    const items = (row as { payout_items?: unknown[] }).payout_items;
+
+    return {
+      ...(row as unknown as Payout),
+      recipient: (Array.isArray(users) ? users[0] ?? null : users ?? null),
+      item_count: Array.isArray(items) ? items.length : 0,
+    };
+  });
+}
