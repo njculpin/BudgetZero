@@ -1,12 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 import { storageClient } from "./client";
 
+/**
+ * Storage buckets. These names must match the buckets created in
+ * `supabase/migrations/` exactly — a mismatch fails silently at upload time and
+ * only surfaces when a customer tries to download what they paid for.
+ */
 export type StorageBucket =
-  | "asset-files"
-  | "asset-images"
-  | "product-images"
-  | "user-avatars"
-  | "documents";
+  | "product-files" // private: paid downloadable product files
+  | "product-images" // public: product cover art and gallery images
+  | "user-avatars" // public: profile images
+  | "document-attachments"; // private: files attached to collaborative documents
 
 export interface UploadResult {
   path: string;

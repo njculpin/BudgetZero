@@ -1,3 +1,4 @@
+import { mockUser, mockSession, mockAuthError } from '@/test/supabase-fixtures';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { authClient } from '../client';
 
@@ -59,7 +60,7 @@ describe('Auth Abstraction Layer', () => {
       const authModule = await import('../index');
 
       // Should not export the Supabase client
-      expect(authModule.authClient).toBeUndefined();
+      expect((authModule as Record<string, unknown>).authClient).toBeUndefined();
       expect((authModule as Record<string, unknown>).supabase).toBeUndefined();
     });
   });
@@ -67,7 +68,7 @@ describe('Auth Abstraction Layer', () => {
   describe('signInWithPassword', () => {
     it('should call auth.signInWithPassword with email and password', async () => {
       const mockResponse = {
-        data: { user: { id: '123', email: 'test@example.com' }, session: {} },
+        data: { user: mockUser({ id: '123', email: 'test@example.com' }), session: mockSession() },
         error: null,
       };
 
@@ -89,7 +90,7 @@ describe('Auth Abstraction Layer', () => {
     it('should return error response on authentication failure', async () => {
       const mockError = {
         data: { user: null, session: null },
-        error: { message: 'Invalid credentials' },
+        error: mockAuthError('Invalid credentials'),
       };
 
       vi.mocked(authClient.auth.signInWithPassword).mockResolvedValue(mockError as never);
@@ -107,7 +108,7 @@ describe('Auth Abstraction Layer', () => {
   describe('signInWithOAuth', () => {
     it('should call auth.signInWithOAuth with provider and redirectTo', async () => {
       const mockResponse = {
-        data: { provider: 'google', url: 'https://oauth.url' },
+        data: { provider: 'google' as const, url: 'https://oauth.url' },
         error: null,
       };
 
@@ -128,7 +129,7 @@ describe('Auth Abstraction Layer', () => {
 
     it('should support multiple OAuth providers', async () => {
       const mockResponse = {
-        data: { provider: 'github', url: 'https://oauth.url' },
+        data: { provider: 'github' as const, url: 'https://oauth.url' },
         error: null,
       };
 
@@ -149,7 +150,7 @@ describe('Auth Abstraction Layer', () => {
   describe('signUp', () => {
     it('should call auth.signUp with email and password', async () => {
       const mockResponse = {
-        data: { user: { id: '123', email: 'newuser@example.com' }, session: null },
+        data: { user: mockUser({ id: '123', email: 'newuser@example.com' }), session: null },
         error: null,
       };
 
@@ -171,7 +172,7 @@ describe('Auth Abstraction Layer', () => {
     it('should return error if email already exists', async () => {
       const mockError = {
         data: { user: null, session: null },
-        error: { message: 'User already exists' },
+        error: mockAuthError('User already exists'),
       };
 
       vi.mocked(authClient.auth.signUp).mockResolvedValue(mockError as never);
@@ -189,7 +190,7 @@ describe('Auth Abstraction Layer', () => {
   describe('exchangeCodeForSession', () => {
     it('should call auth.exchangeCodeForSession with code', async () => {
       const mockResponse = {
-        data: { session: { access_token: 'token123' }, user: { id: '123' } },
+        data: { session: mockSession({ access_token: 'token123' }), user: mockUser({ id: '123' }) },
         error: null,
       };
 
@@ -204,7 +205,7 @@ describe('Auth Abstraction Layer', () => {
     it('should handle invalid OAuth codes', async () => {
       const mockError = {
         data: { session: null, user: null },
-        error: { message: 'Invalid code' },
+        error: mockAuthError('Invalid code'),
       };
 
       vi.mocked(authClient.auth.exchangeCodeForSession).mockResolvedValue(mockError as never);
@@ -232,7 +233,7 @@ describe('Auth Abstraction Layer', () => {
   describe('getSession', () => {
     it('should call auth.getSession', async () => {
       const mockResponse = {
-        data: { session: { access_token: 'token123', user: { id: '123' } } },
+        data: { session: mockSession({ access_token: 'token123', user: mockUser({ id: '123' }) }) },
         error: null,
       };
 
@@ -261,7 +262,7 @@ describe('Auth Abstraction Layer', () => {
   describe('getUser', () => {
     it('should call auth.getUser', async () => {
       const mockResponse = {
-        data: { user: { id: '123', email: 'user@example.com' } },
+        data: { user: mockUser({ id: '123', email: 'user@example.com' }) },
         error: null,
       };
 
@@ -276,7 +277,7 @@ describe('Auth Abstraction Layer', () => {
     it('should return error if no user authenticated', async () => {
       const mockError = {
         data: { user: null },
-        error: { message: 'Not authenticated' },
+        error: mockAuthError('Not authenticated'),
       };
 
       vi.mocked(authClient.auth.getUser).mockResolvedValue(mockError as never);
@@ -290,7 +291,7 @@ describe('Auth Abstraction Layer', () => {
   describe('setSession', () => {
     it('should call auth.setSession with tokens', async () => {
       const mockResponse = {
-        data: { session: { access_token: 'new_token', refresh_token: 'refresh' }, user: {} },
+        data: { session: mockSession({ access_token: 'new_token', refresh_token: 'refresh' }), user: mockUser() },
         error: null,
       };
 
@@ -312,7 +313,7 @@ describe('Auth Abstraction Layer', () => {
     it('should handle invalid tokens', async () => {
       const mockError = {
         data: { session: null, user: null },
-        error: { message: 'Invalid token' },
+        error: mockAuthError('Invalid token'),
       };
 
       vi.mocked(authClient.auth.setSession).mockResolvedValue(mockError as never);
@@ -371,8 +372,8 @@ describe('Auth Abstraction Layer', () => {
 
     it('should return error for invalid email', async () => {
       const mockError = {
-        data: {},
-        error: { message: 'Invalid email' },
+        data: null,
+        error: mockAuthError('Invalid email'),
       };
 
       vi.mocked(authClient.auth.resetPasswordForEmail).mockResolvedValue(mockError);
@@ -386,7 +387,7 @@ describe('Auth Abstraction Layer', () => {
   describe('updatePassword', () => {
     it('should call auth.updateUser with new password', async () => {
       const mockResponse = {
-        data: { user: { id: '123' } },
+        data: { user: mockUser({ id: '123' }) },
         error: null,
       };
 
@@ -404,7 +405,7 @@ describe('Auth Abstraction Layer', () => {
     it('should return error if password update fails', async () => {
       const mockError = {
         data: { user: null },
-        error: { message: 'Password must be at least 6 characters' },
+        error: mockAuthError('Password must be at least 6 characters'),
       };
 
       vi.mocked(authClient.auth.updateUser).mockResolvedValue(mockError);
@@ -420,7 +421,7 @@ describe('Auth Abstraction Layer', () => {
     it('should complete sign up -> sign in -> sign out flow', async () => {
       // Sign up
       const signUpResponse = {
-        data: { user: { id: '123', email: 'flow@example.com' }, session: null },
+        data: { user: mockUser({ id: '123', email: 'flow@example.com' }), session: null },
         error: null,
       };
       vi.mocked(authClient.auth.signUp).mockResolvedValue(signUpResponse);
@@ -434,8 +435,8 @@ describe('Auth Abstraction Layer', () => {
       // Sign in
       const signInResponse = {
         data: {
-          user: { id: '123', email: 'flow@example.com' },
-          session: { access_token: 'token123' },
+          user: mockUser({ id: '123', email: 'flow@example.com' }),
+          session: mockSession({ access_token: 'token123' }),
         },
         error: null,
       };
@@ -449,7 +450,7 @@ describe('Auth Abstraction Layer', () => {
 
       // Get session
       const sessionResponse = {
-        data: { session: { access_token: 'token123' } },
+        data: { session: mockSession({ access_token: 'token123' }) },
         error: null,
       };
       vi.mocked(authClient.auth.getSession).mockResolvedValue(sessionResponse);
@@ -468,7 +469,7 @@ describe('Auth Abstraction Layer', () => {
     it('should complete OAuth flow', async () => {
       // Start OAuth
       const oauthResponse = {
-        data: { provider: 'google', url: 'https://oauth.url' },
+        data: { provider: 'google' as const, url: 'https://oauth.url' },
         error: null,
       };
       vi.mocked(authClient.auth.signInWithOAuth).mockResolvedValue(oauthResponse);
@@ -482,8 +483,8 @@ describe('Auth Abstraction Layer', () => {
       // Exchange code for session
       const exchangeResponse = {
         data: {
-          session: { access_token: 'oauth_token' },
-          user: { id: '123', email: 'oauth@example.com' },
+          session: mockSession({ access_token: 'oauth_token' }),
+          user: mockUser({ id: '123', email: 'oauth@example.com' }),
         },
         error: null,
       };

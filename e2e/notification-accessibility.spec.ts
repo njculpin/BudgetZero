@@ -164,7 +164,7 @@ test.describe('Notification System Accessibility', () => {
       }
 
       // Tab to submit button
-      while (!(await page.locator('button:has-text("Save Settings")').isFocused())) {
+      while (!(await page.locator('button:has-text("Save Settings")').evaluate((el) => el === document.activeElement))) {
         await page.keyboard.press('Tab');
       }
 
@@ -213,8 +213,8 @@ test.describe('Notification System Accessibility', () => {
       for (let i = 0; i < 10; i++) {
         await page.keyboard.press('Tab');
         const focused = await page.evaluateHandle(() => document.activeElement);
-        const tagName = await focused.evaluate((el) => el.tagName);
-        const className = await focused.evaluate((el) => el.className);
+        const tagName = await focused.evaluate((el) => el?.tagName ?? '');
+        const className = await focused.evaluate((el) => el?.className ?? '');
         tabOrder.push(`${tagName}.${className}`);
       }
 
@@ -364,7 +364,7 @@ test.describe('Notification System Accessibility', () => {
         if (!isInDropdown) {
           // This might be okay if focus returns to bell
           const isBell = await focusedElement.evaluate((el, label) => {
-            return el.getAttribute('aria-label') === label;
+            return el?.getAttribute('aria-label') === label;
           }, 'Notifications');
 
           if (!isBell) {

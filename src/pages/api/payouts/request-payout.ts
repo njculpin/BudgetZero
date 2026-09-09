@@ -2,7 +2,11 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { setSession } from "@/lib/auth";
 import { getUserById } from "@/lib/data-access/users";
-import { createPayout, getAvailablePayoutBalance } from "@/lib/data-access/payouts";
+import {
+  requestPayout,
+  getAvailablePayoutBalance,
+  getPayoutById,
+} from "@/lib/data-access/payouts";
 
 const requestPayoutSchema = z.object({
   amountCents: z.number().int().positive(),
@@ -71,24 +75,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Get available balance
-    const balance = await getAvailablePayoutBalance(userId);
-
-    // Verify requested amount doesn't exceed available balance
-    if (validatedData.amountCents > balance.totalCents) {
-      return new Response(
-        JSON.stringify({
-          error: `Insufficient balance. Available: $${(balance.totalCents / 100).toFixed(2)}`,
-          availableBalance: balance.totalCents,
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Check minimum payout amount
+    // Check minimum payout amount up front so an obviously-too-small request gets a
+    // clear message rather than a balance error.
     if (validatedData.amountCents < MINIMUM_PAYOUT_CENTS) {
       return new Response(
         JSON.stringify({
@@ -102,29 +90,51 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Create payout request
-    const payout = await createPayout({
-      userId,
-      amountCents: validatedData.amountCents,
-      currency: 'usd',
-      royaltyTransactionIds: balance.transactionIds.slice(0, Math.ceil(validatedData.amountCents / (balance.totalCents / balance.transactionIds.length))),
-      notes: validatedData.notes,
-    });
+    // Reserve the funding transactions and create the payout in one atomic step.
+    // The balance is deliberately not read first: checking here and reserving later
+    // leaves a window where two concurrent requests both pass the check.
+    let result;
+    try {
+      result = await requestPayout({
+        userId,
+        amountCents: validatedData.amountCents,
+        minimumCents: MINIMUM_PAYOUT_CENTS,
+        notes: validatedData.notes,
+      });
+    } catch (payoutError) {
+      const message =
+        payoutError instanceof Error ? payoutError.message : "Payout request failed";
 
-    if (!payout) {
-      return new Response(
-        JSON.stringify({ error: "Failed to create payout request" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      // The function raises when the claimable total falls below the minimum, which
+      // is a client-correctable condition rather than a server fault.
+      if (message.includes("Insufficient available balance")) {
+        const balance = await getAvailablePayoutBalance(userId);
+        return new Response(
+          JSON.stringify({
+            error: `Insufficient balance. Available: $${(balance.totalCents / 100).toFixed(2)}`,
+            availableBalance: balance.totalCents,
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      throw payoutError;
     }
+
+    const payout = await getPayoutById(result.payoutId);
 
     return new Response(
       JSON.stringify({
         success: true,
         payout,
+        // Whole royalty transactions fund a payout, so the reserved amount can be
+        // less than requested. Report what was actually reserved.
+        reservedCents: result.reservedCents,
+        transactionCount: result.transactionCount,
+        requestedCents: validatedData.amountCents,
       }),
       {
         status: 200,

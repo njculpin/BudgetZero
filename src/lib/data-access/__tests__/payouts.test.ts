@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 import {
-  createPayout,
+  requestPayout,
+  settlePayout,
+  releasePayout,
   getUserPayouts,
   getPayoutById,
   getPayoutItems,
@@ -34,7 +36,7 @@ import type { PayoutStatus } from '@/types';
 
 const supabase = createClient(
   import.meta.env.PUBLIC_SUPABASE_URL,
-  import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY,
+  (import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!,
   {
     auth: {
       autoRefreshToken: false,
@@ -42,6 +44,34 @@ const supabase = createClient(
     },
   }
 );
+
+/**
+ * Insert a payout row directly.
+ *
+ * The tests below exercise the payout row's own lifecycle — listing, status
+ * transitions, the admin queue — and do not care where the money came from.
+ * `requestPayout` deliberately cannot be used for that: it reserves real
+ * `ready_to_pay` royalty transactions, which these cases have not set up.
+ */
+async function createTestPayout(params: {
+  userId: string;
+  amountCents: number;
+  notes?: string;
+}) {
+  const { data } = await supabase
+    .from('payouts')
+    .insert({
+      user_id: params.userId,
+      amount_cents: params.amountCents,
+      currency: 'usd',
+      status: 'pending',
+      notes: params.notes ?? null,
+    })
+    .select()
+    .single();
+
+  return data;
+}
 
 describe('Payout System', () => {
   let testUser1Id: string;
@@ -309,13 +339,13 @@ describe('Payout System', () => {
         email_confirm: true,
       });
 
-      const balance = await getAvailablePayoutBalance(user3Data!.user.id);
+      const balance = await getAvailablePayoutBalance(user3Data!.user!.id);
 
       expect(balance.totalCents).toBe(0);
       expect(balance.transactionIds).toEqual([]);
 
       // Clean up
-      await supabase.auth.admin.deleteUser(user3Data!.user.id);
+      await supabase.auth.admin.deleteUser(user3Data!.user!.id);
     });
 
     it('should not include transactions that are already paid', async () => {
@@ -340,43 +370,88 @@ describe('Payout System', () => {
     });
   });
 
-  describe('createPayout', () => {
-    it('should create a payout request', async () => {
-      const payout = await createPayout({
+  describe('requestPayout', () => {
+    it('should create a payout request and reserve its funding transactions', async () => {
+      const result = await requestPayout({
         userId: testContributorId,
         amountCents: 8000,
-        currency: 'usd',
-        royaltyTransactionIds: [royaltyTransaction1Id, royaltyTransaction2Id],
         notes: 'Test payout request',
       });
 
-      expect(payout).toBeDefined();
+      expect(result.reservedCents).toBe(8000);
+      expect(result.transactionCount).toBe(2);
+
+      payoutId = result.payoutId;
+
+      const payout = await getPayoutById(payoutId);
       expect(payout?.user_id).toBe(testContributorId);
       expect(payout?.amount_cents).toBe(8000);
       expect(payout?.currency).toBe('usd');
       expect(payout?.status).toBe('pending');
       expect(payout?.notes).toBe('Test payout request');
-
-      if (payout) {
-        payoutId = payout.id;
-      }
     });
 
     it('should create payout items linking to royalty transactions', async () => {
       const items = await getPayoutItems(payoutId);
 
-      expect(items.length).toBeGreaterThan(0);
+      expect(items.length).toBe(2);
       expect(items.every(item => item.payout_id === payoutId)).toBe(true);
+      // Items must sum to the payout amount, not to a proportional guess.
+      expect(items.reduce((sum, item) => sum + item.amount_cents, 0)).toBe(8000);
     });
 
-    it('should default to usd currency if not specified', async () => {
-      const payout = await createPayout({
-        userId: testContributorId,
-        amountCents: 1000,
-        royaltyTransactionIds: [],
-      });
+    it('should remove reserved transactions from available balance', async () => {
+      // This is the defect the reservation step exists to prevent: before it, the
+      // funding transactions stayed 'ready_to_pay' and could be withdrawn again.
+      const balance = await getAvailablePayoutBalance(testContributorId);
 
-      expect(payout?.currency).toBe('usd');
+      expect(balance.totalCents).toBe(0);
+      expect(balance.transactionIds).toEqual([]);
+    });
+
+    it('should refuse a second payout for already-reserved earnings', async () => {
+      await expect(
+        requestPayout({ userId: testContributorId, amountCents: 8000 })
+      ).rejects.toThrow(/Insufficient available balance/);
+    });
+
+    it('should return reserved transactions to the balance when released', async () => {
+      const released = await releasePayout(payoutId, 'Test release');
+      expect(released).toBe(2);
+
+      const balance = await getAvailablePayoutBalance(testContributorId);
+      expect(balance.totalCents).toBe(8000);
+
+      // Re-reserve so the remaining lifecycle tests have a pending payout.
+      const result = await requestPayout({
+        userId: testContributorId,
+        amountCents: 8000,
+        notes: 'Test payout request',
+      });
+      payoutId = result.payoutId;
+    });
+
+    it('should mark funding transactions paid when the payout settles', async () => {
+      const settled = await settlePayout(payoutId, 'tr_test_settlement');
+      expect(settled).toBe(2);
+
+      const payout = await getPayoutById(payoutId);
+      expect(payout?.status).toBe('paid');
+      expect(payout?.stripe_transfer_id).toBe('tr_test_settlement');
+
+      // Settled earnings never return to the available balance.
+      const balance = await getAvailablePayoutBalance(testContributorId);
+      expect(balance.totalCents).toBe(0);
+    });
+
+    it('should refuse a payout below the minimum threshold', async () => {
+      await expect(
+        requestPayout({
+          userId: testContributorId,
+          amountCents: 500,
+          minimumCents: 1000,
+        })
+      ).rejects.toThrow(/Insufficient available balance/);
     });
 
     it('should respect minimum payout threshold ($10.00)', async () => {
@@ -388,10 +463,9 @@ describe('Payout System', () => {
       expect(smallAmount).toBeLessThan(minPayoutCents);
 
       // Verify we can create payouts above threshold
-      const payout = await createPayout({
+      const payout = await createTestPayout({
         userId: testContributorId,
         amountCents: minPayoutCents,
-        royaltyTransactionIds: [],
       });
 
       expect(payout).toBeDefined();
@@ -411,10 +485,9 @@ describe('Payout System', () => {
 
     it('should return payouts in descending order by requested_at', async () => {
       // Create another payout
-      await createPayout({
+      await createTestPayout({
         userId: testContributorId,
         amountCents: 1000,
-        royaltyTransactionIds: [],
       });
 
       const payouts = await getUserPayouts(testContributorId);
@@ -484,10 +557,9 @@ describe('Payout System', () => {
 
     it('should update status to failed with reason', async () => {
       // Create a new payout to fail
-      const newPayout = await createPayout({
+      const newPayout = await createTestPayout({
         userId: testContributorId,
         amountCents: 1000,
-        royaltyTransactionIds: [],
       });
 
       const result = await updatePayoutStatus(
@@ -504,10 +576,9 @@ describe('Payout System', () => {
     });
 
     it('should handle status transitions correctly', async () => {
-      const newPayout = await createPayout({
+      const newPayout = await createTestPayout({
         userId: testContributorId,
         amountCents: 2000,
-        royaltyTransactionIds: [],
       });
 
       // pending → processing
@@ -528,10 +599,9 @@ describe('Payout System', () => {
   describe('getPendingPayouts', () => {
     it('should return all pending payouts', async () => {
       // Create some pending payouts
-      await createPayout({
+      await createTestPayout({
         userId: testContributorId,
         amountCents: 1000,
-        royaltyTransactionIds: [],
       });
 
       const pendingPayouts = await getPendingPayouts();
@@ -569,11 +639,11 @@ describe('Payout System', () => {
       expect(balance.totalCents).toBeGreaterThan(0);
 
       // 2. Create payout request
-      const payout = await createPayout({
+      const requested = await requestPayout({
         userId: testContributorId,
         amountCents: balance.totalCents,
-        royaltyTransactionIds: balance.transactionIds,
       });
+      const payout = await getPayoutById(requested.payoutId);
       expect(payout?.status).toBe('pending');
 
       // 3. Mark as processing
@@ -599,11 +669,11 @@ describe('Payout System', () => {
       const balance = await getAvailablePayoutBalance(testContributorId);
 
       // 2. Create payout
-      const payout = await createPayout({
+      const requested = await requestPayout({
         userId: testContributorId,
         amountCents: balance.totalCents,
-        royaltyTransactionIds: balance.transactionIds,
       });
+      const payout = await getPayoutById(requested.payoutId);
 
       // 3. Mark as processing
       await updatePayoutStatus(payout!.id, 'processing');
@@ -620,13 +690,15 @@ describe('Payout System', () => {
       expect(failedPayout?.status).toBe('failed');
       expect(failedPayout?.failed_reason).toBe('Stripe account not connected');
 
-      // 5. Create new payout (retry)
-      const retryPayout = await createPayout({
+      // 5. Create new payout (retry). Releasing the failed payout returned its
+      //    reserved transactions to the balance, so they can fund this one.
+      const retryBalance = await getAvailablePayoutBalance(testContributorId);
+      const retryRequested = await requestPayout({
         userId: testContributorId,
-        amountCents: balance.totalCents,
-        royaltyTransactionIds: balance.transactionIds,
+        amountCents: retryBalance.totalCents,
         notes: 'Retry after Stripe connection',
       });
+      const retryPayout = await getPayoutById(retryRequested.payoutId);
 
       expect(retryPayout?.status).toBe('pending');
       expect(retryPayout?.notes).toBe('Retry after Stripe connection');
@@ -637,30 +709,26 @@ describe('Payout System', () => {
     it('should validate minimum payout threshold is enforced', async () => {
       const minThreshold = 1000; // $10.00
 
-      // Balance below threshold should not trigger payout creation
-      // (This validation happens in UI/API, not in data access layer)
       const lowBalance = 500; // $5.00
 
       expect(lowBalance).toBeLessThan(minThreshold);
 
-      // But data access layer should still allow creation if called
-      const payout = await createPayout({
-        userId: testContributorId,
-        amountCents: lowBalance,
-        royaltyTransactionIds: [],
-        notes: 'Test: below threshold',
-      });
-
-      // Verify it was created (validation is upstream responsibility)
-      expect(payout).toBeDefined();
-      expect(payout?.amount_cents).toBe(lowBalance);
+      // The minimum is now enforced inside request_payout rather than being left
+      // to the caller, so a below-threshold request is refused at the data layer.
+      await expect(
+        requestPayout({
+          userId: testContributorId,
+          amountCents: lowBalance,
+          minimumCents: 1000,
+          notes: 'Test: below threshold',
+        })
+      ).rejects.toThrow(/Insufficient available balance/);
     });
 
     it('should track Stripe transfer IDs for reconciliation', async () => {
-      const payout = await createPayout({
+      const payout = await createTestPayout({
         userId: testContributorId,
         amountCents: 5000,
-        royaltyTransactionIds: [],
       });
 
       // Simulate Stripe Connect transfer

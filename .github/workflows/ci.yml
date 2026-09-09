@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Vercel deploys main automatically, so these checks are the only thing standing
+# between a broken commit and production.
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Match the Vercel serverless runtime.
+          node-version: 22
+          cache: npm
+
+      # `npm ci` installs strictly from the lockfile, so a dependency declared in
+      # package.json but never installed fails here instead of at build time.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx astro check --minimal
+
+      - name: Unit tests
+        run: npm run test:run
+        env:
+          PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          PUBLIC_SUPABASE_ANON_KEY: ${{ vars.TEST_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ vars.TEST_SUPABASE_SERVICE_ROLE_KEY }}
+          MOCK_STRIPE: 'true'
+
+      - name: Build
+        run: npm run build
+        env:
+          PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          PUBLIC_SUPABASE_ANON_KEY: ${{ vars.TEST_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ vars.TEST_SUPABASE_SERVICE_ROLE_KEY }}
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Advisory for now. Tighten to --audit-level=high once the Astro 7 upgrade
+      # has cleared the current backlog of criticals.
+      - name: Audit dependencies
+        run: npm audit --audit-level=critical
+        continue-on-error: true

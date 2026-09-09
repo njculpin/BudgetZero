@@ -1,6 +1,11 @@
 import type { APIRoute } from 'astro';
 import { getUserById } from '@/lib/data-access/users';
-import { getPayoutById, updatePayoutStatus } from '@/lib/data-access/payouts';
+import {
+  getPayoutById,
+  claimPayoutForProcessing,
+  settlePayout,
+  releasePayout,
+} from '@/lib/data-access/payouts';
 import { createTransfer } from '@/lib/payments';
 import { verifyAdmin, logAdminAction } from '@/lib/auth/admin';
 
@@ -62,12 +67,9 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
 
     // Verify recipient has Connect account
     if (!recipient.stripe_connect_account_id) {
-      await updatePayoutStatus(
-        payoutId,
-        'failed',
-        undefined,
-        'No Connect account configured'
-      );
+      // Release rather than just marking failed, so the reserved earnings return to
+      // the creator's balance once they finish Connect onboarding.
+      await releasePayout(payoutId, 'No Connect account configured');
 
       return new Response(
         JSON.stringify({ error: 'Recipient has no Connect account' }),
@@ -78,8 +80,20 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
       );
     }
 
-    // Update status to processing
-    await updatePayoutStatus(payoutId, 'processing');
+    // Claim the payout by moving it pending -> processing conditionally. The status
+    // read above is not enough on its own: two concurrent executions could both see
+    // 'pending' and both transfer. This update only succeeds for one of them.
+    const claimed = await claimPayoutForProcessing(payoutId);
+
+    if (!claimed) {
+      return new Response(
+        JSON.stringify({ error: 'Payout is already being processed' }),
+        {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     try {
       // Create Stripe transfer
@@ -93,8 +107,11 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
         }
       );
 
-      // Update payout with transfer ID and mark as paid
-      await updatePayoutStatus(payoutId, 'paid', transfer.id);
+      // Mark the payout paid AND transition every royalty transaction it reserved
+      // to 'paid'. Updating only the payout row would leave those transactions
+      // reserved forever, or — before reservation existed — back in the available
+      // balance to be withdrawn a second time.
+      const settledCount = await settlePayout(payoutId, transfer.id);
 
       // Log admin action
       await logAdminAction({
@@ -107,6 +124,7 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
           amountCents: payout.amount_cents,
           currency: payout.currency,
           recipientUserId: payout.user_id,
+          royaltyTransactionsSettled: settledCount,
         },
         ipAddress: clientAddress,
         userAgent: request.headers.get('user-agent') || undefined,
@@ -117,6 +135,7 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
           success: true,
           payoutId,
           transferId: transfer.id,
+          royaltyTransactionsSettled: settledCount,
         }),
         {
           status: 200,
@@ -130,7 +149,10 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
           ? transferError.message
           : 'Transfer failed';
 
-      await updatePayoutStatus(payoutId, 'failed', undefined, errorMessage);
+      // Return the reserved royalty transactions to available balance and mark the
+      // payout failed. Without this the creator's earnings stay locked in a payout
+      // that will never complete.
+      await releasePayout(payoutId, errorMessage);
 
       // Log failed admin action
       await logAdminAction({

@@ -84,10 +84,7 @@ const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
         <!-- Royalty Earnings -->
         <Card>
           <CardContent>
-            <EmbeddedUsageDashboard
-              client:load
-              userId={user.id}
-            />
+            <EmbeddedUsageDashboard client:load />
           </CardContent>
         </Card>
 

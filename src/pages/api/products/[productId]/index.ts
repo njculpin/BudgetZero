@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ params }) => {
           ? {
               id: owner.id,
               handle: owner.handle,
-              full_name: owner.full_name,
+              name: owner.name,
             }
           : null,
       }),

@@ -14,7 +14,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     console.error("Missing auth cookies in update-content:", {
       hasAccessToken: !!accessToken,
       hasRefreshToken: !!refreshToken,
-      allCookies: Object.keys(cookies.getAll()),
     });
     return new Response(JSON.stringify({ error: "Not authenticated" }), {
       status: 401,

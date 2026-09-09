@@ -5,7 +5,7 @@ import "./add-to-cart-button.css";
 interface AddToCartButtonProps {
   productId: string;
   productTitle: string;
-  priceCents: number | null;
+  priceCents: number | null | undefined;
   status: Product["status"];
   isOwner: boolean;
   isAuthenticated: boolean;
@@ -25,7 +25,7 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
       !props.isOwner &&
       props.isAuthenticated &&
       (props.status === "public" || props.status === "private") &&
-      props.priceCents !== null
+      props.priceCents != null
     );
   };
 
@@ -67,7 +67,7 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
   return (
     <div class="add-to-cart">
       {/* Price Display */}
-      <Show when={props.priceCents !== null}>
+      <Show when={props.priceCents != null}>
         <div class="add-to-cart__price-section">
           <span class="add-to-cart__price-label">Price</span>
           <span class="add-to-cart__price">

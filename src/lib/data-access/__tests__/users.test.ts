@@ -10,7 +10,7 @@ import type { User } from '@/types';
 
 const supabase = createClient(
   import.meta.env.PUBLIC_SUPABASE_URL,
-  import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY,
+  (import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!,
   {
     auth: {
       autoRefreshToken: false,

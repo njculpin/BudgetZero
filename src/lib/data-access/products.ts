@@ -481,11 +481,12 @@ export const getProductsByTag = async (tag: string): Promise<Product[]> => {
 
   if (!data) return [];
 
-  // Extract unique products from the joined results
+  // Extract unique products from the joined results. PostgREST types an embedded
+  // relation as an array even when the foreign key yields a single row.
   const productMap = new Map<string, Product>();
-  for (const item of data as Array<{ products: Product }>) {
-    const product = item.products;
-    if (!productMap.has(product.id)) {
+  for (const item of data as unknown as Array<{ products: Product | Product[] | null }>) {
+    const product = Array.isArray(item.products) ? item.products[0] : item.products;
+    if (product && !productMap.has(product.id)) {
       productMap.set(product.id, product);
     }
   }
@@ -1398,4 +1399,161 @@ export const updateProductDocumentPrice = async (
   }
 
   return true;
+};
+
+export interface EmbeddedUsageEntry {
+  /** The parent product that embeds one of this user's components. */
+  id: string;
+  title: string;
+  handle: string;
+  cover_image_url: string | null;
+  owner_name: string;
+  owner_handle: string;
+  /** Price inherited by the parent when the component was embedded, in cents. */
+  inherited_price_cents: number;
+  /** Royalties this user has earned from sales of that parent product, in cents. */
+  total_earnings_cents: number;
+  /** Number of royalty transactions contributing to `total_earnings_cents`. */
+  sales_count: number;
+}
+
+/**
+ * Find every product that embeds one of this user's components, along with what the
+ * user has earned from each.
+ *
+ * Earnings are attributed by walking royalty transactions back to the sale item that
+ * produced them: `sale_items.product_id` is the parent product the customer actually
+ * bought, which is the product a creator wants to see their component credited
+ * against.
+ */
+export const getEmbeddedUsageForUser = async (
+  userId: string
+): Promise<EmbeddedUsageEntry[]> => {
+  // The user's own embeddable products
+  const { data: userProducts, error: userProductsError } = await serverClient
+    .from('products')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('is_embeddable', true)
+    .eq('deleted', false);
+
+  if (userProductsError) {
+    console.error('Error fetching user products:', userProductsError);
+    return [];
+  }
+
+  if (!userProducts || userProducts.length === 0) {
+    return [];
+  }
+
+  const userProductIds = userProducts.map((p: { id: string }) => p.id);
+
+  // Parent products embedding any of them
+  const { data: components, error: componentsError } = await serverClient
+    .from('product_components')
+    .select(`
+      parent_product_id,
+      child_product_id,
+      inherited_price_cents,
+      products!product_components_parent_product_id_fkey (
+        id,
+        title,
+        handle,
+        cover_image_url,
+        user_id,
+        users!products_user_id_fkey (
+          name,
+          handle
+        )
+      )
+    `)
+    .in('child_product_id', userProductIds)
+    .eq('deleted', false);
+
+  if (componentsError) {
+    console.error('Error fetching embedded usage:', componentsError);
+    return [];
+  }
+
+  if (!components || components.length === 0) {
+    return [];
+  }
+
+  // PostgREST types embedded relations as arrays even for many-to-one, so narrow to
+  // the single related row each foreign key actually yields.
+  type JoinedUser = { name: string; handle: string };
+  type JoinedProduct = {
+    id: string;
+    title: string;
+    handle: string;
+    cover_image_url: string | null;
+    user_id: string;
+    users: JoinedUser | JoinedUser[] | null;
+  };
+
+  const firstOf = <T>(value: T | T[] | null): T | null =>
+    Array.isArray(value) ? value[0] ?? null : value;
+
+  const byParentId = new Map<string, EmbeddedUsageEntry>();
+
+  for (const component of components) {
+    const product = firstOf(
+      component.products as unknown as JoinedProduct | JoinedProduct[] | null
+    );
+    const owner = product ? firstOf(product.users) : null;
+
+    if (!product || !owner) continue;
+
+    const parentId = component.parent_product_id as string;
+
+    if (!byParentId.has(parentId)) {
+      byParentId.set(parentId, {
+        id: product.id,
+        title: product.title,
+        handle: product.handle,
+        cover_image_url: product.cover_image_url,
+        owner_name: owner.name,
+        owner_handle: owner.handle,
+        inherited_price_cents: component.inherited_price_cents as number,
+        total_earnings_cents: 0,
+        sales_count: 0,
+      });
+    }
+  }
+
+  const parentIds = Array.from(byParentId.keys());
+
+  if (parentIds.length === 0) {
+    return [];
+  }
+
+  // Attribute this user's royalties to the parent product that was sold.
+  const { data: royalties, error: royaltiesError } = await serverClient
+    .from('sale_royalty_transactions')
+    .select('calculated_cents, sale_items!inner(product_id)')
+    .eq('recipient_user_id', userId)
+    .eq('deleted', false)
+    .in('status', ['ready_to_pay', 'reserved', 'paid']);
+
+  if (royaltiesError) {
+    console.error('Error fetching royalties for embedded usage:', royaltiesError);
+    return Array.from(byParentId.values());
+  }
+
+  for (const royalty of royalties || []) {
+    const saleItem = firstOf(
+      royalty.sale_items as unknown as { product_id: string } | { product_id: string }[] | null
+    );
+
+    if (!saleItem) continue;
+
+    const entry = byParentId.get(saleItem.product_id);
+
+    if (entry) {
+      entry.total_earnings_cents += royalty.calculated_cents as number;
+      entry.sales_count += 1;
+    }
+  }
+
+  return Array.from(byParentId.values());
 };

@@ -1,8 +1,17 @@
+/// <reference types="vitest/config" />
 import { getViteConfig } from 'astro/config';
 import dotenv from 'dotenv';
 
-// Load environment variables for tests
-dotenv.config({ path: '.env' });
+/**
+ * Load environment variables for tests.
+ *
+ * `.env.test` holds the local Supabase demo credentials and is committed, so the
+ * suite is reproducible on a fresh clone. `.env.local` is loaded first when present
+ * so a developer can point the suite at their own stack, and dotenv never overwrites
+ * an already-set key.
+ */
+dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env.test' });
 
 export default getViteConfig({
   test: {

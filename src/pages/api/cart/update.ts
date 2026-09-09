@@ -46,11 +46,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const success = await updateCartItemQuantity(
       validatedData.cartItemId,
-      validatedData.quantity,
-      {
-        accessToken: accessToken.value,
-        refreshToken: refreshToken.value,
-      }
+      validatedData.quantity
     );
 
     if (!success) {
