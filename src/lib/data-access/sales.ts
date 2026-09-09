@@ -187,23 +187,33 @@ export const updateSaleStatus = async (
 };
 
 /**
- * Mark sale as refunded
+ * Record a refund against a sale.
+ *
+ * `refundedCents` is Stripe's running total, not the amount of this particular
+ * refund, so this is safe to apply repeatedly as partial refunds accumulate.
+ *
+ * A partial refund leaves the sale `partially_refunded` and does NOT revoke
+ * entitlement — the customer keeps what they bought. Revoking downloads over a
+ * goodwill refund would punish someone the platform chose to compensate.
  */
-export const refundSale = async (
+export const recordSaleRefund = async (
   saleId: string,
-  refundReason: string
+  refundedCents: number,
+  refundReason: string,
+  isFullRefund: boolean
 ): Promise<boolean> => {
   const { error } = await serverClient
     .from('sales')
     .update({
-      status: 'refunded',
+      status: isFullRefund ? 'refunded' : 'partially_refunded',
+      refunded_cents: refundedCents,
       refund_reason: refundReason,
       updated_at: new Date().toISOString(),
     })
     .eq('id', saleId);
 
   if (error) {
-    console.error('Error refunding sale:', error);
+    console.error('Error recording sale refund:', error);
     return false;
   }
 

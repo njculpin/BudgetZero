@@ -117,6 +117,47 @@ export const completeOnboarding = async (
   return getUserById(userId);
 };
 
+export interface ConnectAccountStatusUpdate {
+  detailsSubmitted: boolean;
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+}
+
+/**
+ * Refresh a user's stored Stripe Connect capability flags.
+ *
+ * Driven by the `account.updated` webhook. Without it these flags only refreshed
+ * when a creator happened to open their payout settings, so an account that later
+ * got restricted or had transfers revoked kept `payouts_enabled = true`
+ * indefinitely — and the admin queue would keep offering a transfer that fails
+ * every time, with no diagnosis.
+ *
+ * @returns false when no user holds that Connect account id.
+ */
+export const syncConnectAccountStatus = async (
+  stripeConnectAccountId: string,
+  status: ConnectAccountStatusUpdate
+): Promise<boolean> => {
+  const { data, error } = await serverClient
+    .from("users")
+    .update({
+      stripe_connect_details_submitted: status.detailsSubmitted,
+      stripe_connect_charges_enabled: status.chargesEnabled,
+      stripe_connect_payouts_enabled: status.payoutsEnabled,
+      stripe_connect_onboarded: status.detailsSubmitted,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_connect_account_id", stripeConnectAccountId)
+    .select("id");
+
+  if (error) {
+    console.error("Error syncing Connect account status:", error);
+    return false;
+  }
+
+  return (data?.length ?? 0) > 0;
+};
+
 /**
  * Check if a handle is available
  * @param handle - The handle to check

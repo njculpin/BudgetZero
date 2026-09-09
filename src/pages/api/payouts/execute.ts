@@ -67,14 +67,24 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
       });
     }
 
-    // Verify recipient has Connect account
-    if (!recipient.stripe_connect_account_id) {
-      // Release rather than just marking failed, so the reserved earnings return to
-      // the creator's balance once they finish Connect onboarding.
-      await releasePayout(payoutId, 'No Connect account configured');
+    // Verify the recipient can actually receive a transfer.
+    //
+    // request-payout.ts checks this at request time, but a Connect account can be
+    // restricted, deauthorized, or have its transfers capability revoked between
+    // the request and the admin clicking Pay — and this route previously checked
+    // only that an account id existed. The stored flag is kept current by the
+    // account.updated webhook.
+    if (!recipient.stripe_connect_account_id || !recipient.stripe_connect_payouts_enabled) {
+      const reason = !recipient.stripe_connect_account_id
+        ? 'No Connect account configured'
+        : 'Stripe Connect payouts are not enabled for this account';
+
+      // Release rather than just marking failed, so the reserved earnings return
+      // to the creator's balance once their account is in good standing.
+      await releasePayout(payoutId, reason);
 
       return new Response(
-        JSON.stringify({ error: 'Recipient has no Connect account' }),
+        JSON.stringify({ error: reason }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },

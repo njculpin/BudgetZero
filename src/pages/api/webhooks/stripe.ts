@@ -1,6 +1,8 @@
 import type { APIRoute } from "astro";
 import { verifyWebhookSignature, type Stripe } from "@/lib/payments";
-import { createSale, createSaleItem, getSaleByStripeChargeId, getSaleItems, refundSale } from "@/lib/data-access/sales";
+import { createSale, createSaleItem, getSaleByStripeChargeId, getSaleItems, recordSaleRefund } from "@/lib/data-access/sales";
+import { releasePayoutsForSale, reversePayout } from "@/lib/data-access/payouts";
+import { syncConnectAccountStatus } from "@/lib/data-access/users";
 import { getCartItems, clearCart } from "@/lib/data-access/cart";
 import { getProductById, getProductPriceBreakdown, getProductComponents } from "@/lib/data-access/products";
 import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
@@ -342,21 +344,151 @@ export const POST: APIRoute = async ({ request }) => {
           );
         }
 
-        // Determine refund reason
-        const refundReason = charge.refunds?.data?.[0]?.reason || 'Customer requested refund';
+        const refundReason =
+          charge.refunds?.data?.[0]?.reason || 'Customer requested refund';
 
-        // Mark the sale as refunded
-        await refundSale(sale.id, refundReason);
+        // charge.amount_refunded is the RUNNING TOTAL refunded, and this event
+        // fires for partial refunds too. Treating every refund as total meant a
+        // $1 goodwill refund on a $50 order voided the creator's whole royalty.
+        const refundedCents = charge.amount_refunded ?? 0;
+        const isFullRefund = refundedCents >= sale.price_cents;
 
-        // Mark all pending royalty transactions as refunded
+        await recordSaleRefund(sale.id, refundedCents, refundReason, isFullRefund);
+
+        if (!isFullRefund) {
+          // Partial refund: the sale still stands and the creator keeps their
+          // royalty. Recorded and surfaced rather than silently absorbed, because
+          // repeated partials on one seller are worth an operator noticing.
+          captureMessage('Partial refund recorded', {
+            operation: 'webhook.partial_refund',
+            stripeEventId: event.id,
+            saleId: sale.id,
+            refundedCents,
+            salePriceCents: sale.price_cents,
+          });
+
+          await markWebhookEventProcessed(event.id);
+
+          return new Response(
+            JSON.stringify({
+              received: true,
+              saleId: sale.id,
+              partialRefund: true,
+              refundedCents,
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Full refund. Release any pending payout funded by this sale FIRST —
+        // otherwise it holds royalties it can no longer justify and would transfer
+        // the original un-reduced amount, and releasePayout could not recover them
+        // afterwards because it only restores rows still in 'reserved'.
+        const releasedPayouts = await releasePayoutsForSale(sale.id);
+
         const refundedCount = await markSaleRoyaltiesAsRefunded(sale.id);
+
+        if (releasedPayouts.length > 0) {
+          captureMessage('Refund released a pending payout', {
+            operation: 'webhook.refund_released_payout',
+            stripeEventId: event.id,
+            saleId: sale.id,
+            payoutIds: releasedPayouts.map((p) => p.payoutId).join(','),
+          });
+        }
 
         await markWebhookEventProcessed(event.id);
 
         return new Response(
-          JSON.stringify({ received: true, saleId: sale.id, royaltiesRefunded: refundedCount }),
+          JSON.stringify({
+            received: true,
+            saleId: sale.id,
+            royaltiesRefunded: refundedCount,
+            payoutsReleased: releasedPayouts.length,
+          }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
         );
+      }
+
+      case 'transfer.reversed': {
+        const transfer = event.data.object as Stripe.Transfer;
+
+        // Money that had reached a creator has come back to the platform. Without
+        // handling this the payout stayed 'paid', the royalties stayed 'paid', and
+        // the creator's balance was permanently wrong in our favour, silently.
+        const reversal = await reversePayout(
+          transfer.id,
+          'Transfer reversed by Stripe'
+        );
+
+        if (!reversal) {
+          // A reversal for a transfer we have no payout for. Money moved that this
+          // system cannot account for — the loudest thing in the file.
+          captureError(
+            new Error('Transfer reversed with no matching payout'),
+            {
+              operation: 'webhook.transfer_reversed_orphan',
+              stripeEventId: event.id,
+              transferId: transfer.id,
+              amountCents: transfer.amount,
+            }
+          );
+
+          await markWebhookEventProcessed(event.id);
+
+          return new Response(
+            JSON.stringify({ received: true, orphanedReversal: true }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Those royalties are claimable again immediately. If the reversal was
+        // caused by a problem with the creator's Connect account it will simply
+        // recur, so this needs a human, not just a log line.
+        captureMessage('Payout reversed; royalties returned to balance', {
+          operation: 'webhook.transfer_reversed',
+          stripeEventId: event.id,
+          transferId: transfer.id,
+          payoutId: reversal.payoutId,
+          amountCents: reversal.amountCents,
+          royaltiesRestored: reversal.restoredCount,
+        });
+
+        await markWebhookEventProcessed(event.id);
+
+        return new Response(
+          JSON.stringify({
+            received: true,
+            payoutId: reversal.payoutId,
+            royaltiesRestored: reversal.restoredCount,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'account.updated': {
+        const account = event.data.object as Stripe.Account;
+
+        // Connect capabilities change without us asking — an account gets
+        // restricted, deauthorized, or has transfers revoked. Without this the
+        // stored flags only refreshed when a creator happened to visit their
+        // payout settings, so a stale `payouts_enabled = true` would let the admin
+        // queue keep offering a transfer that fails every time.
+        const updated = await syncConnectAccountStatus(account.id, {
+          detailsSubmitted: account.details_submitted ?? false,
+          chargesEnabled: account.charges_enabled ?? false,
+          payoutsEnabled: account.payouts_enabled ?? false,
+        });
+
+        if (!updated) {
+          captureMessage('account.updated for an unknown Connect account', {
+            operation: 'webhook.account_updated_unknown',
+            stripeEventId: event.id,
+            accountId: account.id,
+          });
+        }
+
+        break;
       }
 
       default:

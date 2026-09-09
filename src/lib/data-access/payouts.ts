@@ -275,3 +275,71 @@ export async function getPendingPayoutsForAdmin(): Promise<
     };
   });
 }
+
+export interface PayoutReversalResult {
+  payoutId: string;
+  restoredCount: number;
+  amountCents: number;
+}
+
+/**
+ * Undo a settled payout after Stripe reverses its transfer.
+ *
+ * The royalties return to `ready_to_pay` — the creator genuinely is owed the money
+ * again — and the payout row survives as `reversed` so the history of a transfer
+ * that happened and came back is not lost.
+ *
+ * @returns `null` when no payout matches the transfer id. That is an orphaned
+ * reversal: money moved that this system has no record of, and the caller must
+ * alert rather than ignore it.
+ */
+export async function reversePayout(
+  stripeTransferId: string,
+  reason?: string
+): Promise<PayoutReversalResult | null> {
+  const { data, error } = await serverClient.rpc('reverse_payout', {
+    p_stripe_transfer_id: stripeTransferId,
+    p_reason: reason ?? null,
+  });
+
+  if (error) {
+    throw new Error(`Failed to reverse payout: ${error.message}`);
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    payoutId: row.out_payout_id as string,
+    restoredCount: row.out_restored_count as number,
+    amountCents: row.out_amount_cents as number,
+  };
+}
+
+/**
+ * Release any pending payout funded by a given sale.
+ *
+ * Must be called BEFORE marking that sale's royalties refunded. A refund that
+ * lands while a payout is pending would otherwise leave the payout holding
+ * royalties it can no longer justify, and `releasePayout` cannot recover them
+ * afterwards because it only restores rows still in `reserved`.
+ */
+export async function releasePayoutsForSale(
+  saleId: string
+): Promise<Array<{ payoutId: string; releasedCount: number }>> {
+  const { data, error } = await serverClient.rpc('release_payouts_for_sale', {
+    p_sale_id: saleId,
+  });
+
+  if (error) {
+    console.error(`Failed to release payouts for sale ${saleId}:`, error);
+    return [];
+  }
+
+  return ((data as Array<{ out_payout_id: string; out_released_count: number }>) || []).map(
+    (row) => ({ payoutId: row.out_payout_id, releasedCount: row.out_released_count })
+  );
+}
