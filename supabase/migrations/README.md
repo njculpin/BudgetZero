@@ -4,7 +4,7 @@ This directory contains the new consolidated migration structure for Game Looper
 
 ## Migration Structure
 
-**6 domain-based migration files:**
+**6 domain-based migration files, plus later corrective migrations:**
 
 1. **00001_core_extensions.sql** - PostgreSQL extensions and utility functions
 2. **00002_users_domain.sql** - Users, tags, reviews, follows
@@ -12,6 +12,23 @@ This directory contains the new consolidated migration structure for Game Looper
 4. **00004_products_domain.sql** - Products, files, documents, components, royalties
 5. **00005_commerce_domain.sql** - Carts, sales, royalties, wishlists, payouts
 6. **00006_system_domain.sql** - Notifications, activity feed, sessions, storage buckets
+
+**Later migrations (September 2026):**
+
+7. **00007_storage_buckets_and_policies.sql** - Creates the missing
+   `document-attachments` bucket, and rewrites the storage ownership policies.
+   The originals were named "Users can update/delete own ..." but only checked
+   `bucket_id`, so any authenticated user could overwrite or delete every product
+   image and avatar on the platform.
+8. **00008_payout_reservation.sql** - Adds the `reserved` royalty status and the
+   `request_payout` / `settle_payout` / `release_payout` functions. Royalties were
+   created as `ready_to_pay` and nothing ever moved them off it, so the same
+   earnings could be withdrawn repeatedly.
+9. **00010_rate_limits.sql** - Postgres-backed fixed-window rate limiting.
+   Serverless invocations share no memory, so counters cannot live in-process.
+
+(00009 was an atomic-credits migration, dropped when credits checkout was cut
+from v1. The gap in numbering is deliberate.)
 
 ## What Was Removed
 
@@ -147,7 +164,8 @@ After applying migrations:
 - [ ] No jam-related tables remain
 - [ ] product_royalties table exists
 - [ ] sale_royalty_transactions references product_royalties (not asset_royalties)
-- [ ] Storage buckets: product-files, product-images, user-avatars exist
+- [ ] Storage buckets: product-files, product-images, user-avatars,
+      document-attachments exist
 - [ ] RLS policies are in place for all tables
 - [ ] TypeScript types match database schema
 - [ ] Application builds without errors
@@ -163,4 +181,4 @@ If you encounter issues:
 ---
 
 **Consolidation Date**: 2026-01-11
-**Agent Reports**: Project PM (ab778c8), Database Architect (a0180c2)
+**Last updated**: 2026-09-09 (migrations 00007, 00008, 00010)
