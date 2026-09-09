@@ -2,7 +2,8 @@ import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
 import type { RoyaltyType } from "./products.types";
 
 export type SaleStatus = 'pending' | 'paid' | 'failed' | 'refunded';
-export type PaymentMethod = 'stripe' | 'credits';
+// Credits checkout is deferred past v1; Stripe is the only payment method.
+export type PaymentMethod = 'stripe';
 /**
  * Lifecycle of a royalty owed to a contributor.
  *
