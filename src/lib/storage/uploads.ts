@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { storageClient } from "./client";
+import { storageClient, storageAdminClient } from "./client";
 
 /**
  * Storage buckets. These names must match the buckets created in
@@ -95,7 +95,10 @@ export async function deleteFile(
   path: string
 ): Promise<boolean> {
   try {
-    const { error } = await storageClient.storage.from(bucket).remove([path]);
+    // Service role: deletes are server-side actions taken after the caller's
+    // ownership of the parent record has already been verified. The anon client
+    // carries no session, so storage RLS would reject the delete outright.
+    const { error } = await storageAdminClient.storage.from(bucket).remove([path]);
 
     if (error) {
       console.error(`Error deleting file from ${bucket}:`, error);
@@ -133,7 +136,11 @@ export async function createSignedUrl(
   expiresIn: number = 3600
 ): Promise<string | null> {
   try {
-    const { data, error } = await storageClient.storage
+    // Service role: signing requires read permission on the object, and the
+    // private product-files bucket grants SELECT to nobody else. The purchase
+    // check that justifies this signature happens in /api/download before the
+    // call, so bypassing RLS here is the design rather than a shortcut.
+    const { data, error } = await storageAdminClient.storage
       .from(bucket)
       .createSignedUrl(path, expiresIn);
 
