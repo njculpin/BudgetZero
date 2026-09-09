@@ -1,3 +1,26 @@
+# PORT ALLOCATION — READ BEFORE CHANGING
+#
+# Every port here is moved off the Supabase defaults (54321-54329) into 55xxx.
+#
+# On Windows, Hyper-V/WinNAT reserves large TCP ranges at boot — on this machine
+# 54308-54407, 54408-54507, 54555-54754 and 54808-54907, which swallow the entire
+# default Supabase block. Binding one fails with:
+#
+#   listen tcp 0.0.0.0:54321: bind: An attempt was made to access a socket in a
+#   way forbidden by its access permissions
+#
+# Check yours with:  netsh interface ipv4 show excludedportrange protocol=tcp
+#
+# Which specific ports are held varies between restarts, so fixing them one at a
+# time is whack-a-mole. 55xxx sits clear of every reserved range.
+#
+# Alternative if you prefer the conventional ports: `net stop winnat` then
+# `net start winnat` from an ELEVATED shell releases the reservations — but only
+# until the next reboot.
+#
+# If you change the API port, update PUBLIC_SUPABASE_URL in .env.local, .env.test,
+# .env.example and .github/workflows/ci.yml to match.
+
 # For detailed configuration reference documentation, visit:
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
@@ -7,7 +30,7 @@ project_id = "BudgetZero"
 [api]
 enabled = true
 # Port to use for the API URL.
-port = 54321
+port = 55321
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
 # endpoints. `public` and `graphql_public` schemas are included by default.
 schemas = ["public", "graphql_public"]
@@ -23,9 +46,11 @@ enabled = false
 
 [db]
 # Port to use for the local database URL.
-port = 54322
+#
+# See the port note at the top of this file.
+port = 55432
 # Port used by db diff command to initialize the shadow database.
-shadow_port = 54320
+shadow_port = 55430
 # The database major version to use. This has to be the same as your remote database's. Run `SHOW
 # server_version;` on the remote database to check.
 major_version = 17
@@ -33,7 +58,7 @@ major_version = 17
 [db.pooler]
 enabled = false
 # Port to use for the local connection pooler.
-port = 54329
+port = 55329
 # Specifies when a server connection can be reused by other clients.
 # Configure one of the supported pooler modes: `transaction`, `session`.
 pool_mode = "transaction"
@@ -79,7 +104,7 @@ enabled = true
 [studio]
 enabled = true
 # Port to use for Supabase Studio.
-port = 54323
+port = 55323
 # External URL of the API server that frontend connects to.
 api_url = "http://127.0.0.1"
 # OpenAI API Key to use for Supabase AI in the Supabase Studio.
@@ -90,10 +115,10 @@ openai_api_key = "env(OPENAI_API_KEY)"
 [inbucket]
 enabled = true
 # Port to use for the email testing server web interface.
-port = 54324
+port = 55324
 # Uncomment to expose additional ports for testing user applications that send emails.
-# smtp_port = 54325
-# pop3_port = 54326
+# smtp_port = 55325
+# pop3_port = 55326
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
@@ -316,8 +341,11 @@ deno_version = 2
 # secret_key = "env(SECRET_VALUE)"
 
 [analytics]
-enabled = true
-port = 54327
+# Disabled locally: nothing in this project reads Logflare, and its default port
+# 54327 falls inside the Hyper-V/WinNAT reserved range 54308-54407 on Windows,
+# so it intermittently fails to bind and takes the whole stack down with it.
+enabled = false
+port = 55327
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
 

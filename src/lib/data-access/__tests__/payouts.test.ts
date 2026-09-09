@@ -7,7 +7,7 @@ import {
   getUserPayouts,
   getPayoutById,
   getPayoutItems,
-  updatePayoutStatus,
+  claimPayoutForProcessing,
   getPendingPayoutsForAdmin,
   getAvailablePayoutBalance
 } from '../payouts';
@@ -83,6 +83,39 @@ describe('Payout System', () => {
   let royaltyTransaction1Id: string;
   let royaltyTransaction2Id: string;
   let saleId: string;
+  let saleItemId: string;
+
+
+  /**
+   * Seed a fresh `ready_to_pay` royalty transaction for the contributor.
+   *
+   * These tests spend balance as they go — reserving, settling, releasing — so any
+   * test needing funds must create its own rather than inherit what the previous
+   * test happened to leave behind. Depending on leftover state makes the suite
+   * order-sensitive, which is exactly how it broke on its first real run.
+   */
+  async function seedReadyRoyalty(amountCents: number): Promise<string> {
+    const { data, error } = await supabase
+      .from('sale_royalty_transactions')
+      .insert({
+        sale_id: saleId,
+        sale_item_id: saleItemId,
+        product_royalty_id: productRoyaltyId,
+        recipient_user_id: testContributorId,
+        royalty_type: 'fixed',
+        royalty_value: amountCents,
+        calculated_cents: amountCents,
+        status: 'ready_to_pay',
+      })
+      .select('id')
+      .single();
+
+    if (error || !data) {
+      throw new Error(`Failed to seed royalty: ${error?.message}`);
+    }
+
+    return data.id as string;
+  }
 
   const testEmail1 = `test-payout-user1-${Date.now()}@example.com`;
   const testEmail2 = `test-payout-user2-${Date.now()}@example.com`;
@@ -186,6 +219,9 @@ describe('Payout System', () => {
       })
       .select()
       .single();
+
+    if (!saleItem) throw new Error('Failed to create mock sale item');
+    saleItemId = saleItem.id;
 
     // Create royalty transactions for contributor (ready to pay)
     const { data: royalty1 } = await supabase
@@ -531,68 +567,76 @@ describe('Payout System', () => {
     });
   });
 
-  describe('updatePayoutStatus', () => {
-    it('should update status to processing', async () => {
-      const result = await updatePayoutStatus(payoutId, 'processing');
-      expect(result).toBe(true);
+  describe('payout lifecycle', () => {
+    // These mirror what /api/payouts/execute actually does. The previous block
+    // tested updatePayoutStatus, which has been removed: it could mark a payout
+    // 'failed' while leaving its royalty transactions reserved, stranding them.
 
-      const payout = await getPayoutById(payoutId);
-      expect(payout?.status).toBe('processing');
-      expect(payout?.processed_at).toBeDefined();
-    });
+    it('should claim a pending payout for processing', async () => {
+      const amount = await seedReadyRoyalty(2600);
+      expect(amount).toBeTruthy();
 
-    it('should update status to paid', async () => {
-      const result = await updatePayoutStatus(
-        payoutId,
-        'paid',
-        'stripe_transfer_123'
-      );
-      expect(result).toBe(true);
-
-      const payout = await getPayoutById(payoutId);
-      expect(payout?.status).toBe('paid');
-      expect(payout?.paid_at).toBeDefined();
-      expect(payout?.stripe_transfer_id).toBe('stripe_transfer_123');
-    });
-
-    it('should update status to failed with reason', async () => {
-      // Create a new payout to fail
-      const newPayout = await createTestPayout({
+      const requested = await requestPayout({
         userId: testContributorId,
-        amountCents: 1000,
+        amountCents: 2600,
       });
 
-      const result = await updatePayoutStatus(
-        newPayout!.id,
-        'failed',
-        undefined,
-        'Insufficient funds in Stripe account'
-      );
-      expect(result).toBe(true);
+      expect(await claimPayoutForProcessing(requested.payoutId)).toBe(true);
 
-      const payout = await getPayoutById(newPayout!.id);
+      const payout = await getPayoutById(requested.payoutId);
+      expect(payout?.status).toBe('processing');
+      expect(payout?.processed_at).toBeTruthy();
+    });
+
+    it('should refuse to claim the same payout twice', async () => {
+      await seedReadyRoyalty(2700);
+      const requested = await requestPayout({
+        userId: testContributorId,
+        amountCents: 2700,
+      });
+
+      expect(await claimPayoutForProcessing(requested.payoutId)).toBe(true);
+      // Two concurrent executions must not both transfer money.
+      expect(await claimPayoutForProcessing(requested.payoutId)).toBe(false);
+    });
+
+    it('should settle a payout and record the transfer id', async () => {
+      await seedReadyRoyalty(2800);
+      const requested = await requestPayout({
+        userId: testContributorId,
+        amountCents: 2800,
+      });
+      await claimPayoutForProcessing(requested.payoutId);
+
+      const settled = await settlePayout(requested.payoutId, 'tr_lifecycle_1');
+      expect(settled).toBeGreaterThan(0);
+
+      const payout = await getPayoutById(requested.payoutId);
+      expect(payout?.status).toBe('paid');
+      expect(payout?.stripe_transfer_id).toBe('tr_lifecycle_1');
+      expect(payout?.paid_at).toBeTruthy();
+    });
+
+    it('should release a failed payout and restore the balance', async () => {
+      await seedReadyRoyalty(2900);
+      const before = await getAvailablePayoutBalance(testContributorId);
+
+      const requested = await requestPayout({
+        userId: testContributorId,
+        amountCents: 2900,
+      });
+      await claimPayoutForProcessing(requested.payoutId);
+
+      const released = await releasePayout(requested.payoutId, 'Transfer declined');
+      expect(released).toBeGreaterThan(0);
+
+      const payout = await getPayoutById(requested.payoutId);
       expect(payout?.status).toBe('failed');
-      expect(payout?.failed_reason).toBe('Insufficient funds in Stripe account');
-    });
+      expect(payout?.failed_reason).toBe('Transfer declined');
 
-    it('should handle status transitions correctly', async () => {
-      const newPayout = await createTestPayout({
-        userId: testContributorId,
-        amountCents: 2000,
-      });
-
-      // pending → processing
-      await updatePayoutStatus(newPayout!.id, 'processing');
-      let payout = await getPayoutById(newPayout!.id);
-      expect(payout?.status).toBe('processing');
-      expect(payout?.processed_at).toBeDefined();
-
-      // processing → paid
-      await updatePayoutStatus(newPayout!.id, 'paid', 'stripe_tx_456');
-      payout = await getPayoutById(newPayout!.id);
-      expect(payout?.status).toBe('paid');
-      expect(payout?.paid_at).toBeDefined();
-      expect(payout?.stripe_transfer_id).toBe('stripe_tx_456');
+      // The creator's earnings must not be stranded in a payout that never completes.
+      const after = await getAvailablePayoutBalance(testContributorId);
+      expect(after.totalCents).toBe(before.totalCents);
     });
   });
 
@@ -637,6 +681,9 @@ describe('Payout System', () => {
 
   describe('Integration: Complete Payout Flow', () => {
     it('should complete a full payout lifecycle', async () => {
+      // Seed this test's own funds rather than relying on leftover balance.
+      await seedReadyRoyalty(4200);
+
       // 1. Check available balance
       const balance = await getAvailablePayoutBalance(testContributorId);
       expect(balance.totalCents).toBeGreaterThan(0);
@@ -649,14 +696,14 @@ describe('Payout System', () => {
       const payout = await getPayoutById(requested.payoutId);
       expect(payout?.status).toBe('pending');
 
-      // 3. Mark as processing
-      await updatePayoutStatus(payout!.id, 'processing');
+      // 3. Claim it for processing, exactly as /api/payouts/execute does
+      expect(await claimPayoutForProcessing(payout!.id)).toBe(true);
       let updatedPayout = await getPayoutById(payout!.id);
       expect(updatedPayout?.status).toBe('processing');
       expect(updatedPayout?.processed_at).toBeDefined();
 
-      // 4. Mark as paid (simulating Stripe Connect transfer)
-      await updatePayoutStatus(payout!.id, 'paid', 'stripe_final_123');
+      // 4. Settle after a successful transfer
+      await settlePayout(payout!.id, 'stripe_final_123');
       updatedPayout = await getPayoutById(payout!.id);
       expect(updatedPayout?.status).toBe('paid');
       expect(updatedPayout?.paid_at).toBeDefined();
@@ -668,6 +715,9 @@ describe('Payout System', () => {
     });
 
     it('should handle failed payout with retry flow', async () => {
+      // Seed this test's own funds rather than relying on leftover balance.
+      await seedReadyRoyalty(3300);
+
       // 1. Get balance
       const balance = await getAvailablePayoutBalance(testContributorId);
 
@@ -678,16 +728,12 @@ describe('Payout System', () => {
       });
       const payout = await getPayoutById(requested.payoutId);
 
-      // 3. Mark as processing
-      await updatePayoutStatus(payout!.id, 'processing');
+      // 3. Claim it for processing
+      await claimPayoutForProcessing(payout!.id);
 
-      // 4. Mark as failed
-      await updatePayoutStatus(
-        payout!.id,
-        'failed',
-        undefined,
-        'Stripe account not connected'
-      );
+      // 4. Transfer fails — release returns the reserved royalties to the
+      //    creator's balance. A bare status update would strand them.
+      await releasePayout(payout!.id, 'Stripe account not connected');
 
       let failedPayout = await getPayoutById(payout!.id);
       expect(failedPayout?.status).toBe('failed');
@@ -734,10 +780,10 @@ describe('Payout System', () => {
         amountCents: 5000,
       });
 
-      // Simulate Stripe Connect transfer
-      const stripeTransferId = `tr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Simulate a Stripe Connect transfer completing
+      const stripeTransferId = `tr_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
-      await updatePayoutStatus(payout!.id, 'paid', stripeTransferId);
+      await settlePayout(payout!.id, stripeTransferId);
 
       const updatedPayout = await getPayoutById(payout!.id);
       expect(updatedPayout?.stripe_transfer_id).toBe(stripeTransferId);
