@@ -48,3 +48,29 @@ export function mockAuthError(message: string, status = 400): AuthError {
     __isAuthError: true,
   } as unknown as AuthError;
 }
+
+/**
+ * A complete `PostgrestSingleResponse`, as returned by `serverClient.rpc()`.
+ *
+ * The success and error shapes carry `count`, `status` and `statusText` that no
+ * test cares about but the type requires.
+ */
+export function mockRpcSuccess<T>(data: T) {
+  return {
+    data,
+    error: null,
+    count: null,
+    status: 200,
+    statusText: 'OK',
+  } as const;
+}
+
+export function mockRpcError(message: string, code = 'XX000') {
+  return {
+    data: null,
+    error: { message, details: '', hint: '', code, name: 'PostgrestError' },
+    count: null,
+    status: 500,
+    statusText: 'Internal Server Error',
+  } as const;
+}

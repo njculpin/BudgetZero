@@ -134,10 +134,14 @@ export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
     );
 
     // Upload file
+    // The access token must be forwarded: storage RLS scopes writes to the owning
+    // user via auth.uid(), and without it this falls back to the anon client where
+    // auth.uid() is NULL and every insert is rejected.
     const result = await uploadFile({
       bucket: validatedData.bucket,
       path: filePath,
       file,
+      accessToken: accessToken.value,
     });
 
     if (!result) {
