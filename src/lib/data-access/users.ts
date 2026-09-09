@@ -118,29 +118,50 @@ export const completeOnboarding = async (
 };
 
 /**
- * Update user's credits balance
- * @param userId - The user ID
- * @param newBalance - The new credits balance in cents
- * @returns The updated user or null if update failed
+ * Spend credits from a user's balance.
+ *
+ * The sufficiency check and the deduction happen in a single statement, so two
+ * concurrent purchases cannot both spend the same credits. Reading the balance and
+ * writing `balance - amount` from JS allowed exactly that.
+ *
+ * @returns The new balance, or `null` when the balance was insufficient.
  */
-export const updateUserCreditsBalance = async (
+export const spendUserCredits = async (
   userId: string,
-  newBalance: number
-): Promise<User | null> => {
-  const { error } = await serverClient
-    .from("users")
-    .update({
-      credits_balance: newBalance,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", userId);
+  amountCents: number
+): Promise<number | null> => {
+  const { data, error } = await serverClient.rpc("spend_credits", {
+    p_user_id: userId,
+    p_amount_cents: amountCents,
+  });
 
   if (error) {
     throw error;
   }
 
-  // Fetch and return the updated user
-  return getUserById(userId);
+  return data as number | null;
+};
+
+/**
+ * Add credits to a user's balance. Used to pay contributors and to reverse a
+ * purchase whose fulfilment failed.
+ *
+ * @returns The new balance.
+ */
+export const grantUserCredits = async (
+  userId: string,
+  amountCents: number
+): Promise<number | null> => {
+  const { data, error } = await serverClient.rpc("grant_credits", {
+    p_user_id: userId,
+    p_amount_cents: amountCents,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data as number | null;
 };
 
 /**
