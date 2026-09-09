@@ -83,16 +83,26 @@ export async function createTransfer(
   accountId: string,
   amountCents: number,
   currency: string = 'usd',
-  metadata?: Record<string, string>
+  metadata?: Record<string, string>,
+  idempotencyKey?: string
 ): Promise<Stripe.Transfer> {
-  const transfer = await stripe.transfers.create({
-    amount: amountCents,
-    currency,
-    destination: accountId,
-    metadata,
-  });
-
-  return transfer;
+  // The idempotency key is the only defence against the one failure this system
+  // cannot otherwise survive: the request reaching Stripe, the transfer being
+  // created, and the response being lost on the wire. Without it the caller sees a
+  // failure, releases the reservation, and the same earnings can be paid a second
+  // time — the money having already left on the first attempt.
+  //
+  // Keyed on the payout id, so a retry of the same payout can never create a
+  // second transfer. Stripe returns the original transfer instead.
+  return await stripe.transfers.create(
+    {
+      amount: amountCents,
+      currency,
+      destination: accountId,
+      metadata,
+    },
+    idempotencyKey ? { idempotencyKey } : undefined
+  );
 }
 
 /**
