@@ -13,6 +13,11 @@ interface ImportMetaEnv {
   readonly STRIPE_CONNECT_WEBHOOK_SECRET: string
   readonly RESEND_API_KEY: string
   /**
+   * Error monitoring. When unset, reports fall through to structured console
+   * output and no monitoring SDK is loaded.
+   */
+  readonly PUBLIC_SENTRY_DSN?: string
+  /**
    * Set to 'true' to run payments against a mock instead of Stripe. Bypasses webhook
    * signature verification, so it is rejected in production builds.
    */

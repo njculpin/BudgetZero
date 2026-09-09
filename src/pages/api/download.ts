@@ -3,6 +3,7 @@ import { setSession } from "@/lib/auth";
 import { hasUserPurchasedProduct } from "@/lib/data-access/sales";
 import { getProductFileById } from "@/lib/data-access/products";
 import { createSignedUrl } from "@/lib/storage";
+import { captureError } from "@/lib/monitoring";
 
 /** Signed download links are bearer credentials for paid content: 5 minutes is
  *  ample to start a download and short enough that a leaked link expires fast. */
@@ -76,7 +77,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     // Redirect to the signed URL
     return redirect(signedUrl);
   } catch (error) {
-    console.error("Download error:", error);
+    captureError(error, { operation: 'download.signed_url', userId, fileId });
     return new Response(
       "Failed to process download",
       { status: 500 }

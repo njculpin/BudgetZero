@@ -8,7 +8,7 @@ import {
   getPayoutById,
   getPayoutItems,
   updatePayoutStatus,
-  getPendingPayouts,
+  getPendingPayoutsForAdmin,
   getAvailablePayoutBalance
 } from '../payouts';
 import { createProduct } from '../products';
@@ -596,7 +596,7 @@ describe('Payout System', () => {
     });
   });
 
-  describe('getPendingPayouts', () => {
+  describe('getPendingPayoutsForAdmin', () => {
     it('should return all pending payouts', async () => {
       // Create some pending payouts
       await createTestPayout({
@@ -604,15 +604,18 @@ describe('Payout System', () => {
         amountCents: 1000,
       });
 
-      const pendingPayouts = await getPendingPayouts();
+      const pendingPayouts = await getPendingPayoutsForAdmin();
 
       expect(pendingPayouts).toBeDefined();
       expect(Array.isArray(pendingPayouts)).toBe(true);
       expect(pendingPayouts.every(p => p.status === 'pending')).toBe(true);
+      // The admin queue needs the recipient in order to decide whether a payout
+      // can actually be transferred.
+      expect(pendingPayouts.every(p => p.recipient !== null)).toBe(true);
     });
 
     it('should not return non-pending payouts', async () => {
-      const pendingPayouts = await getPendingPayouts();
+      const pendingPayouts = await getPendingPayoutsForAdmin();
 
       // The payout we set to 'paid' earlier should not be included
       const hasPaidPayout = pendingPayouts.some(p => p.id === payoutId);
@@ -620,7 +623,7 @@ describe('Payout System', () => {
     });
 
     it('should order by requested_at ascending (oldest first)', async () => {
-      const pendingPayouts = await getPendingPayouts();
+      const pendingPayouts = await getPendingPayoutsForAdmin();
 
       if (pendingPayouts.length > 1) {
         for (let i = 0; i < pendingPayouts.length - 1; i++) {
