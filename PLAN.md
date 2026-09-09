@@ -1,7 +1,7 @@
 # Game Loopers — Ship Plan
 
 **Last updated:** 2026-09-09
-**Branch:** `fix/ship-blockers-money-path` (9 commits ahead of `main`)
+**Branch:** `fix/ship-blockers-money-path` (13 commits ahead of `main`)
 
 This file tracks **only what is still outstanding**. Completed items are deleted
 rather than checked off — if it is not written here, it is done or it was never in
@@ -15,52 +15,23 @@ scope. Git history is the record of what changed.
 |---|---|
 | `npm run build` | ✅ green (Astro 7.3.2) |
 | `astro check` | ✅ **0 errors** across 318 files |
-| `npm run test:run` | ✅ **378 passing**, 0 failing |
+| `npm run test:run` | ✅ **525 passing**, 0 failing — including all 7 integration suites |
 | `npm audit` | ⚠️ 3 high, **0 critical** |
-| Integration tests (7 files) | ⛔ **never executed** — see Verification gap |
-| Purchase → download | ✅ repaired, unverified against a live DB |
-| Royalties → payout | ✅ repaired, unverified against a live DB |
+| Migrations 00007/00008/00010 | ✅ applied; every object verified present |
+| Purchase → download | ✅ repaired and covered by tests |
+| Royalty payout reserve/settle/release | ✅ verified against real Postgres |
 | Legal pages | ❌ still 3-line stubs |
 | CI | ✅ `.github/workflows/ci.yml` |
 
-The money path defects that made this unshippable are fixed in code. What stands
-between here and launch is now: **verification**, **legal**, and a short list of
-operational gaps.
+The money-path defects that made this unshippable are fixed and now verified
+against a real database. What stands between here and launch is the P0 list in
+**`REPORT.md`** — chiefly that nothing ever writes to `product_royalties`, so no
+royalty is ever paid — plus the legal documents.
 
 ---
 
-## ⛔ Verification gap — read this first
-
-**The 7 integration test files have not run in this session.** They require Docker
-and a local Supabase, and Docker was not running on this machine. They are exactly
-the tests that cover the code that changed most:
-
-```
-src/lib/data-access/__tests__/{cart,payouts,products,royalties,users}.test.ts
-src/pages/api/__tests__/checkout-flow.test.ts
-src/pages/api/webhooks/__tests__/stripe.test.ts
-```
-
-Every money-path fix — bucket rename, entitlement resolution, webhook idempotency,
-payout reservation — is verified only by typecheck, unit tests, and reading. None
-of it has touched a real Postgres.
-
-**Do this before anything else:**
-
-```bash
-# start Docker Desktop, then:
-npm run supabase:start
-npm run supabase:reset     # applies 00007, 00008 and 00010
-npm run test:run
-```
-
-Migrations `00007_storage_buckets_and_policies.sql`,
-`00008_payout_reservation.sql` and `00010_rate_limits.sql` have **never been
-applied anywhere**. The payout work depends entirely on `request_payout` / `settle_payout` / `release_payout`
-existing and behaving as written. Treat a clean run of `payouts.test.ts` as the
-gate on the payout rewrite.
-
----
+> **See `REPORT.md`** for the persona-journey findings. Its P0 list is larger than
+> this file's and supersedes it for launch sequencing.
 
 ## P0 — Ship blockers
 
@@ -105,37 +76,21 @@ production build for the webhook cases.
 
 ## P1 — Before or immediately after launch
 
-### 3. Untested code on the money path
-
-40 tests now cover download entitlement, component expansion, webhook idempotency,
-`requireUserId` and rate limiting — each verified by mutation testing (the bug was
-reintroduced and the test confirmed to fail). These still have **no unit coverage**
-and can only be reached through the Docker-dependent integration suite:
-
-- `payouts/request-payout.ts` and `payouts/execute.ts` — the reserve → settle →
-  release lifecycle. The riskiest untested code left, because it moves money.
-- `webhooks/stripe.ts` fulfilment loop — covered only by `stripe.test.ts`, which
-  needs a live database.
-- `lib/payments/mock-mode.ts` — the production hard-fail. Awkward to unit test
-  because it throws at module load; worth an integration assertion instead.
-- `lib/storage/uploads.ts` — the anon/service-role client split, which is exactly
-  where two bugs were just found.
-
-### 4. Account deletion is unimplemented
+### 3. Account deletion is unimplemented
 
 `/api/users/delete-user.ts` was an empty file and has been deleted. GDPR requires
 this. Needs a real soft-delete cascade across users, products, documents, and a
 decision about what happens to sales and royalty records the platform must retain
 for accounting.
 
-### 5. PDF generation is stubbed
+### 4. PDF generation is stubbed
 
 `src/lib/data-access/products.ts` and
 `src/pages/api/products/generate-document-pdfs.ts` are both
 `TODO: Implement actual PDF generation`. `pdf-lib` is installed but unused.
 Decide: build it, or cut document-PDF delivery from v1 and say so in the UI.
 
-### 6. Three high-severity advisories with no upstream fix
+### 5. Three high-severity advisories with no upstream fix
 
 `npm audit` reports 3 high, 0 critical. All three are one ReDoS in
 `path-to-regexp`, reached transitively through `@vercel/routing-utils` inside
@@ -164,7 +119,6 @@ after each adapter release.
 
 ## Launch checklist
 
-- [ ] Local Supabase up; all 30 test files pass, including the 7 integration files
 - [ ] Fresh `supabase db reset` → sign up → create → upload → buy → download
 - [ ] Embedded child product files download for the buyer
 - [ ] Webhook replayed twice produces exactly one sale and one royalty set
