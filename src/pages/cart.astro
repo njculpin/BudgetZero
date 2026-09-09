@@ -74,11 +74,6 @@ const subtotal = cartItemsWithDetails.reduce((total, item) => {
   return total + (itemPrice * item.quantity);
 }, 0);
 
-// Check if cart contains service products (for shipping address requirement)
-const hasServiceProducts = cartItemsWithDetails.some(
-  item => item.product?.product_type === 'print_service' || item.product?.product_type === 'paint_service'
-);
-
 const showAddedMessage = Astro.url.searchParams.get('added') === 'true';
 const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
 ---
