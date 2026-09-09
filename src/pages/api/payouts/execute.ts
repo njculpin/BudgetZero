@@ -3,6 +3,7 @@ import { getUserById } from '@/lib/data-access/users';
 import {
   getPayoutById,
   claimPayoutForProcessing,
+  getPayoutItems,
   settlePayout,
   releasePayout,
 } from '@/lib/data-access/payouts';
@@ -93,6 +94,36 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
           status: 409,
           headers: { 'Content-Type': 'application/json' },
         }
+      );
+    }
+
+    // Defence in depth: never wire an amount that is not backed by reserved
+    // royalty transactions. request_payout() is the only thing that should create
+    // a payout and it always writes matching items — but this route is the last
+    // gate before real money moves, and a mismatch means something upstream is
+    // wrong in a way we should not paper over.
+    const items = await getPayoutItems(payoutId);
+    const backedCents = items
+      .filter((item) => !item.voided)
+      .reduce((sum, item) => sum + item.amount_cents, 0);
+
+    if (backedCents !== payout.amount_cents) {
+      await releasePayout(
+        payoutId,
+        `Integrity check failed: amount ${payout.amount_cents} is backed by ${backedCents} in reserved royalties`
+      );
+
+      captureError(new Error('Payout amount does not match its reserved items'), {
+        operation: 'payout.integrity_check',
+        payoutId,
+        recipientUserId: payout.user_id,
+        amountCents: payout.amount_cents,
+        backedCents,
+      });
+
+      return new Response(
+        JSON.stringify({ error: 'Payout integrity check failed' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
