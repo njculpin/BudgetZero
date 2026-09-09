@@ -12,6 +12,7 @@ import {
 } from "@/lib/data-access/webhook-events";
 
 import { USE_MOCK_STRIPE } from '@/lib/payments/mock-mode';
+import { captureError, captureMessage } from "@/lib/monitoring";
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -61,7 +62,11 @@ export const POST: APIRoute = async ({ request }) => {
       event.data.object as unknown as Record<string, unknown>
     );
   } catch (error) {
-    console.error('Failed to claim webhook event:', error);
+    captureError(error, {
+      operation: 'webhook.claim_event',
+      stripeEventId: event.id,
+      eventType: event.type,
+    });
     // Return 500 so Stripe retries rather than dropping a paid order.
     return new Response('Failed to record webhook event', { status: 500 });
   }
@@ -234,8 +239,8 @@ export const POST: APIRoute = async ({ request }) => {
             { status: 200, headers: { 'Content-Type': 'application/json' } }
           );
         } catch (error) {
-          console.error('Error processing checkout:', error);
-          // Return 500 so Stripe retries
+          // Rethrow so the outer handler reports it, releases the event claim,
+          // and returns 500 to trigger a Stripe retry.
           throw error;
         }
       }
@@ -267,7 +272,13 @@ export const POST: APIRoute = async ({ request }) => {
         const sale = await getSaleByStripeChargeId(paymentIntentId);
 
         if (!sale) {
-          // This might be a charge we don't track - not an error
+          // A refund for a charge we have no record of. Not an error, but worth
+          // surfacing: it usually means a sale failed to record at purchase time.
+          captureMessage('Refund received for an unknown charge', {
+            operation: 'webhook.refund_unmatched',
+            stripeEventId: event.id,
+            paymentIntentId,
+          });
           await markWebhookEventProcessed(event.id);
           return new Response(
             JSON.stringify({ received: true, message: 'No matching sale found' }),
@@ -304,7 +315,13 @@ export const POST: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Webhook processing error:', error);
+    // A failure here means a customer has paid and fulfilment did not complete.
+    // This is the single most important thing in the app to be alerted about.
+    captureError(error, {
+      operation: 'webhook.process',
+      stripeEventId: event.id,
+      eventType: event.type,
+    });
 
     // Release the claim so Stripe's retry is able to process this event again.
     // Leaving it claimed would make the retry look like a duplicate and silently

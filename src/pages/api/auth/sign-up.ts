@@ -1,8 +1,24 @@
 import type { APIRoute } from "astro";
 import { signUp, signInWithPassword } from "../../../lib/auth";
 import { sendEmail } from "@/lib/email";
+import {
+  checkRateLimit,
+  rateLimitIdentity,
+  rateLimitedResponse,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 
-export const POST: APIRoute = async ({ request, redirect, cookies }) => {
+export const POST: APIRoute = async ({ request, clientAddress, redirect, cookies }) => {
+  // Limited by client address to slow bulk account creation.
+  const rateLimit = await checkRateLimit(
+    RATE_LIMITS.signUp,
+    rateLimitIdentity(request, clientAddress)
+  );
+
+  if (!rateLimit.allowed) {
+    return rateLimitedResponse(rateLimit);
+  }
+
   const formData = await request.formData();
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();

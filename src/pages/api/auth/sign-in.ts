@@ -1,7 +1,24 @@
 import type { APIRoute } from "astro";
 import { signInWithPassword } from "../../../lib/auth";
+import {
+  checkRateLimit,
+  rateLimitIdentity,
+  rateLimitedResponse,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request, clientAddress, cookies, redirect }) => {
+  // Sign-in is the credential-stuffing target, so it is limited by client address
+  // rather than by user: the whole point is that the attacker has no account yet.
+  const rateLimit = await checkRateLimit(
+    RATE_LIMITS.signIn,
+    rateLimitIdentity(request, clientAddress)
+  );
+
+  if (!rateLimit.allowed) {
+    return rateLimitedResponse(rateLimit);
+  }
+
   const formData = await request.formData();
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();

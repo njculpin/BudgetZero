@@ -1,7 +1,7 @@
 # Game Loopers — Ship Plan
 
 **Last updated:** 2026-09-09
-**Branch:** `fix/ship-blockers-money-path` (5 commits ahead of `main`)
+**Branch:** `fix/ship-blockers-money-path` (7 commits ahead of `main`)
 
 This file tracks **only what is still outstanding**. Completed items are deleted
 rather than checked off — if it is not written here, it is done or it was never in
@@ -14,7 +14,7 @@ scope. Git history is the record of what changed.
 | Check | Result |
 |---|---|
 | `npm run build` | ✅ green (Astro 7.3.2) |
-| `astro check` | ✅ **0 errors** across 310 files |
+| `astro check` | ✅ **0 errors** across 313 files |
 | `npm run test:run` | ✅ **338 passing**, 0 failing |
 | `npm audit` | ⚠️ 3 high, **0 critical** |
 | Integration tests (7 files) | ⛔ **never executed** — see Verification gap |
@@ -50,13 +50,13 @@ of it has touched a real Postgres.
 ```bash
 # start Docker Desktop, then:
 npm run supabase:start
-npm run supabase:reset     # applies 00007 and 00008, the new migrations
+npm run supabase:reset     # applies 00007, 00008 and 00010
 npm run test:run
 ```
 
-Migrations `00007_storage_buckets_and_policies.sql` and
-`00008_payout_reservation.sql` have **never been applied anywhere**. The payout
-work depends entirely on `request_payout` / `settle_payout` / `release_payout`
+Migrations `00007_storage_buckets_and_policies.sql`,
+`00008_payout_reservation.sql` and `00010_rate_limits.sql` have **never been
+applied anywhere**. The payout work depends entirely on `request_payout` / `settle_payout` / `release_payout`
 existing and behaving as written. Treat a clean run of `payouts.test.ts` as the
 gate on the payout rewrite.
 
@@ -77,9 +77,6 @@ here.
 
 This needs a lawyer, not a developer. It has the longest lead time of anything
 remaining — **start it now**, in parallel with everything else.
-
-Minor, fixable now: `src/pages/licenses/standard.astro` has the page title
-"Privacy - Game Loopers".
 
 ### 2. End-to-end proof of the money path
 
@@ -108,33 +105,21 @@ production build for the webhook cases.
 
 ## P1 — Before or immediately after launch
 
-### 3. No error monitoring
-
-No Sentry, no structured logging, no analytics. Production failures are invisible.
-Given that the webhook now returns 500 to trigger Stripe retries, a silent failure
-loop is a real possibility and nothing would surface it.
-
-### 4. No rate limiting
-
-Nothing throttles any route, including `/api/auth/sign-in` and `/api/upload`.
-Vercel serverless has no shared memory between invocations, so this needs a
-durable store (Upstash, or a Postgres counter table).
-
-### 5. Account deletion is unimplemented
+### 3. Account deletion is unimplemented
 
 `/api/users/delete-user.ts` was an empty file and has been deleted. GDPR requires
 this. Needs a real soft-delete cascade across users, products, documents, and a
 decision about what happens to sales and royalty records the platform must retain
 for accounting.
 
-### 6. PDF generation is stubbed
+### 4. PDF generation is stubbed
 
 `src/lib/data-access/products.ts` and
 `src/pages/api/products/generate-document-pdfs.ts` are both
 `TODO: Implement actual PDF generation`. `pdf-lib` is installed but unused.
 Decide: build it, or cut document-PDF delivery from v1 and say so in the UI.
 
-### 7. Three high-severity advisories with no upstream fix
+### 5. Three high-severity advisories with no upstream fix
 
 `npm audit` reports 3 high, 0 critical. All three are one ReDoS in
 `path-to-regexp`, reached transitively through `@vercel/routing-utils` inside
@@ -147,11 +132,6 @@ after each adapter release.
 
 ## P2 — Quality and hygiene
 
-- **Stale e2e specs.** `e2e/assets-browse.spec.ts` and `e2e/assets-crud.spec.ts`
-  test the asset model that was removed in December. `e2e/debug-auth.spec.ts`
-  looks like a scratch file. Delete all three.
-- **`src/lib/data-access/products.test.ts`** sits outside `__tests__/` unlike every
-  sibling.
 - **Multi-currency and non-US Connect** are hardcoded TODOs
   (`checkout/create-session.ts`, `connect/create-account.ts`). Fine for v1 — just
   be explicit that launch is US-only, USD-only.
@@ -159,8 +139,6 @@ after each adapter release.
   If credits return, they need a top-up flow first (they could previously only be
   earned, never bought, which is why the feature was inert) and a decision about
   whether credit-funded royalties may be withdrawn as real money.
-- **`getPendingPayouts`** in `src/lib/data-access/payouts.ts` is now superseded by
-  `getPendingPayoutsForAdmin` and has no non-test callers.
 
 ---
 
@@ -180,7 +158,7 @@ project read as more finished than it was.
   exist; components are organised by domain.
 - **`CLAUDE.md` claims "~90-95% complete toward MVP"** — revise against this file.
 - **`supabase/migrations/README.md`** describes the consolidation but predates
-  migrations 00007 and 00008.
+  migrations 00007, 00008 and 00010.
 - `CLAUDE.md` still lists Astro 5.15.1 and describes a `PaymentMethodSelector` /
   credits flow that no longer exists.
 
@@ -199,8 +177,8 @@ project read as more finished than it was.
 - [ ] ToS, Privacy Policy, and Standard License published and lawyer-reviewed
 - [ ] Refund policy published (Stripe requirement)
 - [ ] Account deletion implemented and tested
-- [ ] Error monitoring receiving events from production
-- [ ] Rate limiting on `/api/auth/*` and `/api/upload`
+- [ ] `PUBLIC_SENTRY_DSN` set and `@sentry/astro` installed, or a deliberate
+      decision to run on console logs only
 - [ ] `PUBLIC_SITE_URL` set in Vercel; receipt emails link to the production domain
 - [ ] `MOCK_STRIPE` unset in every deployed environment
 - [ ] `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_*`, `RESEND_API_KEY` set in Vercel

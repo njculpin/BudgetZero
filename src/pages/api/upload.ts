@@ -2,6 +2,12 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { setSession } from "@/lib/auth";
 import {
+  checkRateLimit,
+  rateLimitIdentity,
+  rateLimitedResponse,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
+import {
   uploadFile,
   generateFilePath,
   validateFile,
@@ -42,7 +48,7 @@ const BUCKET_MAX_SIZES: Record<UploadableBucket, number> = {
   "document-attachments": 50,
 };
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
   // Check authentication
   const accessToken = cookies.get("sb-access-token");
   const refreshToken = cookies.get("sb-refresh-token");
@@ -75,6 +81,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   const userId = session.data.user.id;
+
+  // Uploads are the most expensive authenticated action, so the quota is keyed to
+  // the user rather than the address — it should follow the account across
+  // networks, and the caller is already authenticated by this point.
+  const rateLimit = await checkRateLimit(
+    RATE_LIMITS.upload,
+    rateLimitIdentity(request, clientAddress, userId)
+  );
+
+  if (!rateLimit.allowed) {
+    return rateLimitedResponse(rateLimit);
+  }
 
   try {
     // Parse FormData

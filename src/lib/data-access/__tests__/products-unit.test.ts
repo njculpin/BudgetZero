@@ -4,12 +4,12 @@ import {
   createProduct,
   updateProduct,
   getProductById,
-} from './products';
-import { serverClient } from './client';
-import type { CreateProductParams, UpdateProductParams } from './products';
+} from '../products';
+import { serverClient } from '../client';
+import type { CreateProductParams, UpdateProductParams } from '../products';
 
 // Mock the serverClient
-vi.mock('./client', () => ({
+vi.mock('../client', () => ({
   serverClient: {
     from: vi.fn(),
   },

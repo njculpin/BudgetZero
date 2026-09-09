@@ -227,24 +227,6 @@ export async function updatePayoutStatus(
 }
 
 /**
- * Get all pending payouts (for admin)
- */
-export async function getPendingPayouts(): Promise<Payout[]> {
-  const { data, error } = await serverClient
-    .from('payouts')
-    .select('*')
-    .eq('status', 'pending')
-    .order('requested_at', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching pending payouts:', error);
-    return [];
-  }
-
-  return (data as Payout[]) || [];
-}
-
-/**
  * Calculate available balance for payout.
  *
  * Only `ready_to_pay` counts. Transactions already attached to a pending payout are

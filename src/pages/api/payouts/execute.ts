@@ -8,6 +8,7 @@ import {
 } from '@/lib/data-access/payouts';
 import { createTransfer } from '@/lib/payments';
 import { verifyAdmin, logAdminAction } from '@/lib/auth/admin';
+import { captureError } from '@/lib/monitoring';
 
 export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
   // Verify admin authorization
@@ -170,7 +171,12 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
         userAgent: request.headers.get('user-agent') || undefined,
       });
 
-      console.error('Transfer error:', transferError);
+      captureError(transferError, {
+        operation: 'payout.transfer',
+        payoutId,
+        recipientUserId: payout.user_id,
+        amountCents: payout.amount_cents,
+      });
 
       return new Response(
         JSON.stringify({
@@ -184,7 +190,7 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
       );
     }
   } catch (error) {
-    console.error('Payout execution error:', error);
+    captureError(error, { operation: 'payout.execute', userId: adminUserId });
     return new Response(
       JSON.stringify({
         error:
