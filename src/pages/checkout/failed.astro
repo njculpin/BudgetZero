@@ -13,7 +13,6 @@ const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
 
 let currentUser = null;
-let userCredits = 0;
 
 if (accessToken && refreshToken) {
   try {
@@ -26,7 +25,6 @@ if (accessToken && refreshToken) {
       const user = await getUserById(session.data.user.id);
       if (user) {
         currentUser = user;
-        userCredits = user.credits_balance || 0;
       }
     }
   } catch (error) {
@@ -121,14 +119,6 @@ const errorInfo = errorMessages[errorCode] || errorMessages.unknown;
                   <a href="/cart">
                     <Button variant="primary" size="lg">
                       <span slot="text">Try Again</span>
-                    </Button>
-                  </a>
-                )}
-
-                {currentUser && userCredits > 0 && (
-                  <a href="/cart?use_credits=true">
-                    <Button variant="outline" size="lg">
-                      <span slot="text">Use Credits ({userCredits.toLocaleString()} available)</span>
                     </Button>
                   </a>
                 )}
