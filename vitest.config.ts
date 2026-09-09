@@ -1,5 +1,5 @@
-/// <reference types="vitest/config" />
 import { getViteConfig } from 'astro/config';
+import type { ViteUserConfig } from 'vitest/config';
 import dotenv from 'dotenv';
 
 /**
@@ -13,7 +13,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env.test' });
 
-export default getViteConfig({
+const testConfig: { test: ViteUserConfig['test'] } = {
   test: {
     globals: true,
     environment: 'jsdom',
@@ -36,4 +36,6 @@ export default getViteConfig({
       ],
     },
   },
-});
+};
+
+export default getViteConfig(testConfig as Parameters<typeof getViteConfig>[0]);
