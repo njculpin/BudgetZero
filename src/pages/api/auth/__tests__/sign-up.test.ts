@@ -45,7 +45,7 @@ describe('POST /api/auth/sign-up', () => {
     });
 
     // Mock successful email sending by default
-    vi.mocked(email.sendEmail).mockResolvedValue(undefined);
+    vi.mocked(email.sendEmail).mockResolvedValue({ success: true });
   });
 
   afterEach(() => {

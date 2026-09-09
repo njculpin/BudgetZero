@@ -14,7 +14,7 @@ import { createProduct } from '../products';
 
 const supabase = createClient(
   import.meta.env.PUBLIC_SUPABASE_URL,
-  import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY,
+  (import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!,
   {
     auth: {
       autoRefreshToken: false,
@@ -168,13 +168,13 @@ describe('Cart Data Access Layer', () => {
         email_confirm: true,
       });
 
-      const emptyCart = await getOrCreateCart(user2Data!.user.id);
+      const emptyCart = await getOrCreateCart(user2Data!.user!.id);
       const items = await getCartItems(emptyCart!.id);
 
       expect(items).toEqual([]);
 
       // Clean up
-      await supabase.auth.admin.deleteUser(user2Data!.user.id);
+      await supabase.auth.admin.deleteUser(user2Data!.user!.id);
     });
 
     it('should order items by created_at descending', async () => {
@@ -294,11 +294,11 @@ describe('Cart Data Access Layer', () => {
         email_confirm: true,
       });
 
-      const count = await getCartItemCount(user3Data!.user.id);
+      const count = await getCartItemCount(user3Data!.user!.id);
       expect(count).toBe(0);
 
       // Clean up
-      await supabase.auth.admin.deleteUser(user3Data!.user.id);
+      await supabase.auth.admin.deleteUser(user3Data!.user!.id);
     });
 
     it('should update count when items are added/removed', async () => {

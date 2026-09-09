@@ -435,19 +435,15 @@ describe('Notification API Endpoints', () => {
       const updatedSettings: NotificationSettings = {
         id: 'settings-1',
         user_id: 'user-1',
-        email_asset_changes: false,
         email_product_conflicts: true,
         email_sales: true,
         email_royalty_payments: true,
         email_document_shares: true,
-        email_jam_updates: true,
         email_marketing: false,
-        inapp_asset_changes: true,
         inapp_product_conflicts: true,
         inapp_sales: true,
         inapp_royalty_payments: true,
         inapp_document_shares: true,
-        inapp_jam_updates: true,
         push_enabled: false,
         push_sales: false,
         push_royalty_payments: false,
@@ -458,13 +454,9 @@ describe('Notification API Endpoints', () => {
       vi.mocked(updateNotificationSettings).mockResolvedValue(updatedSettings);
 
       const result = await updateNotificationSettings('user-1', {
-        email_asset_changes: false,
-        email_jam_updates: true,
       });
 
       expect(updateNotificationSettings).toHaveBeenCalledWith('user-1', {
-        email_asset_changes: false,
-        email_jam_updates: true,
       });
       expect(result).toEqual(updatedSettings);
     });
@@ -484,11 +476,9 @@ describe('Notification API Endpoints', () => {
     it('should validate settings payload', async () => {
       // Test would verify Zod schema validation if implemented
       const invalidSettings = {
-        email_asset_changes: 'invalid', // Should be boolean
       };
 
       // Endpoint should validate and reject invalid data
-      expect(typeof invalidSettings.email_asset_changes).not.toBe('boolean');
     });
   });
 

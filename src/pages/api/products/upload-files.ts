@@ -89,7 +89,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       // Upload to storage
       const uploadResult = await uploadFile({
-        bucket: "asset-files",
+        bucket: "product-files",
         path: filePath,
         file,
         accessToken: accessToken.value,

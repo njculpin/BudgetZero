@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from "astro";
-import { getSession } from "@/lib/auth";
+import { requireUserId } from "@/lib/auth/require-user";
 import { markNotificationAsRead, getNotificationById } from "@/lib/data-access/notifications";
 
 export const POST: APIRoute = async ({ params, cookies, redirect, request }) => {
@@ -15,25 +15,15 @@ export const POST: APIRoute = async ({ params, cookies, redirect, request }) => 
   }
 
   // Authenticate user
-  const accessToken = cookies.get("sb-access-token");
-  const refreshToken = cookies.get("sb-refresh-token");
+  const userId = await requireUserId(cookies);
 
-  if (!accessToken || !refreshToken) {
-    return redirect("/sign-in");
-  }
-
-  const session = await getSession(
-    accessToken.value,
-    refreshToken.value
-  );
-
-  if (!session || !session.user) {
+  if (!userId) {
     return redirect("/sign-in");
   }
 
   // Verify notification belongs to user
   const notification = await getNotificationById(id);
-  if (!notification || notification.user_id !== session.user.id) {
+  if (!notification || notification.user_id !== userId) {
     return redirect("/notifications");
   }
 

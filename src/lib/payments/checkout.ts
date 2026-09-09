@@ -10,8 +10,7 @@
 // import { stripe } from './client'; // COMMENTED OUT - Using mock mode
 import type Stripe from 'stripe';
 
-// Mock mode flag - automatically enabled in development, or set MOCK_STRIPE=true
-const USE_MOCK_STRIPE = import.meta.env.MODE === 'development' || import.meta.env.MOCK_STRIPE === 'true';
+import { USE_MOCK_STRIPE } from './mock-mode';
 
 interface CheckoutSessionParams {
   lineItems: Array<{

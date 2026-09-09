@@ -4,6 +4,10 @@ import { hasUserPurchasedProduct } from "@/lib/data-access/sales";
 import { getProductFileById } from "@/lib/data-access/products";
 import { createSignedUrl } from "@/lib/storage";
 
+/** Signed download links are bearer credentials for paid content: 5 minutes is
+ *  ample to start a download and short enough that a leaked link expires fast. */
+const DOWNLOAD_URL_TTL_SECONDS = 300;
+
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   // Check authentication
   const accessToken = cookies.get("sb-access-token");
@@ -32,32 +36,37 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   // Get form data
   const formData = await request.formData();
   const fileId = formData.get("file_id") as string;
-  const productId = formData.get("product_id") as string;
 
-  if (!fileId || !productId) {
-    return new Response("Missing file_id or product_id", { status: 400 });
+  if (!fileId) {
+    return new Response("Missing file_id", { status: 400 });
   }
 
   try {
-    // Check if user has purchased this product
-    const hasPurchased = await hasUserPurchasedProduct(userId, productId);
-
-    if (!hasPurchased) {
-      return new Response("You have not purchased this product", { status: 403 });
-    }
-
-    // Get file details
+    // Get file details first. Entitlement is checked against the product this file
+    // actually belongs to, never against a product id supplied by the caller — a
+    // caller-supplied product id lets anyone pair a product they did buy with a file
+    // from one they did not.
     const file = await getProductFileById(fileId);
 
     if (!file) {
       return new Response("File not found", { status: 404 });
     }
 
-    // Create signed download URL (expires in 24 hours)
+    // Check if user has purchased the product that owns this file. This also covers
+    // files belonging to products embedded within something the user bought.
+    const hasPurchased = await hasUserPurchasedProduct(userId, file.product_id);
+
+    if (!hasPurchased) {
+      return new Response("You have not purchased this product", { status: 403 });
+    }
+
+    // Create a short-lived signed download URL. The link is a bearer credential for
+    // paid content, so it is scoped to long enough to complete a download and no
+    // longer — not the 24 hours it previously carried.
     const signedUrl = await createSignedUrl(
-      'asset-files',
+      'product-files',
       file.storage_path,
-      86400
+      DOWNLOAD_URL_TTL_SECONDS
     );
 
     if (!signedUrl) {

@@ -4,32 +4,19 @@
  */
 
 import type { APIRoute } from "astro";
-import { getSession } from "@/lib/auth";
+import { requireUserId, unauthorizedResponse } from "@/lib/auth/require-user";
 import { getEmbeddableProducts } from "@/lib/data-access/products";
 
 export const GET: APIRoute = async ({ cookies }) => {
   // Authenticate user
-  const accessToken = cookies.get("sb-access-token");
-  const refreshToken = cookies.get("sb-refresh-token");
+  const userId = await requireUserId(cookies);
 
-  if (!accessToken || !refreshToken) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const session = await getSession(accessToken.value, refreshToken.value);
-
-  if (!session || !session.user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  if (!userId) {
+    return unauthorizedResponse();
   }
 
   // Fetch embeddable products for this user
-  const products = await getEmbeddableProducts(session.user.id);
+  const products = await getEmbeddableProducts(userId);
 
   return new Response(
     JSON.stringify({

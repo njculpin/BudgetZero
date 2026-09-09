@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from "astro";
-import { getSession } from "@/lib/auth";
+import { requireUserId, unauthorizedResponse } from "@/lib/auth/require-user";
 import { deleteNotification, getNotificationById } from "@/lib/data-access/notifications";
 
 export const DELETE: APIRoute = async ({ params, cookies }) => {
@@ -18,31 +18,15 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
   }
 
   // Authenticate user
-  const accessToken = cookies.get("sb-access-token");
-  const refreshToken = cookies.get("sb-refresh-token");
+  const userId = await requireUserId(cookies);
 
-  if (!accessToken || !refreshToken) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const session = await getSession(
-    accessToken.value,
-    refreshToken.value
-  );
-
-  if (!session || !session.user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  if (!userId) {
+    return unauthorizedResponse();
   }
 
   // Verify notification belongs to user
   const notification = await getNotificationById(id);
-  if (!notification || notification.user_id !== session.user.id) {
+  if (!notification || notification.user_id !== userId) {
     return new Response(JSON.stringify({ error: "Not found" }), {
       status: 404,
       headers: { "Content-Type": "application/json" },

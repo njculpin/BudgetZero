@@ -208,7 +208,7 @@ test.describe('Product CRUD Operations', () => {
 
     // Find the asset select dropdown within the variant card
     const assetSelect = variantCard.locator('select[name="asset_id"]');
-    await assetSelect.selectOption({ label: /Test Asset for Product/ });
+    await assetSelect.selectOption({ label: 'Test Asset for Product' });
 
     // Click "Link Asset" button
     await variantCard.locator('button:has-text("Link Asset")').click();

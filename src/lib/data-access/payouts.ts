@@ -1,53 +1,99 @@
 import { serverClient } from './client';
 import type { Payout, PayoutItem, PayoutStatus } from '@/types';
 
-export interface CreatePayoutParams {
+export interface RequestPayoutParams {
   userId: string;
   amountCents: number;
-  currency?: string;
-  royaltyTransactionIds: string[];
+  minimumCents?: number;
   notes?: string;
 }
 
+export interface PayoutRequestResult {
+  payoutId: string;
+  /**
+   * The amount actually reserved. Royalty transactions are indivisible, so this can
+   * be less than the amount requested — it is the authoritative figure to show the
+   * user and must not be replaced by the request amount.
+   */
+  reservedCents: number;
+  transactionCount: number;
+}
+
 /**
- * Create a payout request
+ * Create a payout request, atomically reserving the royalty transactions that fund it.
+ *
+ * All of the selection, reservation and payout creation happens inside the
+ * `request_payout` Postgres function. Doing it here in JS would leave a window in
+ * which two concurrent requests both read the same available balance and both
+ * succeed — which is how the same earnings could be withdrawn twice.
  */
-export async function createPayout(params: CreatePayoutParams): Promise<Payout | null> {
-  const { data: payout, error } = await serverClient
-    .from('payouts')
-    .insert({
-      user_id: params.userId,
-      amount_cents: params.amountCents,
-      currency: params.currency || 'usd',
-      status: 'pending',
-      notes: params.notes,
-    })
-    .select()
-    .single();
+export async function requestPayout(
+  params: RequestPayoutParams
+): Promise<PayoutRequestResult> {
+  const { data, error } = await serverClient.rpc('request_payout', {
+    p_user_id: params.userId,
+    p_amount_cents: params.amountCents,
+    p_minimum_cents: params.minimumCents ?? 1000,
+    p_notes: params.notes ?? null,
+  });
 
   if (error) {
-    console.error('Error creating payout:', error);
-    return null;
+    throw new Error(error.message);
   }
 
-  // Create payout items linking to royalty transactions
-  if (params.royaltyTransactionIds.length > 0) {
-    const payoutItems = params.royaltyTransactionIds.map(transactionId => ({
-      payout_id: payout.id,
-      royalty_transaction_id: transactionId,
-      amount_cents: params.amountCents / params.royaltyTransactionIds.length, // Simplified, should be per-transaction
-    }));
+  const row = Array.isArray(data) ? data[0] : data;
 
-    const { error: itemsError } = await serverClient
-      .from('payout_items')
-      .insert(payoutItems);
-
-    if (itemsError) {
-      console.error('Error creating payout items:', itemsError);
-    }
+  if (!row) {
+    throw new Error('Payout request returned no result');
   }
 
-  return payout as Payout;
+  return {
+    payoutId: row.payout_id as string,
+    reservedCents: row.reserved_cents as number,
+    transactionCount: row.transaction_count as number,
+  };
+}
+
+/**
+ * Settle a payout after a successful Stripe transfer: the payout and every royalty
+ * transaction it reserved become `paid`, leaving them permanently out of the
+ * available balance.
+ */
+export async function settlePayout(
+  payoutId: string,
+  stripeTransferId: string
+): Promise<number> {
+  const { data, error } = await serverClient.rpc('settle_payout', {
+    p_payout_id: payoutId,
+    p_stripe_transfer_id: stripeTransferId,
+  });
+
+  if (error) {
+    throw new Error(`Failed to settle payout ${payoutId}: ${error.message}`);
+  }
+
+  return (data as number) ?? 0;
+}
+
+/**
+ * Release a failed payout, returning its reserved royalty transactions to the
+ * creator's available balance so the earnings are not stranded.
+ */
+export async function releasePayout(
+  payoutId: string,
+  failedReason?: string
+): Promise<number> {
+  const { data, error } = await serverClient.rpc('release_payout', {
+    p_payout_id: payoutId,
+    p_failed_reason: failedReason ?? null,
+  });
+
+  if (error) {
+    console.error(`Failed to release payout ${payoutId}:`, error);
+    return 0;
+  }
+
+  return (data as number) ?? 0;
 }
 
 /**
@@ -101,6 +147,35 @@ export async function getPayoutItems(payoutId: string): Promise<PayoutItem[]> {
   }
 
   return (data as PayoutItem[]) || [];
+}
+
+/**
+ * Move a payout from `pending` to `processing`, returning whether this caller won.
+ *
+ * The status filter makes the transition the claim itself: of two concurrent
+ * executions, only one update matches a `pending` row, so only one proceeds to
+ * transfer money.
+ */
+export async function claimPayoutForProcessing(
+  payoutId: string
+): Promise<boolean> {
+  const { data, error } = await serverClient
+    .from('payouts')
+    .update({
+      status: 'processing',
+      processed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', payoutId)
+    .eq('status', 'pending')
+    .select('id');
+
+  if (error) {
+    console.error('Error claiming payout for processing:', error);
+    return false;
+  }
+
+  return (data?.length ?? 0) > 0;
 }
 
 /**
@@ -170,18 +245,21 @@ export async function getPendingPayouts(): Promise<Payout[]> {
 }
 
 /**
- * Calculate available balance for payout (unpaid royalties)
+ * Calculate available balance for payout.
+ *
+ * Only `ready_to_pay` counts. Transactions already attached to a pending payout are
+ * `reserved` and transferred ones are `paid`, so neither can be withdrawn twice.
  */
 export async function getAvailablePayoutBalance(userId: string): Promise<{
   totalCents: number;
   transactionIds: string[];
 }> {
-  // Get all paid royalty transactions for user
   const { data: transactions, error } = await serverClient
     .from('sale_royalty_transactions')
     .select('id, calculated_cents')
     .eq('recipient_user_id', userId)
-    .eq('status', 'ready_to_pay'); // Royalties ready to be paid out
+    .eq('deleted', false)
+    .eq('status', 'ready_to_pay');
 
   if (error) {
     console.error('Error fetching available balance:', error);

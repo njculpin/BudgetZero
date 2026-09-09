@@ -4,34 +4,16 @@
  */
 
 import type { APIRoute } from "astro";
-import { getSession } from "@/lib/auth";
+import { requireUserId, unauthorizedResponse } from "@/lib/auth/require-user";
 import { getUnreadNotificationCount } from "@/lib/data-access/notifications";
 
 export const GET: APIRoute = async ({ cookies }) => {
   // Authenticate user
-  const accessToken = cookies.get("sb-access-token");
-  const refreshToken = cookies.get("sb-refresh-token");
+  const userId = await requireUserId(cookies);
 
-  if (!accessToken || !refreshToken) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  if (!userId) {
+    return unauthorizedResponse();
   }
-
-  const session = await getSession(
-    accessToken.value,
-    refreshToken.value
-  );
-
-  if (!session || !session.user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const userId = session.user.id;
 
   // Get unread count
   const count = await getUnreadNotificationCount(userId);

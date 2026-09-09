@@ -8,16 +8,13 @@ interface ParentProduct {
   cover_image_url: string | null;
   owner_name: string;
   owner_handle: string;
-  royalty_rate: number;
-  total_earnings: number;
+  /** Price inherited by the parent product when this component was embedded. */
+  inherited_price_cents: number;
+  total_earnings_cents: number;
   sales_count: number;
 }
 
-export interface EmbeddedUsageDashboardProps {
-  userId: string;
-}
-
-export default function EmbeddedUsageDashboard(props: EmbeddedUsageDashboardProps) {
+export default function EmbeddedUsageDashboard() {
   const [parentProducts, setParentProducts] = createSignal<ParentProduct[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
   const [error, setError] = createSignal("");
@@ -31,7 +28,7 @@ export default function EmbeddedUsageDashboard(props: EmbeddedUsageDashboardProp
     setError("");
 
     try {
-      const response = await fetch(`/api/products/embedded-usage?userId=${props.userId}`);
+      const response = await fetch("/api/products/embedded-usage");
 
       if (!response.ok) {
         const data = await response.json();
@@ -50,7 +47,7 @@ export default function EmbeddedUsageDashboard(props: EmbeddedUsageDashboardProp
   };
 
   const totalEarnings = () => {
-    return parentProducts().reduce((sum, product) => sum + product.total_earnings, 0);
+    return parentProducts().reduce((sum, product) => sum + product.total_earnings_cents, 0);
   };
 
   const formatCurrency = (cents: number) => {
@@ -133,8 +130,8 @@ export default function EmbeddedUsageDashboard(props: EmbeddedUsageDashboardProp
 
                   <div class="embedded-product-card__stats">
                     <div class="embedded-product-card__stat">
-                      <span class="embedded-product-card__stat-label">Your Royalty Rate</span>
-                      <span class="embedded-product-card__stat-value">{product.royalty_rate}%</span>
+                      <span class="embedded-product-card__stat-label">Your Component Price</span>
+                      <span class="embedded-product-card__stat-value">{formatCurrency(product.inherited_price_cents)}</span>
                     </div>
                     <div class="embedded-product-card__stat">
                       <span class="embedded-product-card__stat-label">Sales</span>
@@ -142,7 +139,7 @@ export default function EmbeddedUsageDashboard(props: EmbeddedUsageDashboardProp
                     </div>
                     <div class="embedded-product-card__stat embedded-product-card__stat--highlight">
                       <span class="embedded-product-card__stat-label">Earned</span>
-                      <span class="embedded-product-card__stat-value">{formatCurrency(product.total_earnings)}</span>
+                      <span class="embedded-product-card__stat-value">{formatCurrency(product.total_earnings_cents)}</span>
                     </div>
                   </div>
                 </div>

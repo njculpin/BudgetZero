@@ -19,12 +19,21 @@ describe('ProductCreatedModal Component Logic', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     originalLocation = window.location;
-    delete (window as { location?: Location }).location;
-    window.location = { ...originalLocation, href: '' } as Location;
+    // window.location is not directly assignable; redefine it so the stub can be
+    // swapped in and out. `configurable` is required for the afterEach restore.
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, href: '' },
+      writable: true,
+      configurable: true,
+    });
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+      configurable: true,
+    });
   });
 
   describe('Modal Props', () => {

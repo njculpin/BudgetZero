@@ -42,7 +42,7 @@ describe('Notification Data Access Layer', () => {
   beforeEach(async () => {
     // Get reference to mocked client
     const { serverClient } = await import('../client');
-    mockClient = serverClient as typeof mockClient;
+    mockClient = serverClient as unknown as typeof mockClient;
 
     // Reset mocks before each test
     vi.clearAllMocks();
@@ -58,12 +58,12 @@ describe('Notification Data Access Layer', () => {
         {
           id: 'notif-1',
           user_id: 'user-1',
-          title: 'Asset Price Changed',
-          message: 'Asset "Test Model" price updated',
-          entity_type: 'asset',
-          entity_id: 'asset-1',
-          action_type: 'asset_price_changed',
-          snapshot: { asset_handle: 'test-model' },
+          title: 'Product Price Changed',
+          message: 'Product "Test Model" price updated',
+          entity_type: 'product',
+          entity_id: 'product-1',
+          action_type: 'product_price_conflict',
+          snapshot: { product_handle: 'test-model' },
           delivery_type: 'inapp',
           read: false,
           read_at: null,
@@ -459,19 +459,15 @@ describe('Notification Data Access Layer', () => {
       const mockSettings: NotificationSettings = {
         id: 'settings-1',
         user_id: 'user-1',
-        email_asset_changes: true,
         email_product_conflicts: true,
         email_sales: true,
         email_royalty_payments: true,
         email_document_shares: true,
-        email_jam_updates: false,
         email_marketing: false,
-        inapp_asset_changes: true,
         inapp_product_conflicts: true,
         inapp_sales: true,
         inapp_royalty_payments: true,
         inapp_document_shares: true,
-        inapp_jam_updates: true,
         push_enabled: false,
         push_sales: false,
         push_royalty_payments: false,
@@ -497,19 +493,15 @@ describe('Notification Data Access Layer', () => {
       const mockDefaultSettings: NotificationSettings = {
         id: 'settings-new',
         user_id: 'user-new',
-        email_asset_changes: true,
         email_product_conflicts: true,
         email_sales: true,
         email_royalty_payments: true,
         email_document_shares: true,
-        email_jam_updates: false,
         email_marketing: false,
-        inapp_asset_changes: true,
         inapp_product_conflicts: true,
         inapp_sales: true,
         inapp_royalty_payments: true,
         inapp_document_shares: true,
-        inapp_jam_updates: true,
         push_enabled: false,
         push_sales: false,
         push_royalty_payments: false,
@@ -567,19 +559,15 @@ describe('Notification Data Access Layer', () => {
       const updatedSettings: NotificationSettings = {
         id: 'settings-1',
         user_id: 'user-1',
-        email_asset_changes: false, // Changed
         email_product_conflicts: true,
         email_sales: true,
         email_royalty_payments: true,
         email_document_shares: true,
-        email_jam_updates: true, // Changed
         email_marketing: false,
-        inapp_asset_changes: true,
         inapp_product_conflicts: true,
         inapp_sales: true,
         inapp_royalty_payments: true,
         inapp_document_shares: true,
-        inapp_jam_updates: true,
         push_enabled: false,
         push_sales: false,
         push_royalty_payments: false,
@@ -597,13 +585,9 @@ describe('Notification Data Access Layer', () => {
       mockClient.from.mockReturnValue(mockQuery);
 
       const result = await updateNotificationSettings('user-1', {
-        email_asset_changes: false,
-        email_jam_updates: true,
       });
 
       expect(mockQuery.update).toHaveBeenCalledWith({
-        email_asset_changes: false,
-        email_jam_updates: true,
       });
       expect(mockQuery.eq).toHaveBeenCalledWith('user_id', 'user-1');
       expect(result).toEqual(updatedSettings);

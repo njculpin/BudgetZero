@@ -1,13 +1,17 @@
 import type { APIRoute } from "astro";
 import { verifyWebhookSignature, type Stripe } from "@/lib/payments";
-import { createSale, createSaleItem, getSaleByStripeChargeId, refundSale, createSaleItemAsset } from "@/lib/data-access/sales";
+import { createSale, createSaleItem, getSaleByStripeChargeId, refundSale } from "@/lib/data-access/sales";
 import { getCartItems, clearCart } from "@/lib/data-access/cart";
 import { getProductById, getProductPriceBreakdown, getProductFiles, getProductComponents } from "@/lib/data-access/products";
 import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
 import { markSaleRoyaltiesAsRefunded, createRoyaltyTransactionsForProduct } from "@/lib/data-access/royalties";
+import {
+  claimWebhookEvent,
+  markWebhookEventProcessed,
+  releaseWebhookEvent,
+} from "@/lib/data-access/webhook-events";
 
-// Mock mode flag - automatically enabled in development, or set MOCK_STRIPE=true
-const USE_MOCK_STRIPE = import.meta.env.MODE === 'development' || import.meta.env.MOCK_STRIPE === 'true';
+import { USE_MOCK_STRIPE } from '@/lib/payments/mock-mode';
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -41,6 +45,32 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(
       `Webhook Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       { status: 400 }
+    );
+  }
+
+  // Claim the event before doing any work. Stripe retries on every non-2xx response,
+  // and `checkout.session.completed` is not naturally idempotent — reprocessing it
+  // creates a duplicate sale and a duplicate set of royalty obligations for a single
+  // payment. The claim is won or lost in the database via a UNIQUE constraint, so
+  // concurrent deliveries of the same event cannot both proceed.
+  let claimed: boolean;
+  try {
+    claimed = await claimWebhookEvent(
+      event.id,
+      event.type,
+      event.data.object as unknown as Record<string, unknown>
+    );
+  } catch (error) {
+    console.error('Failed to claim webhook event:', error);
+    // Return 500 so Stripe retries rather than dropping a paid order.
+    return new Response('Failed to record webhook event', { status: 500 });
+  }
+
+  if (!claimed) {
+    // Already processed (or in flight). Acknowledge so Stripe stops retrying.
+    return new Response(
+      JSON.stringify({ received: true, duplicate: true }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
@@ -147,45 +177,30 @@ export const POST: APIRoute = async ({ request }) => {
               priceCents: priceBreakdown.totalPrice * cartItem.quantity,
             });
 
-            // 3. Grant download access by creating sale_item_asset record
-            // This treats the product as an asset for backward compatibility with download system
-            const saleItemAsset = await createSaleItemAsset(saleItem.id, product.id);
-
-            if (!saleItemAsset) {
-              console.error(`Failed to create download access for product: ${product.id}`);
-              continue;
-            }
-
-            // 4. Create royalty transactions for product-level royalties
-            const productRoyalties = await createRoyaltyTransactionsForProduct({
+            // 3. Create royalty transactions for product-level royalties.
+            //
+            // Download access needs no record of its own: it is derived from the
+            // sale item above, and from `product_components` for anything embedded
+            // within the product (see `getPurchasedProductIds`). The previous
+            // `sale_item_assets` join table was dropped in the December schema
+            // consolidation.
+            await createRoyaltyTransactionsForProduct({
               saleId: sale.id,
               saleItemId: saleItem.id,
-              saleItemAssetId: saleItemAsset.id,
               productId: product.id,
               saleItemPriceCents: priceBreakdown.totalPrice,
-              currency: 'usd',
             });
 
-            // 5. Create royalty transactions for embedded products
+            // 4. Create royalty transactions for each embedded component, priced at
+            // the amount inherited when the component was embedded.
             const components = await getProductComponents(product.id);
 
             for (const component of components) {
-              // Create sale_item_asset for embedded product
-              const embeddedSaleItemAsset = await createSaleItemAsset(saleItem.id, component.child_product_id);
-
-              if (!embeddedSaleItemAsset) {
-                console.error(`Failed to create download access for embedded product: ${component.child_product_id}`);
-                continue;
-              }
-
-              // Create royalty transactions for the embedded product
-              const embeddedRoyalties = await createRoyaltyTransactionsForProduct({
+              await createRoyaltyTransactionsForProduct({
                 saleId: sale.id,
                 saleItemId: saleItem.id,
-                saleItemAssetId: embeddedSaleItemAsset.id,
                 productId: component.child_product_id,
                 saleItemPriceCents: component.inherited_price_cents,
-                currency: 'usd',
               });
             }
           }
@@ -193,10 +208,15 @@ export const POST: APIRoute = async ({ request }) => {
           // 6. Clear the cart
           await clearCart(cartId);
 
-          // 7. Send purchase confirmation email
-          const origin = process.env.VERCEL_URL
-            ? `https://${process.env.VERCEL_URL}`
-            : 'http://localhost:4321';
+          // 7. Send purchase confirmation email.
+          //
+          // VERCEL_URL is the per-deployment hostname, so a receipt built from it
+          // points at an immutable preview URL that will not stay meaningful. Use the
+          // configured site URL and fall back only for local development.
+          const origin =
+            import.meta.env.PUBLIC_SITE_URL ||
+            process.env.PUBLIC_SITE_URL ||
+            'http://localhost:4321';
 
           await sendPurchaseConfirmation({
             to: userEmail,
@@ -206,6 +226,8 @@ export const POST: APIRoute = async ({ request }) => {
             items: emailItems,
             purchaseUrl: `${origin}/purchases/${sale.id}`,
           });
+
+          await markWebhookEventProcessed(event.id);
 
           return new Response(
             JSON.stringify({ received: true, saleId: sale.id }),
@@ -246,6 +268,7 @@ export const POST: APIRoute = async ({ request }) => {
 
         if (!sale) {
           // This might be a charge we don't track - not an error
+          await markWebhookEventProcessed(event.id);
           return new Response(
             JSON.stringify({ received: true, message: 'No matching sale found' }),
             { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -261,6 +284,8 @@ export const POST: APIRoute = async ({ request }) => {
         // Mark all pending royalty transactions as refunded
         const refundedCount = await markSaleRoyaltiesAsRefunded(sale.id);
 
+        await markWebhookEventProcessed(event.id);
+
         return new Response(
           JSON.stringify({ received: true, saleId: sale.id, royaltiesRefunded: refundedCount }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -272,12 +297,20 @@ export const POST: APIRoute = async ({ request }) => {
         break;
     }
 
+    await markWebhookEventProcessed(event.id);
+
     return new Response(
       JSON.stringify({ received: true }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Webhook processing error:', error);
+
+    // Release the claim so Stripe's retry is able to process this event again.
+    // Leaving it claimed would make the retry look like a duplicate and silently
+    // abandon a paid order partway through fulfilment.
+    await releaseWebhookEvent(event.id);
+
     return new Response(
       `Webhook Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       { status: 500 }

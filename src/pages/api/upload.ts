@@ -7,37 +7,39 @@ import {
   validateFile,
   IMAGE_TYPES,
   DOCUMENT_TYPES,
-  ASSET_FILE_TYPES,
 } from "@/lib/storage";
-import type { StorageBucket } from "@/lib/storage";
 
+/**
+ * Buckets this generic endpoint may write to.
+ *
+ * `product-files` is deliberately excluded: paid product files must go through
+ * `/api/products/upload-files`, which verifies the caller owns the product before
+ * writing. Allowing them here would let any authenticated user seed the paid-file
+ * bucket without an ownership check.
+ */
 const uploadSchema = z.object({
   bucket: z.enum([
-    "asset-files",
-    "asset-images",
     "product-images",
     "user-avatars",
-    "documents",
+    "document-attachments",
   ]),
   prefix: z.string().optional(),
 });
 
+type UploadableBucket = z.infer<typeof uploadSchema>["bucket"];
+
 // Define allowed file types per bucket
-const BUCKET_FILE_TYPES: Record<StorageBucket, string[]> = {
-  "asset-files": ASSET_FILE_TYPES,
-  "asset-images": IMAGE_TYPES,
+const BUCKET_FILE_TYPES: Record<UploadableBucket, string[]> = {
   "product-images": IMAGE_TYPES,
   "user-avatars": IMAGE_TYPES,
-  documents: DOCUMENT_TYPES,
+  "document-attachments": DOCUMENT_TYPES,
 };
 
 // Define max file sizes per bucket (in MB)
-const BUCKET_MAX_SIZES: Record<StorageBucket, number> = {
-  "asset-files": 100,
-  "asset-images": 10,
+const BUCKET_MAX_SIZES: Record<UploadableBucket, number> = {
   "product-images": 10,
   "user-avatars": 5,
-  documents: 50,
+  "document-attachments": 50,
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {

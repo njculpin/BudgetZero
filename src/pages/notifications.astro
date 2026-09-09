@@ -51,8 +51,6 @@ function getEntityUrl(notification: typeof notifications[0]): string | null {
   switch (notification.entity_type) {
     case 'product':
       return `/products/${handle}`;
-    case 'asset':
-      return `/assets/${handle}`;
     case 'document':
       return `/documents/${handle}`;
     case 'sale':

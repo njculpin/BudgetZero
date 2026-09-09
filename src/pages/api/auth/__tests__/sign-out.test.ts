@@ -47,7 +47,7 @@ describe('POST /api/auth/sign-out', () => {
 
   describe('POST Method', () => {
     it('should sign out user, delete cookies, and redirect to homepage', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       const response = await POST({
         cookies: mockCookies,
@@ -67,7 +67,7 @@ describe('POST /api/auth/sign-out', () => {
     });
 
     it('should delete cookies in correct order', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await POST({
         cookies: mockCookies,
@@ -80,7 +80,7 @@ describe('POST /api/auth/sign-out', () => {
     });
 
     it('should specify path "/" for cookie deletion', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await POST({
         cookies: mockCookies,
@@ -113,6 +113,7 @@ describe('POST /api/auth/sign-out', () => {
 
       vi.mocked(auth.signOut).mockImplementation(async () => {
         callOrder.push('signOut');
+        return { error: null };
       });
 
       const originalDelete = mockCookies.delete;
@@ -135,7 +136,7 @@ describe('POST /api/auth/sign-out', () => {
 
   describe('GET Method', () => {
     it('should support GET method for backward compatibility', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       const response = await GET({
         cookies: mockCookies,
@@ -154,7 +155,7 @@ describe('POST /api/auth/sign-out', () => {
     });
 
     it('should have identical behavior to POST method', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       // Call both methods
       await POST({
@@ -163,7 +164,7 @@ describe('POST /api/auth/sign-out', () => {
       } as any);
 
       const postCallCount = {
-        signOut: auth.signOut.mock.calls.length,
+        signOut: vi.mocked(auth.signOut).mock.calls.length,
         delete: mockCookies.delete.mock.calls.length,
         redirect: mockRedirect.mock.calls.length,
       };
@@ -176,7 +177,7 @@ describe('POST /api/auth/sign-out', () => {
       } as any);
 
       const getCallCount = {
-        signOut: auth.signOut.mock.calls.length,
+        signOut: vi.mocked(auth.signOut).mock.calls.length,
         delete: mockCookies.delete.mock.calls.length,
         redirect: mockRedirect.mock.calls.length,
       };
@@ -186,7 +187,7 @@ describe('POST /api/auth/sign-out', () => {
     });
 
     it('should delete cookies with correct parameters', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await GET({
         cookies: mockCookies,
@@ -201,7 +202,7 @@ describe('POST /api/auth/sign-out', () => {
 
   describe('Redirect Behavior', () => {
     it('should redirect to "/" after sign-out', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await POST({
         cookies: mockCookies,
@@ -213,7 +214,7 @@ describe('POST /api/auth/sign-out', () => {
     });
 
     it('should redirect to homepage not /products', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await POST({
         cookies: mockCookies,
@@ -226,7 +227,7 @@ describe('POST /api/auth/sign-out', () => {
     });
 
     it('should return redirect response', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       const response = await POST({
         cookies: mockCookies,
@@ -240,7 +241,7 @@ describe('POST /api/auth/sign-out', () => {
 
   describe('Cookie Cleanup', () => {
     it('should delete both access and refresh tokens', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await POST({
         cookies: mockCookies,
@@ -253,7 +254,7 @@ describe('POST /api/auth/sign-out', () => {
     });
 
     it('should use "/" path for cookie deletion to match set path', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await POST({
         cookies: mockCookies,
@@ -267,7 +268,7 @@ describe('POST /api/auth/sign-out', () => {
     });
 
     it('should not call cookies.set (only delete)', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await POST({
         cookies: mockCookies,
@@ -282,7 +283,7 @@ describe('POST /api/auth/sign-out', () => {
 
   describe('Supabase Integration', () => {
     it('should call signOut from auth module', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await POST({
         cookies: mockCookies,
@@ -293,7 +294,7 @@ describe('POST /api/auth/sign-out', () => {
     });
 
     it('should call signOut with no arguments', async () => {
-      vi.mocked(auth.signOut).mockResolvedValue(undefined);
+      vi.mocked(auth.signOut).mockResolvedValue({ error: null });
 
       await POST({
         cookies: mockCookies,
@@ -311,6 +312,7 @@ describe('POST /api/auth/sign-out', () => {
         // Simulate async delay
         await new Promise((resolve) => setTimeout(resolve, 10));
         signOutCompleted = true;
+        return { error: null };
       });
 
       await POST({
