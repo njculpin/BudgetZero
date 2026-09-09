@@ -259,8 +259,20 @@ export async function createRoyaltyTransactionsForProduct(params: {
 }
 
 /**
- * Mark all royalty transactions for a sale as refunded
- * This prevents payouts for refunded transactions
+ * Mark a refunded sale's royalty transactions as refunded, so they are never paid.
+ *
+ * Covers both `ready_to_pay` and `reserved`. A creator may already have requested
+ * a payout by the time the buyer refunds, which moves those rows to `reserved` —
+ * matching only `ready_to_pay` would silently skip them and the platform would go
+ * on to pay royalties on a sale it had refunded.
+ *
+ * `paid` is deliberately excluded: that money has already left via Stripe and
+ * cannot be reversed by a status change. Those need a clawback, which is a
+ * separate decision.
+ *
+ * @returns the number of transactions refunded. If a pending payout referenced any
+ * of them, its amount no longer matches its items and it needs releasing — see the
+ * caller in the charge.refunded webhook branch.
  */
 export async function markSaleRoyaltiesAsRefunded(
   saleId: string
@@ -272,7 +284,7 @@ export async function markSaleRoyaltiesAsRefunded(
       updated_at: new Date().toISOString(),
     })
     .eq('sale_id', saleId)
-    .eq('status', 'ready_to_pay')
+    .in('status', ['ready_to_pay', 'reserved'])
     .select('id');
 
   if (error) {

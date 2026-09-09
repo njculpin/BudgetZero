@@ -96,9 +96,15 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
       );
     }
 
+    // The Stripe transfer is the point of no return. Everything before it may be
+    // undone by releasing the reservation; nothing after it may be, because the
+    // money has already moved. Keeping settlement inside the transfer's catch
+    // meant a settlement failure would release the reservation and let the same
+    // earnings be withdrawn a second time.
+    let transfer: Awaited<ReturnType<typeof createTransfer>>;
+
     try {
-      // Create Stripe transfer
-      const transfer = await createTransfer(
+      transfer = await createTransfer(
         recipient.stripe_connect_account_id,
         payout.amount_cents,
         payout.currency,
@@ -107,55 +113,22 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
           user_id: payout.user_id,
         }
       );
-
-      // Mark the payout paid AND transition every royalty transaction it reserved
-      // to 'paid'. Updating only the payout row would leave those transactions
-      // reserved forever, or — before reservation existed — back in the available
-      // balance to be withdrawn a second time.
-      const settledCount = await settlePayout(payoutId, transfer.id);
-
-      // Log admin action
-      await logAdminAction({
-        userId: adminUserId,
-        action: 'payout.execute',
-        resourceType: 'payout',
-        resourceId: payoutId,
-        details: {
-          transferId: transfer.id,
-          amountCents: payout.amount_cents,
-          currency: payout.currency,
-          recipientUserId: payout.user_id,
-          royaltyTransactionsSettled: settledCount,
-        },
-        ipAddress: clientAddress,
-        userAgent: request.headers.get('user-agent') || undefined,
-      });
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          payoutId,
-          transferId: transfer.id,
-          royaltyTransactionsSettled: settledCount,
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
     } catch (transferError) {
-      // Transfer failed, update payout status
       const errorMessage =
         transferError instanceof Error
           ? transferError.message
           : 'Transfer failed';
 
-      // Return the reserved royalty transactions to available balance and mark the
-      // payout failed. Without this the creator's earnings stay locked in a payout
-      // that will never complete.
+      // No money moved. Return the reserved royalties to the creator's balance.
       await releasePayout(payoutId, errorMessage);
 
-      // Log failed admin action
+      captureError(transferError, {
+        operation: 'payout.transfer',
+        payoutId,
+        recipientUserId: payout.user_id,
+        amountCents: payout.amount_cents,
+      });
+
       await logAdminAction({
         userId: adminUserId,
         action: 'payout.execute.failed',
@@ -171,13 +144,6 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
         userAgent: request.headers.get('user-agent') || undefined,
       });
 
-      captureError(transferError, {
-        operation: 'payout.transfer',
-        payoutId,
-        recipientUserId: payout.user_id,
-        amountCents: payout.amount_cents,
-      });
-
       return new Response(
         JSON.stringify({
           error: 'Transfer failed',
@@ -189,6 +155,74 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
         }
       );
     }
+
+    // ---- Past this line the money has moved. Never release. ----
+
+    let settledCount = 0;
+
+    try {
+      settledCount = await settlePayout(payoutId, transfer.id);
+    } catch (settlementError) {
+      // The creator has been paid but our records do not show it. Releasing here
+      // would hand them the same earnings twice, so the reservation stays put and
+      // this is escalated for manual reconciliation instead.
+      captureError(settlementError, {
+        operation: 'payout.settle_after_successful_transfer',
+        payoutId,
+        transferId: transfer.id,
+        recipientUserId: payout.user_id,
+        amountCents: payout.amount_cents,
+        severity: 'needs manual reconciliation',
+      });
+
+      return new Response(
+        JSON.stringify({
+          error: 'Transfer succeeded but settlement failed',
+          details:
+            'The recipient has been paid. Do not retry — reconcile this payout manually.',
+          payoutId,
+          transferId: transfer.id,
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Audit logging must not be able to undo a completed payout.
+    try {
+      await logAdminAction({
+        userId: adminUserId,
+        action: 'payout.execute',
+        resourceType: 'payout',
+        resourceId: payoutId,
+        details: {
+          transferId: transfer.id,
+          amountCents: payout.amount_cents,
+          currency: payout.currency,
+          recipientUserId: payout.user_id,
+          royaltyTransactionsSettled: settledCount,
+        },
+        ipAddress: clientAddress,
+        userAgent: request.headers.get('user-agent') || undefined,
+      });
+    } catch (logError) {
+      captureError(logError, { operation: 'payout.audit_log', payoutId });
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        payoutId,
+        transferId: transfer.id,
+        royaltyTransactionsSettled: settledCount,
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     captureError(error, { operation: 'payout.execute', userId: adminUserId });
     return new Response(

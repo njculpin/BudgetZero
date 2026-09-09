@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { verifyWebhookSignature, type Stripe } from "@/lib/payments";
-import { createSale, createSaleItem, getSaleByStripeChargeId, refundSale } from "@/lib/data-access/sales";
+import { createSale, createSaleItem, getSaleByStripeChargeId, getSaleItems, refundSale } from "@/lib/data-access/sales";
 import { getCartItems, clearCart } from "@/lib/data-access/cart";
 import { getProductById, getProductPriceBreakdown, getProductComponents } from "@/lib/data-access/products";
 import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
@@ -90,44 +90,74 @@ export const POST: APIRoute = async ({ request }) => {
         const cartId = session.metadata?.cartId;
         const userEmail = session.customer_email;
 
+        // A malformed session cannot be fixed by retrying, and Stripe does not
+        // retry 4xx anyway. Each of these means a customer paid and we cannot
+        // fulfil — so alert, and mark the event processed so it does not sit in
+        // the claim table forever looking like work still to do.
+        const failValidation = async (reason: string) => {
+          captureError(new Error(reason), {
+            operation: 'webhook.checkout_validation',
+            stripeEventId: event.id,
+            sessionId: session.id,
+            paymentIntent: String(session.payment_intent ?? ''),
+            amountTotal: session.amount_total ?? 0,
+          });
+          await markWebhookEventProcessed(event.id);
+          return new Response(reason, { status: 400 });
+        };
+
         if (!userId || !cartId) {
-          console.error('Missing userId or cartId in session metadata');
-          return new Response('Missing metadata', { status: 400 });
+          return await failValidation('Missing userId or cartId in session metadata');
         }
 
         if (!userEmail) {
-          console.error('Missing customer email');
-          return new Response('Missing customer email', { status: 400 });
+          return await failValidation('Missing customer email');
         }
 
         if (!session.amount_total) {
-          console.error('Missing amount total');
-          return new Response('Missing amount total', { status: 400 });
+          return await failValidation('Missing amount total');
         }
 
         // Get cart items
         const cartItems = await getCartItems(cartId);
 
         if (cartItems.length === 0) {
-          console.error('Cart is empty');
-          return new Response('Cart is empty', { status: 400 });
+          return await failValidation('Cart is empty at fulfilment time');
         }
 
+        const stripeChargeId = (session.payment_intent as string) || session.id;
+
         try {
-          // 1. Create Sale record
-          const sale = await createSale({
-            userId,
-            userEmail,
-            priceCents: session.amount_total,
-            taxCents: 0,
-            currency: session.currency || 'usd',
-            stripeChargeId: session.payment_intent as string || session.id,
-            status: 'paid',
-          });
+          // 1. Find or create the Sale record.
+          //
+          // This must be find-OR-create, not create. `sales.stripe_charge_id` is
+          // UNIQUE, so if a previous attempt created the sale and then failed
+          // partway through fulfilment, a plain insert here returns null, throws,
+          // releases the claim, and the next retry does exactly the same thing —
+          // forever. Resuming from the existing sale lets a retry finish the job.
+          let sale = await getSaleByStripeChargeId(stripeChargeId);
+
+          if (!sale) {
+            sale = await createSale({
+              userId,
+              userEmail,
+              priceCents: session.amount_total,
+              taxCents: 0,
+              currency: session.currency || 'usd',
+              stripeChargeId,
+              status: 'paid',
+            });
+          }
 
           if (!sale) {
             throw new Error('Failed to create sale record');
           }
+
+          // Line items already fulfilled by a previous attempt, so a resumed run
+          // does not duplicate them.
+          const alreadyFulfilled = new Set(
+            (await getSaleItems(sale.id)).map((item) => item.product_id)
+          );
 
           // Collect items for email
           const emailItems: Array<{
@@ -139,10 +169,22 @@ export const POST: APIRoute = async ({ request }) => {
           // 2. Create SaleItems and link files for each cart item
           for (const cartItem of cartItems) {
             // Get product details and pricing
+            // Resumed run: this line item was already fulfilled.
+            if (alreadyFulfilled.has(cartItem.product_id)) {
+              continue;
+            }
+
             const product = await getProductById(cartItem.product_id);
 
             if (!product) {
-              console.error(`Product not found: ${cartItem.product_id}`);
+              // The customer paid for something we can no longer resolve. Dropping
+              // it silently ships an incomplete order with a cheerful receipt.
+              captureError(new Error('Product not found during fulfilment'), {
+                operation: 'webhook.fulfil_item',
+                saleId: sale.id,
+                productId: cartItem.product_id,
+                stripeEventId: event.id,
+              });
               continue;
             }
 
@@ -150,7 +192,12 @@ export const POST: APIRoute = async ({ request }) => {
             const priceBreakdown = await getProductPriceBreakdown(product.id);
 
             if (priceBreakdown.totalPrice === 0) {
-              console.error(`Product has no price: ${product.id}`);
+              captureMessage('Product had no price at fulfilment time', {
+                operation: 'webhook.fulfil_item',
+                saleId: sale.id,
+                productId: product.id,
+                stripeEventId: event.id,
+              });
               continue;
             }
 
@@ -171,8 +218,12 @@ export const POST: APIRoute = async ({ request }) => {
             });
 
             if (!saleItem) {
-              console.error(`Failed to create sale item for cart item: ${cartItem.id}`);
-              continue;
+              // Do not continue past this: without a sale item the buyer has no
+              // entitlement to the product they paid for. Throwing routes through
+              // the outer catch, which releases the claim so a retry can resume.
+              throw new Error(
+                `Failed to create sale item for product ${product.id} on sale ${sale.id}`
+              );
             }
 
             // Add to email items
@@ -223,14 +274,19 @@ export const POST: APIRoute = async ({ request }) => {
             process.env.PUBLIC_SITE_URL ||
             'http://localhost:4321';
 
-          await sendPurchaseConfirmation({
-            to: userEmail,
-            saleId: sale.id,
-            totalCents: session.amount_total,
-            currency: session.currency || 'usd',
-            items: emailItems,
-            purchaseUrl: `${origin}/purchases/${sale.id}`,
-          });
+          // On a resumed run every line item was already fulfilled, so emailItems
+          // is empty and the receipt went out on the earlier attempt. Sending again
+          // would deliver a second confirmation listing nothing.
+          if (emailItems.length > 0) {
+            await sendPurchaseConfirmation({
+              to: userEmail,
+              saleId: sale.id,
+              totalCents: session.amount_total,
+              currency: session.currency || 'usd',
+              items: emailItems,
+              purchaseUrl: `${origin}/purchases/${sale.id}`,
+            });
+          }
 
           await markWebhookEventProcessed(event.id);
 
