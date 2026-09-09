@@ -1,7 +1,7 @@
 # Game Loopers — Ship Plan
 
 **Last updated:** 2026-09-09
-**Branch:** `fix/ship-blockers-money-path` (8 commits ahead of `main`)
+**Branch:** `fix/ship-blockers-money-path` (9 commits ahead of `main`)
 
 This file tracks **only what is still outstanding**. Completed items are deleted
 rather than checked off — if it is not written here, it is done or it was never in
@@ -14,8 +14,8 @@ scope. Git history is the record of what changed.
 | Check | Result |
 |---|---|
 | `npm run build` | ✅ green (Astro 7.3.2) |
-| `astro check` | ✅ **0 errors** across 313 files |
-| `npm run test:run` | ✅ **338 passing**, 0 failing |
+| `astro check` | ✅ **0 errors** across 318 files |
+| `npm run test:run` | ✅ **378 passing**, 0 failing |
 | `npm audit` | ⚠️ 3 high, **0 critical** |
 | Integration tests (7 files) | ⛔ **never executed** — see Verification gap |
 | Purchase → download | ✅ repaired, unverified against a live DB |
@@ -105,21 +105,37 @@ production build for the webhook cases.
 
 ## P1 — Before or immediately after launch
 
-### 3. Account deletion is unimplemented
+### 3. Untested code on the money path
+
+40 tests now cover download entitlement, component expansion, webhook idempotency,
+`requireUserId` and rate limiting — each verified by mutation testing (the bug was
+reintroduced and the test confirmed to fail). These still have **no unit coverage**
+and can only be reached through the Docker-dependent integration suite:
+
+- `payouts/request-payout.ts` and `payouts/execute.ts` — the reserve → settle →
+  release lifecycle. The riskiest untested code left, because it moves money.
+- `webhooks/stripe.ts` fulfilment loop — covered only by `stripe.test.ts`, which
+  needs a live database.
+- `lib/payments/mock-mode.ts` — the production hard-fail. Awkward to unit test
+  because it throws at module load; worth an integration assertion instead.
+- `lib/storage/uploads.ts` — the anon/service-role client split, which is exactly
+  where two bugs were just found.
+
+### 4. Account deletion is unimplemented
 
 `/api/users/delete-user.ts` was an empty file and has been deleted. GDPR requires
 this. Needs a real soft-delete cascade across users, products, documents, and a
 decision about what happens to sales and royalty records the platform must retain
 for accounting.
 
-### 4. PDF generation is stubbed
+### 5. PDF generation is stubbed
 
 `src/lib/data-access/products.ts` and
 `src/pages/api/products/generate-document-pdfs.ts` are both
 `TODO: Implement actual PDF generation`. `pdf-lib` is installed but unused.
 Decide: build it, or cut document-PDF delivery from v1 and say so in the UI.
 
-### 5. Three high-severity advisories with no upstream fix
+### 6. Three high-severity advisories with no upstream fix
 
 `npm audit` reports 3 high, 0 critical. All three are one ReDoS in
 `path-to-regexp`, reached transitively through `@vercel/routing-utils` inside
@@ -132,6 +148,10 @@ after each adapter release.
 
 ## P2 — Quality and hygiene
 
+- **`uploadFile` returns a public URL for private buckets.** `product_files.file_url`
+  therefore holds a URL that 400s for `product-files` and `document-attachments`.
+  Nothing depends on it today (downloads go through `/api/download`), but it is a
+  trap for the next person who links to `file_url` directly.
 - **Multi-currency and non-US Connect** are hardcoded TODOs
   (`checkout/create-session.ts`, `connect/create-account.ts`). Fine for v1 — just
   be explicit that launch is US-only, USD-only.
@@ -144,7 +164,7 @@ after each adapter release.
 
 ## Launch checklist
 
-- [ ] Local Supabase up; all 26 test files pass, including the 7 integration files
+- [ ] Local Supabase up; all 30 test files pass, including the 7 integration files
 - [ ] Fresh `supabase db reset` → sign up → create → upload → buy → download
 - [ ] Embedded child product files download for the buyer
 - [ ] Webhook replayed twice produces exactly one sale and one royalty set
