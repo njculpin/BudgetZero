@@ -2,8 +2,33 @@
 
 Game loopers is a social commerce service which allows tabletop game designers, 3d modelers, illustrators, 3d printers, etc... to collaborate and publish digital download game projects. Game Loopers provides a solution to communicate, assemble, license, and issue royalties.
 
+> **Status:** see [`PLAN.md`](./PLAN.md) for what is outstanding before launch.
+> Development guidelines live in [`CLAUDE.md`](./CLAUDE.md).
+
+## Getting started
+
+Requires Node 22 (see `.nvmrc`) and Docker, for the local Supabase stack.
+
+```bash
+npm install
+cp .env.example .env.local     # fill in your keys
+npm run supabase:start         # starts Postgres, Auth, Storage (needs Docker)
+npm run supabase:reset         # applies all migrations
+npm run dev                    # http://localhost:4321
+```
+
+Before pushing:
+
+```bash
+npx astro check     # must report 0 errors
+npm run test:run
+npm run build
+```
+
+CI runs all three on every push and pull request. Vercel auto-deploys `main`.
+
 ## Language & Framework
-Astro
+Astro 7 (server mode, Vercel adapter)
 SolidJS / Signal Islands
 
 ## Auth
@@ -24,6 +49,15 @@ Component examples in `/src/components/` demonstrate the BEM pattern
 
 ## Form Validation
 Zod
+
+## Payments
+Stripe (Checkout + Connect), isolated in the payments layer
+
+## Email
+Resend, isolated in the email layer
+
+## Testing
+Vitest (unit + integration), Playwright (e2e)
 
 ## Data Model
 Users {
@@ -523,27 +557,38 @@ LogEvents {
 }
 
 ## Views
-"/" - landing page, featured products, etc...
-"/feed" - allows a user to view global activity for the entire platform
-"/login" - allows a user to login
 
-"/users" - allows a user to view and search for users
-"/users/[handle]" - allows a user to manage details about their own profile. If not the current user, you view the public user profile.
-"/users/[handle]/feed" - allows viewing user activity on a particular user account
+Dynamic segments are `[user]` / `[product]` / `[document]` / `[tag]`.
 
-"/documents" - allows a user to view and search for their own documents and those they are collaborating on.
-"/documents/[handle]" - allows a user to manage details about their own documents. Documents are private collaboration tools.
-"/documents/[handle]/feed" - allows viewing document activity on a particular document
+**Public**
+- `/` - landing page, featured products
+- `/users`, `/users/[user]` - directory; profile shows the edit view to its owner
+- `/products`, `/products/[product]` - marketplace; product detail
+- `/tags`, `/tags/[tag]` - tag directory; products within a tag
+- `/about`, `/privacy`, `/terms`, `/licenses/standard`
+- `/sign-in`, `/sign-up`
 
-"/products" - allows a user to view and search for products.
-"/products/[handle]" - allows a user to manage details about their own products. If not the owner or a collaborator, you view the public product as a customer.
-"/products/[handle]/feed" - allows viewing product activity on a particular product
+**Authenticated**
+- `/cart`, `/checkout/success`, `/checkout/failed`
+- `/create` - create a product
+- `/products/[product]/edit`
+- `/documents`, `/documents/[document]` - private collaboration tools
+- `/purchases`, `/purchases/[purchase]` - order history and downloads
+- `/payouts` - earnings and payout requests
+- `/notifications`, `/settings`
 
-"/tags" - allows a user to view and search for tags of products
-"/tags/[handle]" - allows a user to view products within a particular tag
-"/tags/[handle]/feed" - allows viewing tag activity on a particular tag
+**Admin** (`users.role = 'admin'`)
+- `/admin/payouts` - payout queue
 
-"/cart" - view your current cart and checkout
+### Not built
+
+These appear in earlier drafts of this document but do not exist. Listed so the
+gap is explicit rather than mistaken for something already shipped:
+
+- `/feed` - global activity feed
+- `/dashboard` - user dashboard
+- `/users/[user]/feed`, `/products/[product]/feed`, `/tags/[tag]/feed` -
+  per-entity activity feeds
 
 ## APIs
 Astro API Routes + Supabase Direct:
@@ -572,14 +617,25 @@ Astro API Routes + Supabase Direct:
 - Session helpers for server/client
 - Auth middleware for Astro API routes
 
-**Island Components** (`/src/components/islands/`)
+**Island Components** (organised by domain, e.g. `/src/components/products/`)
 - SolidJS components with client-side interactivity
 - Use Signals for local state
-- Call Astro API routes or Supabase client directly
-- Examples: SignUpForm, ProductFileUploader, CartCheckout
+- Call Astro API routes; never the Supabase client directly
+- Generic reusable islands live in `/src/components/interactive/`
+- Examples: SignInForm, ProductContentManager, AddToCartButton
+
+**Payments Layer** (`/src/lib/payments/`)
+- All Stripe SDK calls isolated here (Checkout, Connect, transfers)
+- No direct Stripe imports outside this layer
+
+**Email Layer** (`/src/lib/email/`) and **Monitoring Layer** (`/src/lib/monitoring/`)
+- Same rule: the SDK appears only inside its layer
 
 ## Deployment
-Vercel deploys automatically on git push to main branch
+Vercel deploys automatically on git push to the main branch.
+
+Anything touching money must be atomic in SQL rather than read-modify-write from
+JS — see the September 2026 notes in `CLAUDE.md` for why.
 
 ## Guard Rails
 - Never use "Any" Types
@@ -589,6 +645,8 @@ Vercel deploys automatically on git push to main branch
 - **CRITICAL: All 3rd party service SDKs MUST be isolated in dedicated layers**
   - Supabase SDK only in `/src/lib/data-access/` and `/src/lib/storage/` and `/src/lib/auth/`
   - Stripe SDK only in `/src/lib/payments/`
+  - Resend SDK only in `/src/lib/email/`
+  - Monitoring SDK only in `/src/lib/monitoring/`
   - No direct imports of these SDKs anywhere else
   - This enables quick migration if we decide to switch providers
   - Island components should only import from our abstraction layers

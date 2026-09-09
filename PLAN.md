@@ -1,7 +1,7 @@
 # Game Loopers — Ship Plan
 
 **Last updated:** 2026-09-09
-**Branch:** `fix/ship-blockers-money-path` (7 commits ahead of `main`)
+**Branch:** `fix/ship-blockers-money-path` (8 commits ahead of `main`)
 
 This file tracks **only what is still outstanding**. Completed items are deleted
 rather than checked off — if it is not written here, it is done or it was never in
@@ -139,28 +139,6 @@ after each adapter release.
   If credits return, they need a top-up flow first (they could previously only be
   earned, never bought, which is why the feature was inert) and a decision about
   whether credit-funded royalties may be withdrawn as real money.
-
----
-
-## Documentation drift
-
-The docs still describe a system that does not exist. This is what made the
-project read as more finished than it was.
-
-- **`ROADMAP.md` does not exist**, though `CLAUDE.md` references it four times as
-  the source of truth for phasing and status.
-- **`CLAUDE.md` cites `/src/pages/dashboard.astro`** as the reference session
-  implementation. There is no dashboard page.
-- **Routes documented but absent:** `/feed`, `/login`, `/dashboard`,
-  `/users/[handle]/feed`, `/products/[handle]/feed`, `/tags/[handle]/feed`.
-- **Actual routes are `[user]` / `[product]` / `[document]`**, not `[handle]`.
-- **`README.md` documents `/src/components/islands/`** — that directory does not
-  exist; components are organised by domain.
-- **`CLAUDE.md` claims "~90-95% complete toward MVP"** — revise against this file.
-- **`supabase/migrations/README.md`** describes the consolidation but predates
-  migrations 00007, 00008 and 00010.
-- `CLAUDE.md` still lists Astro 5.15.1 and describes a `PaymentMethodSelector` /
-  credits flow that no longer exists.
 
 ---
 
