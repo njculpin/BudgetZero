@@ -142,7 +142,10 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
         {
           payout_id: payoutId,
           user_id: payout.user_id,
-        }
+        },
+        // Survives a lost response: a retry returns the original transfer rather
+        // than creating a second one.
+        `payout_${payoutId}`
       );
     } catch (transferError) {
       const errorMessage =

@@ -4,11 +4,18 @@
  * Handles creation of checkout sessions and webhook processing.
  * All Stripe SDK interactions are isolated to this payments layer.
  *
- * MOCK MODE: Set USE_MOCK_STRIPE=true to bypass Stripe and use mock responses
+ * MOCK MODE: Set MOCK_STRIPE=true to bypass Stripe and use mock responses. That is
+ * for local development and tests only — see ./mock-mode, which refuses to boot a
+ * production build with it set.
+ *
+ * The real Stripe calls below were previously commented out with a `throw` in their
+ * place. Because mock mode is rejected in production and the real path threw, there
+ * was NO configuration in which a production build could take a payment or verify a
+ * webhook signature.
  */
 
-// import { stripe } from './client'; // COMMENTED OUT - Using mock mode
 import type Stripe from 'stripe';
+import { stripe } from './client';
 
 import { USE_MOCK_STRIPE } from './mock-mode';
 
@@ -71,20 +78,15 @@ export async function createCheckoutSession(
     return mockSession;
   }
 
-  // REAL STRIPE MODE (commented out)
-  // const { stripe } = await import('./client');
-  // const session = await stripe.checkout.sessions.create({
-  //   payment_method_types: ['card'],
-  //   line_items: params.lineItems,
-  //   mode: 'payment',
-  //   success_url: params.successUrl,
-  //   cancel_url: params.cancelUrl,
-  //   customer_email: params.customerEmail,
-  //   metadata: params.metadata,
-  // });
-  // return session;
-
-  throw new Error('Real Stripe mode is disabled. Set USE_MOCK_STRIPE=true to use mock mode.');
+  return await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: params.lineItems,
+    mode: 'payment',
+    success_url: params.successUrl,
+    cancel_url: params.cancelUrl,
+    customer_email: params.customerEmail,
+    metadata: params.metadata,
+  });
 }
 
 /**
@@ -119,11 +121,7 @@ export function verifyWebhookSignature(
     return mockEvent;
   }
 
-  // REAL STRIPE MODE (commented out)
-  // const { stripe } = await import('./client');
-  // return stripe.webhooks.constructEvent(payload, signature, secret);
-
-  throw new Error('Real Stripe mode is disabled. Set USE_MOCK_STRIPE=true to use mock mode.');
+  return stripe.webhooks.constructEvent(payload, signature, secret);
 }
 
 /**
@@ -178,9 +176,5 @@ export async function getCheckoutSession(
     return mockSession;
   }
 
-  // REAL STRIPE MODE (commented out)
-  // const { stripe } = await import('./client');
-  // return await stripe.checkout.sessions.retrieve(sessionId);
-
-  throw new Error('Real Stripe mode is disabled. Set USE_MOCK_STRIPE=true to use mock mode.');
+  return await stripe.checkout.sessions.retrieve(sessionId);
 }
