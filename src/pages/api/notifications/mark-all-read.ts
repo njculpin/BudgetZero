@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from "astro";
-import { requireUserId, unauthorizedResponse } from "@/lib/auth/require-user";
+import { requireUserId } from "@/lib/auth/require-user";
 import { markAllNotificationsAsRead } from "@/lib/data-access/notifications";
 
 export const POST: APIRoute = async ({ cookies, redirect }) => {

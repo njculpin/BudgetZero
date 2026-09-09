@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onCleanup, type Accessor } from "solid-js";
+import { createSignal, onCleanup, type Accessor } from "solid-js";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
