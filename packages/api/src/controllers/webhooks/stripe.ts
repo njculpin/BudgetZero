@@ -129,178 +129,174 @@ export const webhooksStripe: Controller = async ({ request }) => {
 
         const stripeChargeId = (session.payment_intent as string) || session.id;
 
-        try {
-          // 1. Find or create the Sale record.
-          //
-          // This must be find-OR-create, not create. `sales.stripe_charge_id` is
-          // UNIQUE, so if a previous attempt created the sale and then failed
-          // partway through fulfilment, a plain insert here returns null, throws,
-          // releases the claim, and the next retry does exactly the same thing —
-          // forever. Resuming from the existing sale lets a retry finish the job.
-          let sale = await getSaleByStripeChargeId(stripeChargeId);
+        // Anything thrown below propagates to the outer handler, which
+        // releases the event claim and returns 500 so Stripe retries.
+        // 1. Find or create the Sale record.
+        //
+        // This must be find-OR-create, not create. `sales.stripe_charge_id` is
+        // UNIQUE, so if a previous attempt created the sale and then failed
+        // partway through fulfilment, a plain insert here returns null, throws,
+        // releases the claim, and the next retry does exactly the same thing —
+        // forever. Resuming from the existing sale lets a retry finish the job.
+        let sale = await getSaleByStripeChargeId(stripeChargeId);
 
-          if (!sale) {
-            sale = await createSale({
-              userId,
-              userEmail,
-              priceCents: session.amount_total,
-              taxCents: 0,
-              currency: session.currency || 'usd',
-              stripeChargeId,
-              status: 'paid',
-            });
+        if (!sale) {
+          sale = await createSale({
+            userId,
+            userEmail,
+            priceCents: session.amount_total,
+            taxCents: 0,
+            currency: session.currency || 'usd',
+            stripeChargeId,
+            status: 'paid',
+          });
+        }
+
+        if (!sale) {
+          throw new Error('Failed to create sale record');
+        }
+
+        // Line items already fulfilled by a previous attempt, so a resumed run
+        // does not duplicate them.
+        const alreadyFulfilled = new Set(
+          (await getSaleItems(sale.id)).map((item) => item.product_id)
+        );
+
+        // Collect items for email
+        const emailItems: Array<{
+          productTitle: string;
+          quantity: number;
+          priceCents: number;
+        }> = [];
+
+        // 2. Create SaleItems and link files for each cart item
+        for (const cartItem of cartItems) {
+          // Get product details and pricing
+          // Resumed run: this line item was already fulfilled.
+          if (alreadyFulfilled.has(cartItem.product_id)) {
+            continue;
           }
 
-          if (!sale) {
-            throw new Error('Failed to create sale record');
-          }
+          const product = await getProductById(cartItem.product_id);
 
-          // Line items already fulfilled by a previous attempt, so a resumed run
-          // does not duplicate them.
-          const alreadyFulfilled = new Set(
-            (await getSaleItems(sale.id)).map((item) => item.product_id)
-          );
-
-          // Collect items for email
-          const emailItems: Array<{
-            productTitle: string;
-            quantity: number;
-            priceCents: number;
-          }> = [];
-
-          // 2. Create SaleItems and link files for each cart item
-          for (const cartItem of cartItems) {
-            // Get product details and pricing
-            // Resumed run: this line item was already fulfilled.
-            if (alreadyFulfilled.has(cartItem.product_id)) {
-              continue;
-            }
-
-            const product = await getProductById(cartItem.product_id);
-
-            if (!product) {
-              // The customer paid for something we can no longer resolve. Dropping
-              // it silently ships an incomplete order with a cheerful receipt.
-              captureError(new Error('Product not found during fulfilment'), {
-                operation: 'webhook.fulfil_item',
-                saleId: sale.id,
-                productId: cartItem.product_id,
-                stripeEventId: event.id,
-              });
-              continue;
-            }
-
-            // Get product price breakdown
-            const priceBreakdown = await getProductPriceBreakdown(product.id);
-
-            if (priceBreakdown.totalPrice === 0) {
-              captureMessage('Product had no price at fulfilment time', {
-                operation: 'webhook.fulfil_item',
-                saleId: sale.id,
-                productId: product.id,
-                stripeEventId: event.id,
-              });
-              continue;
-            }
-
-            // Create sale item with product snapshot
-            const saleItem = await createSaleItem({
+          if (!product) {
+            // The customer paid for something we can no longer resolve. Dropping
+            // it silently ships an incomplete order with a cheerful receipt.
+            captureError(new Error('Product not found during fulfilment'), {
+              operation: 'webhook.fulfil_item',
               saleId: sale.id,
               productId: cartItem.product_id,
-              priceCents: priceBreakdown.totalPrice,
-              currency: 'usd',
-              quantity: cartItem.quantity,
-              snapshot: {
-                product_title: product.title,
-                product_description: product.description,
-                files_price: priceBreakdown.filePriceTotal,
-                documents_price: priceBreakdown.documentPriceTotal,
-                embedded_price: priceBreakdown.embeddedPriceTotal,
-              },
+              stripeEventId: event.id,
             });
+            continue;
+          }
 
-            if (!saleItem) {
-              // Do not continue past this: without a sale item the buyer has no
-              // entitlement to the product they paid for. Throwing routes through
-              // the outer catch, which releases the claim so a retry can resume.
-              throw new Error(
-                `Failed to create sale item for product ${product.id} on sale ${sale.id}`
-              );
-            }
+          // Get product price breakdown
+          const priceBreakdown = await getProductPriceBreakdown(product.id);
 
-            // Add to email items
-            emailItems.push({
-              productTitle: product.title,
-              quantity: cartItem.quantity,
-              priceCents: priceBreakdown.totalPrice * cartItem.quantity,
+          if (priceBreakdown.totalPrice === 0) {
+            captureMessage('Product had no price at fulfilment time', {
+              operation: 'webhook.fulfil_item',
+              saleId: sale.id,
+              productId: product.id,
+              stripeEventId: event.id,
             });
+            continue;
+          }
 
-            // 3. Create royalty transactions for product-level royalties.
-            //
-            // Download access needs no record of its own: it is derived from the
-            // sale item above, and from `product_components` for anything embedded
-            // within the product (see `getPurchasedProductIds`). The previous
-            // `sale_item_assets` join table was dropped in the December schema
-            // consolidation.
+          // Create sale item with product snapshot
+          const saleItem = await createSaleItem({
+            saleId: sale.id,
+            productId: cartItem.product_id,
+            priceCents: priceBreakdown.totalPrice,
+            currency: 'usd',
+            quantity: cartItem.quantity,
+            snapshot: {
+              product_title: product.title,
+              product_description: product.description,
+              files_price: priceBreakdown.filePriceTotal,
+              documents_price: priceBreakdown.documentPriceTotal,
+              embedded_price: priceBreakdown.embeddedPriceTotal,
+            },
+          });
+
+          if (!saleItem) {
+            // Do not continue past this: without a sale item the buyer has no
+            // entitlement to the product they paid for. Throwing routes through
+            // the outer catch, which releases the claim so a retry can resume.
+            throw new Error(
+              `Failed to create sale item for product ${product.id} on sale ${sale.id}`
+            );
+          }
+
+          // Add to email items
+          emailItems.push({
+            productTitle: product.title,
+            quantity: cartItem.quantity,
+            priceCents: priceBreakdown.totalPrice * cartItem.quantity,
+          });
+
+          // 3. Create royalty transactions for product-level royalties.
+          //
+          // Download access needs no record of its own: it is derived from the
+          // sale item above, and from `product_components` for anything embedded
+          // within the product (see `getPurchasedProductIds`). The previous
+          // `sale_item_assets` join table was dropped in the December schema
+          // consolidation.
+          await createRoyaltyTransactionsForProduct({
+            saleId: sale.id,
+            saleItemId: saleItem.id,
+            productId: product.id,
+            saleItemPriceCents: priceBreakdown.totalPrice,
+          });
+
+          // 4. Create royalty transactions for each embedded component, priced at
+          // the amount inherited when the component was embedded.
+          const components = await getProductComponents(product.id);
+
+          for (const component of components) {
             await createRoyaltyTransactionsForProduct({
               saleId: sale.id,
               saleItemId: saleItem.id,
-              productId: product.id,
-              saleItemPriceCents: priceBreakdown.totalPrice,
-            });
-
-            // 4. Create royalty transactions for each embedded component, priced at
-            // the amount inherited when the component was embedded.
-            const components = await getProductComponents(product.id);
-
-            for (const component of components) {
-              await createRoyaltyTransactionsForProduct({
-                saleId: sale.id,
-                saleItemId: saleItem.id,
-                productId: component.child_product_id,
-                saleItemPriceCents: component.inherited_price_cents,
-              });
-            }
-          }
-
-          // 6. Clear the cart
-          await clearCart(cartId);
-
-          // 7. Send purchase confirmation email.
-          //
-          // VERCEL_URL is the per-deployment hostname, so a receipt built from it
-          // points at an immutable preview URL that will not stay meaningful. Use the
-          // configured site URL and fall back only for local development.
-          const origin =
-            import.meta.env.PUBLIC_SITE_URL ||
-            process.env.PUBLIC_SITE_URL ||
-            'http://localhost:4321';
-
-          // On a resumed run every line item was already fulfilled, so emailItems
-          // is empty and the receipt went out on the earlier attempt. Sending again
-          // would deliver a second confirmation listing nothing.
-          if (emailItems.length > 0) {
-            await sendPurchaseConfirmation({
-              to: userEmail,
-              saleId: sale.id,
-              totalCents: session.amount_total,
-              currency: session.currency || 'usd',
-              items: emailItems,
-              purchaseUrl: `${origin}/purchases/${sale.id}`,
+              productId: component.child_product_id,
+              saleItemPriceCents: component.inherited_price_cents,
             });
           }
-
-          await markWebhookEventProcessed(event.id);
-
-          return new Response(
-            JSON.stringify({ received: true, saleId: sale.id }),
-            { status: 200, headers: { 'Content-Type': 'application/json' } }
-          );
-        } catch (error) {
-          // Rethrow so the outer handler reports it, releases the event claim,
-          // and returns 500 to trigger a Stripe retry.
-          throw error;
         }
+
+        // 6. Clear the cart
+        await clearCart(cartId);
+
+        // 7. Send purchase confirmation email.
+        //
+        // VERCEL_URL is the per-deployment hostname, so a receipt built from it
+        // points at an immutable preview URL that will not stay meaningful. Use the
+        // configured site URL and fall back only for local development.
+        const origin =
+          import.meta.env.PUBLIC_SITE_URL ||
+          process.env.PUBLIC_SITE_URL ||
+          'http://localhost:4321';
+
+        // On a resumed run every line item was already fulfilled, so emailItems
+        // is empty and the receipt went out on the earlier attempt. Sending again
+        // would deliver a second confirmation listing nothing.
+        if (emailItems.length > 0) {
+          await sendPurchaseConfirmation({
+            to: userEmail,
+            saleId: sale.id,
+            totalCents: session.amount_total,
+            currency: session.currency || 'usd',
+            items: emailItems,
+            purchaseUrl: `${origin}/purchases/${sale.id}`,
+          });
+        }
+
+        await markWebhookEventProcessed(event.id);
+
+        return new Response(
+          JSON.stringify({ received: true, saleId: sale.id }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
       }
 
       case 'payment_intent.succeeded': {

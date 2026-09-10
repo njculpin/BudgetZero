@@ -2,7 +2,7 @@ import type { Controller } from '../../../context';
 import { getProductRoyalties } from "@gameloopers/core/data-access/royalties";
 import { serverClient } from "@gameloopers/core/data-access/client";
 
-export const productsProductIdRoyalties: Controller = async ({ request, params }) => {
+export const productsProductIdRoyalties: Controller = async ({ params }) => {
   const { productId } = params;
 
   if (!productId) {

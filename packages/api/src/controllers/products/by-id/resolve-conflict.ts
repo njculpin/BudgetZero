@@ -7,7 +7,7 @@ import { unauthorized } from '../../../responses';
 
 import { resolveProductConflict } from "@gameloopers/core/data-access/notifications";
 
-export const productsProductIdResolveConflict: Controller = async ({ request, params, userId }) => {
+export const productsProductIdResolveConflict: Controller = async ({ params, userId }) => {
   const { productId } = params;
 
   if (!productId) {

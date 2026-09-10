@@ -7,7 +7,7 @@ import { redirect, unauthorized } from '../../../responses';
 
 import { markNotificationAsRead, getNotificationById } from "@gameloopers/core/data-access/notifications";
 
-export const notificationsIdRead: Controller = async ({ request, params, userId }) => {
+export const notificationsIdRead: Controller = async ({ params, userId }) => {
   const { id } = params;
 
   if (!id) {

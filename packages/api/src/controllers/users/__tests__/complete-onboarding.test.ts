@@ -21,18 +21,9 @@ vi.mock('@gameloopers/core/data-access/users');
 
 describe('POST /api/users/complete-onboarding', () => {
   let mockRequest: Request;
-  let mockCookies: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockCookies = {
-      get: vi.fn((name: string) => {
-        if (name === 'sb-access-token') return { value: 'mock-access-token' };
-        if (name === 'sb-refresh-token') return { value: 'mock-refresh-token' };
-        return undefined;
-      }),
-    };
 
     // Default successful auth mock
     vi.mocked(auth.setSession).mockResolvedValue({

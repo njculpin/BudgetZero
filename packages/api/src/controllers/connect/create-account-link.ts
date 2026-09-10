@@ -4,7 +4,7 @@ import { getUserById } from "@gameloopers/core/data-access/users";
 import { createConnectAccount, createAccountLink } from "@gameloopers/core/payments/connect";
 import { serverClient } from "@gameloopers/core/data-access/client";
 
-export const connectCreateAccountLink: Controller = async ({ request, url, userId }) => {
+export const connectCreateAccountLink: Controller = async ({ url, userId }) => {
   if (!userId) return unauthorized('Not authenticated');
 
   try {

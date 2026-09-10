@@ -1,6 +1,6 @@
 import { createSignal, Show } from "solid-js";
 import { LoadingButton } from "@/components/interactive";
-import Modal, { ModalHeader, ModalFooter } from "@/components/Modal";
+import Modal, { ModalHeader, ModalFooter } from "@/components/modal/Modal";
 
 export interface PurchaseActionsProps {
   productId: string;

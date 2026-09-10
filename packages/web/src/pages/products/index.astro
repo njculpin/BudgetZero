@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/Card.astro";
-import CardContent from "@/components/CardContent.astro";
+import Card from "@/components/card/Card.astro";
+import CardContent from "@/components/card/CardContent.astro";
 import PageHeader from "@/components/PageHeader.astro";
 import BrowseCTA from "@/components/home/BrowseCTA.astro";
 import { getAllProducts, getProductImages } from "@gameloopers/core/data-access/products";
@@ -12,7 +12,7 @@ import { serverClient } from "@gameloopers/core/data-access/client";
 import EmptyState from "@/components/EmptyState.astro";
 import { FormSubmitButton } from "@/components/interactive";
 
-const { url, cookies } = Astro;
+const { url } = Astro;
 const searchParams = url.searchParams;
 
 // Check authentication - allow guests to browse
@@ -34,7 +34,6 @@ if (accessToken && refreshToken) {
   }
 }
 
-const userId = currentUser?.id;
 
 const searchQuery = searchParams.get('search') || '';
 const tagFilter = searchParams.get('tag') || '';
@@ -244,24 +243,22 @@ const productTags = allTags
                 actionHref="/products"
               />
             ) : currentUser ? (
-              <div class="empty-state">
-                <div class="empty-state__icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                </div>
-                <h3 class="empty-state__title">No products yet</h3>
-                <p class="empty-state__description">Be the first to create a product and share it with the community.</p>
-                <div class="empty-state__action">
-                  <FormSubmitButton
-                    client:load
-                    action="/api/products/create-product"
-                    method="post"
-                    variant="primary"
-                    size="lg"
-                  >
-                    Create Product
-                  </FormSubmitButton>
-                </div>
-              </div>
+              <EmptyState
+                icon="products"
+                title="No products yet"
+                description="Be the first to create a product and share it with the community."
+              >
+                <FormSubmitButton
+                  slot="action"
+                  client:load
+                  action="/api/products/create-product"
+                  method="post"
+                  variant="primary"
+                  size="lg"
+                >
+                  Create Product
+                </FormSubmitButton>
+              </EmptyState>
             ) : (
               <EmptyState
                 icon="products"

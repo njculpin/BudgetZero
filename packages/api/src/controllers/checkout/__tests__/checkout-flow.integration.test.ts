@@ -41,9 +41,6 @@ let testProductId: string;
 let testEmbeddedProductId: string;
 let testProductWithEmbedId: string;
 
-// Test file IDs
-let testFileId: string;
-let testEmbeddedFileId: string;
 
 // Test royalty IDs
 let embeddedProductRoyaltyId: string;
@@ -94,7 +91,7 @@ beforeAll(async () => {
   testEmbeddedProductId = embeddedProduct!.id;
 
   // Create file for embedded product
-  const { data: embeddedFile } = await supabase
+  await supabase
     .from('product_files')
     .insert({
       product_id: testEmbeddedProductId,
@@ -107,7 +104,6 @@ beforeAll(async () => {
     })
     .select()
     .single();
-  testEmbeddedFileId = embeddedFile!.id;
 
   // Create royalty for embedded product (contributor gets 20%)
   const { data: embeddedRoyalty } = await supabase
@@ -169,7 +165,7 @@ beforeAll(async () => {
   testProductId = standaloneProduct!.id;
 
   // Create file for standalone product
-  const { data: standaloneFile } = await supabase
+  await supabase
     .from('product_files')
     .insert({
       product_id: testProductId,
@@ -182,7 +178,6 @@ beforeAll(async () => {
     })
     .select()
     .single();
-  testFileId = standaloneFile!.id;
 
   // Create royalty for standalone product (seller gets fixed $5 royalty)
   const { data: standaloneRoyalty } = await supabase

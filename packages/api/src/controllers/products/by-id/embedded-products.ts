@@ -12,7 +12,7 @@ interface EmbeddedProductRow {
 }
 
 
-export const productsProductIdEmbeddedProducts: Controller = async ({ request, params }) => {
+export const productsProductIdEmbeddedProducts: Controller = async ({ params }) => {
   const productId = params.productId;
 
   if (!productId) {

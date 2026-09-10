@@ -12,12 +12,13 @@ export interface PurchasesListProps {
 }
 
 export default function PurchasesList(props: PurchasesListProps) {
-  const [purchases, setPurchases] = createSignal<PurchaseWithDetails[]>(props.initialPurchases);
+  // Pagination is client-side over the list this component is handed; nothing
+  // refetches, so these never change after mount.
+  const [purchases] = createSignal<PurchaseWithDetails[]>(props.initialPurchases);
   const [search, setSearch] = createSignal(props.initialSearch || "");
   const [filter, setFilter] = createSignal(props.initialFilter || "all");
   const [currentPage, setCurrentPage] = createSignal(props.initialPage || 1);
-  const [totalCount, setTotalCount] = createSignal(props.totalCount);
-  const [isLoading, setIsLoading] = createSignal(false);
+  const [totalCount] = createSignal(props.totalCount);
 
   const itemsPerPage = 10;
   const totalPages = () => Math.ceil(totalCount() / itemsPerPage);

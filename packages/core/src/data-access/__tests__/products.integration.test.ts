@@ -30,7 +30,6 @@ describe('Product Data Access Layer', () => {
   let testProductId: string;
   let testProductHandle: string;
   let draftProductId: string;
-  let draftProductHandle: string;
   const testEmail = `test-products-${Date.now()}@example.com`;
 
   beforeAll(async () => {
@@ -129,7 +128,6 @@ describe('Product Data Access Layer', () => {
 
       if (product) {
         draftProductId = product.id;
-        draftProductHandle = product.handle;
       }
     });
 
@@ -335,7 +333,7 @@ describe('Product Data Access Layer', () => {
 
     it('should handle handle collision when updating title', async () => {
       // Create a product with a specific handle
-      const product1 = await createProduct(testUserId, {
+      await createProduct(testUserId, {
         title: 'Collision Test 1',
         status: 'public',
       });

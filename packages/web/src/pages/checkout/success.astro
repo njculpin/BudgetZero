@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/Card.astro";
-import CardContent from "@/components/CardContent.astro";
+import Card from "@/components/card/Card.astro";
+import CardContent from "@/components/card/CardContent.astro";
 import Button from "@/components/Button.astro";
 import { setSession } from "@gameloopers/core/auth";
 import { getCheckoutSession } from "@gameloopers/core/payments";
@@ -32,14 +32,20 @@ if (accessToken && refreshToken) {
     if (!session.error && session.data.user) {
       currentUser = session.data.user;
     }
-  } catch {}
+  } catch {
+    // A bad or expired session is not an error for this page: it renders
+    // for a signed-out visitor. Deliberately silent.
+  }
 }
 
 // Handle mock checkout vs Stripe checkout
-let customerEmail: string | null = null;
-let amountTotal = 0;
-let currency = 'usd';
-let sale = null;
+// Every branch below assigns these before anything reads them, so the
+// initialisers were dead. Declared without one, TypeScript's control-flow
+// analysis now checks that each path really does assign.
+let customerEmail: string | null;
+let amountTotal: number;
+let currency: string;
+let sale: Awaited<ReturnType<typeof getSaleById>>;
 let orderId: string;
 
 if (isMockCheckout && saleId) {

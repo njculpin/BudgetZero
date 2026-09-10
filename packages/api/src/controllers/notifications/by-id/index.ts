@@ -7,7 +7,7 @@ import { unauthorized } from '../../../responses';
 
 import { deleteNotification, getNotificationById } from "@gameloopers/core/data-access/notifications";
 
-export const notificationsId: Controller = async ({ request, params, userId }) => {
+export const notificationsId: Controller = async ({ params, userId }) => {
   const { id } = params;
 
   if (!id) {

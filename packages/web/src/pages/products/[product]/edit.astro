@@ -6,11 +6,11 @@ import ProductContributors from "@/components/products/ProductContributors.astro
 import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributorsWithRoles, getProductComponentsWithDetails } from "@gameloopers/core/data-access/products";
 import { getUserById } from "@gameloopers/core/data-access/users";
 import { setSession } from "@gameloopers/core/auth";
-import Card from "@/components/Card.astro";
-import CardHeader from "@/components/CardHeader.astro";
-import CardTitle from "@/components/CardTitle.astro";
-import CardDescription from "@/components/CardDescription.astro";
-import CardContent from "@/components/CardContent.astro";
+import Card from "@/components/card/Card.astro";
+import CardHeader from "@/components/card/CardHeader.astro";
+import CardTitle from "@/components/card/CardTitle.astro";
+import CardDescription from "@/components/card/CardDescription.astro";
+import CardContent from "@/components/card/CardContent.astro";
 
 const { product } = Astro.params;
 
@@ -38,7 +38,10 @@ if (accessToken && refreshToken) {
     if (!session.error && session.data.user) {
       currentUser = session.data.user;
     }
-  } catch {}
+  } catch {
+    // A bad or expired session is not an error for this page: it renders
+    // for a signed-out visitor. Deliberately silent.
+  }
 }
 
 const isOwner = currentUser?.id === productData.user_id;

@@ -30,7 +30,6 @@ vi.mock('@gameloopers/core/auth');
 describe('GET /api/auth/callback', () => {
   let mockUrl: URL;
   let mockCookies: any;
-  let mockRedirect: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -42,12 +41,6 @@ describe('GET /api/auth/callback', () => {
       has: vi.fn(),
     };
 
-    mockRedirect = vi.fn((url: string, status?: number) => {
-      return new Response(null, {
-        status: status || 302,
-        headers: { Location: url },
-      });
-    });
   });
 
   afterEach(() => {
@@ -144,7 +137,7 @@ describe('GET /api/auth/callback', () => {
         error: null,
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
 
       // Verify both cookies were set
       expect(mockCookies.set).toHaveBeenCalledTimes(2);
@@ -196,7 +189,7 @@ describe('GET /api/auth/callback', () => {
         error: null,
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
 
       // Should extract code correctly despite other parameters
       expect(auth.exchangeCodeForSession).toHaveBeenCalledWith('valid123');
@@ -284,7 +277,7 @@ describe('GET /api/auth/callback', () => {
         error: null,
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
 
       // Verify access token cookie
       expect(mockCookies.set).toHaveBeenCalledWith(
@@ -324,7 +317,7 @@ describe('GET /api/auth/callback', () => {
         error: null,
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
 
       // Both cookies should have path: '/'
       const accessTokenCall = mockCookies.set.mock.calls.find(

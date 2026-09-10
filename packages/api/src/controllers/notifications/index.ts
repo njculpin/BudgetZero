@@ -7,7 +7,7 @@ import { unauthorized } from '../../responses';
 
 import { getNotifications } from "@gameloopers/core/data-access/notifications";
 
-export const notifications: Controller = async ({ request, url, userId, params }) => {
+export const notifications: Controller = async ({ url, userId }) => {
   // Authenticate user
 
   if (!userId) {

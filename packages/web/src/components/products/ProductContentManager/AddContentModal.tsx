@@ -1,5 +1,5 @@
 import { createSignal, Show, For, createResource } from "solid-js";
-import Modal from "@/components/Modal";
+import Modal from "@/components/modal/Modal";
 import { LoadingButton } from "@/components/interactive";
 import type { ProductFile } from "@gameloopers/core/types";
 import type { EmbeddedProductData, ProductDocumentRelation } from "./ContentItem";
@@ -124,7 +124,7 @@ export default function AddContentModal(props: AddContentModalProps) {
       const formData = new FormData();
       formData.append("productId", props.productId);
 
-      pendingFiles().forEach((pf, index) => {
+      pendingFiles().forEach((pf) => {
         formData.append(`files`, pf.file);
         // Parse price, default to 0 if invalid or empty
         const priceValue = parseFloat(pf.price) || 0;

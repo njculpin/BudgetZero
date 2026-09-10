@@ -54,7 +54,6 @@ function downloadRequest(fields: Record<string, string>): Request {
 }
 
 describe('POST /api/download', () => {
-  let mockCookies: { get: ReturnType<typeof vi.fn> };
 
   /** Where a 3xx response points, or null if it is not a redirect. */
   const redirectTarget = (response: Response) =>
@@ -64,14 +63,6 @@ describe('POST /api/download', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockCookies = {
-      get: vi.fn((name: string) => {
-        if (name === 'sb-access-token') return { value: 'access' };
-        if (name === 'sb-refresh-token') return { value: 'refresh' };
-        return undefined;
-      }),
-    };
 
     vi.mocked(auth.setSession).mockResolvedValue({
       data: {

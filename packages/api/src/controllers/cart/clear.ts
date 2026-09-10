@@ -2,7 +2,7 @@ import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
 import { getOrCreateCart, clearCart } from "@gameloopers/core/data-access/cart";
 
-export const cartClear: Controller = async ({ request, userId }) => {
+export const cartClear: Controller = async ({ userId }) => {
   // Check authentication
   if (!userId) return unauthorized('Not authenticated');
 

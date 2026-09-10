@@ -914,6 +914,14 @@ blockquote {
   margin-bottom: var(--spacing-6xl);
 }
 
+/* Wrapper around the product grid. Every sibling in this block was styled and
+   this one never was, so the section rendered with no spacing of its own. */
+.browse-section {
+  display: block;
+  margin-bottom: var(--spacing-6xl);
+}
+
+
 .product-card {
   display: flex;
   flex-direction: column;

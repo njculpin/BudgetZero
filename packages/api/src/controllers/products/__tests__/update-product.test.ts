@@ -30,21 +30,9 @@ const VALID_CHILD_PRODUCT_ID = '223e4567-e89b-12d3-a456-426614174000';
 
 describe('PUT /api/products/update-product', () => {
   let mockRequest: Request;
-  let mockCookies: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockCookies = {
-      set: vi.fn(),
-      get: vi.fn((name: string) => {
-        if (name === 'sb-access-token') return { value: 'mock-access-token' };
-        if (name === 'sb-refresh-token') return { value: 'mock-refresh-token' };
-        return undefined;
-      }),
-      delete: vi.fn(),
-      has: vi.fn(),
-    };
 
     // Mock successful authentication by default
     vi.mocked(auth.setSession).mockResolvedValue({

@@ -26,8 +26,10 @@ export default function NotificationCenter(props: NotificationCenterProps) {
     return data.notifications as Notification[];
   });
 
-  // Fetch unread count
-  const [unreadCountResource] = createResource(async () => {
+  // Fetch the unread count on mount. Kept unbound on purpose: this runs for its
+  // side effect of calling setUnreadCount, and the badge below reads that
+  // signal rather than the resource.
+  createResource(async () => {
     const response = await fetch("/api/notifications/unread-count");
     if (!response.ok) return props.initialUnreadCount || 0;
     const data = await response.json();

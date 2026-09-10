@@ -1,4 +1,4 @@
-import { ConfirmModal } from "@/components/Modal";
+import { ConfirmModal } from "@/components/modal/Modal";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -13,7 +13,7 @@ interface ConfirmDialogProps {
 
 /**
  * ConfirmDialog - Backward compatibility wrapper for ConfirmModal
- * @deprecated Use ConfirmModal directly from @/components/Modal instead
+ * @deprecated Use ConfirmModal directly from @/components/modal/Modal instead
  */
 export default function ConfirmDialog(props: ConfirmDialogProps) {
   return (

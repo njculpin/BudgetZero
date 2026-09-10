@@ -40,9 +40,6 @@ export default function ProductEditForm(props: ProductEditFormProps) {
     }
   };
 
-  const handleFileError = (errorMsg: string) => {
-    setError(errorMsg);
-  };
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();

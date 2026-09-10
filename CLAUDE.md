@@ -244,17 +244,15 @@ Components are organized to **mirror the pages directory structure**, making it 
 **Structure:**
 
 ```
-src/components/
-├── Button.astro, Card.astro, etc.  # Generic UI components (used everywhere)
+packages/web/src/components/
+├── Badge, Breadcrumb, Button, EmptyState,   # Generic UI, one file each
+│   Footer, GalleryGrid, Navigation,
+│   PageHeader, Pagination, Tag
+├── card/                            # Card + CardContent/Header/Title/Description
+├── modal/                           # Modal.tsx, modal.css, index.ts
 ├── base/                            # Generic base form components (Astro)
-│   ├── FormField.astro, Input.astro, TextArea.astro, Select.astro
-│   └── index.ts
 ├── interactive/                     # Generic interactive components (SolidJS)
-│   ├── FormField.tsx, LoadingButton.tsx, TagInput.tsx, etc.
-│   └── index.ts
 ├── products/                        # /products/*.astro
-│   ├── ProductEditForm.tsx, ProductContentManager/, etc.
-│   └── index.ts
 ├── documents/                       # /documents/*.astro
 ├── users/                           # /users/*.astro
 ├── cart/                            # /cart.astro
@@ -263,9 +261,13 @@ src/components/
 ├── settings/                        # /settings/*.astro
 ├── home/                            # /index.astro (landing page)
 ├── auth/                            # /sign-in.astro, /sign-up.astro
-├── shared/                          # Components used across multiple page types
 └── notifications/                   # Notification system (used in layout/header)
 ```
+
+A component family with more than one file gets a directory (`card/`, `modal/`),
+and its stylesheet lives beside it. A single generic component stays a single
+file at the root. There is no `shared/` — a component used by several page types
+is a generic one and belongs at the root.
 
 **Import Examples:**
 

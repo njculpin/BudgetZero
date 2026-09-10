@@ -1,4 +1,4 @@
-import Modal, { ModalHeader, ModalFooter } from "@/components/Modal";
+import Modal, { ModalHeader, ModalFooter } from "@/components/modal/Modal";
 import "./product-created-modal.css";
 
 export interface ProductCreatedModalProps {

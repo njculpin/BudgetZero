@@ -28,19 +28,10 @@ describe('POST /api/cart/clear', () => {
   const VALID_CART_ID = '123e4567-e89b-12d3-a456-426614174000';
 
   let mockRequest: Request;
-  let mockCookies: any;
 
   beforeEach(() => {
     expectedUserId = 'user-123';
     vi.clearAllMocks();
-
-    mockCookies = {
-      get: vi.fn((name: string) => {
-        if (name === 'sb-access-token') return { value: 'mock-access-token' };
-        if (name === 'sb-refresh-token') return { value: 'mock-refresh-token' };
-        return undefined;
-      }),
-    };
 
     // Default successful auth mock
     vi.mocked(auth.setSession).mockResolvedValue({

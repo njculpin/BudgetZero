@@ -1,13 +1,14 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/Card.astro";
-import CardContent from "@/components/CardContent.astro";
+import Card from "@/components/card/Card.astro";
+import CardContent from "@/components/card/CardContent.astro";
 import BrowseCTA from "@/components/home/BrowseCTA.astro";
 import PageHeader from "@/components/PageHeader.astro";
 import { setSession } from "@gameloopers/core/auth";
 import { FormSubmitButton } from "@/components/interactive";
 import { getUserDocuments } from "@gameloopers/core/data-access/documents";
 import { getUserById } from "@gameloopers/core/data-access/users";
+import EmptyState from "@/components/EmptyState.astro";
 
 const { cookies } = Astro;
 
@@ -25,7 +26,10 @@ if (accessToken && refreshToken) {
     if (!session.error && session.data.user) {
       currentUser = session.data.user;
     }
-  } catch {}
+  } catch {
+    // A bad or expired session is not an error for this page: it renders
+    // for a signed-out visitor. Deliberately silent.
+  }
 }
 
 // Fetch user's documents
@@ -79,24 +83,22 @@ const formatDate = (dateStr: string) => {
       {currentUser && documents.length === 0 && (
         <Card>
           <CardContent>
-            <div class="empty-state">
-              <div class="empty-state__icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              </div>
-              <h3 class="empty-state__title">No documents yet</h3>
-              <p class="empty-state__description">Create your first document to start collaborating on rulebooks, reference cards, and more.</p>
-              <div class="empty-state__action">
-                <FormSubmitButton
-                  client:load
-                  action="/api/documents/create-document"
-                  method="post"
-                  variant="primary"
-                  size="lg"
-                >
-                  Create Your First Document
-                </FormSubmitButton>
-              </div>
-            </div>
+            <EmptyState
+              icon="documents"
+              title="No documents yet"
+              description="Create your first document to start collaborating on rulebooks, reference cards, and more."
+            >
+              <FormSubmitButton
+                slot="action"
+                client:load
+                action="/api/documents/create-document"
+                method="post"
+                variant="primary"
+                size="lg"
+              >
+                Create Your First Document
+              </FormSubmitButton>
+            </EmptyState>
           </CardContent>
         </Card>
       )}

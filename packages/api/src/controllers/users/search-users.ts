@@ -1,7 +1,7 @@
 import type { Controller } from '../../context';
 import { searchUsers } from "@gameloopers/core/data-access/users";
 
-export const usersSearchUsers: Controller = async ({ request, url }) => {
+export const usersSearchUsers: Controller = async ({ url }) => {
   const query = url.searchParams.get("q");
 
   if (!query) {

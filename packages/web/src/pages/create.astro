@@ -1,8 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Button from "@/components/Button.astro";
-import Card from "@/components/Card.astro";
-import CardContent from "@/components/CardContent.astro";
+import Card from "@/components/card/Card.astro";
+import CardContent from "@/components/card/CardContent.astro";
 import { setSession } from "@gameloopers/core/auth";
 
 const { cookies } = Astro;
@@ -21,7 +21,10 @@ if (accessToken && refreshToken) {
     if (!session.error && session.data.user) {
       isAuthenticated = true;
     }
-  } catch {}
+  } catch {
+    // A bad or expired session is not an error for this page: it renders
+    // for a signed-out visitor. Deliberately silent.
+  }
 }
 ---
 

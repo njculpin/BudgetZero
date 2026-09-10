@@ -30,6 +30,14 @@ const icons = {
       </a>
     </div>
   )}
+  {/* For actions that are not a link — a form submit, say. Pages were
+      hand-rolling the whole component to get one, which meant duplicating the
+      markup without the scoped styles that make it look like anything. */}
+  {Astro.slots.has("action") && (
+    <div class="empty-state__action">
+      <slot name="action" />
+    </div>
+  )}
 </div>
 
 <style>

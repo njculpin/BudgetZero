@@ -2,7 +2,7 @@ import type { Controller } from '../../../context';
 import { getProductById } from "@gameloopers/core/data-access/products";
 import { getUserById } from "@gameloopers/core/data-access/users";
 
-export const productsProductId: Controller = async ({ request, params }) => {
+export const productsProductId: Controller = async ({ params }) => {
   const { productId } = params;
 
   if (!productId) {

@@ -30,7 +30,6 @@ vi.mock('@gameloopers/core/auth');
 describe('POST /api/auth/sign-out', () => {
   let response: Response;
   let mockCookies: any;
-  let mockRedirect: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -42,12 +41,6 @@ describe('POST /api/auth/sign-out', () => {
       has: vi.fn(),
     };
 
-    mockRedirect = vi.fn((url: string, status?: number) => {
-      return new Response(null, {
-        status: status || 302,
-        headers: { Location: url },
-      });
-    });
   });
 
   afterEach(() => {

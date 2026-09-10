@@ -7,7 +7,7 @@ import { unauthorized } from '../../responses';
 
 import { getUnreadNotificationCount } from "@gameloopers/core/data-access/notifications";
 
-export const notificationsUnreadCount: Controller = async ({ request, userId }) => {
+export const notificationsUnreadCount: Controller = async ({ userId }) => {
   // Authenticate user
 
   if (!userId) {

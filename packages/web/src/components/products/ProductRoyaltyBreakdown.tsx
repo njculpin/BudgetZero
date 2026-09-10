@@ -8,13 +8,6 @@ export interface ProductRoyaltyBreakdownProps {
   productOwnerName?: string;
 }
 
-interface RoyaltyRecipient {
-  userId: string;
-  userHandle: string;
-  userName: string;
-  amountCents: number;
-  description: string;
-}
 
 export default function ProductRoyaltyBreakdown(props: ProductRoyaltyBreakdownProps) {
   const [mounted, setMounted] = createSignal(false);

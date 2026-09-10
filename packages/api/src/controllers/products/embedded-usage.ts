@@ -9,7 +9,7 @@ import { unauthorized } from '../../responses';
 
 import { getEmbeddedUsageForUser } from "@gameloopers/core/data-access/products";
 
-export const productsEmbeddedUsage: Controller = async ({ request, userId }) => {
+export const productsEmbeddedUsage: Controller = async ({ userId }) => {
   // Earnings are private financial data. This previously read the user id straight
   // from a query parameter, which let anyone read anyone else's royalty income — so
   // the caller is now always the session user.

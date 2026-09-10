@@ -15,7 +15,6 @@ interface TextAreaFieldProps {
 }
 
 export default function TextAreaField(props: TextAreaFieldProps) {
-  let textareaRef: HTMLTextAreaElement | undefined;
   const fieldId = props.id || props.name;
   const hasError = !!props.error;
 
@@ -27,7 +26,6 @@ export default function TextAreaField(props: TextAreaFieldProps) {
       </label>
       <textarea
         ref={(el) => {
-          textareaRef = el;
           // Set initial value directly on element for proper hydration
           if (el && props.value !== undefined) {
             el.value = props.value;

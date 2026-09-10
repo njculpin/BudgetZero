@@ -47,7 +47,6 @@ vi.mock('@gameloopers/core/email');
 describe('POST /api/auth/sign-up', () => {
   let mockRequest: Request;
   let mockCookies: any;
-  let mockRedirect: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,13 +57,6 @@ describe('POST /api/auth/sign-up', () => {
       delete: vi.fn(),
       has: vi.fn(),
     };
-
-    mockRedirect = vi.fn((url: string, status?: number) => {
-      return new Response(null, {
-        status: status || 302,
-        headers: { Location: url },
-      });
-    });
 
     // Mock successful email sending by default
     vi.mocked(email.sendEmail).mockResolvedValue({ success: true });
@@ -195,7 +187,7 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
 
       // Assert the concrete value, not `import.meta.env.PROD`. Comparing the
       // result against the same variable that produced it passed whatever the
@@ -242,7 +234,7 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
 
       const emailCall = vi.mocked(email.sendEmail).mock.calls[0][0];
 
@@ -598,7 +590,7 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
 
       // Verify access token: 7 days
       expect(mockCookies.set).toHaveBeenCalledWith(

@@ -53,7 +53,6 @@ describe('Product Royalty System', () => {
   let testProductId: string;
   let embeddedProductId: string;
   let testRoyalty1Id: string;
-  let testRoyalty2Id: string;
   let testSaleId: string;
   let testSaleItemId: string;
 
@@ -190,10 +189,6 @@ describe('Product Royalty System', () => {
       expect(royalty?.product_id).toBe(testProductId);
       expect(royalty?.user_id).toBe(testUser2Id);
       expect(royalty?.royalty_value).toBe(300);
-
-      if (royalty) {
-        testRoyalty2Id = royalty.id;
-      }
     });
 
     it('should allow zero royalty value', async () => {

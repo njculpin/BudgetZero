@@ -6,7 +6,6 @@ import {
   createProductImage,
   getProductFiles,
   getProductComponents,
-  getProductDocuments,
   getProductImages,
 } from "@gameloopers/core/data-access/products";
 import { uploadFile, generateFilePath } from "@gameloopers/core/storage";
@@ -31,10 +30,9 @@ async function validatePublishStatus(
   productId: string
 ): Promise<{ valid: boolean; error?: string; warnings?: string[] }> {
   // Get all data in parallel
-  const [files, components, documents, images, product] = await Promise.all([
+  const [files, components, images, product] = await Promise.all([
     getProductFiles(productId),
     getProductComponents(productId),
-    getProductDocuments(productId),
     getProductImages(productId),
     getProductById(productId),
   ]);
@@ -84,7 +82,7 @@ async function validatePublishStatus(
   return { valid: true, warnings };
 }
 
-export const productsUpdateProductPut: Controller = async ({ request, cookies, userId }) => {
+export const productsUpdateProductPut: Controller = async ({ request, userId }) => {
   // Check authentication
   if (!userId) return unauthorized('Not authenticated');
 

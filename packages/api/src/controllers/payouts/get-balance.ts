@@ -2,7 +2,7 @@ import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
 import { getUserPayouts, getAvailablePayoutBalance } from "@gameloopers/core/data-access/payouts";
 
-export const payoutsGetBalance: Controller = async ({ request, userId }) => {
+export const payoutsGetBalance: Controller = async ({ userId }) => {
   if (!userId) return unauthorized('Not authenticated');
 
   try {

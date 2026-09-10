@@ -7,7 +7,7 @@ import type { Controller } from '../../context';
 
 import { markAllNotificationsAsRead } from "@gameloopers/core/data-access/notifications";
 
-export const notificationsMarkAllRead: Controller = async ({ request, userId }) => {
+export const notificationsMarkAllRead: Controller = async ({ userId }) => {
   // Authenticate user
 
   if (!userId) {

@@ -9,7 +9,7 @@ import { getUnreadNotificationCount } from '@gameloopers/core/data-access/notifi
 
 // Check authentication via cookies
 let isAuthenticated = false;
-let userId: string | null = null;
+let userId: string | null;
 let userHandle = '';
 let recentProducts: ProductSummary[] = [];
 let totalProductCount = 0;

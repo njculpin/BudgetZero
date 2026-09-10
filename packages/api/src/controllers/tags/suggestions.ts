@@ -1,7 +1,7 @@
 import type { Controller } from '../../context';
 import { getAllTags } from "@gameloopers/core/data-access/tags";
 
-export const tagsSuggestions: Controller = async ({ request, url }) => {
+export const tagsSuggestions: Controller = async ({ url }) => {
   try {
     const query = url.searchParams.get("q")?.toLowerCase() || "";
 

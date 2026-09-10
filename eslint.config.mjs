@@ -45,7 +45,13 @@ export default tseslint.config(
   {
     files: ['packages/web/**'],
     languageOptions: {
-      globals: { ...globals.node, ...globals.browser },
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        // Astro's ambient JSX namespace, supplied by `astro/client` types.
+        // TypeScript resolves it; ESLint has no way to know it exists.
+        astroHTML: 'readonly',
+      },
     },
   },
 
@@ -76,6 +82,17 @@ export default tseslint.config(
 
       // Base rule off; the TypeScript-aware version above replaces it.
       'no-unused-vars': 'off',
+    },
+  },
+
+  {
+    // SolidJS refs are declared `let el: HTMLDivElement | undefined` and bound
+    // with `ref={el}`. The compiler turns that JSX attribute into an assignment,
+    // which ESLint cannot see — so every ref in the codebase reads as "never
+    // assigned". The rule is wrong about this pattern, not the code.
+    files: ['packages/web/**/*.tsx'],
+    rules: {
+      'no-unassigned-vars': 'off',
     },
   },
 

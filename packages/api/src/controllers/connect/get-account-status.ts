@@ -4,7 +4,7 @@ import { getUserById } from "@gameloopers/core/data-access/users";
 import { getConnectAccountStatus, createLoginLink } from "@gameloopers/core/payments/connect";
 import { serverClient } from "@gameloopers/core/data-access/client";
 
-export const connectGetAccountStatus: Controller = async ({ request, userId }) => {
+export const connectGetAccountStatus: Controller = async ({ userId }) => {
   if (!userId) return unauthorized('Not authenticated');
 
   try {

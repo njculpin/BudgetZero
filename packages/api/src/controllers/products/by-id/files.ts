@@ -5,7 +5,7 @@ import { getProductFiles } from "@gameloopers/core/data-access/products";
  * GET /api/products/[productId]/files
  * Fetch all files for a product
  */
-export const productsProductIdFiles: Controller = async ({ request, params }) => {
+export const productsProductIdFiles: Controller = async ({ params }) => {
   const { productId } = params;
 
   if (!productId) {

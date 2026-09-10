@@ -44,7 +44,6 @@ vi.mock('@gameloopers/core/rate-limit', async (importOriginal) => ({
 describe('POST /api/auth/sign-in', () => {
   let mockRequest: Request;
   let mockCookies: any;
-  let mockRedirect: any;
 
   beforeEach(() => {
     // Reset all mocks
@@ -59,12 +58,6 @@ describe('POST /api/auth/sign-in', () => {
     };
 
     // Mock redirect
-    mockRedirect = vi.fn((url: string, status?: number) => {
-      return new Response(null, {
-        status: status || 302,
-        headers: { Location: url },
-      });
-    });
   });
 
   afterEach(() => {
@@ -430,7 +423,7 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
 
       // Verify access token cookie
       expect(mockCookies.set).toHaveBeenCalledWith(
@@ -482,7 +475,7 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
 
       // Verify both cookies were set
       expect(mockCookies.set).toHaveBeenCalledTimes(2);

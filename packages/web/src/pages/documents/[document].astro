@@ -1,10 +1,10 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/Card.astro";
-import CardContent from "@/components/CardContent.astro";
-import CardHeader from "@/components/CardHeader.astro";
-import CardTitle from "@/components/CardTitle.astro";
-import CardDescription from "@/components/CardDescription.astro";
+import Card from "@/components/card/Card.astro";
+import CardContent from "@/components/card/CardContent.astro";
+import CardHeader from "@/components/card/CardHeader.astro";
+import CardTitle from "@/components/card/CardTitle.astro";
+import CardDescription from "@/components/card/CardDescription.astro";
 import GalleryGrid from "@/components/GalleryGrid.astro";
 import { setSession } from "@gameloopers/core/auth";
 import {
@@ -42,7 +42,10 @@ if (accessToken && refreshToken) {
     if (!session.error && session.data.user) {
       currentUser = session.data.user;
     }
-  } catch {}
+  } catch {
+    // A bad or expired session is not an error for this page: it renders
+    // for a signed-out visitor. Deliberately silent.
+  }
 }
 
 // Fetch document

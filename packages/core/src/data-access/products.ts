@@ -727,6 +727,12 @@ export const getProductContributorsWithRoles = async (
     .eq('parent_product_id', productId)
     .eq('deleted', false);
 
+  if (componentsError) {
+    // Without this the failure is invisible: `components` is null, the loop
+    // below finds nothing, and the product appears to have no contributors.
+    console.error('Error fetching product components:', componentsError);
+  }
+
   // Map contributors to their embedded products
   const contributorsWithRoles: ProductContributorWithRole[] = [];
 

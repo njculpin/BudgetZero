@@ -7,7 +7,7 @@ import { unauthorized } from '../../responses';
 
 import { getEmbeddableProducts } from "@gameloopers/core/data-access/products";
 
-export const productsEmbeddable: Controller = async ({ request, userId }) => {
+export const productsEmbeddable: Controller = async ({ userId }) => {
   // Authenticate user
 
   if (!userId) {

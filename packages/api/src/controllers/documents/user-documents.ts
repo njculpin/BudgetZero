@@ -1,7 +1,7 @@
 import type { Controller } from '../../context';
 import { serverClient } from "@gameloopers/core/data-access/client";
 
-export const documentsUserDocuments: Controller = async ({ request, url }) => {
+export const documentsUserDocuments: Controller = async ({ url }) => {
   const userId = url.searchParams.get("userId");
   const limit = parseInt(url.searchParams.get("limit") || "3", 10);
 

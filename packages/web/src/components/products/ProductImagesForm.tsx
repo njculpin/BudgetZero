@@ -40,7 +40,6 @@ export default function ProductImagesForm(props: ProductImagesFormProps) {
     setImages(props.existingImages);
   });
 
-  const totalSlots = () => MAX_IMAGES;
   const availableSlots = () => MAX_IMAGES - images().length;
 
   // Generate preview URL for file
