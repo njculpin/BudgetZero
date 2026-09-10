@@ -34,8 +34,11 @@ jobs:
       - name: Load test env
         run: cat .env.test >> "$GITHUB_ENV"
 
+      - name: Package boundaries
+        run: npm run check:boundaries
+
       - name: Typecheck
-        run: npx astro check --minimal
+        run: npm run check
 
       - name: Build
         run: npm run build

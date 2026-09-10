@@ -1,11 +1,14 @@
 # Game Loopers — Ship Plan
 
 **Last updated:** 2026-09-09
-**Branch:** `fix/ship-blockers-money-path` (13 commits ahead of `main`)
 
 This file tracks **only what is still outstanding**. Completed items are deleted
 rather than checked off — if it is not written here, it is done or it was never in
 scope. Git history is the record of what changed.
+
+This is the single launch list. The persona-journey audit that used to live in
+`REPORT.md` has been folded in here; its still-open findings appear below with
+their original numbering noted, and the ones that were fixed are simply gone.
 
 ---
 
@@ -13,91 +16,150 @@ scope. Git history is the record of what changed.
 
 | Check | Result |
 |---|---|
-| `npm run build` | ✅ green (Astro 7.3.2) |
-| `astro check` | ✅ **0 errors** across 318 files |
-| `npm run test:run` | ✅ **525 passing**, 0 failing — including all 7 integration suites |
+| `npm run check` | ✅ **0 errors** across 237 files, all three packages |
+| `npm run check:boundaries` | ✅ `web → api → core`, no Astro below `web` |
+| `npm run test:run` | ✅ **400 unit tests**, 9 integration suites |
 | `npm audit` | ⚠️ 3 high, **0 critical** |
-| Migrations 00007/00008/00010 | ✅ applied; every object verified present |
-| Purchase → download | ✅ repaired and covered by tests |
-| Royalty payout reserve/settle/release | ✅ verified against real Postgres |
-| Legal pages | ❌ still 3-line stubs |
-| CI | ✅ `.github/workflows/ci.yml` |
+| Migrations 00001–00013 | ✅ applied and verified against a live database |
+| Purchase → download → royalty → payout | ✅ repaired, covered by tests |
+| Prices shown to buyers | ❌ **10% below what Stripe charges** |
+| Legal pages | ❌ still 11-line stubs |
+| e2e suite | ❌ deleted — it tested routes that do not exist |
 
-The money-path defects that made this unshippable are fixed and now verified
-against a real database. What stands between here and launch is the P0 list in
-**`REPORT.md`** — chiefly that nothing ever writes to `product_royalties`, so no
-royalty is ever paid — plus the legal documents.
+The money path works. What stands between here and launch is that **the buyer is
+shown the wrong price**, the legal documents are empty, and none of it has been
+walked through end to end by a human on a fresh database.
 
 ---
 
-> **See `REPORT.md`** for the persona-journey findings. Its P0 list is larger than
-> this file's and supersedes it for launch sequencing.
-
 ## P0 — Ship blockers
 
-### 1. Legal pages are empty
+### 1. Displayed prices are 10% below what Stripe charges
 
-`src/components/documents/TermsOfService.md`, `PrivacyPolicy.md`, and
-`StandardLicense.md` are **3 lines each — a heading and a date.**
+`getProductPriceBreakdown` returns `totalPrice = subtotal + platformFee`, and
+checkout charges `totalPrice`. The fee is **added on top**, not deducted. But the
+UI never shows it:
 
-Stripe requires published terms and a refund policy. GDPR/CCPA require a real
-privacy policy. The Standard License is load-bearing for the business model: it
-defines what rights a buyer gets and what an embedder may do with someone else's
-component. Shipping royalty splits without it is the largest non-technical risk
-here.
+- `cart.astro:125-131` prints Subtotal and Total as the **same number**, with no
+  fee line. The buyer then gets charged 10% more at Stripe.
+- `products/index.astro` computes card prices without the fee, and omits documents
+  entirely — so a document-only product displays as **"Free"** in the grid.
+- `ProductContentViewer.tsx` labels the bare item sum "Total".
 
-This needs a lawyer, not a developer. It has the longest lead time of anything
-remaining — **start it now**, in parallel with everything else.
+For the persona whose stated pain is *"doesn't know where the money goes"*, an
+undisclosed 10% appearing at the payment step is the worst available failure mode,
+and it is a Stripe compliance risk.
 
-### 2. End-to-end proof of the money path
+**Fix:** one function as the single source of price truth; show subtotal, fee and
+total explicitly everywhere a price appears. ~3–4 h. *(audit P0 #4)*
 
-Once the local stack is up, the fixes need one honest end-to-end run, not just
-green unit tests:
+### 2. `price_cents` is a phantom field, so Add to Cart never renders
+
+The `products` table has **no `price_cents` column** — a product's price is the sum
+of its files, documents and components. But `products.types.ts:22` declares
+`price_cents?: number | null` on `Product`. Because it is **optional**, TypeScript
+never complains; at runtime it is always `undefined`.
+
+`AddToCartButton.canPurchase()` requires `props.priceCents != null`, so on the
+public product page every `<Show>` is false: no price, no button, no explanation.
+The only surviving purchase path is a secondary button inside "What's Included",
+which renders only if the product has content.
+
+**Fix:** delete `price_cents` from the `Product` type and have the product page
+call `getProductPriceBreakdown`. ~1–2 h. Also fixes #3. *(audit P0 #2)*
+
+This is the third phantom field found in this codebase (`products.price_cents`,
+`users.full_name`, `products.embedding_royalty_cents`). All three were declared
+**optional**, which is precisely why `astro check` reported zero errors while the
+feature was dead. Worth remembering given how much weight "0 errors" carries in
+this project's status reporting.
+
+### 3. Every cart line item says "FREE"
+
+`CartItemRow.tsx:121` reads `props.item.product?.price_cents` — the phantom field
+above — which yields `0`, and `formatPrice(0)` returns `"FREE"`. Meanwhile the
+order summary two columns over shows a real total.
+
+The correct value is already in scope: `cart.astro` sets `item.price_cents` from
+the real breakdown. The component reads `item.product.price_cents` instead.
+
+**Fix:** one-word change. 15 min. Highest-abandonment moment in the funnel, and a
+chargeback generator until then. *(audit P0 #3)*
+
+### 4. Buyers are charged for documents that are never delivered
+
+`generate-document-pdfs.ts:57` is `// TODO: Implement actual PDF generation`.
+Documents are priced, added to carts, and paid for; no file is ever produced.
+
+**Fix:** either implement generation or remove documents from the purchasable set
+before launch. Selling something undeliverable is not a bug to defer. *(audit P0 #8)*
+
+### 5. Legal pages are empty
+
+`terms.astro`, `privacy.astro` and `licenses/standard.astro` are 11-line stubs. A
+marketplace that takes payments and issues licences cannot launch without them,
+and Stripe requires a published refund policy.
+
+- [ ] Terms of Service
+- [ ] Privacy Policy
+- [ ] Standard License — what a buyer may do with a downloaded file, and what a
+      creator grants when they mark a product embeddable
+- [ ] Refund policy
+- [ ] Reviewed by someone qualified
+
+### 6. End-to-end proof of the money path
+
+Every part is now covered by automated tests, but the whole has never been walked
+through by a human against a fresh database.
 
 - [ ] Fresh `supabase db reset` → sign up → create product → upload file → buy →
-      download. On a **clean** environment, so the bucket fix is actually proven.
+      download
 - [ ] Buy a bundle containing an embedded component; download the **child**
-      product's files. This is the case that was broken and is the core
-      differentiator.
+      product's file as the buyer
+- [ ] Confirm the child creator's royalty appears, held, and matures after the
+      14-day window
 - [ ] Replay a `checkout.session.completed` webhook with the same event id and
-      assert exactly one sale and one royalty set.
+      assert exactly one sale and one royalty set
 - [ ] Send an invalid webhook signature with `MOCK_STRIPE` unset and assert it is
-      rejected.
+      rejected
 - [ ] Request a payout, execute it, then attempt a second payout for the same
-      earnings and assert refusal.
-- [ ] Fail a transfer and assert the reserved royalties return to available
-      balance.
-
-The e2e suite runs `npm run dev` via `playwright.config.ts`, so it never exercises
-real Stripe signature verification. Consider a separate config that runs a
-production build for the webhook cases.
+      earnings and assert it is refused
+- [ ] Fail a transfer and assert the reserved royalties return to available balance
+- [ ] Refund a sale and assert the royalties are reversed
 
 ---
 
 ## P1 — Before or immediately after launch
 
-### 3. Account deletion is unimplemented
+### 7. Account deletion is unimplemented
 
-`/api/users/delete-user.ts` was an empty file and has been deleted. GDPR requires
-this. Needs a real soft-delete cascade across users, products, documents, and a
-decision about what happens to sales and royalty records the platform must retain
-for accounting.
+Required by the privacy policy that does not exist yet. Needs a decision about
+what happens to a deleted user's published products, their buyers' download
+entitlements, and unpaid royalties.
 
-### 4. PDF generation is stubbed
+### 8. 19 pages still exchange the session on every request
 
-`src/lib/data-access/products.ts` and
-`src/pages/api/products/generate-document-pdfs.ts` are both
-`TODO: Implement actual PDF generation`. `pdf-lib` is installed but unused.
-Decide: build it, or cut document-PDF delivery from v1 and say so in the UI.
+API routes now resolve identity once, at the gateway, by verifying the token
+signature locally. **19 `.astro` pages still call `setSession()` directly**, which
+is a network round trip to the auth provider per page render.
 
-### 5. Three high-severity advisories with no upstream fix
+`resolvePageAuth()` in `packages/web/src/lib/page-auth.ts` already does this the
+right way and `admin/payouts.astro` uses it. Converting the rest is mechanical.
 
-`npm audit` reports 3 high, 0 critical. All three are one ReDoS in
-`path-to-regexp`, reached transitively through `@vercel/routing-utils` inside
-`@astrojs/vercel`. No adapter release fixes it — npm's suggested "fix" is a
-downgrade to `@astrojs/vercel` 8.0.4, which would **reintroduce the
-`x-astro-path` authentication bypass**. Do not take that suggestion. Recheck
-after each adapter release.
+### 9. The e2e suite was deleted and needs rewriting
+
+The previous suite targeted `/dashboard`, `/assets`, `/assets/new` and
+`/products/new` — none of which exist — and carried 70 conditional guards that let
+specs pass without asserting anything. It never ran in CI. A suite that cannot
+fail is worse than no suite, so it was removed rather than repaired.
+
+The Playwright harness is still configured. The manual checks in P0 #6 are the
+right first specs to write.
+
+### 10. Three high-severity advisories with no upstream fix
+
+Transitive `path-to-regexp` ReDoS. No patched version is published. Re-check
+before launch; document the decision if still unfixed.
 
 ---
 
@@ -107,18 +169,33 @@ after each adapter release.
   therefore holds a URL that 400s for `product-files` and `document-attachments`.
   Nothing depends on it today (downloads go through `/api/download`), but it is a
   trap for the next person who links to `file_url` directly.
-- **Multi-currency and non-US Connect** are hardcoded TODOs
-  (`checkout/create-session.ts`, `connect/create-account.ts`). Fine for v1 — just
-  be explicit that launch is US-only, USD-only.
-- **Credits** are cut from v1 but `users.credits_balance` remains in the schema.
-  If credits return, they need a top-up flow first (they could previously only be
-  earned, never bought, which is why the feature was inert) and a decision about
-  whether credit-funded royalties may be withdrawn as real money.
+- **`core` still reads `import.meta.env` directly** in several files, which ties it
+  to a Vite consumer. New code uses `readEnv()` from `@gameloopers/core/env`; the
+  remaining direct uses must migrate before a non-Vite `packages/workers` can
+  import core.
+- **`/payouts` modal is unreachable CSS.** The markup is built with `innerHTML`, so
+  it never matches Astro's scoped `data-astro-cid-*` selectors — roughly 200 lines
+  of styles never apply, and an `onclick="loadData()"` handler is dead.
+- **768px double-match.** Four `min-width: 768px` media queries collide with a
+  `max-width: 768px` at exactly 768px. Move the four to `48.0625rem`.
+- **Dark mode is half-built.** Either finish the `.dark` palette (~20 lines) or
+  delete it (−45 lines). Owner's call; leaving it half-done is the worst option.
+- **Multi-currency and non-US Connect** are hardcoded TODOs. Fine for v1 — just be
+  explicit that launch is US-only, USD-only.
+- **Credits** are cut from v1 but `users.credits_balance` remains in the schema. If
+  credits return they need a top-up flow first, and a decision about whether
+  credit-funded royalties may be withdrawn as real money.
+- **README duplicates CLAUDE.md** across its Views, Data Model, APIs and
+  Architecture sections. They have already drifted once.
 
 ---
 
 ## Launch checklist
 
+- [ ] Buyers see the price they will actually be charged, fee shown explicitly
+- [ ] Add to Cart renders on the public product page
+- [ ] Cart line items show real prices
+- [ ] Documents are either deliverable or not for sale
 - [ ] Fresh `supabase db reset` → sign up → create → upload → buy → download
 - [ ] Embedded child product files download for the buyer
 - [ ] Webhook replayed twice produces exactly one sale and one royalty set
@@ -126,11 +203,13 @@ after each adapter release.
 - [ ] A second payout for already-paid earnings is refused
 - [ ] A failed transfer returns reserved royalties to available balance
 - [ ] A non-owner cannot delete another user's product image or avatar
-- [ ] ToS, Privacy Policy, and Standard License published and lawyer-reviewed
+- [ ] ToS, Privacy Policy, and Standard License published and reviewed
 - [ ] Refund policy published (Stripe requirement)
 - [ ] Account deletion implemented and tested
+- [ ] `SUPABASE_JWT_SECRET` set wherever the auth provider signs with a shared
+      secret — a missing key reports `unconfigured`, not "signed out"
 - [ ] `PUBLIC_SENTRY_DSN` set and `@sentry/astro` installed, or a deliberate
-      decision to run on console logs only
+      decision to launch without error reporting
 - [ ] `PUBLIC_SITE_URL` set in Vercel; receipt emails link to the production domain
 - [ ] `MOCK_STRIPE` unset in every deployed environment
 - [ ] `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_*`, `RESEND_API_KEY` set in Vercel
@@ -140,9 +219,8 @@ after each adapter release.
 
 ## The short version
 
-The code between "customer pays" and "creator gets paid" is now correct, and CI
-keeps it that way. Nothing on that path has been proven against a real database
-yet, and that is the next thing to do.
-
-The two long poles are unchanged: **the legal documents** and **end-to-end
-verification on a live stack**.
+The money path is fixed and tested. The remaining launch blockers are all in what
+the buyer *sees*: a price that is 10% too low, a missing Add to Cart button, cart
+rows that say FREE, documents sold but never delivered, and no legal terms. None
+of them are deep — the largest is half a day — but every one of them is on the
+path between a visitor and a completed purchase.

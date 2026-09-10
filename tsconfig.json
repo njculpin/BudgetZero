@@ -1,14 +1,21 @@
 {
+  "//": [
+    "Workspace root. Each package carries its own tsconfig and is checked by its own",
+    "`check` script — `astro check` for web, because plain tsc cannot resolve .astro",
+    "imports, and tsc for core and api.",
+    "",
+    "This config covers only the loose files at the repository root, which no",
+    "package config includes. It deliberately does NOT use project references:",
+    "those require `composite: true` on every referenced config, and a composite",
+    "build cannot typecheck the web package anyway."
+  ],
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "baseUrl": ".",
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js",
-    "paths": {
-      "@/*": ["src/*"]
-    },
-    "types": ["astro/client"]
+    "types": ["node", "vite/client"],
+    "noEmit": true,
+    "allowJs": true,
+    "module": "esnext",
+    "moduleResolution": "bundler"
   },
-  "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  "include": ["vitest.config.ts", "vitest.setup.ts", "scripts/**/*.mjs"]
 }

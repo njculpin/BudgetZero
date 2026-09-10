@@ -30,3 +30,8 @@ pnpm-debug.log*
 test-results/
 playwright-report/
 coverage/
+
+# Workspace package build output
+packages/*/dist/
+packages/*/.astro/
+packages/*/.vercel/

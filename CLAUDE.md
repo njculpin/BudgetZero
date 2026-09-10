@@ -29,12 +29,13 @@ npm run preview        # Preview production build locally
 npm run supabase:start # Local Supabase (requires Docker)
 npm run supabase:reset # Reapply all migrations from scratch
 
-npx astro check        # Typecheck, including .astro files. Must report 0 errors.
+npm run check          # Typechecks every package. Must report 0 errors.
+npm run check:boundaries # Enforces web -> api -> core
 npm run test:run       # Unit + integration tests (integration needs Supabase up)
 npm run test:e2e       # Playwright
 ```
 
-CI runs `npm ci && astro check && npm run test:run && npm run build` on every push
+CI runs `npm ci && npm run check:boundaries && npm run check && npm run test:run && npm run build` on every push
 and pull request (`.github/workflows/ci.yml`). Vercel auto-deploys `main`.
 
 ## Tech Stack
@@ -49,51 +50,113 @@ and pull request (`.github/workflows/ci.yml`). Vercel auto-deploys `main`.
 - **Testing**: Vitest (unit + integration), Playwright (e2e)
 - **Runtime**: Node 22 (matches the Vercel serverless runtime; see `.nvmrc`)
 
+## Workspace Layout
+
+This is an npm workspace. Dependencies point one way — `web -> api -> core` — and
+CI enforces it with `npm run check:boundaries`.
+
+```
+packages/
+  core/   Domain logic, SDK isolation layers, types, shared test fixtures.
+          Depends on nothing else in the workspace.
+  api/    HTTP controllers. Depends on core. Contains no Astro.
+  web/    The Astro application: pages, components, styles, and thin route
+          adapters. Depends on api and core.
+```
+
+Import with `@gameloopers/core/<layer>` and `@gameloopers/api/<module>`. The `@/`
+alias means `packages/web/src` and is only valid inside `web`.
+
+### Controllers, not route handlers
+
+An API route in `web` is an adapter and nothing else:
+
+```ts
+import { toAstroRoute } from '@/lib/to-astro-route';
+import { addToCartController } from '@gameloopers/api/controllers/cart/add-to-cart';
+
+export const POST = toAstroRoute(addToCartController);
+```
+
+The logic lives in `packages/api/src/controllers/`, written against a
+`RequestContext` of Web platform types — `Request`, `Response`, a small
+`CookieJar`. No controller imports Astro, which is what the boundary check
+enforces and what makes them mountable under another runtime by writing one more
+adapter rather than editing 68 files.
+
+**Identity is resolved once, by the gateway, before any controller runs.**
+`ctx.userId` is already settled; a controller never exchanges cookies for a
+session. It previously happened twice per request — once in middleware, whose
+result nothing read, and again in each route.
+
+Authentication behaviour belongs to `resolveAuth` in
+`packages/api/src/gateway.ts` and is tested once in `gateway.test.ts`, not
+re-asserted in every controller's tests.
+
+### Tokens are verified locally
+
+`packages/core/src/auth/verify-token.ts` checks an access token's signature with
+no network call, supporting both a shared HS256 secret (local development, older
+projects) and a published JWKS (new hosted projects). The auth provider is
+contacted only to renew an expired session — about once an hour per session
+rather than twice per request.
+
+`SUPABASE_JWT_SECRET` must be set wherever the provider signs with a shared
+secret. A missing key reports `unconfigured` rather than "signed out", so a
+deployment fault does not masquerade as an auth bug.
+
+### Known constraint
+
+`core` still reads configuration through `import.meta.env` in several files,
+which ties it to a Vite consumer. New code uses `readEnv()` from
+`@gameloopers/core/env`, which falls back to `process.env`; the remaining direct
+uses need migrating before a non-Vite `packages/workers` can import core.
+
 ## Critical Architecture Rules
 
 ### 🚨 SDK Isolation Layer Pattern
 
 **ALL third-party service SDKs MUST be isolated in dedicated abstraction layers.** This is the most important architectural rule. Direct imports of SDKs outside these layers are strictly prohibited.
 
-**Auth Layer** (`/src/lib/auth/`)
+**Auth Layer** (`packages/core/src/auth/`)
 
 - `client.ts` - Supabase auth client configuration
 - `index.ts` - Exported functions: `signInWithPassword()`, `signInWithOAuth()`, `signUp()`, `exchangeCodeForSession()`, `setSession()`, `getSession()`, `getUser()`, `signOut()`
 - Used by: API routes, Astro pages (server-side)
 - ❌ Never import `@supabase/supabase-js` outside this directory
 
-**Data Access Layer** (`/src/lib/data-access/`)
+**Data Access Layer** (`packages/core/src/data-access/`)
 
 - `client.ts` - Supabase database client
 - Includes: `users.ts`, `products.ts`, `documents.ts`, `royalties.ts` with CRUD functions
 - Export service functions like `getUserById()`, `createProduct()`, `updateDocument()`
 - ❌ Never import `@supabase/supabase-js` outside this directory
 
-**Storage Layer** (`/src/lib/storage/`)
+**Storage Layer** (`packages/core/src/storage/`)
 
 - `client.ts` - Supabase storage client
 - `uploads.ts` - Generic upload functions for product files and images
 - `products.ts` - Product-specific storage functions
 - ❌ Never import `@supabase/supabase-js` outside this directory
 
-**Payments Layer** (`/src/lib/payments/`)
+**Payments Layer** (`packages/core/src/payments/`)
 
 - `client.ts` - Stripe client. `mock-mode.ts` - the single `USE_MOCK_STRIPE` flag
 - `checkout.ts`, `connect.ts` - checkout sessions, Connect accounts, transfers
 - ❌ Never import the Stripe SDK outside this directory
 
-**Email Layer** (`/src/lib/email/`)
+**Email Layer** (`packages/core/src/email/`)
 
 - `client.ts` - Resend client. `index.ts` - `sendEmail()`
 - ❌ Never import the Resend SDK outside this directory
 
-**Monitoring Layer** (`/src/lib/monitoring/`)
+**Monitoring Layer** (`packages/core/src/monitoring/`)
 
 - `client.ts` - provider config. `index.ts` - `captureError()`, `captureMessage()`
 - Sentry loads lazily and only when `PUBLIC_SENTRY_DSN` is set
 - ❌ Never import a monitoring SDK outside this directory
 
-**Rate Limiting** (`/src/lib/rate-limit/`)
+**Rate Limiting** (`packages/core/src/rate-limit/`)
 
 - Postgres-backed fixed-window counters; Vercel invocations share no memory
 - `checkRateLimit()`, `rateLimitIdentity()`, `rateLimitedResponse()`
@@ -129,10 +192,11 @@ build. Never set it in a deployed environment.
 
 ## TypeScript Types
 
-All data model types are defined in `/src/types/`:
+All data model types live in `packages/core/src/types/` and are imported as
+`@gameloopers/core/types`:
 
 ```
-src/types/
+packages/core/src/types/
 ├── common.types.ts      # BaseEntity, BaseEntityWithoutDelete
 ├── users.types.ts       # User, UserTag, UserReview, UserFollows
 ├── documents.types.ts   # Document, DocumentBlock, DocumentCollaborator
@@ -142,7 +206,7 @@ src/types/
 └── index.ts             # Barrel exports
 ```
 
-Import types: `import type { User, Product } from '@/types'`
+Import types: `import type { User, Product } from '@gameloopers/core/types'`
 
 **Never use `any` types.** All functions and components must be fully typed.
 
@@ -359,21 +423,26 @@ Auth uses Supabase PKCE flow with cookies:
 
 - `sb-access-token` - JWT access token (cookie)
 - `sb-refresh-token` - Refresh token (cookie)
-- Protected pages check cookies via `setSession()` from `/src/lib/auth`
+- Protected pages check cookies via `setSession()` from `@gameloopers/core/auth`
 
-**For API routes, use `requireUserId(cookies)` from `/src/lib/auth/require-user`**
-rather than hand-rolling the cookie exchange. Every hand-rolled copy is a chance
-to get it wrong: the notifications routes called `getSession(accessToken,
+**API controllers receive `ctx.userId` already resolved** — do not exchange
+cookies for a session inside a controller. Every hand-rolled copy was a chance to
+get it wrong: the notifications routes called `getSession(accessToken,
 refreshToken)`, but `getSession` takes no arguments, so every one of those
 endpoints answered 401 to every caller until it was fixed.
 
 ```ts
-const userId = await requireUserId(cookies);
-if (!userId) return unauthorizedResponse();
+export const myController: Controller = async ({ userId }) => {
+  if (!userId) return unauthorized();
+  // ...
+};
 ```
 
-For admin-only routes use `verifyAdmin(cookies)` from `/src/lib/auth/admin`, and
-record the action with `logAdminAction()`.
+Inside an `.astro` page, use `resolvePageAuth(Astro.cookies)` from
+`@/lib/page-auth`, which goes through the same gateway.
+
+For admin-only routes use `verifyAdmin(userId)` from
+`@gameloopers/core/auth/admin`, and record the action with `logAdminAction()`.
 
 See `/src/pages/api/notifications/index.ts` (API) or `/src/pages/payouts/index.astro`
 (page) for reference implementations.

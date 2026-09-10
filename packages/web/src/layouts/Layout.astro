@@ -1,0 +1,90 @@
+---
+import '@fontsource/inter';
+import '@/styles/global.css'
+import Navigation from '@/components/Navigation.astro';
+import Footer from '@/components/Footer.astro';
+import OnboardingModal from '@/components/auth/OnboardingModal';
+import { setSession } from '@gameloopers/core/auth';
+import { getUserById } from '@gameloopers/core/data-access/users';
+
+const { title } = Astro.props;
+
+// Check if user needs onboarding
+let showOnboarding = false;
+
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+
+    if (!session.error && session.data.user) {
+      const user = await getUserById(session.data.user.id);
+      if (user && !user.onboarding_completed) {
+        showOnboarding = true;
+      }
+    }
+  } catch (error) {
+    console.error("Error checking onboarding status:", error);
+  }
+}
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<link rel="sitemap" href="/sitemap-index.xml" />
+		<title>{title}</title>
+	</head>
+	<body>
+		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<Navigation server:defer/>
+		<main id="main-content" role="main">
+			<slot />
+		</main>
+		<footer role="contentinfo">
+			<Footer/>
+		</footer>
+		{showOnboarding && (
+			<OnboardingModal client:load />
+		)}
+	</body>
+</html>
+
+<style>
+	html,
+	body {
+		margin: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	/* Skip link for accessibility - visible only on keyboard focus */
+	.skip-link {
+		position: absolute;
+		top: -100px;
+		left: 0;
+		z-index: 100;
+		padding: var(--spacing-md) var(--spacing-lg);
+		background-color: var(--primary);
+		color: var(--primary-foreground);
+		text-decoration: none;
+		font-weight: var(--font-weight-semibold);
+		border-radius: 0 0 var(--radius-md) 0;
+		transition: top 0.2s ease;
+	}
+
+	.skip-link:focus {
+		top: 0;
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+</style>

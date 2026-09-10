@@ -1,0 +1,28 @@
+{
+  "name": "@gameloopers/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Transport-agnostic HTTP controllers. Depends on core; knows nothing about Astro.",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./context": "./src/context.ts",
+    "./responses": "./src/responses.ts",
+    "./controllers/*": "./src/controllers/*.ts",
+    "./gateway": "./src/gateway.ts",
+    "./test-support": "./src/test-support.ts",
+    "./router": "./src/router.ts",
+    "./routes": "./src/routes.ts"
+  },
+  "dependencies": {
+    "@gameloopers/core": "*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/node": "^24.9.1"
+  }
+}

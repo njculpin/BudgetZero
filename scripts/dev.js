@@ -5,9 +5,9 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-const WEB_URL = 'http://localhost:4321'
-const SUPABASE_API_URL = 'http://127.0.0.1:54321';
-const EMAIL_CLIENT_URL = 'http://127.0.0.1:54324';
+const WEB_URL = 'http://localhost:4321';
+const SUPABASE_API_URL = 'http://127.0.0.1:55321';
+const EMAIL_CLIENT_URL = 'http://127.0.0.1:55324';
 
 async function isSupabaseRunning() {
   try {
@@ -49,14 +49,14 @@ async function openEmailClient() {
   try {
     await execAsync(command);
     console.log('✅ Email client opened');
-  } catch (error) {
+  } catch {
     console.warn('⚠️  Could not open email client automatically');
     console.log(`   Open manually: ${EMAIL_CLIENT_URL}`);
   }
 }
 
 async function openWebClient() {
-  console.log('📧 Opening email client...');
+  console.log('🌐 Opening web client...');
 
   const platform = process.platform;
   let command;
@@ -72,7 +72,7 @@ async function openWebClient() {
   try {
     await execAsync(command);
     console.log('✅ Web client opened');
-  } catch (error) {
+  } catch {
     console.warn('⚠️  Could not open web client automatically');
     console.log(`   Open manually: ${WEB_URL}`);
   }

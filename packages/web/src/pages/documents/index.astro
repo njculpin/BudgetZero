@@ -1,0 +1,283 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import CardContent from "@/components/CardContent.astro";
+import BrowseCTA from "@/components/home/BrowseCTA.astro";
+import PageHeader from "@/components/PageHeader.astro";
+import { setSession } from "@gameloopers/core/auth";
+import { FormSubmitButton } from "@/components/interactive";
+import { getUserDocuments } from "@gameloopers/core/data-access/documents";
+import { getUserById } from "@gameloopers/core/data-access/users";
+
+const { cookies } = Astro;
+
+// Check authentication
+let currentUser = null;
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      currentUser = session.data.user;
+    }
+  } catch {}
+}
+
+// Fetch user's documents
+let documents: Awaited<ReturnType<typeof getUserDocuments>> = [];
+if (currentUser) {
+  documents = await getUserDocuments(currentUser.id);
+}
+
+// Fetch document owners
+const ownerIds = [...new Set(documents.map(d => d.user_id))];
+const owners = await Promise.all(ownerIds.map(id => getUserById(id)));
+const ownersMap = new Map(owners.filter(o => o).map(o => [o!.id, o]));
+
+// Helper function to format date
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+---
+
+<Layout title="Documents - Game Loopers">
+  <div class="page">
+    <div class="page__container">
+      <div class="page-header--with-action">
+        <PageHeader title="Documents" description="Collaborative game design documents - rulebooks, reference cards, and more"/>
+        {currentUser && (
+          <FormSubmitButton
+            client:load
+            action="/api/documents/create-document"
+            method="post"
+            variant="primary"
+            size="lg"
+          >
+            New Document
+          </FormSubmitButton>
+        )}
+      </div>
+
+      {!currentUser && (
+        <Card>
+          <CardContent>
+            <BrowseCTA message="Sign in to create and collaborate on game design documents" />
+          </CardContent>
+        </Card>
+      )}
+
+      {currentUser && documents.length === 0 && (
+        <Card>
+          <CardContent>
+            <div class="empty-state">
+              <div class="empty-state__icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              </div>
+              <h3 class="empty-state__title">No documents yet</h3>
+              <p class="empty-state__description">Create your first document to start collaborating on rulebooks, reference cards, and more.</p>
+              <div class="empty-state__action">
+                <FormSubmitButton
+                  client:load
+                  action="/api/documents/create-document"
+                  method="post"
+                  variant="primary"
+                  size="lg"
+                >
+                  Create Your First Document
+                </FormSubmitButton>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {currentUser && documents.length > 0 && (
+        <div class="documents-grid">
+          {documents.map((doc) => {
+            const owner = ownersMap.get(doc.user_id);
+            const isOwner = doc.user_id === currentUser?.id;
+            return (
+              <a href={`/documents/${doc.handle}`} class="document-card">
+                <div class="document-card__icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                </div>
+                <div class="document-card__content">
+                  <h3 class="document-card__title">{doc.title}</h3>
+                  {doc.description && (
+                    <p class="document-card__description">
+                      {doc.description.length > 100 ? `${doc.description.substring(0, 100)}...` : doc.description}
+                    </p>
+                  )}
+                  <div class="document-card__meta">
+                    <span class="document-card__author">
+                      {isOwner ? 'You' : owner?.name || owner?.handle || 'Unknown'}
+                    </span>
+                    <span class="document-card__separator">•</span>
+                    <span class="document-card__date">
+                      Updated {formatDate(doc.updated_at)}
+                    </span>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<style>
+/* ===== Page Header with Action ===== */
+.page-header--with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--gap-xl);
+  margin-bottom: var(--spacing-2xl);
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-6xl) var(--spacing-2xl);
+  min-height: 400px;
+}
+
+.empty-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin-bottom: var(--spacing-xl);
+  color: var(--muted-foreground);
+  opacity: 0.4;
+}
+
+.empty-state__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.empty-state__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.empty-state__description {
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+  margin: 0 0 var(--spacing-2xl) 0;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.empty-state__action {
+  margin-top: var(--spacing-md);
+}
+
+/* ===== Documents Grid ===== */
+.documents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: var(--gap-xl);
+}
+
+/* ===== Document Card ===== */
+.document-card {
+  display: flex;
+  gap: var(--gap-lg);
+  padding: var(--spacing-2xl);
+  background-color: var(--card);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.document-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.document-card__icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--muted);
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+}
+
+.document-card__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.document-card__title {
+  margin: 0 0 var(--spacing-xs);
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.document-card__description {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-normal);
+}
+
+.document-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+}
+
+.document-card__separator {
+  opacity: 0.5;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .page-header--with-action {
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .documents-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

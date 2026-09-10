@@ -20,12 +20,40 @@ npm run dev                    # http://localhost:4321
 Before pushing:
 
 ```bash
-npx astro check     # must report 0 errors
+npm run check:boundaries   # package dependency direction
+npm run check              # typechecks every package; must report 0 errors
 npm run test:run
 npm run build
 ```
 
-CI runs all three on every push and pull request. Vercel auto-deploys `main`.
+CI runs all four on every push and pull request. Vercel auto-deploys `main`.
+
+## Repository layout
+
+An npm workspace. Dependencies point one way — `web -> api -> core` — and
+`npm run check:boundaries` fails the build if that is ever violated.
+
+```
+packages/
+  core/   Domain logic, third-party SDK isolation, types, test fixtures.
+          Depends on nothing else in the workspace.
+  api/    HTTP controllers and the auth gateway. Contains no Astro, so the
+          same handlers can be mounted under another runtime.
+  web/    The Astro application. Its API routes are thin adapters:
+
+              export const POST = toAstroRoute(addToCartController);
+
+e2e/          Playwright specs
+scripts/      dev launcher, boundary check
+supabase/     migrations and local stack config
+```
+
+Run a command against one package with `-w`:
+
+```bash
+npm run dev -w @gameloopers/web
+npm run check -w @gameloopers/core
+```
 
 ## Language & Framework
 Astro 7 (server mode, Vercel adapter)
@@ -45,7 +73,7 @@ Vercel
 
 ## UI
 BEM CSS (Block Element Modifier)
-Component examples in `/src/components/` demonstrate the BEM pattern
+Component examples in `packages/web/src/components/` demonstrate the BEM pattern
 
 ## Form Validation
 Zod
@@ -594,41 +622,42 @@ gap is explicit rather than mistaken for something already shipped:
 Astro API Routes + Supabase Direct:
 - Static pages rendered at build time where possible
 - SolidJS islands for interactive components (auth forms, file uploads, cart, etc.)
-- Astro API routes (`/src/pages/api/`) for server-side operations
+- Astro API routes (`packages/web/src/pages/api/`) are thin adapters; the
+  handlers live in `packages/api/src/controllers/`
 - Supabase SDK via isolated data-access layer (all Supabase calls in dedicated modules)
 - Supabase Auth for session management (cookies handled by Supabase SDK)
 - Signals for reactive state within islands
 - Nanostores for cross-island state if needed
 
 ## Architecture Layers
-**Data Access Layer** (`/src/lib/data-access/`)
+**Data Access Layer** (`packages/core/src/data-access/`)
 - All Supabase DB SDK calls isolated here
 - Export service functions (e.g., `getUserById`, `createProduct`)
 - No direct Supabase imports outside this layer
 - Enables easy migration to different backend
 
-**Storage Layer** (`/src/lib/storage/`)
+**Storage Layer** (`packages/core/src/storage/`)
 - All Supabase Storage SDK calls isolated here
 - Export storage functions (e.g., `uploadProductFile`, `uploadProductImage`, `createSignedUrl`)
 - No direct Storage SDK imports outside this layer
 
-**Auth Layer** (`/src/lib/auth/`)
+**Auth Layer** (`packages/core/src/auth/`)
 - Supabase Auth configuration and utilities
 - Session helpers for server/client
 - Auth middleware for Astro API routes
 
-**Island Components** (organised by domain, e.g. `/src/components/products/`)
+**Island Components** (organised by domain, e.g. `packages/web/src/components/products/`)
 - SolidJS components with client-side interactivity
 - Use Signals for local state
 - Call Astro API routes; never the Supabase client directly
-- Generic reusable islands live in `/src/components/interactive/`
+- Generic reusable islands live in `packages/web/src/components/interactive/`
 - Examples: SignInForm, ProductContentManager, AddToCartButton
 
-**Payments Layer** (`/src/lib/payments/`)
+**Payments Layer** (`packages/core/src/payments/`)
 - All Stripe SDK calls isolated here (Checkout, Connect, transfers)
 - No direct Stripe imports outside this layer
 
-**Email Layer** (`/src/lib/email/`) and **Monitoring Layer** (`/src/lib/monitoring/`)
+**Email Layer** (`packages/core/src/email/`) and **Monitoring Layer** (`packages/core/src/monitoring/`)
 - Same rule: the SDK appears only inside its layer
 
 ## Deployment
@@ -641,12 +670,12 @@ JS — see the September 2026 notes in `CLAUDE.md` for why.
 - Never use "Any" Types
 - Never have unused imports
 - Components should be DRY as possible
-- BEM CSS naming convention for all components (see examples in `/src/components/`)
+- BEM CSS naming convention for all components (see examples in `packages/web/src/components/`)
 - **CRITICAL: All 3rd party service SDKs MUST be isolated in dedicated layers**
-  - Supabase SDK only in `/src/lib/data-access/` and `/src/lib/storage/` and `/src/lib/auth/`
-  - Stripe SDK only in `/src/lib/payments/`
-  - Resend SDK only in `/src/lib/email/`
-  - Monitoring SDK only in `/src/lib/monitoring/`
+  - Supabase SDK only in `packages/core/src/data-access/` and `packages/core/src/storage/` and `packages/core/src/auth/`
+  - Stripe SDK only in `packages/core/src/payments/`
+  - Resend SDK only in `packages/core/src/email/`
+  - Monitoring SDK only in `packages/core/src/monitoring/`
   - No direct imports of these SDKs anywhere else
   - This enables quick migration if we decide to switch providers
   - Island components should only import from our abstraction layers

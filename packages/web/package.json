@@ -1,0 +1,42 @@
+{
+  "name": "@gameloopers/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Astro application: pages, API route adapters, components and styles.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@gameloopers/api": "*",
+    "@gameloopers/core": "*",
+    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/solid-js": "^7.0.2",
+    "@astrojs/vercel": "11.0.10",
+    "@fontsource/inter": "^5.2.8",
+    "@tiptap/core": "^3.11.0",
+    "@tiptap/extension-code-block": "^3.11.0",
+    "@tiptap/extension-heading": "^3.11.0",
+    "@tiptap/extension-image": "^3.11.0",
+    "@tiptap/extension-link": "^3.11.0",
+    "@tiptap/extension-placeholder": "^3.11.0",
+    "@tiptap/extension-table": "^3.11.0",
+    "@tiptap/extension-table-cell": "^3.11.0",
+    "@tiptap/extension-table-header": "^3.11.0",
+    "@tiptap/extension-table-row": "^3.11.0",
+    "@tiptap/pm": "^3.11.0",
+    "@tiptap/starter-kit": "^3.11.0",
+    "astro": "^7.3.2",
+    "pdf-lib": "^1.17.1",
+    "solid-js": "^1.9.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^5.9.3"
+  }
+}

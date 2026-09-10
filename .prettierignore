@@ -1,0 +1,14 @@
+# Build output
+dist/
+.astro/
+.vercel/
+packages/*/dist/
+packages/*/.astro/
+packages/*/.vercel/
+
+# Generated
+package-lock.json
+
+# Supabase migrations are read as a sequence of deliberate statements;
+# reflowing them makes the diffs harder to review than the SQL is to read.
+supabase/migrations/

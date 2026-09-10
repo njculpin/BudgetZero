@@ -1,0 +1,32 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { setSession } from "@gameloopers/core/auth";
+import RegisterForm from "@/components/auth/RegisterForm";
+const { cookies, redirect } = Astro;
+
+// Check if already authenticated
+const accessToken = cookies.get("sb-access-token");
+const refreshToken = cookies.get("sb-refresh-token");
+
+if (accessToken && refreshToken) {
+  try {
+    const session = await setSession({
+      refresh_token: refreshToken.value,
+      access_token: accessToken.value,
+    });
+    if (!session.error && session.data.user) {
+      return redirect("/products");
+    }
+  } catch {
+    // Session invalid, continue to sign-up
+  }
+}
+---
+
+<Layout title="Sign up">
+  <div class="page">
+    <div class="auth-page__container">
+     <RegisterForm client:load />
+    </div>
+  </div>
+</Layout>
