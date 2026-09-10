@@ -183,7 +183,9 @@
   background-color: oklch(from var(--success) l c h / 0.1);
   border: var(--border-width-default) solid var(--success);
   border-radius: var(--radius-md);
-  color: var(--success-foreground);
+  /* --success-foreground is near-white, for use on a SOLID success fill. On
+     this 10% tint it measured 1.08:1. 4.53:1. */
+  color: var(--success-fg);
 }
 
 .add-to-cart__success p {

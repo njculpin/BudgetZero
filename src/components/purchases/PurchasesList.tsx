@@ -1,6 +1,7 @@
 import { createSignal, For, Show, onMount } from "solid-js";
 import PurchaseCard, { type PurchaseWithDetails } from "./PurchaseCard";
 import "./purchases-list.css";
+import { scrollBehavior } from "@/lib/utils/motion";
 
 export interface PurchasesListProps {
   initialPurchases: PurchaseWithDetails[];
@@ -99,7 +100,10 @@ export default function PurchasesList(props: PurchasesListProps) {
     // Scroll to top of purchases list
     const purchasesElement = document.querySelector('.purchases-list');
     if (purchasesElement) {
-      purchasesElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      purchasesElement.scrollIntoView({
+        behavior: scrollBehavior(),
+        block: 'start',
+      });
     }
   };
 

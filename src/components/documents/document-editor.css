@@ -111,11 +111,13 @@
 }
 
 .document-editor__unsaved {
-  color: var(--warning, #f59e0b);
+  /* --warning is a fill colour, 1.72:1 as text. */
+  color: var(--warning-fg);
 }
 
 .document-editor__saved {
-  color: var(--success, #22c55e);
+  /* --success is a fill colour, 4.07:1 as text. */
+  color: var(--success-fg);
 }
 
 /* Presence Indicators */

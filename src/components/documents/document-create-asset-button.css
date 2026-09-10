@@ -78,7 +78,8 @@
   border: 1px solid var(--success, #22c55e);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
-  color: var(--success, #22c55e);
+  /* --success is a fill colour, 4.07:1 as text. */
+  color: var(--success-fg);
 }
 
 .document-create-asset__hint {

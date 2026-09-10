@@ -28,7 +28,8 @@ const { className = "" } = Astro.props;
 
   .warning-box__icon {
     flex-shrink: 0;
-    color: var(--warning, #f59e0b);
+    /* --warning is a fill colour at 1.72:1 on white. --warning-fg is 5.08:1. */
+    color: var(--warning-fg);
     margin-top: 2px;
   }
 

@@ -187,12 +187,14 @@
 }
 
 .dashboard__content-status--private {
-  background-color: oklch(from var(--color-info) l c h / 0.9);
+  /* White on --color-info at 90% is 3.06:1. --info-fg gives 5.10:1. */
+  background-color: var(--info-fg);
   color: var(--color-info-foreground);
 }
 
 .dashboard__content-status--public {
-  background-color: oklch(from var(--color-success) l c h / 0.9);
+  /* White on --color-success at 90% is 3.35:1. --success-fg gives 5.09:1. */
+  background-color: var(--success-fg);
   color: var(--color-success-foreground);
 }
 

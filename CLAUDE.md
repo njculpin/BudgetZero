@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Game Loopers is a social commerce platform for tabletop game creators (designers, 3D modelers, illustrators) to collaborate, publish digital downloads, manage licensing, and distribute royalties. Think of it as a marketplace where contributors can assemble game products with embedded components, manage royalty splits, and customers purchase complete game packages.
 
 **Key Documentation:**
-- `/PLAN.md` - Outstanding work to reach launch. Tracks only what is *not* done;
+
+- `/PLAN.md` - Outstanding work to reach launch. Tracks only what is _not_ done;
   completed items are deleted rather than checked off.
 - `/.claude/skills/persona-journey/PERSONAS.md` - Detailed user personas (current + future)
 - `/.claude/skills/audit-style/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
@@ -55,38 +56,45 @@ and pull request (`.github/workflows/ci.yml`). Vercel auto-deploys `main`.
 **ALL third-party service SDKs MUST be isolated in dedicated abstraction layers.** This is the most important architectural rule. Direct imports of SDKs outside these layers are strictly prohibited.
 
 **Auth Layer** (`/src/lib/auth/`)
+
 - `client.ts` - Supabase auth client configuration
 - `index.ts` - Exported functions: `signInWithPassword()`, `signInWithOAuth()`, `signUp()`, `exchangeCodeForSession()`, `setSession()`, `getSession()`, `getUser()`, `signOut()`
 - Used by: API routes, Astro pages (server-side)
 - ❌ Never import `@supabase/supabase-js` outside this directory
 
 **Data Access Layer** (`/src/lib/data-access/`)
+
 - `client.ts` - Supabase database client
 - Includes: `users.ts`, `products.ts`, `documents.ts`, `royalties.ts` with CRUD functions
 - Export service functions like `getUserById()`, `createProduct()`, `updateDocument()`
 - ❌ Never import `@supabase/supabase-js` outside this directory
 
 **Storage Layer** (`/src/lib/storage/`)
+
 - `client.ts` - Supabase storage client
 - `uploads.ts` - Generic upload functions for product files and images
 - `products.ts` - Product-specific storage functions
 - ❌ Never import `@supabase/supabase-js` outside this directory
 
 **Payments Layer** (`/src/lib/payments/`)
+
 - `client.ts` - Stripe client. `mock-mode.ts` - the single `USE_MOCK_STRIPE` flag
 - `checkout.ts`, `connect.ts` - checkout sessions, Connect accounts, transfers
 - ❌ Never import the Stripe SDK outside this directory
 
 **Email Layer** (`/src/lib/email/`)
+
 - `client.ts` - Resend client. `index.ts` - `sendEmail()`
 - ❌ Never import the Resend SDK outside this directory
 
 **Monitoring Layer** (`/src/lib/monitoring/`)
+
 - `client.ts` - provider config. `index.ts` - `captureError()`, `captureMessage()`
 - Sentry loads lazily and only when `PUBLIC_SENTRY_DSN` is set
 - ❌ Never import a monitoring SDK outside this directory
 
 **Rate Limiting** (`/src/lib/rate-limit/`)
+
 - Postgres-backed fixed-window counters; Vercel invocations share no memory
 - `checkRateLimit()`, `rateLimitIdentity()`, `rateLimitedResponse()`
 
@@ -170,6 +178,7 @@ Use CSS custom properties for theming: `var(--color-primary, #0070f3)`
 Components are organized to **mirror the pages directory structure**, making it immediately clear where each component is used. Generic/shared components that are used across multiple pages live in the root of `components/`.
 
 **Structure:**
+
 ```
 src/components/
 ├── Button.astro, Card.astro, etc.  # Generic UI components (used everywhere)
@@ -195,18 +204,20 @@ src/components/
 ```
 
 **Import Examples:**
+
 ```tsx
 // Generic components (root)
-import Button from '@/components/Button.astro';
-import { FormField, Input } from '@/components/base';
-import { LoadingButton, TagInput } from '@/components/interactive';
+import Button from "@/components/Button.astro";
+import { FormField, Input } from "@/components/base";
+import { LoadingButton, TagInput } from "@/components/interactive";
 
 // Page-specific components
-import { ProductEditForm, ProductContentViewer } from '@/components/products';
-import { NotificationCenter } from '@/components/notifications';
+import { ProductEditForm, ProductContentViewer } from "@/components/products";
+import { NotificationCenter } from "@/components/notifications";
 ```
 
 **Key Principles:**
+
 - **Mirror pages/** - Component directories match page routes
 - **Generic components in root** - Button, Card, Breadcrumb, etc. used everywhere
 - **Co-located CSS** - CSS files next to component files
@@ -220,6 +231,7 @@ Note the dynamic segments are `[user]` / `[product]` / `[document]` / `[tag]`,
 not `[handle]`.
 
 **Public:**
+
 - `/` - Landing page
 - `/about`, `/privacy`, `/terms`, `/licenses/standard` - static pages
 - `/users`, `/users/[user]` - directory and profile (owner sees the edit view)
@@ -228,6 +240,7 @@ not `[handle]`.
 - `/sign-in`, `/sign-up`
 
 **Authenticated:**
+
 - `/cart`, `/checkout/success`, `/checkout/failed`
 - `/create` - product creation
 - `/products/[product]/edit`
@@ -237,6 +250,7 @@ not `[handle]`.
 - `/notifications`, `/settings`
 
 **Admin** (`users.role = 'admin'`):
+
 - `/admin/payouts` - payout queue; executes Stripe transfers
 
 There is no `/dashboard` or `/feed` route.
@@ -250,12 +264,14 @@ own ownership checks; the middleware only establishes that someone is signed in.
 ## Data Model Overview
 
 **Core Entities:**
+
 - **Users**: Creators and customers with handles, bios, Stripe IDs for payouts
 - **Products**: Sellable items with files, documents, and embeddable components (product-in-product)
 - **Documents**: Private collaborative docs (Notion-like blocks) that can be attached to products
 - **Cart/Sales**: E-commerce with line items, file downloads, royalty transactions
 
 **Key Relationships:**
+
 - Products have ProductFiles (downloadable content with individual pricing)
 - Products have ProductDocuments (attached documents with individual pricing)
 - ProductComponents link parent products to child products (product-in-product embedding pattern)
@@ -263,6 +279,7 @@ own ownership checks; the middleware only establishes that someone is signed in.
 - SaleRoyaltyTransactions track payments to contributors per sale
 
 **Architectural Changes (December 2024):**
+
 - **Removed:** Variant abstraction (SKUs/options) - added complexity without clear value
 - **Removed:** Asset abstraction - migrated to product-centric model
 - **Simplified:** Products are now the atomic unit; variants were over-engineering for MVP
@@ -276,17 +293,17 @@ Interactive components are organized by domain (e.g., `/src/components/products/
 
 ```tsx
 // Example: SignInForm.tsx
-import { createSignal } from 'solid-js';
+import { createSignal } from "solid-js";
 
 export default function SignInForm() {
-  const [email, setEmail] = createSignal('');
-  const [password, setPassword] = createSignal('');
+  const [email, setEmail] = createSignal("");
+  const [password, setPassword] = createSignal("");
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    const response = await fetch('/api/auth/sign-in', {
-      method: 'POST',
-      body: new FormData(e.target as HTMLFormElement)
+    const response = await fetch("/api/auth/sign-in", {
+      method: "POST",
+      body: new FormData(e.target as HTMLFormElement),
     });
     // handle response
   };
@@ -305,6 +322,7 @@ export default function SignInForm() {
 ```
 
 **Form State:**
+
 - Simple forms (login, signup): SolidJS Signals only
 - Complex forms (product file upload, checkout): Signals + Zod validation
 - Keep state local to islands (use Nanostores only if cross-island state needed)
@@ -322,12 +340,14 @@ export default function SignInForm() {
 **See `/.claude/skills/persona-journey/PERSONAS.md` for comprehensive persona documentation.**
 
 **Current Personas (MVP - Digital Marketplace):**
+
 - **Game Designers:** Create products, hire collaborators, earn from sales
 - **Illustrators:** Sell art products, license work, earn royalties when embedded in other products
 - **3D Modelers:** Sell STL file products, license models, earn royalties when embedded in other products
 - **Consumers:** Purchase complete game packages, download digital files, support creators
 
 **Future Personas (Phase 3 - Physical Services):**
+
 - **Printers:** Provide 3D printing services to turn STL files into physical miniatures (DEFERRED until Month 7+)
 - **Painters:** Provide miniature painting services for printed models (DEFERRED until Month 7+)
 
@@ -336,6 +356,7 @@ export default function SignInForm() {
 ## Session Management
 
 Auth uses Supabase PKCE flow with cookies:
+
 - `sb-access-token` - JWT access token (cookie)
 - `sb-refresh-token` - Refresh token (cookie)
 - Protected pages check cookies via `setSession()` from `/src/lib/auth`
@@ -360,17 +381,21 @@ See `/src/pages/api/notifications/index.ts` (API) or `/src/pages/payouts/index.a
 ## Recent Architectural Changes
 
 ### December 2024 Simplification
+
 - **Asset Removal**: Migrated from asset-centric to product-centric model. Products are now the atomic sellable unit.
 - **Variant Removal**: Eliminated SKU/variant abstraction. Products have files and documents directly.
 - **Hero Section Removal**: Replaced large hero sections with compact page headers (~250px vertical space saved per page)
 
 ### Platform Fees (December 2024)
+
 - **10% Platform Fee**: Implemented across all sales
 - **Revenue Preview**: Added creator-facing calculator showing exact revenue splits before publishing
 - **Royalty Transparency**: Built components to show who gets paid and how much
 
 ### Earlier Migrations
+
 This codebase migrated from another framework to Astro in 2024. The migration included:
+
 - Converting to Astro server mode (Vercel adapter)
 - Establishing SDK isolation layers
 - Creating comprehensive TypeScript types
@@ -388,7 +413,7 @@ Fixing that meant:
   plus `product_components` (`getPurchasedProductIds`), so buying a bundle grants
   access to the components embedded within it. There is no join table.
 - **Webhooks are idempotent.** `stripe_webhook_events.stripe_event_id` carries a
-  UNIQUE constraint, and the insert *is* the claim. Stripe retries on any non-2xx,
+  UNIQUE constraint, and the insert _is_ the claim. Stripe retries on any non-2xx,
   so without this a retry duplicated the sale and its royalties.
 - **Payouts reserve before paying.** `request_payout()` selects whole royalty
   transactions and marks them `reserved` in one atomic function; `settle_payout()`
@@ -402,3 +427,8 @@ Anything touching money should stay atomic in SQL. Read-modify-write from JS is
 how most of the above went wrong in the first place.
 
 Reference component examples in `/src/components/` for BEM patterns before creating new components.
+
+## GIT
+
+**IMPORTANT** NEVER EVER COMMIT YOURSELF - JUST PROVIDE A SHORT CONCISE COMMIT MESSAGE IN TERMINAL
+**IMPORTANT** NEVER ADD CLAUDE AS A CO-AUTHOR

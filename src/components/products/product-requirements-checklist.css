@@ -28,7 +28,10 @@
 }
 
 .requirements-checklist__badge--ready {
-  background-color: var(--success);
+  /* White on --success is 3.92:1, below the 4.5:1 AA floor for this badge's
+     small uppercase text. Darkening the fill to --success-fg gives 5.09:1
+     without changing the text colour. */
+  background-color: var(--success-fg);
   color: var(--success-foreground);
 }
 
@@ -58,8 +61,9 @@
 }
 
 .requirements-checklist__item--complete {
-  background-color: var(--success);
-  border-color: var(--success);
+  /* White text on --success is 3.92:1; --success-fg is 5.09:1. */
+  background-color: var(--success-fg);
+  border-color: var(--success-fg);
   color: var(--success-foreground);
 }
 
@@ -122,8 +126,9 @@
 
 .requirements-checklist__success {
   padding: var(--spacing-lg);
-  background-color: var(--success);
-  border: var(--border-width-default) solid var(--success);
+  /* White on --success is 3.92:1; --success-fg is 5.09:1. */
+  background-color: var(--success-fg);
+  border: var(--border-width-default) solid var(--success-fg);
   border-radius: var(--radius-md);
 }
 

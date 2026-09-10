@@ -62,9 +62,11 @@ const { features }: Props = Astro.props;
 }
 
 .features__title {
-  font-size: var(--text-3xl);;
+  font-size: var(--text-3xl);
   margin-bottom: 0.5rem;
-  color: var(--accent-fg);
+  /* .features__item is background: var(--primary), a near-black card, so this
+     needs the light accent, not the dark one. 8.72:1. */
+  color: var(--accent-on-dark);
 }
 
 .features__desc {

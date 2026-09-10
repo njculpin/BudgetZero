@@ -112,12 +112,16 @@
   width: 80px;
   height: 80px;
   margin: 0 auto var(--spacing-lg);
-  background: var(--success-background, oklch(0.95 0.05 145));
+  /* --success-background was never defined, so this always fell through to
+     the literal. Use the real token. */
+  background: var(--success-bg);
   border-radius: 50%;
 }
 
 .modal__icon-wrapper svg {
-  color: var(--success-foreground, oklch(0.3 0.15 145));
+  /* --success-foreground IS defined (near-white), so the fallback here never
+     applied and the icon rendered near-white on a near-white circle: 1.09:1. */
+  color: var(--success-fg);
 }
 
 /* Message (for confirm dialogs) */

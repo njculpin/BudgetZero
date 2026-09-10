@@ -191,7 +191,9 @@
   margin: 0;
   font-size: var(--text-base);
   font-weight: var(--font-weight-medium);
-  color: var(--color-success-foreground);
+  /* On the 10% success tint above; --color-success-foreground is near-white
+     and measured 1.08:1 here. 4.53:1. */
+  color: var(--success-fg);
   line-height: var(--leading-normal);
 }
 
