@@ -1,8 +1,8 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import Card from '@/components/card/Card.astro';
-import CardContent from '@/components/card/CardContent.astro';
-import Button from '@/components/Button.astro';
+import Card from '@/components/card/card.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
+import Button from '@/components/button/button.astro';
 // This page renders the same for everyone, so it resolves no session. It
 // previously exchanged the auth cookies with the provider and looked the user
 // up, then rendered neither — a network round trip and a query per view, for

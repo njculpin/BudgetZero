@@ -1,18 +1,18 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import Card from '@/components/card/Card.astro';
-import CardHeader from '@/components/card/CardHeader.astro';
-import CardTitle from '@/components/card/CardTitle.astro';
-import CardDescription from '@/components/card/CardDescription.astro';
-import CardContent from '@/components/card/CardContent.astro';
-import PageHeader from '@/components/PageHeader.astro';
-import Button from '@/components/Button.astro';
+import Card from '@/components/card/card.astro';
+import CardHeader from '@/components/card/card-header/card-header.astro';
+import CardTitle from '@/components/card/card-title/card-title.astro';
+import CardDescription from '@/components/card/card-description/card-description.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
+import PageHeader from '@/components/page-header/page-header.astro';
+import Button from '@/components/button/button.astro';
 import { setSession } from '@gameloopers/core/auth';
 import { getUserById, getUserTags } from '@gameloopers/core/data-access/users';
 import { getNotificationSettings } from '@gameloopers/core/data-access/notifications';
 import { UserEditForm } from '@/components/users';
-import NotificationSettingsForm from '@/components/settings/NotificationSettingsForm';
-import EmbeddedUsageDashboard from '@/components/products/EmbeddedUsageDashboard';
+import NotificationSettingsForm from '@/components/settings/notification-settings-form/notification-settings-form';
+import EmbeddedUsageDashboard from '@/components/products/embedded-usage-dashboard/embedded-usage-dashboard';
 
 const { cookies, redirect } = Astro;
 

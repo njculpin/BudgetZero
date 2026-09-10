@@ -1,9 +1,9 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import Button from '@/components/Button.astro';
+import Button from '@/components/button/button.astro';
 import { ProductContentViewer, AddToCartButton } from '@/components/products';
-import ProductContributors from '@/components/products/ProductContributors.astro';
-import ProductImageGallery from '@/components/products/ProductImageGallery.astro';
+import ProductContributors from '@/components/products/product-contributors/product-contributors.astro';
+import ProductImageGallery from '@/components/products/product-image-gallery/product-image-gallery.astro';
 import {
   getProductByHandle,
   getProductTags,
@@ -16,12 +16,12 @@ import {
 } from '@gameloopers/core/data-access/products';
 import { getUserById } from '@gameloopers/core/data-access/users';
 import { setSession } from '@gameloopers/core/auth';
-import Card from '@/components/card/Card.astro';
-import CardHeader from '@/components/card/CardHeader.astro';
-import CardTitle from '@/components/card/CardTitle.astro';
-import CardDescription from '@/components/card/CardDescription.astro';
-import CardContent from '@/components/card/CardContent.astro';
-import Avatar from '@/components/users/Avatar.astro';
+import Card from '@/components/card/card.astro';
+import CardHeader from '@/components/card/card-header/card-header.astro';
+import CardTitle from '@/components/card/card-title/card-title.astro';
+import CardDescription from '@/components/card/card-description/card-description.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
+import Avatar from '@/components/users/avatar/avatar.astro';
 
 const { product } = Astro.params;
 
@@ -176,6 +176,8 @@ const shouldShowContentViewer =
                   files={productFiles}
                   documents={productDocuments}
                   embeddedProducts={embeddedProductsWithCreators}
+                  platformFeeCents={priceBreakdown.platformFee}
+                  totalPriceCents={priceBreakdown.totalPrice}
                 />
               </CardContent>
             </Card>

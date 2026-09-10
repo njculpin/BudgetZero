@@ -1,11 +1,11 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import Card from '@/components/card/Card.astro';
-import CardContent from '@/components/card/CardContent.astro';
-import CardHeader from '@/components/card/CardHeader.astro';
-import CardTitle from '@/components/card/CardTitle.astro';
-import CardDescription from '@/components/card/CardDescription.astro';
-import GalleryGrid from '@/components/GalleryGrid.astro';
+import Card from '@/components/card/card.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
+import CardHeader from '@/components/card/card-header/card-header.astro';
+import CardTitle from '@/components/card/card-title/card-title.astro';
+import CardDescription from '@/components/card/card-description/card-description.astro';
+import GalleryGrid from '@/components/gallery-grid/gallery-grid.astro';
 import { setSession } from '@gameloopers/core/auth';
 import {
   getDocumentByHandle,
@@ -16,10 +16,10 @@ import {
   getDocumentAttachments,
 } from '@gameloopers/core/data-access/documents';
 import { getUserById } from '@gameloopers/core/data-access/users';
-import DocumentEditor from '@/components/documents/DocumentEditor';
-import DocumentDeleteButton from '@/components/documents/DocumentDeleteButton';
+import DocumentEditor from '@/components/documents/document-editor/document-editor';
+import DocumentDeleteButton from '@/components/documents/document-delete-button/document-delete-button';
 import { DocumentAttachmentsForm } from '@/components/documents';
-import Badge from '@/components/Badge.astro';
+import Badge from '@/components/badge/badge.astro';
 
 const { params, cookies } = Astro;
 const documentHandle = params.document;

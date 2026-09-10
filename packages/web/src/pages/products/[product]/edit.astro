@@ -1,6 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import Button from '@/components/Button.astro';
+import Button from '@/components/button/button.astro';
 import {
   ProductBasicInfoForm,
   ProductStatusEditor,
@@ -10,7 +10,7 @@ import {
   ProductContentManager,
   ProductDeleteButton,
 } from '@/components/products';
-import ProductContributors from '@/components/products/ProductContributors.astro';
+import ProductContributors from '@/components/products/product-contributors/product-contributors.astro';
 import {
   getProductByHandle,
   getProductTags,
@@ -22,11 +22,11 @@ import {
 } from '@gameloopers/core/data-access/products';
 import { getUserById } from '@gameloopers/core/data-access/users';
 import { setSession } from '@gameloopers/core/auth';
-import Card from '@/components/card/Card.astro';
-import CardHeader from '@/components/card/CardHeader.astro';
-import CardTitle from '@/components/card/CardTitle.astro';
-import CardDescription from '@/components/card/CardDescription.astro';
-import CardContent from '@/components/card/CardContent.astro';
+import Card from '@/components/card/card.astro';
+import CardHeader from '@/components/card/card-header/card-header.astro';
+import CardTitle from '@/components/card/card-title/card-title.astro';
+import CardDescription from '@/components/card/card-description/card-description.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
 
 const { product } = Astro.params;
 

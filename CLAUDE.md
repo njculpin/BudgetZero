@@ -257,31 +257,42 @@ Components are organized to **mirror the pages directory structure**, making it 
 
 **Structure:**
 
+Every component gets its own folder, named in kebab-case, and every file inside
+is prefixed with that folder name. There are no exceptions — a pattern with
+exceptions is not a pattern, and this one exists so that both people and tooling
+can locate a component's files without searching.
+
 ```
-packages/web/src/components/
-├── Badge, Breadcrumb, Button, EmptyState,   # Generic UI, one file each
-│   Footer, GalleryGrid, Navigation,
-│   PageHeader, Pagination, Tag
-├── card/                            # Card + CardContent/Header/Title/Description
-├── modal/                           # Modal.tsx, modal.css, index.ts
-├── base/                            # Generic base form components (Astro)
-├── interactive/                     # Generic interactive components (SolidJS)
-├── products/                        # /products/*.astro
-├── documents/                       # /documents/*.astro
-├── users/                           # /users/*.astro
-├── cart/                            # /cart.astro
-├── checkout/                        # /checkout/*.astro
-├── admin/                           # /admin/*.astro (admin-only tooling)
-├── settings/                        # /settings/*.astro
-├── home/                            # /index.astro (landing page)
-├── auth/                            # /sign-in.astro, /sign-up.astro
-└── notifications/                   # Notification system (used in layout/header)
+<component-name>/
+  <component-name>.astro | .tsx    the component
+  <component-name>.css             its styles, if it has any
+  <component-name>.test.tsx        its tests, if it has any
 ```
 
-A component family with more than one file gets a directory (`card/`, `modal/`),
-and its stylesheet lives beside it. A single generic component stays a single
-file at the root. There is no `shared/` — a component used by several page types
-is a generic one and belongs at the root.
+So an editor tab reads `add-to-cart-button.css`, not a `.css` that could be any
+of thirty-eight. Folders group by page, mirroring `pages/`:
+
+```
+packages/web/src/components/
+├── button/button.astro              # generic UI, one folder each
+├── badge/, breadcrumb/, card/, empty-state/, footer/,
+│   gallery-grid/, modal/, navigation/, page-header/,
+│   pagination/, tag/
+├── base/                            # generic base form components (Astro)
+├── interactive/                     # generic interactive components (SolidJS)
+├── products/                        # /products/*.astro
+│   ├── add-to-cart-button/
+│   │   ├── add-to-cart-button.tsx
+│   │   └── add-to-cart-button.css
+│   └── product-content-manager/     # a component with sub-components nests
+│       ├── product-content-manager.tsx
+│       └── content-list/content-list.tsx
+├── documents/, users/, cart/, checkout/, admin/,
+│   settings/, home/, auth/, notifications/, purchases/
+```
+
+The exported identifier stays PascalCase (`export default function AddToCartButton`);
+only filenames are kebab-case.
 
 **Import Examples:**
 

@@ -1,8 +1,8 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import Card from '@/components/card/Card.astro';
-import CardContent from '@/components/card/CardContent.astro';
-import Button from '@/components/Button.astro';
+import Card from '@/components/card/card.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
+import Button from '@/components/button/button.astro';
 import { setSession } from '@gameloopers/core/auth';
 import { getCheckoutSession } from '@gameloopers/core/payments';
 import { getOrCreateCart, clearCart } from '@gameloopers/core/data-access/cart';

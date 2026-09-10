@@ -1,0 +1,42 @@
+---
+import Avatar from '@/components/users/avatar/avatar.astro';
+import type { User } from '@gameloopers/core/types';
+import type { ProductContributorWithRole } from '@gameloopers/core/data-access/products';
+import './product-contributors.css';
+
+export interface Props {
+  contributors?: User[];
+  contributorsWithRoles?: ProductContributorWithRole[];
+}
+
+const { contributors, contributorsWithRoles } = Astro.props;
+
+// Support both old (User[]) and new (ProductContributorWithRole[]) formats
+const items =
+  contributorsWithRoles ||
+  contributors?.map((c) => ({ user: c, role: 'Contributor', contributedVia: '' })) ||
+  [];
+---
+
+<div class="product-contributors">
+  {items.map((item) => {
+    const user = 'user' in item ? item.user : item;
+    const role = 'role' in item ? item.role : 'Contributor';
+    const contributedVia = 'contributedVia' in item ? item.contributedVia : '';
+
+    return (
+      <a href={`/users/${user.handle}`} class="product-contributors__item">
+        <Avatar src={user.avatar_url} alt={user.name || user.handle} size="md" />
+        <div class="product-contributors__info">
+          <div class="product-contributors__name">{user.name || user.handle}</div>
+          <div class="product-contributors__role">{role}</div>
+          {contributedVia && (
+            <div class="product-contributors__via">via {contributedVia}</div>
+          )}
+        </div>
+      </a>
+    );
+  })}
+
+  {items.length === 0 && <p class="product-contributors__empty">No contributors yet</p>}
+</div>

@@ -1,7 +1,7 @@
-export { default as PurchasesList } from './PurchasesList';
-export { default as PurchaseCard } from './PurchaseCard';
+export { default as PurchasesList } from './purchases-list/purchases-list';
+export { default as PurchaseCard } from './purchase-card/purchase-card';
 export type {
   PurchaseWithDetails,
   PurchaseItemWithDetails,
   PurchaseFile,
-} from './PurchaseCard';
+} from './purchase-card/purchase-card';

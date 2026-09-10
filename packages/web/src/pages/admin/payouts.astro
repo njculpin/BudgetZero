@@ -1,13 +1,13 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import Card from '@/components/card/Card.astro';
-import CardHeader from '@/components/card/CardHeader.astro';
-import CardTitle from '@/components/card/CardTitle.astro';
-import CardDescription from '@/components/card/CardDescription.astro';
-import CardContent from '@/components/card/CardContent.astro';
-import PageHeader from '@/components/PageHeader.astro';
-import PayoutQueue from '@/components/admin/PayoutQueue';
-import type { PayoutQueueEntry } from '@/components/admin/PayoutQueue';
+import Card from '@/components/card/card.astro';
+import CardHeader from '@/components/card/card-header/card-header.astro';
+import CardTitle from '@/components/card/card-title/card-title.astro';
+import CardDescription from '@/components/card/card-description/card-description.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
+import PageHeader from '@/components/page-header/page-header.astro';
+import PayoutQueue from '@/components/admin/payout-queue/payout-queue';
+import type { PayoutQueueEntry } from '@/components/admin/payout-queue/payout-queue';
 import { resolvePageAuth } from '@/lib/page-auth';
 import { verifyAdmin } from '@gameloopers/core/auth/admin';
 import { getPendingPayoutsForAdmin } from '@gameloopers/core/data-access/payouts';

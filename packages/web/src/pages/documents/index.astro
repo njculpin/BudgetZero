@@ -1,14 +1,14 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import Card from '@/components/card/Card.astro';
-import CardContent from '@/components/card/CardContent.astro';
-import BrowseCTA from '@/components/home/BrowseCTA.astro';
-import PageHeader from '@/components/PageHeader.astro';
+import Card from '@/components/card/card.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
+import BrowseCTA from '@/components/home/browse-cta/browse-cta.astro';
+import PageHeader from '@/components/page-header/page-header.astro';
 import { setSession } from '@gameloopers/core/auth';
 import { FormSubmitButton } from '@/components/interactive';
 import { getUserDocuments } from '@gameloopers/core/data-access/documents';
 import { getUserById } from '@gameloopers/core/data-access/users';
-import EmptyState from '@/components/EmptyState.astro';
+import EmptyState from '@/components/empty-state/empty-state.astro';
 
 const { cookies } = Astro;
 

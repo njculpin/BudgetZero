@@ -1,2 +1,2 @@
 // Auth components barrel export
-export { default as OnboardingModal } from './OnboardingModal';
+export { default as OnboardingModal } from './onboarding-modal/onboarding-modal';
