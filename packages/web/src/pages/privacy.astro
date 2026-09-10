@@ -1,12 +1,11 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import Page from '@/components/page/page.astro';
 import { Content as PrivacyPolicy } from '@/components/documents/PrivacyPolicy.md';
 ---
 
 <Layout title="Privacy - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <PrivacyPolicy />
-    </div>
-  </div>
+  <Page>
+    <PrivacyPolicy />
+  </Page>
 </Layout>

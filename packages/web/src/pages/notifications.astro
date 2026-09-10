@@ -1,29 +1,12 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import { getPageUser } from '@/lib/page-auth';
+import Page from '@/components/page/page.astro';
 import Card from '@/components/card/card.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
 import PageHeader from '@/components/page-header/page-header.astro';
-import { setSession } from '@gameloopers/core/auth';
 import { getNotifications } from '@gameloopers/core/data-access/notifications';
-
-// Check authentication
-let currentUser = null;
-const accessToken = Astro.cookies.get('sb-access-token');
-const refreshToken = Astro.cookies.get('sb-refresh-token');
-
-if (accessToken && refreshToken) {
-  try {
-    const session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-    if (!session.error && session.data.user) {
-      currentUser = session.data.user;
-    }
-  } catch {
-    // User not authenticated
-  }
-}
+const currentUser = await getPageUser(Astro.cookies);
 
 // Redirect to sign-in if not authenticated
 if (!currentUser) {
@@ -122,237 +105,230 @@ function getNotificationColorClass(actionType: string): string {
 ---
 
 <Layout title="Notifications - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <!-- Page Header -->
-      <div class="page-header--with-action">
-        <PageHeader
-          title="Notifications"
-          description="Stay updated with your activity and important events"
-        />
-        {notifications.some((n) => !n.read) && (
-          <form action="/api/notifications/mark-all-read" method="post">
-            <button type="submit" class="mark-read-button">
-              Mark all as read
-            </button>
-          </form>
-        )}
-      </div>
+  <Page>
+    <!-- Page Header -->
+    <PageHeader
+      title="Notifications"
+      description="Stay updated with your activity and important events"
+    >
+      {notifications.some((n) => !n.read) && (
+        <form slot="actions" action="/api/notifications/mark-all-read" method="post">
+          <button type="submit" class="mark-read-button">
+            Mark all as read
+          </button>
+        </form>
+      )}
+    </PageHeader>
 
-      <!-- Notifications List -->
-      {notifications.length > 0 ? (
-        <div class="notifications-list">
-          {notifications.map((notification) => (
-            <Card
-              className={`notification-card ${!notification.read ? 'notification-card--unread' : ''}`}
-            >
-              <CardContent>
-                <div class="notification">
-                  <div
-                    class={`notification__icon ${getNotificationColorClass(notification.action_type)}`}
-                  >
-                    {getNotificationIcon(notification.action_type) ===
-                      'shopping-cart' && (
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        aria-hidden="true"
-                      >
-                        <circle cx="9" cy="21" r="1"></circle>
-                        <circle cx="20" cy="21" r="1"></circle>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                      </svg>
-                    )}
-                    {getNotificationIcon(notification.action_type) === 'dollar-sign' && (
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        aria-hidden="true"
-                      >
-                        <line x1="12" y1="1" x2="12" y2="23"></line>
-                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                      </svg>
-                    )}
-                    {getNotificationIcon(notification.action_type) === 'file' && (
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        aria-hidden="true"
-                      >
-                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                        <polyline points="13 2 13 9 20 9"></polyline>
-                      </svg>
-                    )}
-                    {getNotificationIcon(notification.action_type) === 'alert-circle' && (
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        aria-hidden="true"
-                      >
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                      </svg>
-                    )}
-                    {getNotificationIcon(notification.action_type) === 'file-text' && (
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        aria-hidden="true"
-                      >
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                      </svg>
-                    )}
-                    {getNotificationIcon(notification.action_type) === 'award' && (
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        aria-hidden="true"
-                      >
-                        <circle cx="12" cy="8" r="7"></circle>
-                        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
-                      </svg>
-                    )}
-                    {getNotificationIcon(notification.action_type) === 'bell' && (
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        aria-hidden="true"
-                      >
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                      </svg>
-                    )}
-                  </div>
-                  <div class="notification__content">
-                    <div class="notification__header">
-                      <h3 class="notification__title">{notification.title}</h3>
-                      <span class="notification__time">
-                        {formatRelativeTime(notification.created_at)}
-                      </span>
-                    </div>
-                    <p class="notification__message">{notification.message}</p>
-                    {getEntityUrl(notification) && (
-                      <div class="notification__actions">
-                        {!notification.read ? (
-                          <form
-                            action={`/api/notifications/${notification.id}/read-and-view`}
-                            method="post"
-                            class="notification__view-form"
-                          >
-                            <input
-                              type="hidden"
-                              name="entityUrl"
-                              value={getEntityUrl(notification)!}
-                            />
-                            <button type="submit" class="notification__link">
-                              View {notification.entity_type} →
-                            </button>
-                          </form>
-                        ) : (
-                          <a
-                            href={getEntityUrl(notification)!}
-                            class="notification__link"
-                          >
-                            View {notification.entity_type} →
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {!notification.read && (
-                    <>
-                      <form
-                        action={`/api/notifications/${notification.id}/read`}
-                        method="post"
-                        class="notification__mark-read-form"
-                      >
-                        <button
-                          type="submit"
-                          class="notification__mark-read-button"
-                          title="Mark as read"
-                          aria-label="Mark as read"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            aria-hidden="true"
-                          >
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        </button>
-                      </form>
-                      <div class="notification__unread-indicator" title="Unread"></div>
-                    </>
+    <!-- Notifications List -->
+    {notifications.length > 0 ? (
+      <div class="notifications-list">
+        {notifications.map((notification) => (
+          <Card
+            className={`notification-card ${!notification.read ? 'notification-card--unread' : ''}`}
+          >
+            <CardContent>
+              <div class="notification">
+                <div
+                  class={`notification__icon ${getNotificationColorClass(notification.action_type)}`}
+                >
+                  {getNotificationIcon(notification.action_type) === 'shopping-cart' && (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                  )}
+                  {getNotificationIcon(notification.action_type) === 'dollar-sign' && (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <line x1="12" y1="1" x2="12" y2="23"></line>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                  )}
+                  {getNotificationIcon(notification.action_type) === 'file' && (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                      <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                  )}
+                  {getNotificationIcon(notification.action_type) === 'alert-circle' && (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                  )}
+                  {getNotificationIcon(notification.action_type) === 'file-text' && (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                  )}
+                  {getNotificationIcon(notification.action_type) === 'award' && (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="8" r="7"></circle>
+                      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                    </svg>
+                  )}
+                  {getNotificationIcon(notification.action_type) === 'bell' && (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent>
-            <div class="notifications-empty">
-              <svg
-                class="notifications-empty__icon"
-                width="64"
-                height="64"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                aria-hidden="true"
-              >
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <h3 class="notifications-empty__title">No notifications yet</h3>
-              <p class="notifications-empty__text">
-                When you receive notifications about your activity, they'll appear here.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  </div>
+                <div class="notification__content">
+                  <div class="notification__header">
+                    <h3 class="notification__title">{notification.title}</h3>
+                    <span class="notification__time">
+                      {formatRelativeTime(notification.created_at)}
+                    </span>
+                  </div>
+                  <p class="notification__message">{notification.message}</p>
+                  {getEntityUrl(notification) && (
+                    <div class="notification__actions">
+                      {!notification.read ? (
+                        <form
+                          action={`/api/notifications/${notification.id}/read-and-view`}
+                          method="post"
+                          class="notification__view-form"
+                        >
+                          <input
+                            type="hidden"
+                            name="entityUrl"
+                            value={getEntityUrl(notification)!}
+                          />
+                          <button type="submit" class="notification__link">
+                            View {notification.entity_type} →
+                          </button>
+                        </form>
+                      ) : (
+                        <a href={getEntityUrl(notification)!} class="notification__link">
+                          View {notification.entity_type} →
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {!notification.read && (
+                  <>
+                    <form
+                      action={`/api/notifications/${notification.id}/read`}
+                      method="post"
+                      class="notification__mark-read-form"
+                    >
+                      <button
+                        type="submit"
+                        class="notification__mark-read-button"
+                        title="Mark as read"
+                        aria-label="Mark as read"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          aria-hidden="true"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </button>
+                    </form>
+                    <div class="notification__unread-indicator" title="Unread"></div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    ) : (
+      <Card>
+        <CardContent>
+          <div class="notifications-empty">
+            <svg
+              class="notifications-empty__icon"
+              width="64"
+              height="64"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <h3 class="notifications-empty__title">No notifications yet</h3>
+            <p class="notifications-empty__text">
+              When you receive notifications about your activity, they'll appear here.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+  </Page>
 </Layout>
 
 <style>

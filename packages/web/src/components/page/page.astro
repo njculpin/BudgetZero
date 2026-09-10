@@ -1,0 +1,24 @@
+---
+/**
+ * The page shell.
+ *
+ * Twenty-six of twenty-seven pages opened with the same two wrapper divs —
+ * fifty-one of the two hundred and eighty raw `<div>`s in the pages directory.
+ * A page should say what it contains, not restate the frame it sits in.
+ *
+ * Sign-in and sign-up use a narrower container that centres a card, so that is
+ * a variant rather than a second shell.
+ */
+interface Props {
+  variant?: 'default' | 'auth';
+}
+
+const { variant = 'default' } = Astro.props;
+const containerClass = variant === 'auth' ? 'auth-page__container' : 'page__container';
+---
+
+<div class="page">
+  <div class={containerClass}>
+    <slot />
+  </div>
+</div>

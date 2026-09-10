@@ -1,25 +1,71 @@
 ---
+/**
+ * The heading block at the top of a page.
+ *
+ * Three pages hand-rolled this markup rather than using the component, and the
+ * reason was the same in each case: they needed an action button or a line of
+ * metadata, and the component only accepted a title and a description. The
+ * answer to that is slots, not a fourth copy of the markup.
+ *
+ * `--with-action` is gone: a page used to wrap this component in a div carrying
+ * that class to lay a button out beside it, which meant the layout lived at the
+ * call site while the heading lived here.
+ */
+interface Props {
+  title: string;
+  description?: string;
+}
+
 const { title, description } = Astro.props;
+const hasActions = Astro.slots.has('actions');
 ---
 
 <div class="page-header">
-  <h1 class="page-header__title">{title}</h1>
-  <p class="page-header__description">{description}</p>
+  <div class="page-header__content">
+    <h1 class="page-header__title">{title}</h1>
+    {description && <p class="page-header__description">{description}</p>}
+    <slot name="meta" />
+  </div>
+  {hasActions && (
+    <div class="page-header__actions">
+      <slot name="actions" />
+    </div>
+  )}
 </div>
 
 <style>
   .page-header {
-    text-align: left;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--gap-lg);
+    flex-wrap: wrap;
     margin-bottom: var(--spacing-2xl);
   }
+
+  .page-header__content {
+    flex: 1;
+    min-width: 0;
+  }
+
   .page-header__title {
     margin: 0 0 var(--spacing-sm);
     font-size: var(--text-4xl);
     font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
   }
+
   .page-header__description {
     margin: 0;
     font-size: var(--text-lg);
     color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  .page-header__actions {
+    display: flex;
+    gap: var(--gap-md);
+    flex-wrap: wrap;
+    flex-shrink: 0;
   }
 </style>

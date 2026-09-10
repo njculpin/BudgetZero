@@ -2,7 +2,7 @@ import { createSignal, createEffect, Show } from 'solid-js';
 import { useAutoSave } from '@/lib/hooks/useAutoSave';
 import { FormField, TextAreaField, ErrorMessage } from '@/components/interactive';
 import '@/components/interactive/base.css';
-import '@/styles/save-status.css';
+import SaveStatus from '../../interactive/save-status/save-status';
 
 export interface DocumentBasicInfoFormProps {
   documentId: string;
@@ -86,37 +86,7 @@ export default function DocumentBasicInfoForm(props: DocumentBasicInfoFormProps)
 
       {/* Save Status Indicator */}
       <div class="document-form__save-status">
-        <Show when={autoSave.saveStatus() === 'saving'}>
-          <span
-            class="save-status save-status--saving"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <span class="save-status__spinner" aria-hidden="true"></span>
-            Saving...
-          </span>
-        </Show>
-        <Show when={autoSave.saveStatus() === 'saved'}>
-          <span
-            class="save-status save-status--saved"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            ✓ Saved
-          </span>
-        </Show>
-        <Show when={autoSave.saveStatus() === 'error'}>
-          <span
-            class="save-status save-status--error"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            ✗ Save failed
-          </span>
-        </Show>
+        <SaveStatus status={autoSave.saveStatus()} />
       </div>
 
       <FormField

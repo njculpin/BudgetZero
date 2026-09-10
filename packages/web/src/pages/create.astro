@@ -1,194 +1,173 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import { getPageUser } from '@/lib/page-auth';
+import Page from '@/components/page/page.astro';
 import Button from '@/components/button/button.astro';
 import Card from '@/components/card/card.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
-import { setSession } from '@gameloopers/core/auth';
 
-const { cookies } = Astro;
-
-// Check authentication
-let isAuthenticated = false;
-const accessToken = cookies.get('sb-access-token');
-const refreshToken = cookies.get('sb-refresh-token');
-
-if (accessToken && refreshToken) {
-  try {
-    const session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-    if (!session.error && session.data.user) {
-      isAuthenticated = true;
-    }
-  } catch {
-    // A bad or expired session is not an error for this page: it renders
-    // for a signed-out visitor. Deliberately silent.
-  }
-}
+const isAuthenticated = (await getPageUser(Astro.cookies)) !== null;
 ---
 
 <Layout title="Start Creating - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <!-- Page Header -->
-      <header class="page-header">
-        <div class="page-header__content">
-          <h1 class="page-header__title">Bring Your Tabletop Game to Life</h1>
-          <p class="page-header__subtitle">
-            Join a community of creators who design, collaborate, and sell tabletop games
-            on Game Loopers.
-          </p>
-          <div class="page-header__actions">
-            {isAuthenticated ? (
-              <a href="/products">
+  <Page>
+    <!-- Page Header -->
+    <header class="page-header">
+      <div class="page-header__content">
+        <h1 class="page-header__title">Bring Your Tabletop Game to Life</h1>
+        <p class="page-header__subtitle">
+          Join a community of creators who design, collaborate, and sell tabletop games on
+          Game Loopers.
+        </p>
+        <div class="page-header__actions">
+          {isAuthenticated ? (
+            <a href="/products">
+              <Button variant="primary" size="lg">
+                <span slot="text">Go to My Products</span>
+              </Button>
+            </a>
+          ) : (
+            <>
+              <a href="/sign-up">
                 <Button variant="primary" size="lg">
-                  <span slot="text">Go to My Products</span>
+                  <span slot="text">Sign Up Free</span>
                 </Button>
               </a>
-            ) : (
-              <>
-                <a href="/sign-up">
-                  <Button variant="primary" size="lg">
-                    <span slot="text">Sign Up Free</span>
-                  </Button>
-                </a>
-                <a href="/sign-in">
-                  <Button variant="outline" size="lg">
-                    <span slot="text">Sign In</span>
-                  </Button>
-                </a>
-              </>
-            )}
-          </div>
+              <a href="/sign-in">
+                <Button variant="outline" size="lg">
+                  <span slot="text">Sign In</span>
+                </Button>
+              </a>
+            </>
+          )}
         </div>
-      </header>
+      </div>
+    </header>
 
-      <!-- How It Works Section -->
-      <section class="create-section">
-        <h2 class="create-section__title">How It Works</h2>
-        <div class="create-workflow">
-          <Card>
-            <CardContent>
-              <div class="workflow-step">
-                <div class="workflow-step__number">1</div>
-                <h3 class="workflow-step__title">Create Assets</h3>
-                <p class="workflow-step__description">
-                  Upload 3D models, illustrations, rulebooks, or documents. Set royalty
-                  rates so you earn whenever your work is used.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent>
-              <div class="workflow-step">
-                <div class="workflow-step__number">2</div>
-                <h3 class="workflow-step__title">Build Products</h3>
-                <p class="workflow-step__description">
-                  Combine your assets (and others') into complete game packages. Set
-                  pricing, variants, and bundles.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent>
-              <div class="workflow-step">
-                <div class="workflow-step__number">3</div>
-                <h3 class="workflow-step__title">Publish & Earn</h3>
-                <p class="workflow-step__description">
-                  Launch your product to the marketplace. Sales automatically split among
-                  all contributors based on royalty agreements.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      <!-- Features Section -->
-      <section class="create-section">
-        <h2 class="create-section__title">Why Game Loopers?</h2>
-        <div class="create-features">
-          <div class="feature">
-            <div class="feature__icon">💰</div>
-            <h3 class="feature__title">Transparent Royalties</h3>
-            <p class="feature__description">
-              Automatic royalty splitting means every contributor gets paid fairly when a
-              product sells.
-            </p>
-          </div>
-
-          <div class="feature">
-            <div class="feature__icon">🤝</div>
-            <h3 class="feature__title">Easy Collaboration</h3>
-            <p class="feature__description">
-              Work with designers, artists, and modelers. Build games together with shared
-              ownership.
-            </p>
-          </div>
-
-          <div class="feature">
-            <div class="feature__icon">🛍️</div>
-            <h3 class="feature__title">Built-in Storefront</h3>
-            <p class="feature__description">
-              Your products get a beautiful storefront. No need for external payment
-              processors or hosting.
-            </p>
-          </div>
-
-          <div class="feature">
-            <div class="feature__icon">📄</div>
-            <h3 class="feature__title">Collaborative Documents</h3>
-            <p class="feature__description">
-              Write rulebooks and reference cards together in real-time. Export as PDFs
-              when ready.
-            </p>
-          </div>
-
-          <div class="feature">
-            <div class="feature__icon">🔒</div>
-            <h3 class="feature__title">License Protection</h3>
-            <p class="feature__description">
-              Define usage terms for your assets. Protect your work while enabling
-              collaboration.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- CTA Section -->
-      <section class="create-cta">
+    <!-- How It Works Section -->
+    <section class="create-section">
+      <h2 class="create-section__title">How It Works</h2>
+      <div class="create-workflow">
         <Card>
           <CardContent>
-            <div class="cta-content">
-              <h2 class="cta-content__title">Ready to Start Creating?</h2>
-              <p class="cta-content__description">
-                Join thousands of tabletop game creators building the future of
-                collaborative game design.
+            <div class="workflow-step">
+              <div class="workflow-step__number">1</div>
+              <h3 class="workflow-step__title">Create Assets</h3>
+              <p class="workflow-step__description">
+                Upload 3D models, illustrations, rulebooks, or documents. Set royalty
+                rates so you earn whenever your work is used.
               </p>
-              {isAuthenticated ? (
-                <a href="/products">
-                  <Button variant="primary" size="lg">
-                    <span slot="text">Browse Products</span>
-                  </Button>
-                </a>
-              ) : (
-                <a href="/sign-up">
-                  <Button variant="primary" size="lg">
-                    <span slot="text">Get Started Free</span>
-                  </Button>
-                </a>
-              )}
             </div>
           </CardContent>
         </Card>
-      </section>
-    </div>
-  </div>
+
+        <Card>
+          <CardContent>
+            <div class="workflow-step">
+              <div class="workflow-step__number">2</div>
+              <h3 class="workflow-step__title">Build Products</h3>
+              <p class="workflow-step__description">
+                Combine your assets (and others') into complete game packages. Set
+                pricing, variants, and bundles.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <div class="workflow-step">
+              <div class="workflow-step__number">3</div>
+              <h3 class="workflow-step__title">Publish & Earn</h3>
+              <p class="workflow-step__description">
+                Launch your product to the marketplace. Sales automatically split among
+                all contributors based on royalty agreements.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="create-section">
+      <h2 class="create-section__title">Why Game Loopers?</h2>
+      <div class="create-features">
+        <div class="feature">
+          <div class="feature__icon">💰</div>
+          <h3 class="feature__title">Transparent Royalties</h3>
+          <p class="feature__description">
+            Automatic royalty splitting means every contributor gets paid fairly when a
+            product sells.
+          </p>
+        </div>
+
+        <div class="feature">
+          <div class="feature__icon">🤝</div>
+          <h3 class="feature__title">Easy Collaboration</h3>
+          <p class="feature__description">
+            Work with designers, artists, and modelers. Build games together with shared
+            ownership.
+          </p>
+        </div>
+
+        <div class="feature">
+          <div class="feature__icon">🛍️</div>
+          <h3 class="feature__title">Built-in Storefront</h3>
+          <p class="feature__description">
+            Your products get a beautiful storefront. No need for external payment
+            processors or hosting.
+          </p>
+        </div>
+
+        <div class="feature">
+          <div class="feature__icon">📄</div>
+          <h3 class="feature__title">Collaborative Documents</h3>
+          <p class="feature__description">
+            Write rulebooks and reference cards together in real-time. Export as PDFs when
+            ready.
+          </p>
+        </div>
+
+        <div class="feature">
+          <div class="feature__icon">🔒</div>
+          <h3 class="feature__title">License Protection</h3>
+          <p class="feature__description">
+            Define usage terms for your assets. Protect your work while enabling
+            collaboration.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="create-cta">
+      <Card>
+        <CardContent>
+          <div class="cta-content">
+            <h2 class="cta-content__title">Ready to Start Creating?</h2>
+            <p class="cta-content__description">
+              Join thousands of tabletop game creators building the future of
+              collaborative game design.
+            </p>
+            {isAuthenticated ? (
+              <a href="/products">
+                <Button variant="primary" size="lg">
+                  <span slot="text">Browse Products</span>
+                </Button>
+              </a>
+            ) : (
+              <a href="/sign-up">
+                <Button variant="primary" size="lg">
+                  <span slot="text">Get Started Free</span>
+                </Button>
+              </a>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  </Page>
 </Layout>
 
 <style>

@@ -1,5 +1,6 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import Page from '@/components/page/page.astro';
 import Card from '@/components/card/card.astro';
 import CardHeader from '@/components/card/card-header/card-header.astro';
 import CardTitle from '@/components/card/card-title/card-title.astro';
@@ -52,26 +53,24 @@ const formatCurrency = (cents: number) =>
 ---
 
 <Layout title="Payout Queue - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <PageHeader
-        title="Payout Queue"
-        description="Pending payout requests, oldest first. Executing a payout transfers funds through Stripe Connect and marks the underlying royalties paid."
-      />
+  <Page>
+    <PageHeader
+      title="Payout Queue"
+      description="Pending payout requests, oldest first. Executing a payout transfers funds through Stripe Connect and marks the underlying royalties paid."
+    />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Pending</CardTitle>
-          <CardDescription>
-            {queueEntries.length}
-            {queueEntries.length === 1 ? ' payout' : ' payouts'} totalling{' '}
-            {formatCurrency(totalOwedCents)}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PayoutQueue client:load payouts={queueEntries} />
-        </CardContent>
-      </Card>
-    </div>
-  </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Pending</CardTitle>
+        <CardDescription>
+          {queueEntries.length}
+          {queueEntries.length === 1 ? ' payout' : ' payouts'} totalling{' '}
+          {formatCurrency(totalOwedCents)}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <PayoutQueue client:load payouts={queueEntries} />
+      </CardContent>
+    </Card>
+  </Page>
 </Layout>

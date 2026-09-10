@@ -1,0 +1,17 @@
+---
+/**
+ * A two-column page body: main content beside a sidebar.
+ *
+ * The `main` and `aside` slots are named so a page cannot silently depend on
+ * child order for which column something lands in.
+ */
+---
+
+<div class="page-columns">
+  <div class="page-columns__column">
+    <slot name="main" />
+  </div>
+  <div class="page-columns__column">
+    <slot name="aside" />
+  </div>
+</div>

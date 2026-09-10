@@ -1,36 +1,20 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import Page from '@/components/page/page.astro';
 import Card from '@/components/card/card.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
 import BrowseCTA from '@/components/home/browse-cta/browse-cta.astro';
 import PageHeader from '@/components/page-header/page-header.astro';
-import { setSession } from '@gameloopers/core/auth';
 import { FormSubmitButton } from '@/components/interactive';
 import { getUserDocuments } from '@gameloopers/core/data-access/documents';
 import { getUserById } from '@gameloopers/core/data-access/users';
 import EmptyState from '@/components/empty-state/empty-state.astro';
+import { getPageUser } from '@/lib/page-auth';
 
 const { cookies } = Astro;
 
 // Check authentication
-let currentUser = null;
-const accessToken = cookies.get('sb-access-token');
-const refreshToken = cookies.get('sb-refresh-token');
-
-if (accessToken && refreshToken) {
-  try {
-    const session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-    if (!session.error && session.data.user) {
-      currentUser = session.data.user;
-    }
-  } catch {
-    // A bad or expired session is not an error for this page: it renders
-    // for a signed-out visitor. Deliberately silent.
-  }
-}
+const currentUser = await getPageUser(Astro.cookies);
 
 // Fetch user's documents
 let documents: Awaited<ReturnType<typeof getUserDocuments>> = [];
@@ -55,116 +39,107 @@ const formatDate = (dateStr: string) => {
 ---
 
 <Layout title="Documents - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <div class="page-header--with-action">
-        <PageHeader
-          title="Documents"
-          description="Collaborative game design documents - rulebooks, reference cards, and more"
-        />
-        {currentUser && (
-          <FormSubmitButton
-            client:load
-            action="/api/documents/create-document"
-            method="post"
-            variant="primary"
-            size="lg"
+  <Page>
+    <PageHeader
+      title="Documents"
+      description="Collaborative game design documents - rulebooks, reference cards, and more"
+    >
+      {currentUser && (
+        <FormSubmitButton
+          slot="actions"
+          client:load
+          action="/api/documents/create-document"
+          method="post"
+          variant="primary"
+          size="lg"
+        >
+          New Document
+        </FormSubmitButton>
+      )}
+    </PageHeader>
+
+    {!currentUser && (
+      <Card>
+        <CardContent>
+          <BrowseCTA message="Sign in to create and collaborate on game design documents" />
+        </CardContent>
+      </Card>
+    )}
+
+    {currentUser && documents.length === 0 && (
+      <Card>
+        <CardContent>
+          <EmptyState
+            icon="documents"
+            title="No documents yet"
+            description="Create your first document to start collaborating on rulebooks, reference cards, and more."
           >
-            New Document
-          </FormSubmitButton>
-        )}
-      </div>
-
-      {!currentUser && (
-        <Card>
-          <CardContent>
-            <BrowseCTA message="Sign in to create and collaborate on game design documents" />
-          </CardContent>
-        </Card>
-      )}
-
-      {currentUser && documents.length === 0 && (
-        <Card>
-          <CardContent>
-            <EmptyState
-              icon="documents"
-              title="No documents yet"
-              description="Create your first document to start collaborating on rulebooks, reference cards, and more."
+            <FormSubmitButton
+              slot="action"
+              client:load
+              action="/api/documents/create-document"
+              method="post"
+              variant="primary"
+              size="lg"
             >
-              <FormSubmitButton
-                slot="action"
-                client:load
-                action="/api/documents/create-document"
-                method="post"
-                variant="primary"
-                size="lg"
-              >
-                Create Your First Document
-              </FormSubmitButton>
-            </EmptyState>
-          </CardContent>
-        </Card>
-      )}
+              Create Your First Document
+            </FormSubmitButton>
+          </EmptyState>
+        </CardContent>
+      </Card>
+    )}
 
-      {currentUser && documents.length > 0 && (
-        <div class="documents-grid">
-          {documents.map((doc) => {
-            const owner = ownersMap.get(doc.user_id);
-            const isOwner = doc.user_id === currentUser?.id;
-            return (
-              <a href={`/documents/${doc.handle}`} class="document-card">
-                <div class="document-card__icon">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                  </svg>
+    {currentUser && documents.length > 0 && (
+      <div class="documents-grid">
+        {documents.map((doc) => {
+          const owner = ownersMap.get(doc.user_id);
+          const isOwner = doc.user_id === currentUser?.id;
+          return (
+            <a href={`/documents/${doc.handle}`} class="document-card">
+              <div class="document-card__icon">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </div>
+              <div class="document-card__content">
+                <h3 class="document-card__title">{doc.title}</h3>
+                {doc.description && (
+                  <p class="document-card__description">
+                    {doc.description.length > 100
+                      ? `${doc.description.substring(0, 100)}...`
+                      : doc.description}
+                  </p>
+                )}
+                <div class="document-card__meta">
+                  <span class="document-card__author">
+                    {isOwner ? 'You' : owner?.name || owner?.handle || 'Unknown'}
+                  </span>
+                  <span class="document-card__separator">•</span>
+                  <span class="document-card__date">
+                    Updated {formatDate(doc.updated_at)}
+                  </span>
                 </div>
-                <div class="document-card__content">
-                  <h3 class="document-card__title">{doc.title}</h3>
-                  {doc.description && (
-                    <p class="document-card__description">
-                      {doc.description.length > 100
-                        ? `${doc.description.substring(0, 100)}...`
-                        : doc.description}
-                    </p>
-                  )}
-                  <div class="document-card__meta">
-                    <span class="document-card__author">
-                      {isOwner ? 'You' : owner?.name || owner?.handle || 'Unknown'}
-                    </span>
-                    <span class="document-card__separator">•</span>
-                    <span class="document-card__date">
-                      Updated {formatDate(doc.updated_at)}
-                    </span>
-                  </div>
-                </div>
-              </a>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
+  </Page>
 </Layout>
 
 <style>
   /* ===== Page Header with Action ===== */
-  .page-header--with-action {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: var(--gap-xl);
-    margin-bottom: var(--spacing-2xl);
-  }
 
   /* ===== Empty State ===== */
   .empty-state {
@@ -285,11 +260,6 @@ const formatDate = (dateStr: string) => {
 
   /* ===== Responsive ===== */
   @media (max-width: 768px) {
-    .page-header--with-action {
-      flex-direction: column;
-      gap: var(--gap-md);
-    }
-
     .documents-grid {
       grid-template-columns: 1fr;
     }

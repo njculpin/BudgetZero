@@ -1,5 +1,7 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import { getPageUser } from '@/lib/page-auth';
+import Page from '@/components/page/page.astro';
 import Button from '@/components/button/button.astro';
 import { ProductContentViewer, AddToCartButton } from '@/components/products';
 import ProductContributors from '@/components/products/product-contributors/product-contributors.astro';
@@ -15,7 +17,6 @@ import {
   getProductPriceBreakdown,
 } from '@gameloopers/core/data-access/products';
 import { getUserById } from '@gameloopers/core/data-access/users';
-import { setSession } from '@gameloopers/core/auth';
 import Card from '@/components/card/card.astro';
 import CardHeader from '@/components/card/card-header/card-header.astro';
 import CardTitle from '@/components/card/card-title/card-title.astro';
@@ -61,25 +62,7 @@ const [
 if (!owner) {
   return Astro.redirect('/404');
 }
-
-let currentUser = null;
-const accessToken = Astro.cookies.get('sb-access-token');
-const refreshToken = Astro.cookies.get('sb-refresh-token');
-
-if (accessToken && refreshToken) {
-  try {
-    const session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-    if (!session.error && session.data.user) {
-      currentUser = session.data.user;
-    }
-  } catch {
-    // A bad or expired session is not an error for this page: it renders
-    // for a signed-out visitor. Deliberately silent.
-  }
-}
+const currentUser = await getPageUser(Astro.cookies);
 
 const isOwner = currentUser?.id === productData.user_id;
 
@@ -96,132 +79,130 @@ const shouldShowContentViewer =
 ---
 
 <Layout title={`${productData.title} - Game Loopers`}>
-  <div class="page">
-    <div class="page__container">
-      <div class="page-columns">
-        <!-- Main Content Column -->
-        <div class="page-columns__column">
-          <!-- Product Images -->
-          {productImages.length > 0 && (
-            <ProductImageGallery
-              images={productImages.map((img) => ({
-                url: img.file_url,
-                alt: img.title,
-              }))}
-            />
+  <Page>
+    <div class="page-columns">
+      <!-- Main Content Column -->
+      <div class="page-columns__column">
+        <!-- Product Images -->
+        {productImages.length > 0 && (
+          <ProductImageGallery
+            images={productImages.map((img) => ({
+              url: img.file_url,
+              alt: img.title,
+            }))}
+          />
+        )}
+      </div>
+
+      <!-- Sidebar Column -->
+      <div class="page-columns__column">
+        <!-- Product Header -->
+        <div class="product-page-header">
+          <div class="product-page-header__top">
+            <h1 class="product-page-header__title">{productData.title}</h1>
+            {isOwner && (
+              <a
+                href={`/products/${product}/edit`}
+                class="product-page-header__edit-link"
+              >
+                <Button variant="outline" size="sm">
+                  <span slot="text">Edit</span>
+                </Button>
+              </a>
+            )}
+          </div>
+          {productData.description && (
+            <p class="product-page-header__description">{productData.description}</p>
+          )}
+          {tags.length > 0 && (
+            <div class="product-page-header__tags">
+              {tags.map((tag) => (
+                <a href={`/tags/${tag.value}`} class="product-tag">
+                  {tag.value}
+                </a>
+              ))}
+            </div>
           )}
         </div>
 
-        <!-- Sidebar Column -->
-        <div class="page-columns__column">
-          <!-- Product Header -->
-          <div class="product-page-header">
-            <div class="product-page-header__top">
-              <h1 class="product-page-header__title">{productData.title}</h1>
-              {isOwner && (
-                <a
-                  href={`/products/${product}/edit`}
-                  class="product-page-header__edit-link"
-                >
-                  <Button variant="outline" size="sm">
-                    <span slot="text">Edit</span>
-                  </Button>
-                </a>
-              )}
-            </div>
-            {productData.description && (
-              <p class="product-page-header__description">{productData.description}</p>
-            )}
-            {tags.length > 0 && (
-              <div class="product-page-header__tags">
-                {tags.map((tag) => (
-                  <a href={`/tags/${tag.value}`} class="product-tag">
-                    {tag.value}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
+        <!-- Add to Cart Button -->
+        <Card>
+          <CardContent>
+            <AddToCartButton
+              client:load
+              productId={productData.id}
+              productTitle={productData.title}
+              priceCents={priceBreakdown.totalPrice}
+              status={productData.status}
+              isOwner={isOwner}
+              isAuthenticated={!!currentUser}
+            />
+          </CardContent>
+        </Card>
 
-          <!-- Add to Cart Button -->
+        <!-- Product Content Viewer -->
+        {shouldShowContentViewer && (
           <Card>
+            <CardHeader>
+              <CardTitle>What's Included</CardTitle>
+              <CardDescription>
+                All files, documents, and embedded products included with purchase
+              </CardDescription>
+            </CardHeader>
             <CardContent>
-              <AddToCartButton
+              <ProductContentViewer
                 client:load
                 productId={productData.id}
                 productTitle={productData.title}
-                priceCents={priceBreakdown.totalPrice}
-                status={productData.status}
-                isOwner={isOwner}
                 isAuthenticated={!!currentUser}
+                files={productFiles}
+                documents={productDocuments}
+                embeddedProducts={embeddedProductsWithCreators}
+                platformFeeCents={priceBreakdown.platformFee}
+                totalPriceCents={priceBreakdown.totalPrice}
               />
             </CardContent>
           </Card>
+        )}
 
-          <!-- Product Content Viewer -->
-          {shouldShowContentViewer && (
-            <Card>
+        <!-- Creator & Contributors -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Created By</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <a href={`/users/${owner.handle}`} class="creator-profile">
+              <Avatar
+                src={owner.avatar_url}
+                alt={owner.name || owner.handle || 'Creator'}
+                size="lg"
+              />
+              <div class="creator-profile__info">
+                <h3 class="creator-profile__name">{owner.name || owner.handle}</h3>
+                <p class="creator-profile__handle">@{owner.handle}</p>
+                {owner.bio && <p class="creator-profile__bio">{owner.bio}</p>}
+              </div>
+            </a>
+          </CardContent>
+          {productContributorsWithRoles.length > 0 && (
+            <>
               <CardHeader>
-                <CardTitle>What's Included</CardTitle>
+                <CardTitle>Contributors</CardTitle>
                 <CardDescription>
-                  All files, documents, and embedded products included with purchase
+                  Creators earning royalties from embedded content
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ProductContentViewer
-                  client:load
-                  productId={productData.id}
-                  productTitle={productData.title}
-                  isAuthenticated={!!currentUser}
-                  files={productFiles}
-                  documents={productDocuments}
-                  embeddedProducts={embeddedProductsWithCreators}
-                  platformFeeCents={priceBreakdown.platformFee}
-                  totalPriceCents={priceBreakdown.totalPrice}
+                <ProductContributors
+                  contributorsWithRoles={productContributorsWithRoles}
                 />
               </CardContent>
-            </Card>
+            </>
           )}
-
-          <!-- Creator & Contributors -->
-          <Card>
-            <CardHeader>
-              <CardTitle>Created By</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <a href={`/users/${owner.handle}`} class="creator-profile">
-                <Avatar
-                  src={owner.avatar_url}
-                  alt={owner.name || owner.handle || 'Creator'}
-                  size="lg"
-                />
-                <div class="creator-profile__info">
-                  <h3 class="creator-profile__name">{owner.name || owner.handle}</h3>
-                  <p class="creator-profile__handle">@{owner.handle}</p>
-                  {owner.bio && <p class="creator-profile__bio">{owner.bio}</p>}
-                </div>
-              </a>
-            </CardContent>
-            {productContributorsWithRoles.length > 0 && (
-              <>
-                <CardHeader>
-                  <CardTitle>Contributors</CardTitle>
-                  <CardDescription>
-                    Creators earning royalties from embedded content
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ProductContributors
-                    contributorsWithRoles={productContributorsWithRoles}
-                  />
-                </CardContent>
-              </>
-            )}
-          </Card>
-        </div>
+        </Card>
       </div>
     </div>
-  </div>
+  </Page>
 </Layout>
 
 <style>

@@ -1,6 +1,7 @@
 ---
-import Layout from '@/layouts/Layout.astro';
-import { setSession } from '@gameloopers/core/auth';
+import Layout from '@/layouts/layout.astro';
+import { getPageUser } from '@/lib/page-auth';
+import Page from '@/components/page/page.astro';
 import { getUserSales, getSaleItems } from '@gameloopers/core/data-access/sales';
 import {
   getProductById,
@@ -18,24 +19,7 @@ const searchParams = url.searchParams;
 const currentPage = parseInt(searchParams.get('page') || '1', 10);
 const searchQuery = searchParams.get('search') || '';
 const filterQuery = searchParams.get('filter') || 'all';
-
-let currentUser = null;
-const accessToken = Astro.cookies.get('sb-access-token');
-const refreshToken = Astro.cookies.get('sb-refresh-token');
-
-if (accessToken && refreshToken) {
-  try {
-    const session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-    if (!session.error && session.data.user) {
-      currentUser = session.data.user;
-    }
-  } catch {
-    // Continue as guest
-  }
-}
+const currentUser = await getPageUser(Astro.cookies);
 
 if (!currentUser) {
   return Astro.redirect('/sign-in');
@@ -142,23 +126,19 @@ const purchasesWithDetails = await Promise.all(
 ---
 
 <Layout title="My Downloads - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <div class="page-header--with-action">
-        <PageHeader
-          title="Purchases"
-          description="Browse your purchases and download your digital products."
-        />
-      </div>
+  <Page>
+    <PageHeader
+      title="Purchases"
+      description="Browse your purchases and download your digital products."
+    />
 
-      <PurchasesList
-        client:load
-        initialPurchases={purchasesWithDetails}
-        initialPage={currentPage}
-        initialSearch={searchQuery}
-        initialFilter={filterQuery}
-        totalCount={purchasesWithDetails.length}
-      />
-    </div>
-  </div>
+    <PurchasesList
+      client:load
+      initialPurchases={purchasesWithDetails}
+      initialPage={currentPage}
+      initialSearch={searchQuery}
+      initialFilter={filterQuery}
+      totalCount={purchasesWithDetails.length}
+    />
+  </Page>
 </Layout>

@@ -1,5 +1,6 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import Page from '@/components/page/page.astro';
 import PageHeader from '@/components/page-header/page-header.astro';
 import { getCreators } from '@gameloopers/core/data-access/users';
 
@@ -15,87 +16,85 @@ const tagsList = Array.from(allTags).sort();
 ---
 
 <Layout title="Creator Directory - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <div class="creators-page">
-        <PageHeader
-          title="Creator Directory"
-          description="Discover talented game designers, illustrators, 3D modelers, and other creators."
-        />
+  <Page>
+    <div class="creators-page">
+      <PageHeader
+        title="Creator Directory"
+        description="Discover talented game designers, illustrators, 3D modelers, and other creators."
+      />
 
-        <!-- Search -->
-        <div class="browse-search">
-          <div class="browse-search__wrapper">
-            <input
-              type="text"
-              id="creator-search"
-              class="browse-search__input"
-              placeholder="Search creators..."
-            />
-          </div>
+      <!-- Search -->
+      <div class="browse-search">
+        <div class="browse-search__wrapper">
+          <input
+            type="text"
+            id="creator-search"
+            class="browse-search__input"
+            placeholder="Search creators..."
+          />
         </div>
+      </div>
 
-        <!-- Tag Filters -->
-        {tagsList.length > 0 && (
-          <div class="browse-tags">
-            <span class="browse-tags__label">Filter by tag:</span>
-            <div class="browse-tags__list">
-              <button
-                type="button"
-                class="browse-tags__tag browse-tags__tag--active"
-                data-tag="all"
-              >
-                All
+      <!-- Tag Filters -->
+      {tagsList.length > 0 && (
+        <div class="browse-tags">
+          <span class="browse-tags__label">Filter by tag:</span>
+          <div class="browse-tags__list">
+            <button
+              type="button"
+              class="browse-tags__tag browse-tags__tag--active"
+              data-tag="all"
+            >
+              All
+            </button>
+            {tagsList.map((tag) => (
+              <button type="button" class="browse-tags__tag" data-tag={tag}>
+                {tag}
               </button>
-              {tagsList.map((tag) => (
-                <button type="button" class="browse-tags__tag" data-tag={tag}>
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div class="creators-page__count">
-          <span id="creators-count">
-            {creators.length} {creators.length === 1 ? 'Creator' : 'Creators'}
-          </span>
-        </div>
-
-        {creators.length === 0 ? (
-          <div class="creators-page__empty">
-            <p>No creators found.</p>
-          </div>
-        ) : (
-          <div id="creators-grid" class="creators-grid">
-            {creators.map(({ user, tags }) => (
-              <a
-                href={`/users/${user.handle}`}
-                class="creator-card"
-                data-search={`${user.name} ${user.handle} ${user.bio || ''}`}
-                data-tags={tags.join(',')}
-              >
-                <div class="creator-card__avatar">
-                  <img
-                    src={
-                      user.avatar_url ||
-                      `https://placehold.co/200x200?text=${encodeURIComponent(user.name)}`
-                    }
-                    alt={user.name}
-                    class="creator-card__avatar-img"
-                  />
-                </div>
-                {/* <div class="creator-card__info">
-                  <h3 class="creator-card__name">{user.name}</h3>
-                  <p class="creator-card__handle">@{user.handle}</p>
-                </div> */}
-              </a>
             ))}
           </div>
-        )}
+        </div>
+      )}
+
+      <div class="creators-page__count">
+        <span id="creators-count">
+          {creators.length} {creators.length === 1 ? 'Creator' : 'Creators'}
+        </span>
       </div>
+
+      {creators.length === 0 ? (
+        <div class="creators-page__empty">
+          <p>No creators found.</p>
+        </div>
+      ) : (
+        <div id="creators-grid" class="creators-grid">
+          {creators.map(({ user, tags }) => (
+            <a
+              href={`/users/${user.handle}`}
+              class="creator-card"
+              data-search={`${user.name} ${user.handle} ${user.bio || ''}`}
+              data-tags={tags.join(',')}
+            >
+              <div class="creator-card__avatar">
+                <img
+                  src={
+                    user.avatar_url ||
+                    `https://placehold.co/200x200?text=${encodeURIComponent(user.name)}`
+                  }
+                  alt={user.name}
+                  class="creator-card__avatar-img"
+                />
+              </div>
+              {/* <div class="creator-card__info">
+              <h3 class="creator-card__name">{user.name}</h3>
+              <p class="creator-card__handle">@{user.handle}</p>
+            </div> */}
+            </a>
+          ))}
+        </div>
+      )}
     </div>
-  </div>
+  </Page>
 </Layout>
 
 <script>

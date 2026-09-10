@@ -1,5 +1,7 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import { getPageUser } from '@/lib/page-auth';
+import Page from '@/components/page/page.astro';
 import Card from '@/components/card/card.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
 import PageHeader from '@/components/page-header/page-header.astro';
@@ -11,31 +13,13 @@ import {
 } from '@gameloopers/core/data-access/products';
 import { getUserById } from '@gameloopers/core/data-access/users';
 import { getAllTags } from '@gameloopers/core/data-access/tags';
-import { setSession } from '@gameloopers/core/auth';
 import EmptyState from '@/components/empty-state/empty-state.astro';
 import { FormSubmitButton } from '@/components/interactive';
+import ProductCard from '@/components/products/product-card/product-card.astro';
 
 const { url } = Astro;
 const searchParams = url.searchParams;
-
-// Check authentication - allow guests to browse
-let currentUser = null;
-const accessToken = Astro.cookies.get('sb-access-token');
-const refreshToken = Astro.cookies.get('sb-refresh-token');
-
-if (accessToken && refreshToken) {
-  try {
-    const session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-    if (!session.error && session.data.user) {
-      currentUser = session.data.user;
-    }
-  } catch {
-    // Continue as guest
-  }
-}
+const currentUser = await getPageUser(Astro.cookies);
 
 const searchQuery = searchParams.get('search') || '';
 const tagFilter = searchParams.get('tag') || '';
@@ -86,228 +70,206 @@ const productTags = allTags.filter((tag) => tag.productCount > 0).slice(0, 10);
 ---
 
 <Layout title="Browse Products - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <div class="page-header--with-action">
-        <PageHeader
-          title="Products"
-          description="Discover tabletop games from the community"
+  <Page>
+    <PageHeader title="Products" description="Discover tabletop games from the community">
+      {currentUser && (
+        <FormSubmitButton
+          slot="actions"
+          client:load
+          action="/api/products/create-product"
+          method="post"
+          variant="primary"
+          size="lg"
+        >
+          Create Product
+        </FormSubmitButton>
+      )}
+    </PageHeader>
+
+    <!-- Search Form -->
+    <form method="get" action="/products" class="browse-search">
+      <div class="browse-search__wrapper">
+        <input
+          type="text"
+          name="search"
+          value={searchQuery}
+          placeholder="Search products..."
+          class="browse-search__input"
+          aria-label="Search products"
         />
-        {currentUser && (
-          <FormSubmitButton
-            client:load
-            action="/api/products/create-product"
-            method="post"
-            variant="primary"
-            size="lg"
+        <button type="submit" class="browse-search__btn">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
           >
-            Create Product
-          </FormSubmitButton>
-        )}
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <span>Search</span>
+        </button>
+      </div>
+      {(searchQuery || tagFilter) && (
+        <a href="/products" class="browse-search__clear">
+          Clear filters
+        </a>
+      )}
+    </form>
+
+    <!-- Sort and Filter Bar -->
+    <div class="browse-controls">
+      <!-- Sort Dropdown -->
+      <div class="browse-sort">
+        <label for="sort-select" class="browse-sort__label">
+          Sort by:
+        </label>
+        <select
+          id="sort-select"
+          class="browse-sort__select"
+          onchange="window.location.href = '/products?sort=' + this.value + (new URLSearchParams(window.location.search).get('search') ? '&search=' + encodeURIComponent(new URLSearchParams(window.location.search).get('search')) : '') + (new URLSearchParams(window.location.search).get('tag') ? '&tag=' + encodeURIComponent(new URLSearchParams(window.location.search).get('tag')) : '')"
+        >
+          <option value="newest" selected={sortBy === 'newest'}>
+            Newest First
+          </option>
+          <option value="oldest" selected={sortBy === 'oldest'}>
+            Oldest First
+          </option>
+          <option value="price-low" selected={sortBy === 'price-low'}>
+            Price: Low to High
+          </option>
+          <option value="price-high" selected={sortBy === 'price-high'}>
+            Price: High to Low
+          </option>
+          <option value="popular" selected={sortBy === 'popular'}>
+            Most Viewed
+          </option>
+          <option value="title-az" selected={sortBy === 'title-az'}>
+            Title: A-Z
+          </option>
+          <option value="title-za" selected={sortBy === 'title-za'}>
+            Title: Z-A
+          </option>
+        </select>
       </div>
 
-      <!-- Search Form -->
-      <form method="get" action="/products" class="browse-search">
-        <div class="browse-search__wrapper">
-          <input
-            type="text"
-            name="search"
-            value={searchQuery}
-            placeholder="Search products..."
-            class="browse-search__input"
-            aria-label="Search products"
-          />
-          <button type="submit" class="browse-search__btn">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <span>Search</span>
-          </button>
-        </div>
-        {(searchQuery || tagFilter) && (
-          <a href="/products" class="browse-search__clear">
-            Clear filters
-          </a>
-        )}
-      </form>
-
-      <!-- Sort and Filter Bar -->
-      <div class="browse-controls">
-        <!-- Sort Dropdown -->
-        <div class="browse-sort">
-          <label for="sort-select" class="browse-sort__label">
-            Sort by:
-          </label>
-          <select
-            id="sort-select"
-            class="browse-sort__select"
-            onchange="window.location.href = '/products?sort=' + this.value + (new URLSearchParams(window.location.search).get('search') ? '&search=' + encodeURIComponent(new URLSearchParams(window.location.search).get('search')) : '') + (new URLSearchParams(window.location.search).get('tag') ? '&tag=' + encodeURIComponent(new URLSearchParams(window.location.search).get('tag')) : '')"
-          >
-            <option value="newest" selected={sortBy === 'newest'}>
-              Newest First
-            </option>
-            <option value="oldest" selected={sortBy === 'oldest'}>
-              Oldest First
-            </option>
-            <option value="price-low" selected={sortBy === 'price-low'}>
-              Price: Low to High
-            </option>
-            <option value="price-high" selected={sortBy === 'price-high'}>
-              Price: High to Low
-            </option>
-            <option value="popular" selected={sortBy === 'popular'}>
-              Most Viewed
-            </option>
-            <option value="title-az" selected={sortBy === 'title-az'}>
-              Title: A-Z
-            </option>
-            <option value="title-za" selected={sortBy === 'title-za'}>
-              Title: Z-A
-            </option>
-          </select>
-        </div>
-
-        <!-- Tag Filters -->
-        {productTags.length > 0 && (
-          <div class="browse-tags">
-            <span class="browse-tags__label">Filter by tag:</span>
-            <div class="browse-tags__list">
-              {productTags.map((tag) => (
-                <a
-                  href={
-                    tagFilter === tag.value
-                      ? `/products${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}${sortBy !== 'newest' ? `${searchQuery ? '&' : '?'}sort=${sortBy}` : ''}`
-                      : `/products?tag=${encodeURIComponent(tag.value)}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${sortBy !== 'newest' ? `&sort=${sortBy}` : ''}`
-                  }
-                  class:list={[
-                    'browse-tags__tag',
-                    { 'browse-tags__tag--active': tagFilter === tag.value },
-                  ]}
-                >
-                  {tag.value}
-                  <span class="browse-tags__count">({tag.productCount})</span>
-                </a>
-              ))}
-            </div>
+      <!-- Tag Filters -->
+      {productTags.length > 0 && (
+        <div class="browse-tags">
+          <span class="browse-tags__label">Filter by tag:</span>
+          <div class="browse-tags__list">
+            {productTags.map((tag) => (
+              <a
+                href={
+                  tagFilter === tag.value
+                    ? `/products${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}${sortBy !== 'newest' ? `${searchQuery ? '&' : '?'}sort=${sortBy}` : ''}`
+                    : `/products?tag=${encodeURIComponent(tag.value)}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${sortBy !== 'newest' ? `&sort=${sortBy}` : ''}`
+                }
+                class:list={[
+                  'browse-tags__tag',
+                  { 'browse-tags__tag--active': tagFilter === tag.value },
+                ]}
+              >
+                {tag.value}
+                <span class="browse-tags__count">({tag.productCount})</span>
+              </a>
+            ))}
           </div>
-        )}
-      </div>
-
-      {!currentUser && (
-        <Card>
-          <CardContent>
-            <BrowseCTA message="Sign in to create and sell your tabletop games" />
-          </CardContent>
-        </Card>
-      )}
-
-      <!-- All Products Section -->
-      {productsWithDetails.length > 0 ? (
-        <section class="browse-section">
-          <div class="browse-grid">
-            {productsWithDetails.map((product) => {
-              const owner = allOwnersMap.get(product.user_id);
-              return (
-                <a href={`/products/${product.handle}`} class="product-card">
-                  <div class="product-card__image">
-                    <img
-                      src={product.cover_image_url || 'https://placehold.co/600x600'}
-                      alt={product.title}
-                      loading="lazy"
-                    />
-                  </div>
-                  <div class="product-card__content">
-                    <h3 class="product-card__title">{product.title}</h3>
-                    <p class="product-card__creator">
-                      by {owner?.name || owner?.handle || 'Unknown'}
-                    </p>
-                    {product.description && (
-                      <p class="product-card__description">{product.description}</p>
-                    )}
-                    <div class="product-card__footer">
-                      <span class="product-card__price">
-                        {product.total_price_cents === 0
-                          ? 'Free'
-                          : `$${(product.total_price_cents / 100).toFixed(2)}`}
-                      </span>
-                    </div>
-                  </div>
-                </a>
-              );
-            })}
-          </div>
-        </section>
-      ) : (
-        productsWithDetails.length === 0 && (
-          <Card>
-            <CardContent>
-              {searchQuery || tagFilter ? (
-                <EmptyState
-                  icon="search"
-                  title="No products found"
-                  description="Try adjusting your search or clearing filters to see more results."
-                  actionText="Clear filters"
-                  actionHref="/products"
-                />
-              ) : currentUser ? (
-                <EmptyState
-                  icon="products"
-                  title="No products yet"
-                  description="Be the first to create a product and share it with the community."
-                >
-                  <FormSubmitButton
-                    slot="action"
-                    client:load
-                    action="/api/products/create-product"
-                    method="post"
-                    variant="primary"
-                    size="lg"
-                  >
-                    Create Product
-                  </FormSubmitButton>
-                </EmptyState>
-              ) : (
-                <EmptyState
-                  icon="products"
-                  title="No products yet"
-                  description="Be the first to create a product and share it with the community."
-                  actionText="Sign in to create"
-                  actionHref="/sign-in"
-                />
-              )}
-            </CardContent>
-          </Card>
-        )
-      )}
-
-      {productsWithDetails.length === limit && (
-        <div class="browse-pagination">
-          {page > 1 && (
-            <a
-              href={`/products?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
-              class="browse-pagination__link"
-            >
-              ← Previous
-            </a>
-          )}
-          <span class="browse-pagination__current">Page {page}</span>
-          <a
-            href={`/products?page=${page + 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
-            class="browse-pagination__link"
-          >
-            Next →
-          </a>
         </div>
       )}
     </div>
-  </div>
+
+    {!currentUser && (
+      <Card>
+        <CardContent>
+          <BrowseCTA message="Sign in to create and sell your tabletop games" />
+        </CardContent>
+      </Card>
+    )}
+
+    <!-- All Products Section -->
+    {productsWithDetails.length > 0 ? (
+      <section class="browse-section">
+        <div class="browse-grid">
+          {productsWithDetails.map((product) => {
+            const owner = allOwnersMap.get(product.user_id);
+            return (
+              <ProductCard
+                handle={product.handle}
+                title={product.title}
+                creatorName={owner?.name || owner?.handle || 'Unknown'}
+                imageUrl={product.cover_image_url}
+                description={product.description}
+                priceCents={product.total_price_cents}
+              />
+            );
+          })}
+        </div>
+      </section>
+    ) : (
+      productsWithDetails.length === 0 && (
+        <Card>
+          <CardContent>
+            {searchQuery || tagFilter ? (
+              <EmptyState
+                icon="search"
+                title="No products found"
+                description="Try adjusting your search or clearing filters to see more results."
+                actionText="Clear filters"
+                actionHref="/products"
+              />
+            ) : currentUser ? (
+              <EmptyState
+                icon="products"
+                title="No products yet"
+                description="Be the first to create a product and share it with the community."
+              >
+                <FormSubmitButton
+                  slot="action"
+                  client:load
+                  action="/api/products/create-product"
+                  method="post"
+                  variant="primary"
+                  size="lg"
+                >
+                  Create Product
+                </FormSubmitButton>
+              </EmptyState>
+            ) : (
+              <EmptyState
+                icon="products"
+                title="No products yet"
+                description="Be the first to create a product and share it with the community."
+                actionText="Sign in to create"
+                actionHref="/sign-in"
+              />
+            )}
+          </CardContent>
+        </Card>
+      )
+    )}
+
+    {productsWithDetails.length === limit && (
+      <div class="browse-pagination">
+        {page > 1 && (
+          <a
+            href={`/products?page=${page - 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
+            class="browse-pagination__link"
+          >
+            ← Previous
+          </a>
+        )}
+        <span class="browse-pagination__current">Page {page}</span>
+        <a
+          href={`/products?page=${page + 1}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}${tagFilter ? `&tag=${encodeURIComponent(tagFilter)}` : ''}`}
+          class="browse-pagination__link"
+        >
+          Next →
+        </a>
+      </div>
+    )}
+  </Page>
 </Layout>

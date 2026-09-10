@@ -1,5 +1,6 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import Page from '@/components/page/page.astro';
 import Card from '@/components/card/card.astro';
 import CardHeader from '@/components/card/card-header/card-header.astro';
 import CardTitle from '@/components/card/card-title/card-title.astro';
@@ -7,43 +8,17 @@ import CardContent from '@/components/card/card-content/card-content.astro';
 import Button from '@/components/button/button.astro';
 import CartItemRow from '@/components/cart/cart-item-row/cart-item-row';
 import CheckoutButton from '@/components/checkout/checkout-button/checkout-button';
-import { setSession } from '@gameloopers/core/auth';
 import EmptyState from '@/components/empty-state/empty-state.astro';
 import { getOrCreateCart, getCartItems } from '@gameloopers/core/data-access/cart';
+import { requirePageUser } from '@/lib/page-auth';
 import {
   getProductById,
   getProductPriceBreakdown,
 } from '@gameloopers/core/data-access/products';
 
-const accessToken = Astro.cookies.get('sb-access-token');
-const refreshToken = Astro.cookies.get('sb-refresh-token');
-
-if (!accessToken || !refreshToken) {
-  return Astro.redirect('/sign-in?redirect=/cart');
-}
-
-let session;
-try {
-  session = await setSession({
-    refresh_token: refreshToken.value,
-    access_token: accessToken.value,
-  });
-  if (session.error) {
-    Astro.cookies.delete('sb-access-token', { path: '/' });
-    Astro.cookies.delete('sb-refresh-token', { path: '/' });
-    return Astro.redirect('/sign-in?redirect=/cart');
-  }
-} catch {
-  Astro.cookies.delete('sb-access-token', { path: '/' });
-  Astro.cookies.delete('sb-refresh-token', { path: '/' });
-  return Astro.redirect('/sign-in?redirect=/cart');
-}
-
-const userId = session.data.user?.id;
-
-if (!userId) {
-  return Astro.redirect('/sign-in?redirect=/cart');
-}
+const auth = await requirePageUser(Astro, '/cart');
+if (auth instanceof Response) return auth;
+const userId = auth.id;
 
 // Get cart and items (cart operations now handled client-side)
 const cart = await getOrCreateCart(userId);
@@ -97,93 +72,89 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
 ---
 
 <Layout title="Shopping Cart - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <div class="page__header">
-        <h1 class="page__title">Shopping Cart</h1>
-      </div>
-
-      {showAddedMessage && (
-        <div class="cart-alert cart-alert--success">Item added to cart!</div>
-      )}
-
-      {showCancelledMessage && (
-        <div class="cart-alert cart-alert--error">
-          Checkout was cancelled. Your items are still in your cart.
-        </div>
-      )}
-
-      {cartItemsWithDetails.length > 0 ? (
-        <div class="cart-layout">
-          <div class="cart-items">
-            <Card>
-              <CardContent>
-                <div class="cart-items__list">
-                  {cartItemsWithDetails.map((item) => (
-                    <CartItemRow client:load item={item} />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div class="cart-summary">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div class="cart-summary__content">
-                  <div class="cart-summary__row">
-                    <span class="cart-summary__label">Subtotal</span>
-                    <span class="cart-summary__value">
-                      USD {(subtotal / 100).toFixed(2)}
-                    </span>
-                  </div>
-                  <div class="cart-summary__row">
-                    <span class="cart-summary__label">Platform fee (10%)</span>
-                    <span class="cart-summary__value">
-                      USD {(platformFee / 100).toFixed(2)}
-                    </span>
-                  </div>
-                  <div class="cart-summary__row cart-summary__row--total">
-                    <span class="cart-summary__label">Total</span>
-                    <span class="cart-summary__value">
-                      USD {(total / 100).toFixed(2)}
-                    </span>
-                  </div>
-
-                  <div class="cart-summary__checkout">
-                    <CheckoutButton client:load variant="primary" size="lg" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div class="cart-summary__continue">
-              <a href="/products">
-                <Button variant="outline" size="md">
-                  <span slot="text">Continue Shopping</span>
-                </Button>
-              </a>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <Card>
-          <CardContent>
-            <EmptyState
-              icon="cart"
-              title="Your cart is empty"
-              description="Start shopping and add products to your cart to see them here."
-              actionText="Browse Products"
-              actionHref="/products"
-            />
-          </CardContent>
-        </Card>
-      )}
+  <Page>
+    <div class="page__header">
+      <h1 class="page__title">Shopping Cart</h1>
     </div>
-  </div>
+
+    {showAddedMessage && (
+      <div class="cart-alert cart-alert--success">Item added to cart!</div>
+    )}
+
+    {showCancelledMessage && (
+      <div class="cart-alert cart-alert--error">
+        Checkout was cancelled. Your items are still in your cart.
+      </div>
+    )}
+
+    {cartItemsWithDetails.length > 0 ? (
+      <div class="cart-layout">
+        <div class="cart-items">
+          <Card>
+            <CardContent>
+              <div class="cart-items__list">
+                {cartItemsWithDetails.map((item) => (
+                  <CartItemRow client:load item={item} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div class="cart-summary">
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="cart-summary__content">
+                <div class="cart-summary__row">
+                  <span class="cart-summary__label">Subtotal</span>
+                  <span class="cart-summary__value">
+                    USD {(subtotal / 100).toFixed(2)}
+                  </span>
+                </div>
+                <div class="cart-summary__row">
+                  <span class="cart-summary__label">Platform fee (10%)</span>
+                  <span class="cart-summary__value">
+                    USD {(platformFee / 100).toFixed(2)}
+                  </span>
+                </div>
+                <div class="cart-summary__row cart-summary__row--total">
+                  <span class="cart-summary__label">Total</span>
+                  <span class="cart-summary__value">USD {(total / 100).toFixed(2)}</span>
+                </div>
+
+                <div class="cart-summary__checkout">
+                  <CheckoutButton client:load variant="primary" size="lg" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div class="cart-summary__continue">
+            <a href="/products">
+              <Button variant="outline" size="md">
+                <span slot="text">Continue Shopping</span>
+              </Button>
+            </a>
+          </div>
+        </div>
+      </div>
+    ) : (
+      <Card>
+        <CardContent>
+          <EmptyState
+            icon="cart"
+            title="Your cart is empty"
+            description="Start shopping and add products to your cart to see them here."
+            actionText="Browse Products"
+            actionHref="/products"
+          />
+        </CardContent>
+      </Card>
+    )}
+  </Page>
 </Layout>
 
 <style>

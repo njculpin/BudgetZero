@@ -1,5 +1,6 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import Page from '@/components/page/page.astro';
 import Card from '@/components/card/card.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
 import Button from '@/components/button/button.astro';
@@ -66,76 +67,74 @@ const errorInfo = errorMessages[errorCode] || errorMessages.unknown;
 ---
 
 <Layout title="Payment Failed - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <div class="payment-failed">
-        <Card>
-          <CardContent>
-            <div class="payment-failed__content">
-              <!-- Error Icon -->
-              <div class="payment-failed__icon">
-                <svg
-                  width="64"
-                  height="64"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="15" y1="9" x2="9" y2="15"></line>
-                  <line x1="9" y1="9" x2="15" y2="15"></line>
-                </svg>
-              </div>
+  <Page>
+    <div class="payment-failed">
+      <Card>
+        <CardContent>
+          <div class="payment-failed__content">
+            <!-- Error Icon -->
+            <div class="payment-failed__icon">
+              <svg
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
 
-              <!-- Error Message -->
-              <h1 class="payment-failed__title">{errorInfo.title}</h1>
-              <p class="payment-failed__description">{errorInfo.description}</p>
+            <!-- Error Message -->
+            <h1 class="payment-failed__title">{errorInfo.title}</h1>
+            <p class="payment-failed__description">{errorInfo.description}</p>
 
-              <!-- Actions -->
-              <div class="payment-failed__actions">
-                {errorInfo.canRetry && (
-                  <a href="/cart">
-                    <Button variant="primary" size="lg">
-                      <span slot="text">Try Again</span>
-                    </Button>
-                  </a>
-                )}
-
-                <a href="/products">
-                  <Button variant="ghost" size="lg">
-                    <span slot="text">Continue Shopping</span>
+            <!-- Actions -->
+            <div class="payment-failed__actions">
+              {errorInfo.canRetry && (
+                <a href="/cart">
+                  <Button variant="primary" size="lg">
+                    <span slot="text">Try Again</span>
                   </Button>
                 </a>
-              </div>
+              )}
 
-              <!-- Support Link -->
-              <div class="payment-failed__support">
-                <p class="payment-failed__support-text">
-                  Need help?{' '}
-                  <a
-                    href="mailto:support@gameloopers.com"
-                    class="payment-failed__support-link"
-                  >
-                    Contact Support
-                  </a>
-                </p>
-              </div>
-
-              <!-- Error Code -->
-              <div class="payment-failed__error-code">
-                <p class="payment-failed__error-code-text">
-                  Error Code: <code>{errorCode}</code>
-                </p>
-              </div>
+              <a href="/products">
+                <Button variant="ghost" size="lg">
+                  <span slot="text">Continue Shopping</span>
+                </Button>
+              </a>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            <!-- Support Link -->
+            <div class="payment-failed__support">
+              <p class="payment-failed__support-text">
+                Need help?{' '}
+                <a
+                  href="mailto:support@gameloopers.com"
+                  class="payment-failed__support-link"
+                >
+                  Contact Support
+                </a>
+              </p>
+            </div>
+
+            <!-- Error Code -->
+            <div class="payment-failed__error-code">
+              <p class="payment-failed__error-code-text">
+                Error Code: <code>{errorCode}</code>
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  </div>
+  </Page>
 </Layout>
 
 <style>

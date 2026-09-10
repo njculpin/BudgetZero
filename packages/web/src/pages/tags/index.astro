@@ -1,5 +1,6 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import Page from '@/components/page/page.astro';
 import Card from '@/components/card/card.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
 import { getAllTags } from '@gameloopers/core/data-access/tags';
@@ -8,74 +9,72 @@ const tags = await getAllTags();
 ---
 
 <Layout title="Tags - Game Loopers">
-  <div class="page">
-    <div class="page__container">
-      <div class="tags-page">
-        <!-- Header -->
-        <div class="tags-header">
-          <h1 class="tags-header__title">Tags</h1>
-          <p class="tags-header__description">Explore products and assets by topic</p>
-        </div>
+  <Page>
+    <div class="tags-page">
+      <!-- Header -->
+      <div class="tags-header">
+        <h1 class="tags-header__title">Tags</h1>
+        <p class="tags-header__description">Explore products and assets by topic</p>
+      </div>
 
-        <!-- Tags Grid -->
-        {tags.length > 0 ? (
-          <div class="tags-grid">
-            {tags.map((tag) => (
-              <a href={`/tags/${encodeURIComponent(tag.value)}`} class="tag-card">
-                <div class="tag-card__content">
-                  <div class="tag-card__header">
-                    <span class="tag-card__icon">#</span>
-                    <h3 class="tag-card__name">{tag.value}</h3>
+      <!-- Tags Grid -->
+      {tags.length > 0 ? (
+        <div class="tags-grid">
+          {tags.map((tag) => (
+            <a href={`/tags/${encodeURIComponent(tag.value)}`} class="tag-card">
+              <div class="tag-card__content">
+                <div class="tag-card__header">
+                  <span class="tag-card__icon">#</span>
+                  <h3 class="tag-card__name">{tag.value}</h3>
+                </div>
+                <div class="tag-card__stats">
+                  <div class="tag-card__stat">
+                    <span class="tag-card__stat-value">{tag.count}</span>
+                    <span class="tag-card__stat-label">total items</span>
                   </div>
-                  <div class="tag-card__stats">
-                    <div class="tag-card__stat">
-                      <span class="tag-card__stat-value">{tag.count}</span>
-                      <span class="tag-card__stat-label">total items</span>
-                    </div>
-                    <div class="tag-card__breakdown">
-                      {tag.productCount > 0 && (
-                        <span class="tag-card__breakdown-item">
-                          {tag.productCount} product{tag.productCount !== 1 ? 's' : ''}
-                        </span>
-                      )}
-                      {tag.assetCount > 0 && (
-                        <span class="tag-card__breakdown-item">
-                          {tag.assetCount} asset{tag.assetCount !== 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </div>
+                  <div class="tag-card__breakdown">
+                    {tag.productCount > 0 && (
+                      <span class="tag-card__breakdown-item">
+                        {tag.productCount} product{tag.productCount !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {tag.assetCount > 0 && (
+                      <span class="tag-card__breakdown-item">
+                        {tag.assetCount} asset{tag.assetCount !== 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
                 </div>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent>
-              <div class="tags-empty">
-                <svg
-                  class="tags-empty__icon"
-                  width="64"
-                  height="64"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                </svg>
-                <p class="tags-empty__text">No tags found</p>
-                <p class="tags-empty__description">
-                  Tags will appear here as products and assets are created
-                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent>
+            <div class="tags-empty">
+              <svg
+                class="tags-empty__icon"
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+              <p class="tags-empty__text">No tags found</p>
+              <p class="tags-empty__description">
+                Tags will appear here as products and assets are created
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
-  </div>
+  </Page>
 </Layout>
 
 <style>

@@ -1,13 +1,14 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import Page from '@/components/page/page.astro';
 import Card from '@/components/card/card.astro';
 import CardHeader from '@/components/card/card-header/card-header.astro';
 import CardTitle from '@/components/card/card-title/card-title.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
 import Badge from '@/components/badge/badge.astro';
-import { setSession } from '@gameloopers/core/auth';
 import { getSaleById, getSaleItems } from '@gameloopers/core/data-access/sales';
 import { getProductById, getProductFiles } from '@gameloopers/core/data-access/products';
+import { requirePageUser } from '@/lib/page-auth';
 
 const { purchase: saleId } = Astro.params;
 
@@ -16,27 +17,9 @@ if (!saleId) {
 }
 
 // Check authentication
-const accessToken = Astro.cookies.get('sb-access-token');
-const refreshToken = Astro.cookies.get('sb-refresh-token');
-
-if (!accessToken || !refreshToken) {
-  return Astro.redirect('/sign-in');
-}
-
-let session;
-try {
-  session = await setSession({
-    refresh_token: refreshToken.value,
-    access_token: accessToken.value,
-  });
-  if (session.error || !session.data.user) {
-    return Astro.redirect('/sign-in');
-  }
-} catch {
-  return Astro.redirect('/sign-in');
-}
-
-const userId = session.data.user.id;
+const auth = await requirePageUser(Astro);
+if (auth instanceof Response) return auth;
+const userId = auth.id;
 
 // Get sale
 const sale = await getSaleById(saleId);
@@ -72,135 +55,133 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
 ---
 
 <Layout title={`Purchase #${saleId.slice(0, 8)} - Game Loopers`}>
-  <div class="page">
-    <div class="page__container">
-      <div class="purchase-page">
-        {/* Header */}
-        <div class="purchase-header">
-          <div class="purchase-header__content">
-            <h1 class="purchase-header__title">Purchase Details</h1>
-            <p class="purchase-header__subtitle">Order #{saleId.slice(0, 8)}...</p>
-          </div>
-          <div class="purchase-header__status">
-            <Badge variant={sale.status === 'paid' ? 'success' : 'muted'}>
-              {sale.status.toUpperCase()}
-            </Badge>
-          </div>
+  <Page>
+    <div class="purchase-page">
+      {/* Header */}
+      <div class="purchase-header">
+        <div class="purchase-header__content">
+          <h1 class="purchase-header__title">Purchase Details</h1>
+          <p class="purchase-header__subtitle">Order #{saleId.slice(0, 8)}...</p>
         </div>
+        <div class="purchase-header__status">
+          <Badge variant={sale.status === 'paid' ? 'success' : 'muted'}>
+            {sale.status.toUpperCase()}
+          </Badge>
+        </div>
+      </div>
 
-        {/* Order Info */}
+      {/* Order Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Order Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="order-info">
+            <div class="order-info__row">
+              <span class="order-info__label">Order Date:</span>
+              <span class="order-info__value">{saleDate.toLocaleDateString()}</span>
+            </div>
+            {completedDate && (
+              <div class="order-info__row">
+                <span class="order-info__label">Completed:</span>
+                <span class="order-info__value">
+                  {completedDate.toLocaleDateString()}
+                </span>
+              </div>
+            )}
+            <div class="order-info__row">
+              <span class="order-info__label">Email:</span>
+              <span class="order-info__value">{sale.user_email}</span>
+            </div>
+            <div class="order-info__row">
+              <span class="order-info__label">Total:</span>
+              <span class="order-info__value">
+                {sale.currency.toUpperCase()} {(sale.price_cents / 100).toFixed(2)}
+              </span>
+            </div>
+            <div class="order-info__row">
+              <span class="order-info__label">Payment ID:</span>
+              <span class="order-info__value order-info__value--mono">
+                {sale.stripe_charge_id}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Purchased Items */}
+      {itemsWithDetails.map((item) => (
         <Card>
           <CardHeader>
-            <CardTitle>Order Information</CardTitle>
+            <CardTitle>{item.product?.title || 'Unknown Product'}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div class="order-info">
-              <div class="order-info__row">
-                <span class="order-info__label">Order Date:</span>
-                <span class="order-info__value">{saleDate.toLocaleDateString()}</span>
+            <div class="purchase-item">
+              <div class="purchase-item__details">
+                {item.product?.description && (
+                  <p class="purchase-item__description">{item.product.description}</p>
+                )}
+                <p class="purchase-item__price">
+                  {item.currency.toUpperCase()} {(item.price_cents / 100).toFixed(2)}
+                  {item.quantity > 1 && ` × ${item.quantity}`}
+                </p>
               </div>
-              {completedDate && (
-                <div class="order-info__row">
-                  <span class="order-info__label">Completed:</span>
-                  <span class="order-info__value">
-                    {completedDate.toLocaleDateString()}
-                  </span>
+
+              {/* Downloads */}
+              {item.files && item.files.length > 0 && (
+                <div class="purchase-downloads">
+                  <h3 class="purchase-downloads__title">Downloads</h3>
+                  <div class="purchase-downloads__list">
+                    {item.files.map((file) => (
+                      <a
+                        href={file.file_url}
+                        download
+                        class="download-item"
+                        target="_blank"
+                      >
+                        <div class="download-item__icon">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                        </div>
+                        <div class="download-item__content">
+                          <span class="download-item__title">{file.title}</span>
+                          {file.description && (
+                            <span class="download-item__description">
+                              {file.description}
+                            </span>
+                          )}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
-              <div class="order-info__row">
-                <span class="order-info__label">Email:</span>
-                <span class="order-info__value">{sale.user_email}</span>
-              </div>
-              <div class="order-info__row">
-                <span class="order-info__label">Total:</span>
-                <span class="order-info__value">
-                  {sale.currency.toUpperCase()} {(sale.price_cents / 100).toFixed(2)}
-                </span>
-              </div>
-              <div class="order-info__row">
-                <span class="order-info__label">Payment ID:</span>
-                <span class="order-info__value order-info__value--mono">
-                  {sale.stripe_charge_id}
-                </span>
-              </div>
             </div>
           </CardContent>
         </Card>
+      ))}
 
-        {/* Purchased Items */}
-        {itemsWithDetails.map((item) => (
-          <Card>
-            <CardHeader>
-              <CardTitle>{item.product?.title || 'Unknown Product'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div class="purchase-item">
-                <div class="purchase-item__details">
-                  {item.product?.description && (
-                    <p class="purchase-item__description">{item.product.description}</p>
-                  )}
-                  <p class="purchase-item__price">
-                    {item.currency.toUpperCase()} {(item.price_cents / 100).toFixed(2)}
-                    {item.quantity > 1 && ` × ${item.quantity}`}
-                  </p>
-                </div>
-
-                {/* Downloads */}
-                {item.files && item.files.length > 0 && (
-                  <div class="purchase-downloads">
-                    <h3 class="purchase-downloads__title">Downloads</h3>
-                    <div class="purchase-downloads__list">
-                      {item.files.map((file) => (
-                        <a
-                          href={file.file_url}
-                          download
-                          class="download-item"
-                          target="_blank"
-                        >
-                          <div class="download-item__icon">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                              <polyline points="7 10 12 15 17 10"></polyline>
-                              <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                          </div>
-                          <div class="download-item__content">
-                            <span class="download-item__title">{file.title}</span>
-                            {file.description && (
-                              <span class="download-item__description">
-                                {file.description}
-                              </span>
-                            )}
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {/* Back to Purchases */}
-        <div class="purchase-actions">
-          <a href="/purchases" class="purchase-actions__link">
-            ← Back to Purchases
-          </a>
-        </div>
+      {/* Back to Purchases */}
+      <div class="purchase-actions">
+        <a href="/purchases" class="purchase-actions__link">
+          ← Back to Purchases
+        </a>
       </div>
     </div>
-  </div>
+  </Page>
 </Layout>
 
 <style>

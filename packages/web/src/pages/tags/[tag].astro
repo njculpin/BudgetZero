@@ -1,5 +1,6 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import Page from '@/components/page/page.astro';
 import Card from '@/components/card/card.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
 import {
@@ -37,96 +38,92 @@ const totalCount = productsWithImages.length;
 ---
 
 <Layout title={`${decodedTag} - Game Loopers`}>
-  <div class="page">
-    <div class="page__container">
-      <div class="tags-page">
-        <!-- Header -->
-        <div class="tags-header">
-          <h1 class="tags-header__title">#{decodedTag}</h1>
-          <div class="tags-header__counts">
-            <p class="tags-header__count">
-              {totalCount} total {totalCount === 1 ? 'item' : 'items'}
-            </p>
-            <div class="tags-header__breakdown">
-              {productsWithImages.length > 0 && (
-                <span class="tags-header__breakdown-item">
-                  {productsWithImages.length} product
-                  {productsWithImages.length !== 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
+  <Page>
+    <div class="tags-page">
+      <!-- Header -->
+      <div class="tags-header">
+        <h1 class="tags-header__title">#{decodedTag}</h1>
+        <div class="tags-header__counts">
+          <p class="tags-header__count">
+            {totalCount} total {totalCount === 1 ? 'item' : 'items'}
+          </p>
+          <div class="tags-header__breakdown">
+            {productsWithImages.length > 0 && (
+              <span class="tags-header__breakdown-item">
+                {productsWithImages.length} product
+                {productsWithImages.length !== 1 ? 's' : ''}
+              </span>
+            )}
           </div>
         </div>
+      </div>
 
-        {totalCount > 0 ? (
-          <>
-            <!-- Products Section -->
-            {productsWithImages.length > 0 && (
-              <div class="tag-section">
-                <h2 class="tag-section__title">Products</h2>
-                <div class="items-grid">
-                  {productsWithImages.map((product) => (
-                    <a href={`/products/${product.handle}`} class="item-card">
-                      <div class="item-card__badge item-card__badge--product">
-                        Product
+      {totalCount > 0 ? (
+        <>
+          <!-- Products Section -->
+          {productsWithImages.length > 0 && (
+            <div class="tag-section">
+              <h2 class="tag-section__title">Products</h2>
+              <div class="items-grid">
+                {productsWithImages.map((product) => (
+                  <a href={`/products/${product.handle}`} class="item-card">
+                    <div class="item-card__badge item-card__badge--product">Product</div>
+                    <div class="item-card__content">
+                      <img
+                        src={product.coverImageUrl}
+                        alt={product.title}
+                        class="item-card__image"
+                        loading="lazy"
+                      />
+                      <div class="item-card__info">
+                        <h3 class="item-card__title">{product.title}</h3>
+                        {product.description && (
+                          <p class="item-card__description">
+                            {product.description.substring(0, 100)}
+                            {product.description.length > 100 ? '...' : ''}
+                          </p>
+                        )}
                       </div>
-                      <div class="item-card__content">
-                        <img
-                          src={product.coverImageUrl}
-                          alt={product.title}
-                          class="item-card__image"
-                          loading="lazy"
-                        />
-                        <div class="item-card__info">
-                          <h3 class="item-card__title">{product.title}</h3>
-                          {product.description && (
-                            <p class="item-card__description">
-                              {product.description.substring(0, 100)}
-                              {product.description.length > 100 ? '...' : ''}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
+                    </div>
+                  </a>
+                ))}
               </div>
-            )}
-          </>
-        ) : (
-          <Card>
-            <CardContent>
-              <div class="tags-empty">
-                <svg
-                  class="tags-empty__icon"
-                  width="64"
-                  height="64"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                </svg>
-                <p class="tags-empty__text">No items found with this tag</p>
-                <a href="/tags" class="tags-empty__link">
-                  Browse all tags
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          )}
+        </>
+      ) : (
+        <Card>
+          <CardContent>
+            <div class="tags-empty">
+              <svg
+                class="tags-empty__icon"
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+              <p class="tags-empty__text">No items found with this tag</p>
+              <a href="/tags" class="tags-empty__link">
+                Browse all tags
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        <!-- Back Link -->
-        <div class="tags-actions">
-          <a href="/tags" class="tags-actions__link">
-            ← Back to All Tags
-          </a>
-        </div>
+      <!-- Back Link -->
+      <div class="tags-actions">
+        <a href="/tags" class="tags-actions__link">
+          ← Back to All Tags
+        </a>
       </div>
     </div>
-  </div>
+  </Page>
 </Layout>
 
 <style>

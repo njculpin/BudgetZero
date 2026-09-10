@@ -1,5 +1,6 @@
 import type { JSX } from 'solid-js';
-import '@/styles/button.css';
+// Reuses the Button component's .button block (button__spinner, button__text).
+import '../../button/button.css';
 import './loading-button.css';
 
 interface LoadingButtonProps {

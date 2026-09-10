@@ -1,5 +1,7 @@
 ---
-import Layout from '@/layouts/Layout.astro';
+import Layout from '@/layouts/layout.astro';
+import { getPageUser } from '@/lib/page-auth';
+import Page from '@/components/page/page.astro';
 import Button from '@/components/button/button.astro';
 import {
   ProductBasicInfoForm,
@@ -21,7 +23,6 @@ import {
   getProductComponentsWithDetails,
 } from '@gameloopers/core/data-access/products';
 import { getUserById } from '@gameloopers/core/data-access/users';
-import { setSession } from '@gameloopers/core/auth';
 import Card from '@/components/card/card.astro';
 import CardHeader from '@/components/card/card-header/card-header.astro';
 import CardTitle from '@/components/card/card-title/card-title.astro';
@@ -39,26 +40,7 @@ const productData = await getProductByHandle(product);
 if (!productData) {
   return Astro.redirect('/404');
 }
-
-// Auth check
-let currentUser = null;
-const accessToken = Astro.cookies.get('sb-access-token');
-const refreshToken = Astro.cookies.get('sb-refresh-token');
-
-if (accessToken && refreshToken) {
-  try {
-    const session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-    if (!session.error && session.data.user) {
-      currentUser = session.data.user;
-    }
-  } catch {
-    // A bad or expired session is not an error for this page: it renders
-    // for a signed-out visitor. Deliberately silent.
-  }
-}
+const currentUser = await getPageUser(Astro.cookies);
 
 const isOwner = currentUser?.id === productData.user_id;
 
@@ -96,171 +78,167 @@ const productContributorsWithRoles = await getProductContributorsWithRoles(
 ---
 
 <Layout title={`Edit ${productData.title} - Game Loopers`}>
-  <div class="page">
-    <div class="page__container">
-      <!-- Page Header -->
-      <div class="page-header">
-        <div class="page-header__content">
-          <h1 class="page-header__title">Edit Product</h1>
-          <p class="page-header__description">
-            Manage your product content, pricing, and settings
-          </p>
-        </div>
-        <div class="page-header__actions">
-          <a href={`/products/${product}`}>
-            <Button variant="outline" size="md">
-              <span slot="text">View Product</span>
-            </Button>
-          </a>
-        </div>
+  <Page>
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header__content">
+        <h1 class="page-header__title">Edit Product</h1>
+        <p class="page-header__description">
+          Manage your product content, pricing, and settings
+        </p>
       </div>
-
-      <div class="page-columns">
-        <!-- Main Content Column -->
-        <div class="page-columns__column">
-          <!-- Product Images Form -->
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Images</CardTitle>
-              <CardDescription>
-                Upload and manage product images (up to 9). First image is the cover.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProductImagesForm
-                client:load
-                productId={productData.id}
-                existingImages={productImages}
-              />
-            </CardContent>
-          </Card>
-
-          <!-- Product Content Manager -->
-          <Card>
-            <CardHeader>
-              <CardTitle>Content & Pricing</CardTitle>
-              <CardDescription>
-                Manage all content, pricing, and revenue distribution
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProductContentManager
-                client:load
-                productId={productData.id}
-                productTitle={productData.title}
-                userId={currentUser!.id}
-                isOwner={true}
-                isAuthenticated={true}
-                existingFiles={productFiles}
-                existingDocuments={productDocuments}
-                existingEmbeddedProducts={embeddedProductsWithCreators}
-                productOwnerId={productData.user_id}
-                productOwnerHandle={owner?.handle}
-                productOwnerName={owner?.name || owner?.handle}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        <!-- Sidebar Column -->
-        <div class="page-columns__column">
-          <!-- Basic Info Form -->
-          <Card>
-            <CardContent>
-              <ProductBasicInfoForm
-                client:load
-                productId={productData.id}
-                initialData={{
-                  title: productData.title,
-                  description: productData.description,
-                }}
-              />
-            </CardContent>
-          </Card>
-
-          <!-- Tags Form -->
-          <Card>
-            <CardHeader>
-              <CardTitle>Tags</CardTitle>
-              <CardDescription>Help users discover your product</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProductTagsForm
-                client:load
-                productId={productData.id}
-                initialTags={tags.map((t) => t.value)}
-              />
-            </CardContent>
-          </Card>
-
-          <!-- Contributors -->
-          {productContributorsWithRoles.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Contributors</CardTitle>
-                <CardDescription>
-                  Creators earning royalties from embedded content
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProductContributors
-                  contributorsWithRoles={productContributorsWithRoles}
-                />
-              </CardContent>
-            </Card>
-          )}
-
-          <!-- Embeddable Toggle -->
-          <Card>
-            <CardHeader>
-              <CardTitle>Embeddable</CardTitle>
-              <CardDescription>
-                Allow other creators to embed this product in their work
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProductEmbeddableToggle
-                client:load
-                productId={productData.id}
-                isEmbeddable={productData.is_embeddable}
-                productStatus={productData.status}
-                embeddingRoyaltyCents={productData.embedding_royalty_cents}
-              />
-            </CardContent>
-          </Card>
-
-          <!-- Product Settings -->
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Settings</CardTitle>
-              <CardDescription>Manage visibility and lifecycle</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div class="product-settings">
-                <div class="product-settings__section">
-                  <h4 class="product-settings__section-title">Publish Status</h4>
-                  <ProductStatusEditor
-                    client:load
-                    productId={productData.id}
-                    currentStatus={productData.status}
-                  />
-                </div>
-
-                <div class="product-settings__section product-settings__section--danger">
-                  <h4 class="product-settings__section-title">Danger Zone</h4>
-                  <ProductDeleteButton
-                    client:load
-                    productId={productData.id}
-                    productTitle={productData.title}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div class="page-header__actions">
+        <a href={`/products/${product}`}>
+          <Button variant="outline" size="md">
+            <span slot="text">View Product</span>
+          </Button>
+        </a>
       </div>
     </div>
-  </div>
+
+    <div class="page-columns">
+      <!-- Main Content Column -->
+      <div class="page-columns__column">
+        <!-- Product Images Form -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Images</CardTitle>
+            <CardDescription>
+              Upload and manage product images (up to 9). First image is the cover.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductImagesForm
+              client:load
+              productId={productData.id}
+              existingImages={productImages}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Product Content Manager -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Content & Pricing</CardTitle>
+            <CardDescription>
+              Manage all content, pricing, and revenue distribution
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductContentManager
+              client:load
+              productId={productData.id}
+              productTitle={productData.title}
+              userId={currentUser!.id}
+              isOwner={true}
+              isAuthenticated={true}
+              existingFiles={productFiles}
+              existingDocuments={productDocuments}
+              existingEmbeddedProducts={embeddedProductsWithCreators}
+              productOwnerId={productData.user_id}
+              productOwnerHandle={owner?.handle}
+              productOwnerName={owner?.name || owner?.handle}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Sidebar Column -->
+      <div class="page-columns__column">
+        <!-- Basic Info Form -->
+        <Card>
+          <CardContent>
+            <ProductBasicInfoForm
+              client:load
+              productId={productData.id}
+              initialData={{
+                title: productData.title,
+                description: productData.description,
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Tags Form -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Tags</CardTitle>
+            <CardDescription>Help users discover your product</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductTagsForm
+              client:load
+              productId={productData.id}
+              initialTags={tags.map((t) => t.value)}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Contributors -->
+        {productContributorsWithRoles.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Contributors</CardTitle>
+              <CardDescription>
+                Creators earning royalties from embedded content
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductContributors contributorsWithRoles={productContributorsWithRoles} />
+            </CardContent>
+          </Card>
+        )}
+
+        <!-- Embeddable Toggle -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Embeddable</CardTitle>
+            <CardDescription>
+              Allow other creators to embed this product in their work
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductEmbeddableToggle
+              client:load
+              productId={productData.id}
+              isEmbeddable={productData.is_embeddable}
+              productStatus={productData.status}
+              embeddingRoyaltyCents={productData.embedding_royalty_cents}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Product Settings -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Settings</CardTitle>
+            <CardDescription>Manage visibility and lifecycle</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="product-settings">
+              <div class="product-settings__section">
+                <h4 class="product-settings__section-title">Publish Status</h4>
+                <ProductStatusEditor
+                  client:load
+                  productId={productData.id}
+                  currentStatus={productData.status}
+                />
+              </div>
+
+              <div class="product-settings__section product-settings__section--danger">
+                <h4 class="product-settings__section-title">Danger Zone</h4>
+                <ProductDeleteButton
+                  client:load
+                  productId={productData.id}
+                  productTitle={productData.title}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </Page>
 </Layout>
 
 <style>
