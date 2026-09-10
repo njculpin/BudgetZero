@@ -1,16 +1,16 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/card/Card.astro";
-import CardHeader from "@/components/card/CardHeader.astro";
-import CardTitle from "@/components/card/CardTitle.astro";
-import CardDescription from "@/components/card/CardDescription.astro";
-import CardContent from "@/components/card/CardContent.astro";
-import PageHeader from "@/components/PageHeader.astro";
-import PayoutQueue from "@/components/admin/PayoutQueue";
-import type { PayoutQueueEntry } from "@/components/admin/PayoutQueue";
+import Layout from '@/layouts/Layout.astro';
+import Card from '@/components/card/Card.astro';
+import CardHeader from '@/components/card/CardHeader.astro';
+import CardTitle from '@/components/card/CardTitle.astro';
+import CardDescription from '@/components/card/CardDescription.astro';
+import CardContent from '@/components/card/CardContent.astro';
+import PageHeader from '@/components/PageHeader.astro';
+import PayoutQueue from '@/components/admin/PayoutQueue';
+import type { PayoutQueueEntry } from '@/components/admin/PayoutQueue';
 import { resolvePageAuth } from '@/lib/page-auth';
-import { verifyAdmin } from "@gameloopers/core/auth/admin";
-import { getPendingPayoutsForAdmin } from "@gameloopers/core/data-access/payouts";
+import { verifyAdmin } from '@gameloopers/core/auth/admin';
+import { getPendingPayoutsForAdmin } from '@gameloopers/core/data-access/payouts';
 
 // The execute endpoint enforces admin authorization itself; this check keeps the
 // page from rendering the queue to anyone who cannot act on it.
@@ -18,10 +18,13 @@ const { userId } = await resolvePageAuth(Astro.cookies);
 const authResult = await verifyAdmin(userId);
 
 if (!authResult.authorized) {
-  if (authResult.error === "Not authenticated" || authResult.error === "Invalid session") {
-    return Astro.redirect("/sign-in?redirect=/admin/payouts");
+  if (
+    authResult.error === 'Not authenticated' ||
+    authResult.error === 'Invalid session'
+  ) {
+    return Astro.redirect('/sign-in?redirect=/admin/payouts');
   }
-  return Astro.redirect("/");
+  return Astro.redirect('/');
 }
 
 const pendingPayouts = await getPendingPayoutsForAdmin();
@@ -39,15 +42,12 @@ const queueEntries: PayoutQueueEntry[] = pendingPayouts
     payoutsEnabled: payout.recipient!.stripe_connect_payouts_enabled,
   }));
 
-const totalOwedCents = queueEntries.reduce(
-  (sum, entry) => sum + entry.amountCents,
-  0
-);
+const totalOwedCents = queueEntries.reduce((sum, entry) => sum + entry.amountCents, 0);
 
 const formatCurrency = (cents: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
   }).format(cents / 100);
 ---
 
@@ -64,7 +64,7 @@ const formatCurrency = (cents: number) =>
           <CardTitle>Pending</CardTitle>
           <CardDescription>
             {queueEntries.length}
-            {queueEntries.length === 1 ? " payout" : " payouts"} totalling{" "}
+            {queueEntries.length === 1 ? ' payout' : ' payouts'} totalling{' '}
             {formatCurrency(totalOwedCents)}
           </CardDescription>
         </CardHeader>

@@ -1,12 +1,12 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { z } from "zod";
-import { getUserById } from "@gameloopers/core/data-access/users";
+import { z } from 'zod';
+import { getUserById } from '@gameloopers/core/data-access/users';
 import {
   requestPayout,
   getAvailablePayoutBalance,
   getPayoutById,
-} from "@gameloopers/core/data-access/payouts";
+} from '@gameloopers/core/data-access/payouts';
 
 const requestPayoutSchema = z.object({
   amountCents: z.number().int().positive(),
@@ -26,21 +26,21 @@ export const payoutsRequestPayout: Controller = async ({ request, userId }) => {
     // Check if user has Stripe Connect setup
     const user = await getUserById(userId);
     if (!user) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     if (!user.stripe_connect_account_id || !user.stripe_connect_payouts_enabled) {
       return new Response(
         JSON.stringify({
-          error: "Stripe Connect not setup. Please complete payout setup first.",
+          error: 'Stripe Connect not setup. Please complete payout setup first.',
           setupRequired: true,
         }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
@@ -55,7 +55,7 @@ export const payoutsRequestPayout: Controller = async ({ request, userId }) => {
         }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
@@ -73,11 +73,11 @@ export const payoutsRequestPayout: Controller = async ({ request, userId }) => {
       });
     } catch (payoutError) {
       const message =
-        payoutError instanceof Error ? payoutError.message : "Payout request failed";
+        payoutError instanceof Error ? payoutError.message : 'Payout request failed';
 
       // The function raises when the claimable total falls below the minimum, which
       // is a client-correctable condition rather than a server fault.
-      if (message.includes("Insufficient available balance")) {
+      if (message.includes('Insufficient available balance')) {
         const balance = await getAvailablePayoutBalance(userId);
         return new Response(
           JSON.stringify({
@@ -86,7 +86,7 @@ export const payoutsRequestPayout: Controller = async ({ request, userId }) => {
           }),
           {
             status: 400,
-            headers: { "Content-Type": "application/json" },
+            headers: { 'Content-Type': 'application/json' },
           }
         );
       }
@@ -108,31 +108,31 @@ export const payoutsRequestPayout: Controller = async ({ request, userId }) => {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return new Response(
         JSON.stringify({
-          error: "Validation failed",
+          error: 'Validation failed',
           details: error.errors,
         }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
 
-    console.error("Request payout error:", error);
+    console.error('Request payout error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to request payout",
+        error: error instanceof Error ? error.message : 'Failed to request payout',
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

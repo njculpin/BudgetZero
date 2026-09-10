@@ -36,7 +36,10 @@ export function notFound(error = 'Not found'): Response {
   return json({ error }, 404);
 }
 
-export function tooManyRequests(error = 'Too many requests', retryAfterSeconds?: number): Response {
+export function tooManyRequests(
+  error = 'Too many requests',
+  retryAfterSeconds?: number
+): Response {
   return json(
     { error },
     429,
@@ -54,6 +57,9 @@ export function serverError(error = 'Internal server error'): Response {
  * Astro's `redirect()` is only available inside an Astro route; controllers need
  * something they can return from anywhere.
  */
-export function redirect(location: string, status: 301 | 302 | 303 | 307 | 308 = 302): Response {
+export function redirect(
+  location: string,
+  status: 301 | 302 | 303 | 307 | 308 = 302
+): Response {
   return new Response(null, { status, headers: { Location: location } });
 }

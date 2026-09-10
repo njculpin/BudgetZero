@@ -54,7 +54,6 @@ function downloadRequest(fields: Record<string, string>): Request {
 }
 
 describe('POST /api/download', () => {
-
   /** Where a 3xx response points, or null if it is not a redirect. */
   const redirectTarget = (response: Response) =>
     response.status >= 300 && response.status < 400
@@ -94,13 +93,11 @@ describe('POST /api/download', () => {
   });
 
   describe('Entitlement', () => {
-    it("refuses a file belonging to a product the user has not purchased", async () => {
+    it('refuses a file belonging to a product the user has not purchased', async () => {
       vi.mocked(products.getProductFileById).mockResolvedValue(foreignFile);
       vi.mocked(sales.hasUserPurchasedProduct).mockResolvedValue(false);
 
-      const response = await invoke(
-        downloadRequest({ file_id: foreignFile.id })
-      );
+      const response = await invoke(downloadRequest({ file_id: foreignFile.id }));
 
       expect(response.status).toBe(403);
       expect(storage.createSignedUrl).not.toHaveBeenCalled();

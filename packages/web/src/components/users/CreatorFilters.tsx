@@ -1,22 +1,22 @@
-import { createSignal } from "solid-js";
+import { createSignal } from 'solid-js';
 
 interface CreatorFiltersProps {
   onFilterChange: (search: string, tags: string[]) => void;
 }
 
 const CREATOR_TYPES = [
-  "Game Designer",
-  "Illustrator",
-  "3D Modeler",
-  "Painter",
-  "2D Printer",
-  "3D Printer",
-  "Writer",
-  "Designer",
+  'Game Designer',
+  'Illustrator',
+  '3D Modeler',
+  'Painter',
+  '2D Printer',
+  '3D Printer',
+  'Writer',
+  'Designer',
 ];
 
 export default function CreatorFilters(props: CreatorFiltersProps) {
-  const [search, setSearch] = createSignal("");
+  const [search, setSearch] = createSignal('');
   const [selectedTags, setSelectedTags] = createSignal<string[]>([]);
 
   const handleSearchInput = (value: string) => {
@@ -34,9 +34,9 @@ export default function CreatorFilters(props: CreatorFiltersProps) {
   };
 
   const clearFilters = () => {
-    setSearch("");
+    setSearch('');
     setSelectedTags([]);
-    props.onFilterChange("", []);
+    props.onFilterChange('', []);
   };
 
   const hasActiveFilters = () => search().length > 0 || selectedTags().length > 0;
@@ -57,11 +57,7 @@ export default function CreatorFilters(props: CreatorFiltersProps) {
         <div class="creator-filters__tags-header">
           <h3 class="creator-filters__tags-title">Filter by Type</h3>
           {hasActiveFilters() && (
-            <button
-              type="button"
-              class="creator-filters__clear"
-              onClick={clearFilters}
-            >
+            <button type="button" class="creator-filters__clear" onClick={clearFilters}>
               Clear Filters
             </button>
           )}
@@ -71,9 +67,7 @@ export default function CreatorFilters(props: CreatorFiltersProps) {
             <button
               type="button"
               class={`creator-filters__tag ${
-                selectedTags().includes(tag)
-                  ? "creator-filters__tag--active"
-                  : ""
+                selectedTags().includes(tag) ? 'creator-filters__tag--active' : ''
               }`}
               onClick={() => toggleTag(tag)}
             >

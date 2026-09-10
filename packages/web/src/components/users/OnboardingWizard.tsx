@@ -1,5 +1,5 @@
-import { createSignal, Show, For } from "solid-js";
-import "./onboarding-wizard.css";
+import { createSignal, Show, For } from 'solid-js';
+import './onboarding-wizard.css';
 
 interface OnboardingStep {
   title: string;
@@ -12,7 +12,7 @@ interface OnboardingStep {
 }
 
 interface Props {
-  userType: "creator" | "consumer";
+  userType: 'creator' | 'consumer';
 }
 
 export default function OnboardingWizard(props: Props) {
@@ -21,79 +21,79 @@ export default function OnboardingWizard(props: Props) {
 
   const creatorSteps: OnboardingStep[] = [
     {
-      title: "Welcome to Game Loopers! 🎮",
+      title: 'Welcome to Game Loopers! 🎮',
       description:
         "You're joining a community of tabletop game creators who collaborate, publish products, and earn together.",
-      icon: "👋",
+      icon: '👋',
     },
     {
-      title: "Create Documents",
+      title: 'Create Documents',
       description:
-        "Start with collaborative documents to write rulebooks, design content, and build your game materials with your team.",
-      icon: "📝",
+        'Start with collaborative documents to write rulebooks, design content, and build your game materials with your team.',
+      icon: '📝',
       cta: {
-        label: "Create Your First Document",
+        label: 'Create Your First Document',
         action: () => {
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = "/api/documents/create-document";
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '/api/documents/create-document';
           document.body.appendChild(form);
           form.submit();
         },
       },
     },
     {
-      title: "Build Products",
+      title: 'Build Products',
       description:
-        "Package your content into complete game products with variants and pricing. Sell digital downloads directly to customers.",
-      icon: "📦",
+        'Package your content into complete game products with variants and pricing. Sell digital downloads directly to customers.',
+      icon: '📦',
       cta: {
-        label: "Create Your First Product",
+        label: 'Create Your First Product',
         action: () => {
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = "/api/products/create-product";
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '/api/products/create-product';
           document.body.appendChild(form);
           form.submit();
         },
       },
     },
     {
-      title: "Pro Tips for Success",
+      title: 'Pro Tips for Success',
       description:
-        "Add high-quality images, write clear descriptions, use relevant tags.",
-      icon: "💡",
+        'Add high-quality images, write clear descriptions, use relevant tags.',
+      icon: '💡',
     },
   ];
 
   const consumerSteps: OnboardingStep[] = [
     {
-      title: "Welcome to Game Loopers! 🎮",
+      title: 'Welcome to Game Loopers! 🎮',
       description:
-        "Discover amazing tabletop games created by a passionate community. Your purchases directly support creators.",
-      icon: "👋",
+        'Discover amazing tabletop games created by a passionate community. Your purchases directly support creators.',
+      icon: '👋',
     },
     {
-      title: "Browse the Marketplace",
+      title: 'Browse the Marketplace',
       description:
-        "Explore complete game products and individual assets. Use tags and search to find exactly what you need.",
-      icon: "🔍",
+        'Explore complete game products and individual assets. Use tags and search to find exactly what you need.',
+      icon: '🔍',
       cta: {
-        label: "Browse Products",
+        label: 'Browse Products',
         action: () => {
-          window.location.href = "/products";
+          window.location.href = '/products';
         },
       },
     },
     {
-      title: "Support Creators",
+      title: 'Support Creators',
       description:
-        "When you purchase, you see exactly who gets paid. Transparent royalty splits ensure fair compensation for all contributors.",
-      icon: "💰",
+        'When you purchase, you see exactly who gets paid. Transparent royalty splits ensure fair compensation for all contributors.',
+      icon: '💰',
     },
   ];
 
-  const steps = () => (props.userType === "creator" ? creatorSteps : consumerSteps);
+  const steps = () => (props.userType === 'creator' ? creatorSteps : consumerSteps);
 
   const handleNext = () => {
     if (currentStep() < steps().length - 1) {
@@ -110,12 +110,12 @@ export default function OnboardingWizard(props: Props) {
   const handleDismiss = () => {
     setIsVisible(false);
     // Store dismissal in localStorage
-    localStorage.setItem("onboarding-dismissed", "true");
+    localStorage.setItem('onboarding-dismissed', 'true');
   };
 
   const handleFinish = () => {
     setIsVisible(false);
-    localStorage.setItem("onboarding-completed", "true");
+    localStorage.setItem('onboarding-completed', 'true');
   };
 
   return (
@@ -135,9 +135,7 @@ export default function OnboardingWizard(props: Props) {
           <div class="onboarding__content">
             <div class="onboarding__icon">{steps()[currentStep()].icon}</div>
             <h2 class="onboarding__title">{steps()[currentStep()].title}</h2>
-            <p class="onboarding__description">
-              {steps()[currentStep()].description}
-            </p>
+            <p class="onboarding__description">{steps()[currentStep()].description}</p>
           </div>
 
           <div class="onboarding__progress">
@@ -146,10 +144,10 @@ export default function OnboardingWizard(props: Props) {
                 <div
                   class={`onboarding__progress-dot ${
                     index() === currentStep()
-                      ? "onboarding__progress-dot--active"
+                      ? 'onboarding__progress-dot--active'
                       : index() < currentStep()
-                      ? "onboarding__progress-dot--completed"
-                      : ""
+                        ? 'onboarding__progress-dot--completed'
+                        : ''
                   }`}
                   onClick={() => setCurrentStep(index())}
                 />

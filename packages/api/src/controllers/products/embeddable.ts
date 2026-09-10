@@ -5,7 +5,7 @@ import { unauthorized } from '../../responses';
  * Fetches products that can be embedded as components
  */
 
-import { getEmbeddableProducts } from "@gameloopers/core/data-access/products";
+import { getEmbeddableProducts } from '@gameloopers/core/data-access/products';
 
 export const productsEmbeddable: Controller = async ({ userId }) => {
   // Authenticate user
@@ -23,7 +23,7 @@ export const productsEmbeddable: Controller = async ({ userId }) => {
     }),
     {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     }
   );
 };

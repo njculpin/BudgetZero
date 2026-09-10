@@ -5,7 +5,7 @@ import { unauthorized } from '../../responses';
  * Get count of unread notifications for the current user
  */
 
-import { getUnreadNotificationCount } from "@gameloopers/core/data-access/notifications";
+import { getUnreadNotificationCount } from '@gameloopers/core/data-access/notifications';
 
 export const notificationsUnreadCount: Controller = async ({ userId }) => {
   // Authenticate user
@@ -17,11 +17,8 @@ export const notificationsUnreadCount: Controller = async ({ userId }) => {
   // Get unread count
   const count = await getUnreadNotificationCount(userId);
 
-  return new Response(
-    JSON.stringify({ count }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+  return new Response(JSON.stringify({ count }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
 };

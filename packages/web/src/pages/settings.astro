@@ -1,27 +1,27 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/card/Card.astro";
-import CardHeader from "@/components/card/CardHeader.astro";
-import CardTitle from "@/components/card/CardTitle.astro";
-import CardDescription from "@/components/card/CardDescription.astro";
-import CardContent from "@/components/card/CardContent.astro";
-import PageHeader from "@/components/PageHeader.astro";
-import Button from "@/components/Button.astro";
-import { setSession } from "@gameloopers/core/auth";
-import { getUserById, getUserTags } from "@gameloopers/core/data-access/users";
-import { getNotificationSettings } from "@gameloopers/core/data-access/notifications";
-import { UserEditForm } from "@/components/users";
-import NotificationSettingsForm from "@/components/settings/NotificationSettingsForm";
-import EmbeddedUsageDashboard from "@/components/products/EmbeddedUsageDashboard";
+import Layout from '@/layouts/Layout.astro';
+import Card from '@/components/card/Card.astro';
+import CardHeader from '@/components/card/CardHeader.astro';
+import CardTitle from '@/components/card/CardTitle.astro';
+import CardDescription from '@/components/card/CardDescription.astro';
+import CardContent from '@/components/card/CardContent.astro';
+import PageHeader from '@/components/PageHeader.astro';
+import Button from '@/components/Button.astro';
+import { setSession } from '@gameloopers/core/auth';
+import { getUserById, getUserTags } from '@gameloopers/core/data-access/users';
+import { getNotificationSettings } from '@gameloopers/core/data-access/notifications';
+import { UserEditForm } from '@/components/users';
+import NotificationSettingsForm from '@/components/settings/NotificationSettingsForm';
+import EmbeddedUsageDashboard from '@/components/products/EmbeddedUsageDashboard';
 
 const { cookies, redirect } = Astro;
 
 // Check authentication
-const accessToken = cookies.get("sb-access-token");
-const refreshToken = cookies.get("sb-refresh-token");
+const accessToken = cookies.get('sb-access-token');
+const refreshToken = cookies.get('sb-refresh-token');
 
 if (!accessToken || !refreshToken) {
-  return redirect("/sign-in");
+  return redirect('/sign-in');
 }
 
 const session = await setSession({
@@ -30,7 +30,7 @@ const session = await setSession({
 });
 
 if (!session || session.error || !session.data.user) {
-  return redirect("/sign-in");
+  return redirect('/sign-in');
 }
 
 const currentUser = session.data.user;
@@ -39,7 +39,7 @@ const currentUser = session.data.user;
 const user = await getUserById(currentUser.id);
 
 if (!user) {
-  return redirect("/sign-in");
+  return redirect('/sign-in');
 }
 
 // Fetch user tags
@@ -62,7 +62,6 @@ const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
       />
 
       <div class="settings-page">
-
         <!-- Profile Settings -->
         <Card>
           <CardHeader>
@@ -97,7 +96,15 @@ const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
             {isOnboarded && payoutsEnabled ? (
               <div class="payout-status">
                 <div class="payout-status__success">
-                  <svg class="payout-status__icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg
+                    class="payout-status__icon"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="m9 12 2 2 4-4"></path>
                   </svg>
@@ -112,25 +119,52 @@ const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
             ) : (
               <div class="payout-setup">
                 <p class="payout-setup__description">
-                  To receive royalty payments, connect your bank account through Stripe. This secure process takes just a few minutes.
+                  To receive royalty payments, connect your bank account through Stripe.
+                  This secure process takes just a few minutes.
                 </p>
 
                 <div class="payout-features">
                   <div class="payout-feature">
-                    <svg class="payout-feature__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg
+                      class="payout-feature__icon"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     </svg>
                     <span class="payout-feature__text">Secure & powered by Stripe</span>
                   </div>
                   <div class="payout-feature">
-                    <svg class="payout-feature__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg
+                      class="payout-feature__icon"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="payout-feature__text">Setup takes just a few minutes</span>
+                    <span class="payout-feature__text">
+                      Setup takes just a few minutes
+                    </span>
                   </div>
                   <div class="payout-feature">
-                    <svg class="payout-feature__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg
+                      class="payout-feature__icon"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
                       <line x1="12" y1="1" x2="12" y2="23"></line>
                       <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                     </svg>
@@ -138,14 +172,20 @@ const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
                   </div>
                 </div>
 
-                <form id="connect-form" method="post" action="/api/connect/create-account" class="payout-setup__form">
+                <form
+                  id="connect-form"
+                  method="post"
+                  action="/api/connect/create-account"
+                  class="payout-setup__form"
+                >
                   <Button type="submit" variant="primary" size="lg">
                     Connect Bank Account
                   </Button>
                 </form>
 
                 <p class="payout-setup__note">
-                  You'll be redirected to Stripe to securely connect your bank account. Your information is never stored on our servers.
+                  You'll be redirected to Stripe to securely connect your bank account.
+                  Your information is never stored on our servers.
                 </p>
               </div>
             )}
@@ -156,7 +196,9 @@ const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
         <Card>
           <CardHeader>
             <CardTitle>Email Notifications</CardTitle>
-            <CardDescription>Choose which notifications you want to receive via email</CardDescription>
+            <CardDescription>
+              Choose which notifications you want to receive via email
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <NotificationSettingsForm
@@ -211,99 +253,99 @@ const payoutsEnabled = user.stripe_connect_payouts_enabled || false;
 </script>
 
 <style>
-.settings-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-2xl);
-}
+  .settings-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xl);
+  }
 
-/* ===== Payout Status ===== */
-.payout-status {
-  padding: var(--spacing-xl) 0;
-}
+  /* ===== Payout Status ===== */
+  .payout-status {
+    padding: var(--spacing-xl) 0;
+  }
 
-.payout-status__success {
-  display: flex;
-  gap: var(--gap-lg);
-  align-items: flex-start;
-  padding: var(--spacing-2xl);
-  background-color: oklch(from var(--success) l c h / 0.1);
-  border: var(--border-width-default) solid var(--success);
-  border-radius: var(--radius-md);
-}
+  .payout-status__success {
+    display: flex;
+    gap: var(--gap-lg);
+    align-items: flex-start;
+    padding: var(--spacing-2xl);
+    background-color: oklch(from var(--success) l c h / 0.1);
+    border: var(--border-width-default) solid var(--success);
+    border-radius: var(--radius-md);
+  }
 
-.payout-status__icon {
-  color: var(--success-fg);
-  flex-shrink: 0;
-}
+  .payout-status__icon {
+    color: var(--success-fg);
+    flex-shrink: 0;
+  }
 
-.payout-status__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-sm);
-}
+  .payout-status__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+  }
 
-.payout-status__title {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
+  .payout-status__title {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
 
-.payout-status__message {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-  line-height: var(--leading-relaxed);
-}
+  .payout-status__message {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+  }
 
-/* ===== Payout Setup ===== */
-.payout-setup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-2xl);
-  padding: var(--spacing-xl) 0;
-}
+  /* ===== Payout Setup ===== */
+  .payout-setup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xl);
+    padding: var(--spacing-xl) 0;
+  }
 
-.payout-setup__description {
-  margin: 0;
-  font-size: var(--text-base);
-  color: var(--muted-foreground);
-  line-height: var(--leading-relaxed);
-}
+  .payout-setup__description {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+  }
 
-.payout-features {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-lg);
-}
+  .payout-features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-lg);
+  }
 
-.payout-feature {
-  display: flex;
-  gap: var(--gap-md);
-  align-items: center;
-}
+  .payout-feature {
+    display: flex;
+    gap: var(--gap-md);
+    align-items: center;
+  }
 
-.payout-feature__icon {
-  color: var(--primary);
-  flex-shrink: 0;
-}
+  .payout-feature__icon {
+    color: var(--primary);
+    flex-shrink: 0;
+  }
 
-.payout-feature__text {
-  font-size: var(--text-sm);
-  color: var(--foreground);
-}
+  .payout-feature__text {
+    font-size: var(--text-sm);
+    color: var(--foreground);
+  }
 
-.payout-setup__form {
-  display: flex;
-  justify-content: flex-start;
-  padding-top: var(--spacing-lg);
-}
+  .payout-setup__form {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: var(--spacing-lg);
+  }
 
-.payout-setup__note {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-  line-height: var(--leading-relaxed);
-}
+  .payout-setup__note {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+  }
 </style>

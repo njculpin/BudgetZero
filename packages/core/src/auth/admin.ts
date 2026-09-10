@@ -25,7 +25,6 @@ export const verifyAdmin = async (userId: string | null): Promise<AdminAuthResul
     };
   }
 
-
   // Check if user has admin role
   const user = await getUserById(userId);
 
@@ -62,7 +61,9 @@ export interface LogAdminActionParams {
 /**
  * Log an admin action to the audit log
  */
-export const logAdminAction = async (params: LogAdminActionParams): Promise<AuditLog | null> => {
+export const logAdminAction = async (
+  params: LogAdminActionParams
+): Promise<AuditLog | null> => {
   try {
     const { data, error } = await serverClient
       .from('audit_log')

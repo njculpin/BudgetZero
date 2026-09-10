@@ -1,5 +1,5 @@
 ---
-const { className = "" } = Astro.props;
+const { className = '' } = Astro.props;
 ---
 
 <p class={`card__description ${className}`}>
@@ -7,8 +7,8 @@ const { className = "" } = Astro.props;
 </p>
 
 <style>
-.card__description {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
+  .card__description {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
 </style>

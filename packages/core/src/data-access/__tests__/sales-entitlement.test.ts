@@ -11,10 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  hasUserPurchasedProduct,
-  getPurchasedProductIds,
-} from '../sales';
+import { hasUserPurchasedProduct, getPurchasedProductIds } from '../sales';
 import { serverClient } from '../client';
 import { mockTables } from '../../test/supabase-query-mock';
 

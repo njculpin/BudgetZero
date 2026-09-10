@@ -35,10 +35,7 @@ const RULES = [
         'api must not depend on Astro - that is what makes the controllers ' +
           'mountable under another runtime',
       ],
-      [
-        /import\s+type\s*\{[^}]*Astro[A-Za-z]+/,
-        'api must not reference Astro types',
-      ],
+      [/import\s+type\s*\{[^}]*Astro[A-Za-z]+/, 'api must not reference Astro types'],
     ],
   },
 ];

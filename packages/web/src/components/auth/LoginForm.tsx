@@ -1,39 +1,39 @@
-import { createSignal } from "solid-js";
-import { LoadingButton } from "@/components/interactive";
-import "./login-form.css";
+import { createSignal } from 'solid-js';
+import { LoadingButton } from '@/components/interactive';
+import './login-form.css';
 
 export default function LoginForm() {
-  const [email, setEmail] = createSignal<string>("");
-  const [password, setPassword] = createSignal<string>("");
-  const [error, setError] = createSignal<string>("");
+  const [email, setEmail] = createSignal<string>('');
+  const [password, setPassword] = createSignal<string>('');
+  const [error, setError] = createSignal<string>('');
   const [isLoading, setIsLoading] = createSignal<boolean>(false);
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setIsLoading(true);
 
     try {
       const formData = new FormData();
-      formData.append("email", email());
-      formData.append("password", password());
+      formData.append('email', email());
+      formData.append('password', password());
 
-      const response = await fetch("/api/auth/sign-in", {
-        method: "POST",
+      const response = await fetch('/api/auth/sign-in', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to sign in. Please try again.");
+        setError(data.error || 'Failed to sign in. Please try again.');
         setIsLoading(false);
         return;
       }
 
       // Successful sign-in - redirect will happen from server
-      window.location.href = "/products";
+      window.location.href = '/products';
     } catch {
-      setError("An unexpected error occurred. Please try again.");
+      setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
   };
@@ -107,7 +107,7 @@ export default function LoginForm() {
 
       <div class="card-footer">
         <p class="auth-page__footer-text">
-          New here?{" "}
+          New here?{' '}
           <a href="/sign-up" class="auth-page__link">
             Create an account
           </a>

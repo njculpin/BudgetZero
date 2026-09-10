@@ -1,6 +1,13 @@
-import { createSignal, createResource, For, Show, onCleanup, createEffect } from "solid-js";
-import type { Notification } from "@gameloopers/core/types";
-import "./notification-center.css";
+import {
+  createSignal,
+  createResource,
+  For,
+  Show,
+  onCleanup,
+  createEffect,
+} from 'solid-js';
+import type { Notification } from '@gameloopers/core/types';
+import './notification-center.css';
 
 interface NotificationCenterProps {
   userId: string;
@@ -10,9 +17,7 @@ interface NotificationCenterProps {
 
 export default function NotificationCenter(props: NotificationCenterProps) {
   const [isOpen, setIsOpen] = createSignal(false);
-  const [unreadCount, setUnreadCount] = createSignal(
-    props.initialUnreadCount || 0
-  );
+  const [unreadCount, setUnreadCount] = createSignal(props.initialUnreadCount || 0);
 
   // Refs for focus management
   let triggerRef: HTMLButtonElement | undefined;
@@ -20,7 +25,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
 
   // Fetch notifications from API
   const [notifications, { refetch }] = createResource(async () => {
-    const response = await fetch("/api/notifications");
+    const response = await fetch('/api/notifications');
     if (!response.ok) return props.initialNotifications || [];
     const data = await response.json();
     return data.notifications as Notification[];
@@ -30,7 +35,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
   // side effect of calling setUnreadCount, and the badge below reads that
   // signal rather than the resource.
   createResource(async () => {
-    const response = await fetch("/api/notifications/unread-count");
+    const response = await fetch('/api/notifications/unread-count');
     if (!response.ok) return props.initialUnreadCount || 0;
     const data = await response.json();
     setUnreadCount(data.count);
@@ -43,7 +48,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
 
   const markAsRead = async (notificationId: string) => {
     const response = await fetch(`/api/notifications/${notificationId}/read`, {
-      method: "POST",
+      method: 'POST',
     });
 
     if (response.ok) {
@@ -53,8 +58,8 @@ export default function NotificationCenter(props: NotificationCenterProps) {
   };
 
   const markAllAsRead = async () => {
-    const response = await fetch("/api/notifications/mark-all-read", {
-      method: "POST",
+    const response = await fetch('/api/notifications/mark-all-read', {
+      method: 'POST',
     });
 
     if (response.ok) {
@@ -65,7 +70,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
 
   const deleteNotification = async (notificationId: string) => {
     const response = await fetch(`/api/notifications/${notificationId}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
 
     if (response.ok) {
@@ -75,7 +80,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
 
   // Keyboard event handler for Escape key
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && isOpen()) {
+    if (e.key === 'Escape' && isOpen()) {
       setIsOpen(false);
       triggerRef?.focus();
     }
@@ -83,7 +88,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
 
   // Focus trap handler
   const handleFocusTrap = (e: KeyboardEvent) => {
-    if (!isOpen() || e.key !== "Tab") return;
+    if (!isOpen() || e.key !== 'Tab') return;
 
     const focusableElements = dropdownRef?.querySelectorAll(
       'button, a, [tabindex]:not([tabindex="-1"])'
@@ -105,8 +110,8 @@ export default function NotificationCenter(props: NotificationCenterProps) {
   // Effect to manage keyboard listeners and focus
   createEffect(() => {
     if (isOpen()) {
-      document.addEventListener("keydown", handleKeyDown);
-      document.addEventListener("keydown", handleFocusTrap);
+      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('keydown', handleFocusTrap);
       // Move focus to first interactive element in dropdown
       setTimeout(() => {
         const firstFocusable = dropdownRef?.querySelector(
@@ -115,35 +120,35 @@ export default function NotificationCenter(props: NotificationCenterProps) {
         firstFocusable?.focus();
       }, 0);
     } else {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keydown", handleFocusTrap);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', handleFocusTrap);
     }
   });
 
   // Cleanup on unmount
   onCleanup(() => {
-    document.removeEventListener("keydown", handleKeyDown);
-    document.removeEventListener("keydown", handleFocusTrap);
+    document.removeEventListener('keydown', handleKeyDown);
+    document.removeEventListener('keydown', handleFocusTrap);
   });
 
   const getNotificationIcon = (actionType: string) => {
     switch (actionType) {
-      case "product_price_conflict":
-        return "⚠️";
-      case "asset_price_changed":
-        return "💰";
-      case "asset_files_changed":
-        return "📁";
-      case "sale_completed":
-        return "🎉";
-      case "royalty_payment_received":
-        return "💵";
-      case "document_shared":
-        return "📄";
-      case "jam_submission_approved":
-        return "🏆";
+      case 'product_price_conflict':
+        return '⚠️';
+      case 'asset_price_changed':
+        return '💰';
+      case 'asset_files_changed':
+        return '📁';
+      case 'sale_completed':
+        return '🎉';
+      case 'royalty_payment_received':
+        return '💵';
+      case 'document_shared':
+        return '📄';
+      case 'jam_submission_approved':
+        return '🏆';
       default:
-        return "🔔";
+        return '🔔';
     }
   };
 
@@ -152,7 +157,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return "just now";
+    if (seconds < 60) return 'just now';
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
@@ -164,14 +169,14 @@ export default function NotificationCenter(props: NotificationCenterProps) {
     const snapshot = notification.snapshot as Record<string, unknown>;
 
     switch (entityType) {
-      case "product":
+      case 'product':
         return `/products/${snapshot.product_handle}`;
-      case "document":
+      case 'document':
         return `/documents/${snapshot.document_handle}`;
-      case "sale":
+      case 'sale':
         return `/purchases`;
       default:
-        return "/products";
+        return '/products';
     }
   };
 
@@ -182,7 +187,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
         class="notification-center__trigger"
         onClick={toggleDropdown}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
+          if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             toggleDropdown();
           }
@@ -205,7 +210,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
         </svg>
         <Show when={unreadCount() > 0}>
           <span class="notification-center__badge">
-            {unreadCount() > 99 ? "99+" : unreadCount()}
+            {unreadCount() > 99 ? '99+' : unreadCount()}
           </span>
         </Show>
       </button>
@@ -221,10 +226,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
           <div class="notification-center__header">
             <h3 class="notification-center__title">Notifications</h3>
             <Show when={unreadCount() > 0}>
-              <button
-                class="notification-center__mark-all"
-                onClick={markAllAsRead}
-              >
+              <button class="notification-center__mark-all" onClick={markAllAsRead}>
                 Mark all read
               </button>
             </Show>
@@ -255,14 +257,14 @@ export default function NotificationCenter(props: NotificationCenterProps) {
             </Show>
 
             <Show
-              when={!notifications.loading && !notifications.error && notifications()?.length}
+              when={
+                !notifications.loading && !notifications.error && notifications()?.length
+              }
               fallback={
                 <Show when={!notifications.loading && !notifications.error}>
                   <div class="notification-center__empty">
                     <span class="notification-center__empty-icon">🔔</span>
-                    <p class="notification-center__empty-text">
-                      No notifications yet
-                    </p>
+                    <p class="notification-center__empty-text">No notifications yet</p>
                   </div>
                 </Show>
               }
@@ -271,9 +273,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
                 {(notification) => (
                   <div
                     class={`notification-center__item ${
-                      !notification.read
-                        ? "notification-center__item--unread"
-                        : ""
+                      !notification.read ? 'notification-center__item--unread' : ''
                     }`}
                   >
                     <a
@@ -331,10 +331,7 @@ export default function NotificationCenter(props: NotificationCenterProps) {
 
       {/* Backdrop */}
       <Show when={isOpen()}>
-        <div
-          class="notification-center__backdrop"
-          onClick={() => setIsOpen(false)}
-        />
+        <div class="notification-center__backdrop" onClick={() => setIsOpen(false)} />
       </Show>
     </div>
   );

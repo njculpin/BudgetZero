@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  checkHandleAvailability,
-  createProduct,
-  updateProduct,
-} from '../products';
+import { checkHandleAvailability, createProduct, updateProduct } from '../products';
 import { serverClient } from '../client';
 import type { CreateProductParams, UpdateProductParams } from '../products';
 
@@ -101,14 +97,12 @@ describe('Product Handle Generation', () => {
       };
 
       // Mock handle availability check
-      vi.mocked(serverClient.from).mockReturnValueOnce(
-        {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        } as never
-      );
+      vi.mocked(serverClient.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      } as never);
 
       // Mock insert
       vi.mocked(serverClient.from).mockReturnValueOnce(mockQuery as never);
@@ -156,14 +150,12 @@ describe('Product Handle Generation', () => {
       };
 
       // Mock handle availability
-      vi.mocked(serverClient.from).mockReturnValueOnce(
-        {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        } as never
-      );
+      vi.mocked(serverClient.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      } as never);
 
       // Mock insert
       vi.mocked(serverClient.from).mockReturnValueOnce(mockQuery as never);
@@ -198,14 +190,12 @@ describe('Product Handle Generation', () => {
       };
 
       // Mock handle availability
-      vi.mocked(serverClient.from).mockReturnValueOnce(
-        {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        } as never
-      );
+      vi.mocked(serverClient.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      } as never);
 
       // Mock insert
       vi.mocked(serverClient.from).mockReturnValueOnce(mockQuery as never);
@@ -239,27 +229,23 @@ describe('Product Handle Generation', () => {
       };
 
       // First check: handle taken
-      vi.mocked(serverClient.from).mockReturnValueOnce(
-        {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({
-              data: [{ id: 'existing-id' }],
-              error: null,
-            }),
+      vi.mocked(serverClient.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({
+            data: [{ id: 'existing-id' }],
+            error: null,
           }),
-        } as never
-      );
+        }),
+      } as never);
 
       // Second check: handle-1 available
-      vi.mocked(serverClient.from).mockReturnValueOnce(
-        {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        } as never
-      );
+      vi.mocked(serverClient.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      } as never);
 
       // Mock insert
       vi.mocked(serverClient.from).mockReturnValueOnce(mockQuery as never);
@@ -293,14 +279,12 @@ describe('Product Handle Generation', () => {
       };
 
       // Mock handle availability
-      vi.mocked(serverClient.from).mockReturnValueOnce(
-        {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        } as never
-      );
+      vi.mocked(serverClient.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      } as never);
 
       // Mock insert error
       vi.mocked(serverClient.from).mockReturnValueOnce(mockQuery as never);
@@ -333,16 +317,14 @@ describe('Product Handle Generation', () => {
       };
 
       // Mock handle availability check
-      vi.mocked(serverClient.from).mockReturnValueOnce(
-        {
-          select: vi.fn().mockReturnThis(),
+      vi.mocked(serverClient.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              neq: vi.fn().mockResolvedValue({ data: [], error: null }),
-            }),
+            neq: vi.fn().mockResolvedValue({ data: [], error: null }),
           }),
-        } as never
-      );
+        }),
+      } as never);
 
       // Mock update
       vi.mocked(serverClient.from).mockReturnValueOnce(mockUpdateQuery as never);
@@ -380,19 +362,17 @@ describe('Product Handle Generation', () => {
 
     it('should throw error when custom handle is already taken', async () => {
       // Mock handle unavailable
-      vi.mocked(serverClient.from).mockReturnValueOnce(
-        {
-          select: vi.fn().mockReturnThis(),
+      vi.mocked(serverClient.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              neq: vi.fn().mockResolvedValue({
-                data: [{ id: 'other-product-id' }],
-                error: null,
-              }),
+            neq: vi.fn().mockResolvedValue({
+              data: [{ id: 'other-product-id' }],
+              error: null,
             }),
           }),
-        } as never
-      );
+        }),
+      } as never);
 
       const updates: UpdateProductParams = {
         handle: 'taken-handle',

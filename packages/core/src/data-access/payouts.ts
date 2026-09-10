@@ -161,9 +161,7 @@ export async function getPayoutItems(payoutId: string): Promise<PayoutItem[]> {
  * executions, only one update matches a `pending` row, so only one proceeds to
  * transfer money.
  */
-export async function claimPayoutForProcessing(
-  payoutId: string
-): Promise<boolean> {
+export async function claimPayoutForProcessing(payoutId: string): Promise<boolean> {
   const { data, error } = await serverClient
     .from('payouts')
     .update({
@@ -222,7 +220,7 @@ export async function getAvailablePayoutBalance(userId: string): Promise<{
   }
 
   const totalCents = transactions.reduce((sum, t) => sum + t.calculated_cents, 0);
-  const transactionIds = transactions.map(t => t.id);
+  const transactionIds = transactions.map((t) => t.id);
 
   return { totalCents, transactionIds };
 }
@@ -248,12 +246,11 @@ export interface PendingPayoutWithRecipient extends Payout {
  * enabled will fail at the transfer step, and an admin should be able to see that
  * before triggering it rather than after.
  */
-export async function getPendingPayoutsForAdmin(): Promise<
-  PendingPayoutWithRecipient[]
-> {
+export async function getPendingPayoutsForAdmin(): Promise<PendingPayoutWithRecipient[]> {
   const { data, error } = await serverClient
     .from('payouts')
-    .select(`
+    .select(
+      `
       *,
       users!payouts_user_id_fkey (
         id,
@@ -264,7 +261,8 @@ export async function getPendingPayoutsForAdmin(): Promise<
         stripe_connect_payouts_enabled
       ),
       payout_items (id)
-    `)
+    `
+    )
     .eq('status', 'pending')
     .order('requested_at', { ascending: true });
 
@@ -281,7 +279,7 @@ export async function getPendingPayoutsForAdmin(): Promise<
 
     return {
       ...(row as unknown as Payout),
-      recipient: (Array.isArray(users) ? users[0] ?? null : users ?? null),
+      recipient: Array.isArray(users) ? (users[0] ?? null) : (users ?? null),
       item_count: Array.isArray(items) ? items.length : 0,
     };
   });
@@ -350,9 +348,12 @@ export async function releasePayoutsForSale(
     return [];
   }
 
-  return ((data as Array<{ out_payout_id: string; out_released_count: number }>) || []).map(
-    (row) => ({ payoutId: row.out_payout_id, releasedCount: row.out_released_count })
-  );
+  return (
+    (data as Array<{ out_payout_id: string; out_released_count: number }>) || []
+  ).map((row) => ({
+    payoutId: row.out_payout_id,
+    releasedCount: row.out_released_count,
+  }));
 }
 
 export interface ClearingBalance {
@@ -370,9 +371,7 @@ export interface ClearingBalance {
  * know happened. Money that appears to vanish is worse than money that is visibly
  * pending.
  */
-export async function getClearingBalance(
-  userId: string
-): Promise<ClearingBalance> {
+export async function getClearingBalance(userId: string): Promise<ClearingBalance> {
   const { data, error } = await serverClient
     .from('sale_royalty_transactions')
     .select('calculated_cents, available_at')
@@ -390,10 +389,7 @@ export async function getClearingBalance(
   const rows = data ?? [];
 
   return {
-    totalCents: rows.reduce(
-      (sum, row) => sum + (row.calculated_cents as number),
-      0
-    ),
+    totalCents: rows.reduce((sum, row) => sum + (row.calculated_cents as number), 0),
     transactionCount: rows.length,
     nextAvailableAt: rows.length > 0 ? (rows[0].available_at as string) : null,
   };

@@ -1,7 +1,7 @@
-import { For, Show, createSignal } from "solid-js";
-import ContentItem, { type UnifiedItem } from "./ContentItem";
+import { For, Show, createSignal } from 'solid-js';
+import ContentItem, { type UnifiedItem } from './ContentItem';
 
-export type SortOption = "type" | "name" | "price";
+export type SortOption = 'type' | 'name' | 'price';
 
 export interface ContentListProps {
   items: UnifiedItem[];
@@ -50,7 +50,7 @@ export default function ContentList(props: ContentListProps) {
 
   const canItemBeDragged = (item: UnifiedItem): boolean => {
     // Embedded products cannot be reordered
-    return item.type !== "embedded";
+    return item.type !== 'embedded';
   };
 
   return (
@@ -67,9 +67,7 @@ export default function ContentList(props: ContentListProps) {
               id="sort-select"
               class="content-list__sort-select"
               value={props.sortBy}
-              onChange={(e) =>
-                props.onSortChange(e.currentTarget.value as SortOption)
-              }
+              onChange={(e) => props.onSortChange(e.currentTarget.value as SortOption)}
             >
               <option value="type">Type</option>
               <option value="name">Name</option>
@@ -109,9 +107,7 @@ export default function ContentList(props: ContentListProps) {
           fallback={
             <div class="content-list__empty">
               <div class="content-list__empty-icon">📦</div>
-              <p class="content-list__empty-text">
-                No content added yet
-              </p>
+              <p class="content-list__empty-text">No content added yet</p>
               <p class="content-list__empty-hint">
                 Add files, documents, or embed products to get started
               </p>
@@ -123,8 +119,7 @@ export default function ContentList(props: ContentListProps) {
               <div
                 class="content-list__item-wrapper"
                 classList={{
-                  "content-list__item-wrapper--drag-over":
-                    dragOverItemId() === item.id,
+                  'content-list__item-wrapper--drag-over': dragOverItemId() === item.id,
                 }}
                 onDragOver={(e) => handleDragOver(e, item.id)}
                 onDrop={(e) => handleDrop(e, item.id)}

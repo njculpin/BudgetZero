@@ -7,7 +7,7 @@ import type {
   ProductDocument,
   ProductComponent,
   User,
-  Document
+  Document,
 } from '../types';
 
 /** One `product_components` row with its to-one embeds resolved. */
@@ -22,8 +22,6 @@ interface ComponentWithDetailsRow {
     creator: { id: string; name: string | null; handle: string } | null;
   } | null;
 }
-
-
 
 export interface CreateProductParams {
   title: string;
@@ -107,7 +105,7 @@ export const createProduct = async (
   const baseHandle = generateHandle(params.title);
   const handle = await generateUniqueHandle(baseHandle);
 
-  const { data, error} = await serverClient
+  const { data, error } = await serverClient
     .from('products')
     .insert({
       user_id: userId,
@@ -178,8 +176,8 @@ export const updateProduct = async (
     // Auto-generate handle from title only if no custom handle is provided
     const titleSlug = updates.title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with dashes
-      .replace(/^-|-$/g, ""); // Remove leading/trailing dashes
+      .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with dashes
+      .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
 
     // Check if new handle is available (excluding current product)
     const isAvailable = await checkHandleAvailability(titleSlug, productId);
@@ -216,12 +214,16 @@ export const updateProduct = async (
   };
 
   if (updatesToApply.title !== undefined) updateData.title = updatesToApply.title;
-  if (updatesToApply.description !== undefined) updateData.description = updatesToApply.description;
+  if (updatesToApply.description !== undefined)
+    updateData.description = updatesToApply.description;
   if (updatesToApply.status !== undefined) updateData.status = updatesToApply.status;
   if (updatesToApply.handle !== undefined) updateData.handle = updatesToApply.handle;
-  if (updatesToApply.publicAt !== undefined) updateData.public_at = updatesToApply.publicAt;
-  if (updatesToApply.isEmbeddable !== undefined) updateData.is_embeddable = updatesToApply.isEmbeddable;
-  if (updatesToApply.embeddingRoyaltyCents !== undefined) updateData.embedding_royalty_cents = updatesToApply.embeddingRoyaltyCents;
+  if (updatesToApply.publicAt !== undefined)
+    updateData.public_at = updatesToApply.publicAt;
+  if (updatesToApply.isEmbeddable !== undefined)
+    updateData.is_embeddable = updatesToApply.isEmbeddable;
+  if (updatesToApply.embeddingRoyaltyCents !== undefined)
+    updateData.embedding_royalty_cents = updatesToApply.embeddingRoyaltyCents;
 
   const { error } = await serverClient
     .from('products')
@@ -238,10 +240,7 @@ export const updateProduct = async (
   }
 
   if (updatesToApply.tags !== undefined) {
-    await serverClient
-      .from('product_tags')
-      .delete()
-      .eq('product_id', productId);
+    await serverClient.from('product_tags').delete().eq('product_id', productId);
 
     if (updatesToApply.tags.length > 0) {
       for (const tag of updatesToApply.tags) {
@@ -256,9 +255,7 @@ export const updateProduct = async (
 /**
  * Soft delete a product
  */
-export const deleteProduct = async (
-  productId: string
-): Promise<boolean> => {
+export const deleteProduct = async (productId: string): Promise<boolean> => {
   const { error } = await serverClient
     .from('products')
     .update({
@@ -332,10 +329,10 @@ export const getAllProducts = async (
         .eq('value', tag.toLowerCase())
         .eq('deleted', false);
       if (tagData) {
-        tagData.forEach(t => productIds.add(t.product_id));
+        tagData.forEach((t) => productIds.add(t.product_id));
       }
     }
-    products = products.filter(product => productIds.has(product.id));
+    products = products.filter((product) => productIds.has(product.id));
   }
 
   return products;
@@ -405,7 +402,6 @@ export const getRecentProducts = async (
   return productsWithThumbnails;
 };
 
-
 // ===== Product Tags =====
 
 /**
@@ -415,12 +411,10 @@ export const createProductTag = async (
   productId: string,
   tag: string
 ): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('product_tags')
-    .insert({
-      product_id: productId,
-      value: tag.toLowerCase().trim(),
-    });
+  const { error } = await serverClient.from('product_tags').insert({
+    product_id: productId,
+    value: tag.toLowerCase().trim(),
+  });
 
   if (error) {
     // Ignore duplicate tag errors
@@ -452,7 +446,9 @@ export const getProductTags = async (productId: string): Promise<ProductTag[]> =
 /**
  * Get popular product tags
  */
-export const getPopularProductTags = async (limit: number = 20): Promise<Array<{ value: string; count: number }>> => {
+export const getPopularProductTags = async (
+  limit: number = 20
+): Promise<Array<{ value: string; count: number }>> => {
   const { data, error } = await serverClient
     .from('product_tags')
     .select('value')
@@ -462,10 +458,13 @@ export const getPopularProductTags = async (limit: number = 20): Promise<Array<{
     return [];
   }
 
-  const tagCounts = data.reduce((acc, tag) => {
-    acc[tag.value] = (acc[tag.value] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const tagCounts = data.reduce(
+    (acc, tag) => {
+      acc[tag.value] = (acc[tag.value] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   return Object.entries(tagCounts)
     .map(([value, count]) => ({ value, count }))
@@ -479,10 +478,12 @@ export const getPopularProductTags = async (limit: number = 20): Promise<Array<{
 export const getProductsByTag = async (tag: string): Promise<Product[]> => {
   const { data, error } = await serverClient
     .from('product_tags')
-    .select(`
+    .select(
+      `
       product_id,
       products!inner(*)
-    `)
+    `
+    )
     .eq('value', tag)
     .eq('deleted', false)
     .eq('products.deleted', false)
@@ -512,14 +513,17 @@ export const getProductsByTag = async (tag: string): Promise<Product[]> => {
  * Search products by title or handle
  * Returns up to 10 matching products owned by the specified user
  */
-export const searchProducts = async (userId: string, query: string): Promise<Product[]> => {
+export const searchProducts = async (
+  userId: string,
+  query: string
+): Promise<Product[]> => {
   if (!query || query.trim().length === 0) {
     return [];
   }
 
   const searchTerm = `%${query.trim()}%`;
 
-  const { data, error} = await serverClient
+  const { data, error } = await serverClient
     .from('products')
     .select('*')
     .eq('user_id', userId)
@@ -534,7 +538,6 @@ export const searchProducts = async (userId: string, query: string): Promise<Pro
 
   return data as Product[];
 };
-
 
 // ===== Product Images =====
 
@@ -561,22 +564,19 @@ export const createProductImage = async (
     .order('position', { ascending: false })
     .limit(1);
 
-  const nextPosition = existingImages && existingImages.length > 0
-    ? existingImages[0].position + 1
-    : 0;
+  const nextPosition =
+    existingImages && existingImages.length > 0 ? existingImages[0].position + 1 : 0;
 
-  const { error } = await serverClient
-    .from('product_images')
-    .insert({
-      product_id: productId,
-      title: imageData.title,
-      description: imageData.description || '',
-      file_url: imageData.file_url,
-      storage_path: imageData.storage_path,
-      file_size_bytes: imageData.file_size_bytes,
-      mime_type: imageData.mime_type,
-      position: nextPosition,
-    });
+  const { error } = await serverClient.from('product_images').insert({
+    product_id: productId,
+    title: imageData.title,
+    description: imageData.description || '',
+    file_url: imageData.file_url,
+    storage_path: imageData.storage_path,
+    file_size_bytes: imageData.file_size_bytes,
+    mime_type: imageData.mime_type,
+    position: nextPosition,
+  });
 
   if (error) {
     console.error('Error creating product image:', error);
@@ -595,7 +595,7 @@ export const getProductImages = async (productId: string) => {
     .select('*')
     .eq('product_id', productId)
     .eq('deleted', false)
-    .order('position', { ascending: true});
+    .order('position', { ascending: true });
 
   if (error) {
     console.error('Error fetching product images:', error);
@@ -647,7 +647,6 @@ export const deleteProductImage = async (imageId: string): Promise<boolean> => {
   return true;
 };
 
-
 /**
  * Get all contributors for a product
  * Returns unique users who have royalties on the product
@@ -665,7 +664,7 @@ export const getProductContributors = async (productId: string): Promise<User[]>
   }
 
   // Get unique user IDs
-  const userIds = [...new Set(royalties.map(r => r.user_id))];
+  const userIds = [...new Set(royalties.map((r) => r.user_id))];
 
   // Fetch user data
   const { data: users, error: usersError } = await serverClient
@@ -708,7 +707,7 @@ export const getProductContributorsWithRoles = async (
   }
 
   // Get unique user IDs
-  const userIds = [...new Set(royalties.map(r => r.user_id))];
+  const userIds = [...new Set(royalties.map((r) => r.user_id))];
 
   // Fetch user data
   const { data: users, error: usersError } = await serverClient
@@ -750,33 +749,28 @@ export const getProductContributorsWithRoles = async (
           // Infer role from product title or tags
           const title = childProduct.title.toLowerCase();
           const tags = await getProductTags(childProduct.id);
-          const tagValues = tags.map(t => t.value.toLowerCase());
+          const tagValues = tags.map((t) => t.value.toLowerCase());
 
           if (
             title.includes('stl') ||
             title.includes('3d') ||
             title.includes('model') ||
-            tagValues.some(t => t.includes('stl') || t.includes('3d'))
+            tagValues.some((t) => t.includes('stl') || t.includes('3d'))
           ) {
             role = '3D Modeler';
           } else if (
             title.includes('art') ||
             title.includes('illustration') ||
             title.includes('character') ||
-            tagValues.some(t =>
-              t.includes('art') || t.includes('illustration')
-            )
+            tagValues.some((t) => t.includes('art') || t.includes('illustration'))
           ) {
             role = 'Illustrator';
-          } else if (
-            title.includes('map') ||
-            tagValues.some(t => t.includes('map'))
-          ) {
+          } else if (title.includes('map') || tagValues.some((t) => t.includes('map'))) {
             role = 'Map Designer';
           } else if (
             title.includes('music') ||
             title.includes('sound') ||
-            tagValues.some(t => t.includes('music') || t.includes('audio'))
+            tagValues.some((t) => t.includes('music') || t.includes('audio'))
           ) {
             role = 'Sound Designer';
           } else if (
@@ -828,9 +822,8 @@ export const createProductFile = async (
     .order('position', { ascending: false })
     .limit(1);
 
-  const nextPosition = existingFiles && existingFiles.length > 0
-    ? existingFiles[0].position + 1
-    : 0;
+  const nextPosition =
+    existingFiles && existingFiles.length > 0 ? existingFiles[0].position + 1 : 0;
 
   const { data, error } = await serverClient
     .from('product_files')
@@ -992,7 +985,9 @@ export const getEmbeddableProducts = async (userId: string): Promise<Product[]> 
 /**
  * Get embedded products (product components) for a product
  */
-export const getProductComponents = async (productId: string): Promise<ProductComponent[]> => {
+export const getProductComponents = async (
+  productId: string
+): Promise<ProductComponent[]> => {
   const { data, error } = await serverClient
     .from('product_components')
     .select('*')
@@ -1011,16 +1006,21 @@ export const getProductComponents = async (productId: string): Promise<ProductCo
  * Get embedded products with full product and creator details
  * Optimized to avoid N+1 queries by using a single join query
  */
-export const getProductComponentsWithDetails = async (productId: string): Promise<Array<{
-  id: string;
-  title: string;
-  handle: string;
-  inherited_price_cents: number;
-  creator_name: string;
-}>> => {
+export const getProductComponentsWithDetails = async (
+  productId: string
+): Promise<
+  Array<{
+    id: string;
+    title: string;
+    handle: string;
+    inherited_price_cents: number;
+    creator_name: string;
+  }>
+> => {
   const { data, error } = await serverClient
     .from('product_components')
-    .select(`
+    .select(
+      `
       child_product_id,
       inherited_price_cents,
       child_product:products!product_components_child_product_id_fkey (
@@ -1034,7 +1034,8 @@ export const getProductComponentsWithDetails = async (productId: string): Promis
           handle
         )
       )
-    `)
+    `
+    )
     .eq('parent_product_id', productId)
     .eq('deleted', false);
 
@@ -1065,9 +1066,11 @@ export const getProductComponentsWithDetails = async (productId: string): Promis
 };
 
 // Platform fee percentage (10%)
-const PLATFORM_FEE_PERCENTAGE = 0.10;
+const PLATFORM_FEE_PERCENTAGE = 0.1;
 
-export const getProductPriceBreakdown = async (productId: string): Promise<{
+export const getProductPriceBreakdown = async (
+  productId: string
+): Promise<{
   filePriceTotal: number;
   documentPriceTotal: number;
   embeddedPriceTotal: number;
@@ -1149,10 +1152,12 @@ export const getProductDocuments = async (
 ): Promise<(ProductDocument & { document: Document })[]> => {
   const { data, error } = await serverClient
     .from('product_documents')
-    .select(`
+    .select(
+      `
       *,
       document:documents(*)
-    `)
+    `
+    )
     .eq('product_id', productId)
     .eq('deleted', false)
     .order('position', { ascending: true });
@@ -1182,9 +1187,8 @@ export const addDocumentToProduct = async (
     .order('position', { ascending: false })
     .limit(1);
 
-  const nextPosition = existingDocs && existingDocs.length > 0
-    ? existingDocs[0].position + 1
-    : 0;
+  const nextPosition =
+    existingDocs && existingDocs.length > 0 ? existingDocs[0].position + 1 : 0;
 
   const { data, error } = await serverClient
     .from('product_documents')
@@ -1194,10 +1198,12 @@ export const addDocumentToProduct = async (
       price_cents: priceCents,
       position: nextPosition,
     })
-    .select(`
+    .select(
+      `
       *,
       document:documents(*)
-    `)
+    `
+    )
     .single();
 
   if (error) {
@@ -1213,9 +1219,7 @@ export const addDocumentToProduct = async (
  * Called when a product is purchased to make documents downloadable
  * Only generates PDFs for documents that don't already have them
  */
-export const ensureProductDocumentPDFs = async (
-  productId: string
-): Promise<void> => {
+export const ensureProductDocumentPDFs = async (productId: string): Promise<void> => {
   const productDocuments = await getProductDocuments(productId);
 
   for (const productDoc of productDocuments) {
@@ -1345,7 +1349,8 @@ export const getEmbeddedUsageForUser = async (
   // Parent products embedding any of them
   const { data: components, error: componentsError } = await serverClient
     .from('product_components')
-    .select(`
+    .select(
+      `
       parent_product_id,
       child_product_id,
       inherited_price_cents,
@@ -1360,7 +1365,8 @@ export const getEmbeddedUsageForUser = async (
           handle
         )
       )
-    `)
+    `
+    )
     .in('child_product_id', userProductIds)
     .eq('deleted', false);
 
@@ -1386,7 +1392,7 @@ export const getEmbeddedUsageForUser = async (
   };
 
   const firstOf = <T>(value: T | T[] | null): T | null =>
-    Array.isArray(value) ? value[0] ?? null : value;
+    Array.isArray(value) ? (value[0] ?? null) : value;
 
   const byParentId = new Map<string, EmbeddedUsageEntry>();
 
@@ -1436,7 +1442,8 @@ export const getEmbeddedUsageForUser = async (
 
   for (const royalty of royalties || []) {
     const saleItem = firstOf(
-      royalty.sale_items as unknown as { product_id: string } | { product_id: string }[] | null
+      royalty.sale_items as unknown as
+        { product_id: string } | { product_id: string }[] | null
     );
 
     if (!saleItem) continue;

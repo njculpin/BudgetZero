@@ -68,7 +68,10 @@ describe('Auth Abstraction Layer', () => {
   describe('signInWithPassword', () => {
     it('should call auth.signInWithPassword with email and password', async () => {
       const mockResponse = {
-        data: { user: mockUser({ id: '123', email: 'test@example.com' }), session: mockSession() },
+        data: {
+          user: mockUser({ id: '123', email: 'test@example.com' }),
+          session: mockSession(),
+        },
         error: null,
       };
 
@@ -150,7 +153,10 @@ describe('Auth Abstraction Layer', () => {
   describe('signUp', () => {
     it('should call auth.signUp with email and password', async () => {
       const mockResponse = {
-        data: { user: mockUser({ id: '123', email: 'newuser@example.com' }), session: null },
+        data: {
+          user: mockUser({ id: '123', email: 'newuser@example.com' }),
+          session: null,
+        },
         error: null,
       };
 
@@ -190,7 +196,10 @@ describe('Auth Abstraction Layer', () => {
   describe('exchangeCodeForSession', () => {
     it('should call auth.exchangeCodeForSession with code', async () => {
       const mockResponse = {
-        data: { session: mockSession({ access_token: 'token123' }), user: mockUser({ id: '123' }) },
+        data: {
+          session: mockSession({ access_token: 'token123' }),
+          user: mockUser({ id: '123' }),
+        },
         error: null,
       };
 
@@ -198,7 +207,9 @@ describe('Auth Abstraction Layer', () => {
 
       const result = await exchangeCodeForSession('oauth_code_123');
 
-      expect(authClient.auth.exchangeCodeForSession).toHaveBeenCalledWith('oauth_code_123');
+      expect(authClient.auth.exchangeCodeForSession).toHaveBeenCalledWith(
+        'oauth_code_123'
+      );
       expect(result).toEqual(mockResponse);
     });
 
@@ -208,7 +219,9 @@ describe('Auth Abstraction Layer', () => {
         error: mockAuthError('Invalid code'),
       };
 
-      vi.mocked(authClient.auth.exchangeCodeForSession).mockResolvedValue(mockError as never);
+      vi.mocked(authClient.auth.exchangeCodeForSession).mockResolvedValue(
+        mockError as never
+      );
 
       const result = await exchangeCodeForSession('invalid_code');
 
@@ -233,7 +246,12 @@ describe('Auth Abstraction Layer', () => {
   describe('getSession', () => {
     it('should call auth.getSession', async () => {
       const mockResponse = {
-        data: { session: mockSession({ access_token: 'token123', user: mockUser({ id: '123' }) }) },
+        data: {
+          session: mockSession({
+            access_token: 'token123',
+            user: mockUser({ id: '123' }),
+          }),
+        },
         error: null,
       };
 
@@ -291,7 +309,10 @@ describe('Auth Abstraction Layer', () => {
   describe('setSession', () => {
     it('should call auth.setSession with tokens', async () => {
       const mockResponse = {
-        data: { session: mockSession({ access_token: 'new_token', refresh_token: 'refresh' }), user: mockUser() },
+        data: {
+          session: mockSession({ access_token: 'new_token', refresh_token: 'refresh' }),
+          user: mockUser(),
+        },
         error: null,
       };
 
@@ -488,7 +509,9 @@ describe('Auth Abstraction Layer', () => {
         },
         error: null,
       };
-      vi.mocked(authClient.auth.exchangeCodeForSession).mockResolvedValue(exchangeResponse);
+      vi.mocked(authClient.auth.exchangeCodeForSession).mockResolvedValue(
+        exchangeResponse
+      );
 
       const exchangeResult = await exchangeCodeForSession('oauth_code');
       expect(exchangeResult.data.session).toBeDefined();

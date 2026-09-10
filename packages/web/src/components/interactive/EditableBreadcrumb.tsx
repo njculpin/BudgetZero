@@ -1,9 +1,9 @@
-import { createSignal, Show } from "solid-js";
-import "./editable-breadcrumb.css";
+import { createSignal, Show } from 'solid-js';
+import './editable-breadcrumb.css';
 
 interface EditableBreadcrumbProps {
   entityId: string;
-  entityType: "asset" | "product" | "document";
+  entityType: 'asset' | 'product' | 'document';
   currentTitle: string;
   breadcrumbItems: Array<{
     label: string;
@@ -15,46 +15,46 @@ export default function EditableBreadcrumb(props: EditableBreadcrumbProps) {
   const [isEditing, setIsEditing] = createSignal(false);
   const [title, setTitle] = createSignal(props.currentTitle);
   const [isLoading, setIsLoading] = createSignal(false);
-  const [error, setError] = createSignal("");
+  const [error, setError] = createSignal('');
 
   let inputRef: HTMLInputElement | undefined;
 
   const getEndpoint = () => {
     switch (props.entityType) {
-      case "asset":
-        return "/api/assets/update-asset";
-      case "product":
-        return "/api/products/update-product";
-      case "document":
-        return "/api/documents/update-document";
+      case 'asset':
+        return '/api/assets/update-asset';
+      case 'product':
+        return '/api/products/update-product';
+      case 'document':
+        return '/api/documents/update-document';
     }
   };
 
   const getParamName = () => {
     switch (props.entityType) {
-      case "asset":
-        return "assetId";
-      case "product":
-        return "productId";
-      case "document":
-        return "documentId";
+      case 'asset':
+        return 'assetId';
+      case 'product':
+        return 'productId';
+      case 'document':
+        return 'documentId';
     }
   };
 
   const getUrlSegment = () => {
     switch (props.entityType) {
-      case "asset":
-        return "assets";
-      case "product":
-        return "products";
-      case "document":
-        return "documents";
+      case 'asset':
+        return 'assets';
+      case 'product':
+        return 'products';
+      case 'document':
+        return 'documents';
     }
   };
 
   const startEditing = () => {
     setIsEditing(true);
-    setError("");
+    setError('');
     // Focus input after render
     setTimeout(() => inputRef?.focus(), 0);
   };
@@ -62,13 +62,13 @@ export default function EditableBreadcrumb(props: EditableBreadcrumbProps) {
   const cancelEditing = () => {
     setIsEditing(false);
     setTitle(props.currentTitle);
-    setError("");
+    setError('');
   };
 
   const saveTitle = async () => {
     const newTitle = title().trim();
     if (!newTitle) {
-      setError("Title cannot be empty");
+      setError('Title cannot be empty');
       return;
     }
 
@@ -78,21 +78,21 @@ export default function EditableBreadcrumb(props: EditableBreadcrumbProps) {
     }
 
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       const formData = new FormData();
       formData.append(getParamName(), props.entityId);
-      formData.append("title", newTitle);
+      formData.append('title', newTitle);
 
       const response = await fetch(getEndpoint(), {
-        method: "POST",
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to update title");
+        throw new Error(data.error || 'Failed to update title');
       }
 
       const data = await response.json();
@@ -106,17 +106,17 @@ export default function EditableBreadcrumb(props: EditableBreadcrumbProps) {
         setIsEditing(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update");
+      setError(err instanceof Error ? err.message : 'Failed to update');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       saveTitle();
-    } else if (e.key === "Escape") {
+    } else if (e.key === 'Escape') {
       cancelEditing();
     }
   };
@@ -131,7 +131,10 @@ export default function EditableBreadcrumb(props: EditableBreadcrumbProps) {
             </a>
           </li>
         ))}
-        <li class="editable-breadcrumb__item editable-breadcrumb__item--current" aria-current="page">
+        <li
+          class="editable-breadcrumb__item editable-breadcrumb__item--current"
+          aria-current="page"
+        >
           <Show
             when={isEditing()}
             fallback={
@@ -186,7 +189,14 @@ export default function EditableBreadcrumb(props: EditableBreadcrumbProps) {
                 {isLoading() ? (
                   <span class="editable-breadcrumb__spinner" />
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 )}
@@ -198,7 +208,14 @@ export default function EditableBreadcrumb(props: EditableBreadcrumbProps) {
                 disabled={isLoading()}
                 title="Cancel"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>

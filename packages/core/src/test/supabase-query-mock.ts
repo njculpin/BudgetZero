@@ -57,10 +57,7 @@ export function mockTables(
   vi.mocked(client.from as (table: string) => unknown).mockImplementation(
     (table: string) => {
       if (!builders.has(table)) {
-        builders.set(
-          table,
-          build(tables[table] ?? { data: [], error: null })
-        );
+        builders.set(table, build(tables[table] ?? { data: [], error: null }));
       }
       return builders.get(table);
     }

@@ -40,7 +40,6 @@ vi.mock('@gameloopers/core/rate-limit', async (importOriginal) => ({
   }),
 }));
 
-
 describe('POST /api/auth/sign-in', () => {
   let mockRequest: Request;
   let mockCookies: any;
@@ -97,7 +96,9 @@ describe('POST /api/auth/sign-in', () => {
       });
 
       // Call the endpoint
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       // Verify signInWithPassword was called with correct params
       expect(auth.signInWithPassword).toHaveBeenCalledWith({
@@ -162,7 +163,9 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(auth.signInWithPassword).toHaveBeenCalledWith({
         email: 'json@example.com',
@@ -187,7 +190,9 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
       const text = await response.text();
@@ -209,7 +214,9 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
       const text = await response.text();
@@ -229,7 +236,9 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
       expect(auth.signInWithPassword).not.toHaveBeenCalled();
@@ -259,13 +268,17 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(401);
       expect(response.headers.get('Content-Type')).toBe('application/json');
 
       const data = await response.json();
-      expect(data.error).toBe('The email or password you entered is incorrect. Please try again.');
+      expect(data.error).toBe(
+        'The email or password you entered is incorrect. Please try again.'
+      );
 
       // Verify cookies were not set
       expect(mockCookies.set).not.toHaveBeenCalled();
@@ -293,7 +306,9 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(401);
 
@@ -323,7 +338,9 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(401);
 
@@ -353,12 +370,16 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(401);
 
       const data = await response.json();
-      expect(data.error).toBe('Unable to sign in. Please check your credentials and try again.');
+      expect(data.error).toBe(
+        'Unable to sign in. Please check your credentials and try again.'
+      );
     });
   });
 
@@ -384,12 +405,16 @@ describe('POST /api/auth/sign-in', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignIn(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignIn(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(500);
 
       const data = await response.json();
-      expect(data.error).toBe('Unable to create session. Please try again or contact support if the problem persists.');
+      expect(data.error).toBe(
+        'Unable to create session. Please try again or contact support if the problem persists.'
+      );
 
       // Verify cookies were not set
       expect(mockCookies.set).not.toHaveBeenCalled();

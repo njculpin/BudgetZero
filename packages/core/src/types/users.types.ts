@@ -1,4 +1,4 @@
-import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
+import type { BaseEntity, BaseEntityWithoutDelete } from './common.types';
 
 export interface User extends BaseEntity {
   handle: string;

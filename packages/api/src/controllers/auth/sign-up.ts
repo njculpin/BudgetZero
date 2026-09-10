@@ -1,14 +1,14 @@
 import type { Controller } from '../../context';
 import { redirect } from '../../responses';
 import { setSessionCookies } from '../../gateway';
-import { signUp, signInWithPassword } from "@gameloopers/core/auth";
-import { sendEmail } from "@gameloopers/core/email";
+import { signUp, signInWithPassword } from '@gameloopers/core/auth';
+import { sendEmail } from '@gameloopers/core/email';
 import {
   checkRateLimit,
   rateLimitIdentity,
   rateLimitedResponse,
   RATE_LIMITS,
-} from "@gameloopers/core/rate-limit";
+} from '@gameloopers/core/rate-limit';
 
 export const authSignUp: Controller = async ({ request, clientAddress, cookies }) => {
   // Limited by client address to slow bulk account creation.
@@ -22,17 +22,14 @@ export const authSignUp: Controller = async ({ request, clientAddress, cookies }
   }
 
   const formData = await request.formData();
-  const email = formData.get("email")?.toString();
-  const password = formData.get("password")?.toString();
+  const email = formData.get('email')?.toString();
+  const password = formData.get('password')?.toString();
 
   if (!email || !password) {
-    return new Response(
-      JSON.stringify({ error: "Email and password are required" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: 'Email and password are required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const { error: signUpError } = await signUp({
@@ -41,24 +38,25 @@ export const authSignUp: Controller = async ({ request, clientAddress, cookies }
   });
 
   if (signUpError) {
-    console.error("Sign-up error:", signUpError.message, signUpError);
+    console.error('Sign-up error:', signUpError.message, signUpError);
 
     // Make error messages more user-friendly
     let userMessage = signUpError.message;
 
-    if (signUpError.message.includes("Password should contain at least one character")) {
-      userMessage = "Password must include: lowercase letter, uppercase letter, number, and special character (!@#$%^&* etc.)";
-    } else if (signUpError.message.includes("Password should be at least")) {
-      userMessage = "Password must be at least 6 characters long";
-    } else if (signUpError.message.includes("User already registered")) {
-      userMessage = "An account with this email already exists. Please sign in instead.";
-    } else if (signUpError.message.includes("Invalid email")) {
-      userMessage = "Please enter a valid email address";
+    if (signUpError.message.includes('Password should contain at least one character')) {
+      userMessage =
+        'Password must include: lowercase letter, uppercase letter, number, and special character (!@#$%^&* etc.)';
+    } else if (signUpError.message.includes('Password should be at least')) {
+      userMessage = 'Password must be at least 6 characters long';
+    } else if (signUpError.message.includes('User already registered')) {
+      userMessage = 'An account with this email already exists. Please sign in instead.';
+    } else if (signUpError.message.includes('Invalid email')) {
+      userMessage = 'Please enter a valid email address';
     }
 
     return new Response(JSON.stringify({ error: userMessage }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -69,9 +67,9 @@ export const authSignUp: Controller = async ({ request, clientAddress, cookies }
   });
 
   if (signInError || !signInData.session) {
-    console.error("Auto-login after signup failed:", signInError);
+    console.error('Auto-login after signup failed:', signInError);
     // Fall back to manual sign-in
-    return redirect("/sign-in?message=Account created. Please sign in.");
+    return redirect('/sign-in?message=Account created. Please sign in.');
   }
 
   // Shared with sign-in, the OAuth callback and the gateway's own refresh, so
@@ -84,9 +82,9 @@ export const authSignUp: Controller = async ({ request, clientAddress, cookies }
   // Send welcome email
   const origin = new URL(request.url).origin;
   await sendEmail({
-    from: "Game Loopers <noreply@gameloopers.com>",
+    from: 'Game Loopers <noreply@gameloopers.com>',
     to: email,
-    subject: "Welcome to Game Loopers!",
+    subject: 'Welcome to Game Loopers!',
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Welcome to Game Loopers!</h1>
@@ -132,5 +130,5 @@ export const authSignUp: Controller = async ({ request, clientAddress, cookies }
   });
 
   // Redirect to products after successful auto-login
-  return redirect("/products");
+  return redirect('/products');
 };

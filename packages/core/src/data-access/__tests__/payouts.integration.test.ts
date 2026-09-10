@@ -9,7 +9,7 @@ import {
   getPayoutItems,
   claimPayoutForProcessing,
   getPendingPayoutsForAdmin,
-  getAvailablePayoutBalance
+  getAvailablePayoutBalance,
 } from '../payouts';
 import { createProduct } from '../products';
 
@@ -83,7 +83,6 @@ describe('Payout System', () => {
   let royaltyTransaction2Id: string;
   let saleId: string;
   let saleItemId: string;
-
 
   /**
    * Seed a fresh `ready_to_pay` royalty transaction for the contributor.
@@ -161,18 +160,16 @@ describe('Payout System', () => {
     testProductId = product.id;
 
     // Add product file
-    await supabase
-      .from('product_files')
-      .insert({
-        product_id: testProductId,
-        title: 'Test File.pdf',
-        file_url: 'https://example.com/test.pdf',
-        storage_path: 'test/file.pdf',
-        file_size_bytes: 1024000, // 1000 KB
-        mime_type: 'application/pdf',
-        position: 0,
-        price_cents: 10000, // $100.00
-      });
+    await supabase.from('product_files').insert({
+      product_id: testProductId,
+      title: 'Test File.pdf',
+      file_url: 'https://example.com/test.pdf',
+      storage_path: 'test/file.pdf',
+      file_size_bytes: 1024000, // 1000 KB
+      mime_type: 'application/pdf',
+      position: 0,
+      price_cents: 10000, // $100.00
+    });
 
     // Create product royalty for contributor
     const { data: productRoyalty } = await supabase
@@ -270,21 +267,19 @@ describe('Payout System', () => {
     royaltyTransaction2Id = royalty2.id;
 
     // Create a royalty transaction for user2 (to test isolation)
-    await supabase
-      .from('sale_royalty_transactions')
-      .insert({
-        sale_id: sale.id,
-        sale_item_id: saleItem!.id,
-        product_royalty_id: productRoyaltyId,
-        recipient_user_id: testUser2Id,
-        royalty_type: 'fixed',
-        royalty_value: 2000,
-        calculated_cents: 2000, // $20.00
-        status: 'ready_to_pay',
-        // Matured past the hold period: this suite tests payout mechanics, not the
-        // hold. Without it a royalty is held 14 days and never reads as available.
-        available_at: new Date(Date.now() - 86_400_000).toISOString(),
-      });
+    await supabase.from('sale_royalty_transactions').insert({
+      sale_id: sale.id,
+      sale_item_id: saleItem!.id,
+      product_royalty_id: productRoyaltyId,
+      recipient_user_id: testUser2Id,
+      royalty_type: 'fixed',
+      royalty_value: 2000,
+      calculated_cents: 2000, // $20.00
+      status: 'ready_to_pay',
+      // Matured past the hold period: this suite tests payout mechanics, not the
+      // hold. Without it a royalty is held 14 days and never reads as available.
+      available_at: new Date(Date.now() - 86_400_000).toISOString(),
+    });
   });
 
   afterAll(async () => {
@@ -322,7 +317,7 @@ describe('Payout System', () => {
       expect(user2Balance.totalCents).toBe(2000);
 
       // Transaction IDs should not overlap
-      const hasOverlap = contributorBalance.transactionIds.some(id =>
+      const hasOverlap = contributorBalance.transactionIds.some((id) =>
         user2Balance.transactionIds.includes(id)
       );
       expect(hasOverlap).toBe(false);
@@ -358,21 +353,19 @@ describe('Payout System', () => {
         .select()
         .single();
 
-      await supabase
-        .from('sale_royalty_transactions')
-        .insert({
-          sale_id: newSale!.id,
-          sale_item_id: newSaleItem!.id,
-          product_royalty_id: productRoyaltyId,
-          recipient_user_id: testContributorId,
-          royalty_type: 'fixed',
-          royalty_value: 1000,
-          calculated_cents: 1000,
-          status: 'pending',
-          // Matured past the hold period: this suite tests payout mechanics, not the
-          // hold. Without it a royalty is held 14 days and never reads as available.
-          available_at: new Date(Date.now() - 86_400_000).toISOString(), // Not ready_to_pay
-        });
+      await supabase.from('sale_royalty_transactions').insert({
+        sale_id: newSale!.id,
+        sale_item_id: newSaleItem!.id,
+        product_royalty_id: productRoyaltyId,
+        recipient_user_id: testContributorId,
+        royalty_type: 'fixed',
+        royalty_value: 1000,
+        calculated_cents: 1000,
+        status: 'pending',
+        // Matured past the hold period: this suite tests payout mechanics, not the
+        // hold. Without it a royalty is held 14 days and never reads as available.
+        available_at: new Date(Date.now() - 86_400_000).toISOString(), // Not ready_to_pay
+      });
 
       const balance = await getAvailablePayoutBalance(testContributorId);
 
@@ -445,7 +438,7 @@ describe('Payout System', () => {
       const items = await getPayoutItems(payoutId);
 
       expect(items.length).toBe(2);
-      expect(items.every(item => item.payout_id === payoutId)).toBe(true);
+      expect(items.every((item) => item.payout_id === payoutId)).toBe(true);
       // Items must sum to the payout amount, not to a proportional guess.
       expect(items.reduce((sum, item) => sum + item.amount_cents, 0)).toBe(8000);
     });
@@ -530,7 +523,7 @@ describe('Payout System', () => {
       expect(payouts).toBeDefined();
       expect(Array.isArray(payouts)).toBe(true);
       expect(payouts.length).toBeGreaterThan(0);
-      expect(payouts.every(p => p.user_id === testContributorId)).toBe(true);
+      expect(payouts.every((p) => p.user_id === testContributorId)).toBe(true);
     });
 
     it('should return payouts in descending order by requested_at', async () => {
@@ -556,11 +549,11 @@ describe('Payout System', () => {
       const contributorPayouts = await getUserPayouts(testContributorId);
       const user2Payouts = await getUserPayouts(testUser2Id);
 
-      expect(contributorPayouts.every(p => p.user_id === testContributorId)).toBe(true);
-      expect(user2Payouts.every(p => p.user_id === testUser2Id)).toBe(true);
+      expect(contributorPayouts.every((p) => p.user_id === testContributorId)).toBe(true);
+      expect(user2Payouts.every((p) => p.user_id === testUser2Id)).toBe(true);
 
-      const hasOverlap = contributorPayouts.some(p1 =>
-        user2Payouts.some(p2 => p1.id === p2.id)
+      const hasOverlap = contributorPayouts.some((p1) =>
+        user2Payouts.some((p2) => p1.id === p2.id)
       );
       expect(hasOverlap).toBe(false);
     });
@@ -666,17 +659,17 @@ describe('Payout System', () => {
 
       expect(pendingPayouts).toBeDefined();
       expect(Array.isArray(pendingPayouts)).toBe(true);
-      expect(pendingPayouts.every(p => p.status === 'pending')).toBe(true);
+      expect(pendingPayouts.every((p) => p.status === 'pending')).toBe(true);
       // The admin queue needs the recipient in order to decide whether a payout
       // can actually be transferred.
-      expect(pendingPayouts.every(p => p.recipient !== null)).toBe(true);
+      expect(pendingPayouts.every((p) => p.recipient !== null)).toBe(true);
     });
 
     it('should not return non-pending payouts', async () => {
       const pendingPayouts = await getPendingPayoutsForAdmin();
 
       // The payout we set to 'paid' earlier should not be included
-      const hasPaidPayout = pendingPayouts.some(p => p.id === payoutId);
+      const hasPaidPayout = pendingPayouts.some((p) => p.id === payoutId);
       expect(hasPaidPayout).toBe(false);
     });
 

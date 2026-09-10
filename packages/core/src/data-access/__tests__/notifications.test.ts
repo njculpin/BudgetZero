@@ -131,7 +131,7 @@ describe('Notification Data Access Layer', () => {
         order: vi.fn().mockReturnThis(),
         range: vi.fn().mockResolvedValue({
           data: null,
-          error: { message: 'Database connection failed' }
+          error: { message: 'Database connection failed' },
         }),
       };
 
@@ -248,10 +248,12 @@ describe('Notification Data Access Layer', () => {
       const mockQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        then: vi.fn((resolve) => resolve({
-          count: null,
-          error: { message: 'Count failed' }
-        })),
+        then: vi.fn((resolve) =>
+          resolve({
+            count: null,
+            error: { message: 'Count failed' },
+          })
+        ),
       };
 
       mockClient.from.mockReturnValue(mockQuery);
@@ -317,7 +319,7 @@ describe('Notification Data Access Layer', () => {
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
           data: null,
-          error: { code: 'PGRST116' } // Not found error
+          error: { code: 'PGRST116' }, // Not found error
         }),
       };
 
@@ -334,7 +336,7 @@ describe('Notification Data Access Layer', () => {
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
           data: null,
-          error: { message: 'Query failed' }
+          error: { message: 'Query failed' },
         }),
       };
 
@@ -515,7 +517,7 @@ describe('Notification Data Access Layer', () => {
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
           data: null,
-          error: { code: 'PGRST116' }
+          error: { code: 'PGRST116' },
         }),
       };
 
@@ -542,7 +544,7 @@ describe('Notification Data Access Layer', () => {
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
           data: null,
-          error: { message: 'Query failed' }
+          error: { message: 'Query failed' },
         }),
       };
 
@@ -584,11 +586,9 @@ describe('Notification Data Access Layer', () => {
 
       mockClient.from.mockReturnValue(mockQuery);
 
-      const result = await updateNotificationSettings('user-1', {
-      });
+      const result = await updateNotificationSettings('user-1', {});
 
-      expect(mockQuery.update).toHaveBeenCalledWith({
-      });
+      expect(mockQuery.update).toHaveBeenCalledWith({});
       expect(mockQuery.eq).toHaveBeenCalledWith('user_id', 'user-1');
       expect(result).toEqual(updatedSettings);
     });
@@ -600,7 +600,7 @@ describe('Notification Data Access Layer', () => {
         select: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
           data: null,
-          error: { message: 'Update failed' }
+          error: { message: 'Update failed' },
         }),
       };
 
@@ -618,7 +618,7 @@ describe('Notification Data Access Layer', () => {
     it('should resolve product conflict successfully', async () => {
       mockClient.rpc.mockResolvedValue({
         data: { success: true },
-        error: null
+        error: null,
       });
 
       const result = await resolveProductConflict('product-1', 'user-1');
@@ -633,7 +633,7 @@ describe('Notification Data Access Layer', () => {
     it('should return error when user is not product owner', async () => {
       mockClient.rpc.mockResolvedValue({
         data: { success: false, error: 'Unauthorized' },
-        error: null
+        error: null,
       });
 
       const result = await resolveProductConflict('product-1', 'wrong-user');
@@ -644,28 +644,28 @@ describe('Notification Data Access Layer', () => {
     it('should handle database error gracefully', async () => {
       mockClient.rpc.mockResolvedValue({
         data: null,
-        error: { message: 'RPC call failed' }
+        error: { message: 'RPC call failed' },
       });
 
       const result = await resolveProductConflict('product-1', 'user-1');
 
       expect(result).toEqual({
         success: false,
-        error: 'RPC call failed'
+        error: 'RPC call failed',
       });
     });
 
     it('should handle product not found', async () => {
       mockClient.rpc.mockResolvedValue({
         data: { success: false, error: 'Product not found' },
-        error: null
+        error: null,
       });
 
       const result = await resolveProductConflict('non-existent', 'user-1');
 
       expect(result).toEqual({
         success: false,
-        error: 'Product not found'
+        error: 'Product not found',
       });
     });
   });
@@ -705,7 +705,9 @@ describe('Notification Data Access Layer', () => {
       expect(mockQuery.eq).toHaveBeenCalledWith('user_id', 'user-1');
       expect(mockQuery.eq).toHaveBeenCalledWith('needs_attention', true);
       expect(mockQuery.eq).toHaveBeenCalledWith('deleted', false);
-      expect(mockQuery.order).toHaveBeenCalledWith('attention_since', { ascending: false });
+      expect(mockQuery.order).toHaveBeenCalledWith('attention_since', {
+        ascending: false,
+      });
       expect(result).toEqual(mockProducts);
     });
 
@@ -729,7 +731,7 @@ describe('Notification Data Access Layer', () => {
         eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: null,
-          error: { message: 'Query failed' }
+          error: { message: 'Query failed' },
         }),
       };
 

@@ -1,8 +1,8 @@
-import { createMemo, For, Show } from "solid-js";
-import type { ProductFile } from "@gameloopers/core/types";
-import type { ProductDocumentRelation } from "./ProductContentManager/ContentItem";
-import PurchaseActions from "./ProductContentManager/PurchaseActions";
-import "./product-content-viewer.css";
+import { createMemo, For, Show } from 'solid-js';
+import type { ProductFile } from '@gameloopers/core/types';
+import type { ProductDocumentRelation } from './ProductContentManager/ContentItem';
+import PurchaseActions from './ProductContentManager/PurchaseActions';
+import './product-content-viewer.css';
 
 export interface ProductContentViewerProps {
   productId: string;
@@ -22,7 +22,7 @@ export interface ProductContentViewerProps {
 
 interface ContentViewItem {
   id: string;
-  type: "file" | "document" | "embedded";
+  type: 'file' | 'document' | 'embedded';
   name: string;
   price: number;
   creatorInfo?: string;
@@ -33,21 +33,21 @@ export default function ProductContentViewer(props: ProductContentViewerProps) {
   const contentItems = createMemo<ContentViewItem[]>(() => {
     const fileItems: ContentViewItem[] = props.files.map((f) => ({
       id: f.id,
-      type: "file",
+      type: 'file',
       name: f.title,
       price: f.price_cents,
     }));
 
     const docItems: ContentViewItem[] = props.documents.map((d) => ({
       id: d.id,
-      type: "document",
+      type: 'document',
       name: d.document.title,
       price: d.price_cents,
     }));
 
     const embeddedItems: ContentViewItem[] = props.embeddedProducts.map((p) => ({
       id: p.id,
-      type: "embedded",
+      type: 'embedded',
       name: p.title,
       price: p.inherited_price_cents,
       creatorInfo: `by ${p.creator_name}`,
@@ -64,25 +64,25 @@ export default function ProductContentViewer(props: ProductContentViewerProps) {
     return `$${(cents / 100).toFixed(2)}`;
   };
 
-  const getTypeIcon = (type: "file" | "document" | "embedded"): string => {
+  const getTypeIcon = (type: 'file' | 'document' | 'embedded'): string => {
     switch (type) {
-      case "file":
-        return "📁";
-      case "document":
-        return "📄";
-      case "embedded":
-        return "📦";
+      case 'file':
+        return '📁';
+      case 'document':
+        return '📄';
+      case 'embedded':
+        return '📦';
     }
   };
 
-  const getTypeName = (type: "file" | "document" | "embedded"): string => {
+  const getTypeName = (type: 'file' | 'document' | 'embedded'): string => {
     switch (type) {
-      case "file":
-        return "File";
-      case "document":
-        return "Document";
-      case "embedded":
-        return "Product";
+      case 'file':
+        return 'File';
+      case 'document':
+        return 'Document';
+      case 'embedded':
+        return 'Product';
     }
   };
 
@@ -94,9 +94,7 @@ export default function ProductContentViewer(props: ProductContentViewerProps) {
           when={contentItems().length > 0}
           fallback={
             <div class="product-content-viewer__empty">
-              <p class="product-content-viewer__empty-text">
-                No content available yet
-              </p>
+              <p class="product-content-viewer__empty-text">No content available yet</p>
             </div>
           }
         >

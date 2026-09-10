@@ -1,6 +1,6 @@
-import { createSignal, Show } from "solid-js";
-import { LoadingButton } from "@/components/interactive";
-import Modal, { ModalHeader, ModalFooter } from "@/components/modal/Modal";
+import { createSignal, Show } from 'solid-js';
+import { LoadingButton } from '@/components/interactive';
+import Modal, { ModalHeader, ModalFooter } from '@/components/modal/Modal';
 
 export interface PurchaseActionsProps {
   productId: string;
@@ -23,9 +23,9 @@ export default function PurchaseActions(props: PurchaseActionsProps) {
     setError(null);
 
     try {
-      const response = await fetch("/api/cart/add-to-cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/cart/add-to-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: props.productId,
           quantity: 1,
@@ -33,11 +33,11 @@ export default function PurchaseActions(props: PurchaseActionsProps) {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to add to cart");
+      if (!response.ok) throw new Error(data.error || 'Failed to add to cart');
 
       setShowSuccessModal(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add to cart");
+      setError(err instanceof Error ? err.message : 'Failed to add to cart');
     } finally {
       setIsLoading(false);
     }
@@ -45,7 +45,7 @@ export default function PurchaseActions(props: PurchaseActionsProps) {
 
   const handleCloseModal = () => setShowSuccessModal(false);
   const handleViewCart = () => {
-    window.location.href = "/cart";
+    window.location.href = '/cart';
   };
 
   return (
@@ -76,7 +76,7 @@ export default function PurchaseActions(props: PurchaseActionsProps) {
           <circle cx="20" cy="21" r="1" />
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
         </svg>
-        {props.isAuthenticated ? "Add to Cart" : "Sign In to Purchase"}
+        {props.isAuthenticated ? 'Add to Cart' : 'Sign In to Purchase'}
       </LoadingButton>
 
       <Show when={error()}>

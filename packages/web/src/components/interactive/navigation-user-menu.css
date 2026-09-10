@@ -18,7 +18,9 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background-color 0.2s var(--ease-in-out), border-color 0.2s var(--ease-in-out);
+  transition:
+    background-color 0.2s var(--ease-in-out),
+    border-color 0.2s var(--ease-in-out);
 }
 
 .nav-user-menu__trigger:hover {

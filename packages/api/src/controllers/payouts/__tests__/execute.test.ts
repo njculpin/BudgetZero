@@ -220,25 +220,18 @@ describe('POST /api/payouts/execute', () => {
 
   describe('Failure before the transfer releases the reservation', () => {
     it('releases and reports failure when the transfer throws', async () => {
-      vi.mocked(payments.createTransfer).mockRejectedValue(
-        new Error('card_declined')
-      );
+      vi.mocked(payments.createTransfer).mockRejectedValue(new Error('card_declined'));
 
       const response = await invoke();
 
       expect(response.status).toBe(500);
       // No money moved, so the creator's earnings must return to their balance.
-      expect(payouts.releasePayout).toHaveBeenCalledWith(
-        PAYOUT_ID,
-        'card_declined'
-      );
+      expect(payouts.releasePayout).toHaveBeenCalledWith(PAYOUT_ID, 'card_declined');
       expect(payouts.settlePayout).not.toHaveBeenCalled();
     });
 
     it('does not let a release failure mask the transfer failure', async () => {
-      vi.mocked(payments.createTransfer).mockRejectedValue(
-        new Error('card_declined')
-      );
+      vi.mocked(payments.createTransfer).mockRejectedValue(new Error('card_declined'));
       vi.mocked(payouts.releasePayout).mockRejectedValue(
         new Error('database unreachable')
       );

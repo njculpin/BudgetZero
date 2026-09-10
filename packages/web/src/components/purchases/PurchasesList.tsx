@@ -1,7 +1,7 @@
-import { createSignal, For, Show } from "solid-js";
-import PurchaseCard, { type PurchaseWithDetails } from "./PurchaseCard";
-import "./purchases-list.css";
-import { scrollBehavior } from "@/lib/utils/motion";
+import { createSignal, For, Show } from 'solid-js';
+import PurchaseCard, { type PurchaseWithDetails } from './PurchaseCard';
+import './purchases-list.css';
+import { scrollBehavior } from '@/lib/utils/motion';
 
 export interface PurchasesListProps {
   initialPurchases: PurchaseWithDetails[];
@@ -15,8 +15,8 @@ export default function PurchasesList(props: PurchasesListProps) {
   // Pagination is client-side over the list this component is handed; nothing
   // refetches, so these never change after mount.
   const [purchases] = createSignal<PurchaseWithDetails[]>(props.initialPurchases);
-  const [search, setSearch] = createSignal(props.initialSearch || "");
-  const [filter, setFilter] = createSignal(props.initialFilter || "all");
+  const [search, setSearch] = createSignal(props.initialSearch || '');
+  const [filter, setFilter] = createSignal(props.initialFilter || 'all');
   const [currentPage, setCurrentPage] = createSignal(props.initialPage || 1);
   const [totalCount] = createSignal(props.totalCount);
 
@@ -33,9 +33,10 @@ export default function PurchasesList(props: PurchasesListProps) {
       filtered = filtered.filter((purchase) =>
         purchase.items.some((item) => {
           const productMatch = item.product?.title.toLowerCase().includes(searchTerm);
-          const fileMatch = item.files?.some((file) =>
-            file.title.toLowerCase().includes(searchTerm) ||
-            file.source_product_title?.toLowerCase().includes(searchTerm)
+          const fileMatch = item.files?.some(
+            (file) =>
+              file.title.toLowerCase().includes(searchTerm) ||
+              file.source_product_title?.toLowerCase().includes(searchTerm)
           );
           return productMatch || fileMatch;
         })
@@ -46,17 +47,19 @@ export default function PurchasesList(props: PurchasesListProps) {
     const now = new Date();
     const filterValue = filter();
 
-    if (filterValue !== "all") {
+    if (filterValue !== 'all') {
       filtered = filtered.filter((purchase) => {
         const purchaseDate = new Date(purchase.created_at);
-        const daysDiff = Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
+        const daysDiff = Math.floor(
+          (now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
 
         switch (filterValue) {
-          case "last_30":
+          case 'last_30':
             return daysDiff <= 30;
-          case "last_90":
+          case 'last_90':
             return daysDiff <= 90;
-          case "last_year":
+          case 'last_year':
             return daysDiff <= 365;
           default:
             return true;
@@ -70,12 +73,12 @@ export default function PurchasesList(props: PurchasesListProps) {
   // Update URL params when filters change
   const updateUrlParams = () => {
     const params = new URLSearchParams();
-    if (search()) params.set("search", search());
-    if (filter() !== "all") params.set("filter", filter());
-    if (currentPage() > 1) params.set("page", currentPage().toString());
+    if (search()) params.set('search', search());
+    if (filter() !== 'all') params.set('filter', filter());
+    if (currentPage() > 1) params.set('page', currentPage().toString());
 
     const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
-    window.history.pushState({}, "", newUrl);
+    window.history.pushState({}, '', newUrl);
   };
 
   // Handle search input
@@ -194,14 +197,13 @@ export default function PurchasesList(props: PurchasesListProps) {
           fallback={
             <p class="purchases-list__summary-text">
               No purchases found
-              <Show when={search() || filter() !== "all"}>
-                {" "}matching your filters
-              </Show>
+              <Show when={search() || filter() !== 'all'}> matching your filters</Show>
             </p>
           }
         >
           <p class="purchases-list__summary-text">
-            Showing {paginatedPurchases().length} of {filteredPurchases().length} {filteredPurchases().length === 1 ? "purchase" : "purchases"}
+            Showing {paginatedPurchases().length} of {filteredPurchases().length}{' '}
+            {filteredPurchases().length === 1 ? 'purchase' : 'purchases'}
           </p>
         </Show>
       </div>
@@ -212,7 +214,7 @@ export default function PurchasesList(props: PurchasesListProps) {
         fallback={
           <div class="purchases-list__empty">
             <Show
-              when={search() || filter() !== "all"}
+              when={search() || filter() !== 'all'}
               fallback={
                 <>
                   <svg
@@ -263,8 +265,8 @@ export default function PurchasesList(props: PurchasesListProps) {
                 type="button"
                 class="button button--outline button--md"
                 onClick={() => {
-                  setSearch("");
-                  setFilter("all");
+                  setSearch('');
+                  setFilter('all');
                   setCurrentPage(1);
                   updateUrlParams();
                 }}
@@ -327,7 +329,9 @@ export default function PurchasesList(props: PurchasesListProps) {
                 <button
                   type="button"
                   class={`purchases-list__pagination-number ${
-                    page === currentPage() ? "purchases-list__pagination-number--active" : ""
+                    page === currentPage()
+                      ? 'purchases-list__pagination-number--active'
+                      : ''
                   }`}
                   onClick={() => handlePageChange(page)}
                 >
@@ -337,7 +341,9 @@ export default function PurchasesList(props: PurchasesListProps) {
             </For>
 
             <Show when={paginationRange()[paginationRange().length - 1] < totalPages()}>
-              <Show when={paginationRange()[paginationRange().length - 1] < totalPages() - 1}>
+              <Show
+                when={paginationRange()[paginationRange().length - 1] < totalPages() - 1}
+              >
                 <span class="purchases-list__pagination-ellipsis">...</span>
               </Show>
               <button

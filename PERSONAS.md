@@ -5,26 +5,31 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ## Current Personas (MVP - Digital + Physical Services Marketplace)
 
 ### 1. Game Designer
+
 **Role:** Creates tabletop game products by combining assets
 
 **Goals:**
+
 - Publish complete game packages (rules, maps, tokens)
 - Collaborate with artists and modelers
 - Earn revenue from sales
 - Build reputation in TTRPG community
 
 **Pain Points:**
+
 - Can't afford to hire artists/modelers upfront
 - Existing platforms (DriveThruRPG, itch.io) don't support revenue sharing
 - Need easy way to combine digital assets from multiple creators
 
 **Key Features:**
+
 - Product creation with variants
 - Asset linking with automatic royalty distribution
 - Collaborative documents for game rules
 - Jam participation for visibility
 
 **Success Metrics:**
+
 - Products public
 - Total sales revenue
 - Collaborator count
@@ -33,21 +38,25 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ---
 
 ### 2. 3D Modeler
+
 **Role:** Creates STL files for miniatures, terrain, and game pieces
 
 **Goals:**
+
 - Sell digital STL file products
 - Earn passive income through royalties when others embed their products
 - Build portfolio and reputation
 - License work for commercial use
 
 **Pain Points:**
+
 - Race to bottom pricing on generic marketplaces
 - No recurring revenue (one-time sales only)
 - Hard to track commercial usage
 - Limited collaboration opportunities
 
 **Key Features:**
+
 - Product creation with STL file uploads
 - 4-state status system (draft, private, public, archived)
 - Product embeddability (is_embeddable flag for royalty earnings)
@@ -55,6 +64,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Portfolio showcase on profile
 
 **Success Metrics:**
+
 - Public products (embeddable and ready for use)
 - Total downloads
 - Royalty earnings when products are embedded
@@ -63,21 +73,25 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ---
 
 ### 3. Illustrator / Artist
+
 **Role:** Creates 2D art products (character portraits, maps, tokens, card art)
 
 **Goals:**
+
 - License artwork for game products
 - Earn royalties on each product sale when work is embedded
 - Maintain copyright while allowing commercial use
 - Get credited for work
 
 **Pain Points:**
+
 - One-time commission payments (no recurring revenue)
 - Artwork used without proper licensing/credit
 - Hard to find game designers who need art
 - Unclear licensing terms
 
 **Key Features:**
+
 - Product creation with image files (PNG, JPG, PDF)
 - Product embeddability for licensing
 - Public marketplace visibility
@@ -85,6 +99,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Automatic attribution on product pages
 
 **Success Metrics:**
+
 - Public embeddable products in marketplace
 - Products embedding their artwork
 - Royalty earnings from embedded products
@@ -93,20 +108,24 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ---
 
 ### 4. Consumer / Buyer
+
 **Role:** Purchases complete game products for personal use
 
 **Goals:**
+
 - Find high-quality TTRPG content
 - Support creators directly
 - Get complete game packages (not piecemeal assets)
 
 **Pain Points:**
+
 - Existing marketplaces have poor discovery
 - Unclear what's included in purchase
 - Don't know where money goes (who gets paid?)
 - Fragmented purchasing (buy rules, then maps, then tokens separately)
 
 **Key Features:**
+
 - Product marketplace with search/filtering
 - Clear "What's Included" breakdown
 - Transparent royalty information (see who gets paid)
@@ -114,6 +133,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Wishlist and cart
 
 **Success Metrics:**
+
 - Products purchased
 - Return purchase rate
 - Average order value
@@ -122,17 +142,20 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ---
 
 ### 5. Printer (3D Printing Service Provider)
+
 **Status:** CRITICAL - MVP Launch
 
 **Role:** Provides 3D printing services to turn digital STL files into physical miniatures/terrain
 
 **Goals:**
+
 - Earn money from printing capacity (own 3D printer farm)
 - Access steady stream of print orders
 - Build reputation for quality prints
 - Offer multiple materials/finishes (PLA, resin, painted)
 
 **Pain Points:**
+
 - Hard to find customers (Etsy is saturated, Shapeways is automated)
 - Customers provide unprintable STL files
 - Race to bottom on pricing
@@ -140,6 +163,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Quality disputes ("this doesn't look like the preview")
 
 **Key Features:**
+
 - Product creation with product_type='print_service'
 - Service listing page (reuses product page structure):
   - Printer specs (build volume, resolution, materials)
@@ -152,6 +176,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Payments handled through existing Stripe integration
 
 **User Flow:**
+
 ```
 1. Printer creates account (same as any creator)
 2. Create service "product"
@@ -172,6 +197,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ```
 
 **Revenue Model:**
+
 - Customer pays: $20 (for medium size resin print)
 - Platform fee (10%): $2
 - Printer receives: $18
@@ -179,6 +205,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Printer profit: $6
 
 **Success Metrics:**
+
 - Service products listed (target: 5-10 printers at launch)
 - Orders fulfilled per month (per printer)
 - Average rating (target: 4.5+ stars)
@@ -186,6 +213,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Revenue per month
 
 **Technical Requirements (Minimal):**
+
 - Add `product_type` field to products table: 'digital' | 'print_service' | 'paint_service'
 - Add `shipping_address` JSONB field to sales table
 - Collect shipping address at checkout when cart contains service products
@@ -195,17 +223,20 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ---
 
 ### 6. Painter (Miniature Painting Service Provider)
+
 **Status:** PLANNED - Defer until post-MVP (Month 7+)
 
 **Role:** Provides painting services for printed miniatures
 
 **Goals:**
+
 - Earn money from painting skills
 - Access customers who want table-ready minis
 - Showcase painting portfolio
 - Offer multiple quality tiers (tabletop, display, competition)
 
 **Pain Points:**
+
 - Hard to find customers beyond local game stores
 - Time-consuming to quote each job
 - Customers have unrealistic expectations for price/quality
@@ -213,6 +244,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Color preferences hard to communicate
 
 **Key Features:**
+
 - Product creation with product_type='paint_service'
 - Service listing page (reuses product page structure):
   - Painting quality tiers (tabletop $8/mini, display $20/mini, competition $40/mini)
@@ -225,6 +257,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - File upload for customer reference photos (existing file attachment system)
 
 **User Flow:**
+
 ```
 1. Painter creates account (same as any creator)
 2. Create service "product"
@@ -246,6 +279,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ```
 
 **Revenue Model (Example: Tabletop Quality):**
+
 - Customer pays: $15 (for tabletop quality paint job)
 - Platform fee (10%): $1.50
 - Painter receives: $13.50
@@ -253,6 +287,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Painter profit: $8.50
 
 **Success Metrics:**
+
 - Service products listed (target: 3-5 painters at launch)
 - Paint jobs completed per month (per painter)
 - Average rating (target: 4.7+ stars)
@@ -260,6 +295,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 - Revenue per month
 
 **Technical Requirements (Minimal):**
+
 - Same as Printer (product_type='paint_service', shipping_address field)
 - Optional: Customer notes field at checkout for color preferences
 - Optional: File upload at checkout for reference photos
@@ -271,14 +307,15 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 
 ### Digital Marketplace (Current - MVP)
 
-| Creator Type | Creates | Consumers | Earns From |
-|-------------|---------|-----------|------------|
-| Game Designer | Products | Buyers | Product sales |
-| 3D Modeler | Embeddable STL Products | Designers | Direct sales + royalties when embedded in other products |
-| Illustrator | Embeddable Art Products | Designers | Direct sales + royalties when embedded in other products |
-| Consumer | Reviews | N/A | N/A |
+| Creator Type  | Creates                 | Consumers | Earns From                                               |
+| ------------- | ----------------------- | --------- | -------------------------------------------------------- |
+| Game Designer | Products                | Buyers    | Product sales                                            |
+| 3D Modeler    | Embeddable STL Products | Designers | Direct sales + royalties when embedded in other products |
+| Illustrator   | Embeddable Art Products | Designers | Direct sales + royalties when embedded in other products |
+| Consumer      | Reviews                 | N/A       | N/A                                                      |
 
 **Example Transaction:**
+
 - Designer creates product "Fantasy RPG Starter Kit" ($25 total price)
 - Embeds 3D Modeler's STL pack product (royalty: $5)
 - Embeds Illustrator's character art product (royalty: $3)
@@ -294,14 +331,15 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 
 ### Physical Services (Current - MVP)
 
-| Creator Type | Creates | Consumers | Earns From |
-|-------------|---------|-----------|------------|
-| 3D Modeler | Embeddable STL Products | Designers + Consumers + Printers | Product sales + print royalties (optional) |
-| Printer | Physical Minis | Consumers | Print service fees |
-| Painter | Painted Minis | Consumers | Paint service fees |
-| Consumer | Reviews | N/A | N/A |
+| Creator Type | Creates                 | Consumers                        | Earns From                                 |
+| ------------ | ----------------------- | -------------------------------- | ------------------------------------------ |
+| 3D Modeler   | Embeddable STL Products | Designers + Consumers + Printers | Product sales + print royalties (optional) |
+| Printer      | Physical Minis          | Consumers                        | Print service fees                         |
+| Painter      | Painted Minis           | Consumers                        | Paint service fees                         |
+| Consumer     | Reviews                 | N/A                              | N/A                                        |
 
 **Example Transaction (Print + Paint - Bundled Services):**
+
 - Consumer finds Printer's service "Medium Resin Print + Tabletop Paint" ($35 bundled)
 - Downloads 3D Modeler's STL file "Dragon Mini" ($5 digital) separately
 - Sends STL to Printer via order notes/chat
@@ -318,12 +356,14 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ## Collaboration Patterns
 
 ### Current (Digital)
+
 - **Designer + Modeler:** Designer embeds Modeler's STL product, royalty auto-calculated and paid
 - **Designer + Illustrator:** Designer embeds Illustrator's art product, royalty auto-calculated and paid
 - **Multi-Product Embedding:** Designer can embed multiple products from different creators, all royalties tracked
 - **Designer + Designer:** Co-create product (future feature - formal collaboration invitations)
 
 ### Current (Physical Services)
+
 - **Modeler + Printer:** Customer buys Modeler's STL → separately orders print service from Printer → Printer fulfills
 - **Printer + Painter:** Printer can offer bundled print+paint service product → Painter handles fulfillment or collaborates
 - **Customer Flexibility:** Can mix and match (buy STL from Modeler A, print from Printer B, paint from Painter C)
@@ -333,7 +373,9 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ## Persona Prioritization
 
 ### Phase 1 (MVP - Now): Digital + Physical Services Marketplace
+
 **Focus Personas:**
+
 1. ✅ Game Designer (primary)
 2. ✅ 3D Modeler (primary)
 3. ✅ Illustrator (primary)
@@ -342,12 +384,14 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 6. ✅ Painter (beta - invite 3-5 providers)
 
 **Why:**
+
 - Validate core marketplace mechanics with digital products
 - Test physical service demand from day 1 with controlled beta group
 - Differentiate from competitors (only platform with integrated print/paint services)
 - Same technical infrastructure (products, sales, reviews, chat)
 
 **Beta Approach:**
+
 - Manually recruit 5-10 trusted printers + 3-5 painters
 - Launch with "Services" tab in marketplace
 - Low volume initially, learn operational issues
@@ -356,7 +400,9 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ---
 
 ### Phase 2 (Growth - Months 2-6): Scale All Personas
+
 **Focus:**
+
 - Open printer/painter applications (with portfolio verification)
 - Grow digital creators (10+ products per creator)
 - Jam organizers (community leaders)
@@ -369,36 +415,42 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ## Success Metrics by Persona
 
 ### Game Designer
+
 - Products public: Target 3-5 per active designer
 - Average product price: $15-25
 - Products embedding community products: 60%+ (collaborative revenue model)
 - Jam participation rate: 40% of designers
 
 ### 3D Modeler
+
 - Public embeddable products: 70% of total products (not stuck in draft)
 - Products embedded in other products: 30% utilization rate
 - Average royalty per embedded product: $3-5
 - Repeat usage: 2+ products embedding their work
 
 ### Illustrator
+
 - Public embeddable products: 80% of total products
 - Products embedded in other products: 40% utilization rate
 - Average royalty per embedded product: $2-4
 - Portfolio engagement: 50+ profile views per month
 
 ### Consumer
+
 - Average order value: $20-30
 - Repeat purchase rate: 30% within 3 months
 - Jam voting participation: 20% of buyers
 - Review rate: 15% of purchases
 
 ### Printer
+
 - Orders fulfilled: 10+ per month (per printer)
 - Average order value: $20-25
 - Quality approval rate: 95%+ first submission
 - Customer satisfaction: 4.5+ star average
 
 ### Painter
+
 - Paint jobs completed: 5+ per month (per painter)
 - Average order value: $15-20
 - First-submission approval: 90%+
@@ -409,6 +461,7 @@ This document defines all user personas for Game Loopers, their goals, pain poin
 ## Implementation for Printer/Painter Personas (MVP)
 
 ### Database Changes (Minimal)
+
 ```sql
 -- Add product_type to existing products table
 ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT 'digital';
@@ -424,6 +477,7 @@ ALTER TABLE sales ADD COLUMN order_notes TEXT;
 ```
 
 ### UI Components (Reuse Existing)
+
 - ✅ Product pages (already exists - just different content for services)
 - ✅ Product creation form (already exists - add product_type selector)
 - ✅ Cart/Checkout (add shipping address field when cart has services)
@@ -433,15 +487,18 @@ ALTER TABLE sales ADD COLUMN order_notes TEXT;
 - ✅ File uploads (already exists - for reference photos, STL files)
 
 **New Components Needed:**
+
 - `ShippingAddressForm.tsx` (checkout step, ~3 hours)
 - Service type badge on product cards (1 hour)
 
 ### API Changes (Minimal)
+
 - Modify `/api/checkout/*` to collect shipping address when cart contains services
 - Modify order notification emails to include shipping address
 - No new endpoints needed - reuse existing product/sales APIs
 
 ### Operational Requirements (MVP Beta)
+
 - Manual verification of 5-10 printers + 3-5 painters (portfolio review)
 - Basic quality guidelines documented in Help/FAQ
 - Customer service handled via existing support email

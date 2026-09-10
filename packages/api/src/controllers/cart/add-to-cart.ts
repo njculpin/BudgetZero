@@ -41,8 +41,6 @@ export const cartAddToCart: Controller = async ({ request, userId }) => {
     return json({ success: true, cartItem });
   } catch (error) {
     console.error('Add to cart error:', error);
-    return serverError(
-      error instanceof Error ? error.message : 'Failed to add to cart'
-    );
+    return serverError(error instanceof Error ? error.message : 'Failed to add to cart');
   }
 };

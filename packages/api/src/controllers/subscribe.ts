@@ -1,23 +1,23 @@
 import type { Controller } from '../context';
-import { sendEmail } from "@gameloopers/core/email";
+import { sendEmail } from '@gameloopers/core/email';
 
 export const subscribe: Controller = async ({ request }) => {
   const formData = await request.formData();
-  const email = formData.get("email")?.toString();
+  const email = formData.get('email')?.toString();
 
-  if (!email || !email.includes("@")) {
-    return new Response(JSON.stringify({ error: "Invalid email" }), {
+  if (!email || !email.includes('@')) {
+    return new Response(JSON.stringify({ error: 'Invalid email' }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
   try {
     // Send subscription confirmation email
     const result = await sendEmail({
-      from: "Game Loopers <noreply@gameloopers.com>",
+      from: 'Game Loopers <noreply@gameloopers.com>',
       to: email,
-      subject: "Welcome to Game Loopers!",
+      subject: 'Welcome to Game Loopers!',
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #333;">Welcome to Game Loopers!</h1>
@@ -48,13 +48,13 @@ export const subscribe: Controller = async ({ request }) => {
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: "Failed to subscribe" }), {
+    return new Response(JSON.stringify({ error: 'Failed to subscribe' }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 };

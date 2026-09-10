@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, Show } from 'solid-js';
 import {
   FormField,
   TextAreaField,
@@ -6,16 +6,16 @@ import {
   LoadingButton,
   ErrorMessage,
   SuccessMessage,
-} from "@/components/interactive";
-import TagInput from "@/components/interactive/TagInput";
-import "@/components/interactive/base.css";
+} from '@/components/interactive';
+import TagInput from '@/components/interactive/TagInput';
+import '@/components/interactive/base.css';
 
 export interface ProductEditFormProps {
   productId: string;
   initialData: {
     title: string;
     description: string | null;
-    status: "draft" | "private" | "public" | "archived";
+    status: 'draft' | 'private' | 'public' | 'archived';
     coverImageUrl: string | null;
     tags: string[];
   };
@@ -24,15 +24,13 @@ export interface ProductEditFormProps {
 
 export default function ProductEditForm(props: ProductEditFormProps) {
   const [title, setTitle] = createSignal(props.initialData.title);
-  const [description, setDescription] = createSignal(
-    props.initialData.description || ""
-  );
+  const [description, setDescription] = createSignal(props.initialData.description || '');
   const [status, setStatus] = createSignal(props.initialData.status);
   const [tags, setTags] = createSignal<string[]>(props.initialData.tags);
   const [coverImageFile, setCoverImageFile] = createSignal<File | null>(null);
   const [isLoading, setIsLoading] = createSignal(false);
-  const [error, setError] = createSignal("");
-  const [success, setSuccess] = createSignal("");
+  const [error, setError] = createSignal('');
+  const [success, setSuccess] = createSignal('');
 
   const handleFilesSelected = (files: File[]) => {
     if (files.length > 0) {
@@ -40,38 +38,37 @@ export default function ProductEditForm(props: ProductEditFormProps) {
     }
   };
 
-
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setIsLoading(true);
 
     try {
       const formData = new FormData();
-      formData.append("productId", props.productId);
-      formData.append("title", title());
-      formData.append("description", description());
-      formData.append("status", status());
-      formData.append("tags", JSON.stringify(tags()));
+      formData.append('productId', props.productId);
+      formData.append('title', title());
+      formData.append('description', description());
+      formData.append('status', status());
+      formData.append('tags', JSON.stringify(tags()));
 
       if (coverImageFile()) {
-        formData.append("coverImage", coverImageFile()!);
+        formData.append('coverImage', coverImageFile()!);
       }
 
-      const response = await fetch("/api/products/update-product", {
-        method: "POST",
+      const response = await fetch('/api/products/update-product', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to update product");
+        setError(data.error || 'Failed to update product');
         setIsLoading(false);
         return;
       }
 
-      setSuccess("Product updated successfully!");
+      setSuccess('Product updated successfully!');
       setIsLoading(false);
 
       // Reload page after short delay to show success message
@@ -79,7 +76,7 @@ export default function ProductEditForm(props: ProductEditFormProps) {
         window.location.href = `/products/${props.productHandle}`;
       }, 1500);
     } catch {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
       setIsLoading(false);
     }
   };
@@ -91,11 +88,11 @@ export default function ProductEditForm(props: ProductEditFormProps) {
   return (
     <form onSubmit={handleSubmit} class="product-edit-form">
       <Show when={error()}>
-        <ErrorMessage message={error()} onDismiss={() => setError("")} />
+        <ErrorMessage message={error()} onDismiss={() => setError('')} />
       </Show>
 
       <Show when={success()}>
-        <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
+        <SuccessMessage message={success()} onDismiss={() => setSuccess('')} />
       </Show>
 
       <FormField
@@ -137,9 +134,7 @@ export default function ProductEditForm(props: ProductEditFormProps) {
           class="form-field__file-input"
         />
         <Show when={coverImageFile()}>
-          <p class="form-field__help-text">
-            New file selected: {coverImageFile()!.name}
-          </p>
+          <p class="form-field__help-text">New file selected: {coverImageFile()!.name}</p>
         </Show>
       </div>
 
@@ -158,23 +153,22 @@ export default function ProductEditForm(props: ProductEditFormProps) {
         name="status"
         value={status()}
         onChange={(e: Event) =>
-          setStatus((e.currentTarget as HTMLSelectElement).value as "draft" | "private" | "archived")
+          setStatus(
+            (e.currentTarget as HTMLSelectElement).value as
+              'draft' | 'private' | 'archived'
+          )
         }
         options={[
-          { value: "draft", label: "Draft" },
-          { value: "private", label: "Private" },
-          { value: "public", label: "Public" },
-          { value: "archived", label: "Archived" },
+          { value: 'draft', label: 'Draft' },
+          { value: 'private', label: 'Private' },
+          { value: 'public', label: 'Public' },
+          { value: 'archived', label: 'Archived' },
         ]}
         disabled={isLoading()}
       />
 
       <div class="product-edit-form__actions">
-        <LoadingButton
-          type="submit"
-          isLoading={isLoading()}
-          loadingText="Saving..."
-        >
+        <LoadingButton type="submit" isLoading={isLoading()} loadingText="Saving...">
           Save Changes
         </LoadingButton>
       </div>

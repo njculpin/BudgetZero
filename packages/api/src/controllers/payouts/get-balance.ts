@@ -1,6 +1,9 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { getUserPayouts, getAvailablePayoutBalance } from "@gameloopers/core/data-access/payouts";
+import {
+  getUserPayouts,
+  getAvailablePayoutBalance,
+} from '@gameloopers/core/data-access/payouts';
 
 export const payoutsGetBalance: Controller = async ({ userId }) => {
   if (!userId) return unauthorized('Not authenticated');
@@ -20,18 +23,18 @@ export const payoutsGetBalance: Controller = async ({ userId }) => {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Get balance error:", error);
+    console.error('Get balance error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to get balance",
+        error: error instanceof Error ? error.message : 'Failed to get balance',
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

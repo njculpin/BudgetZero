@@ -67,10 +67,7 @@ describe('POST /api/cart/update', () => {
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data.success).toBe(true);
-      expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(
-        VALID_CART_ITEM_ID,
-        3
-      );
+      expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(VALID_CART_ITEM_ID, 3);
     });
 
     it('should handle quantity of 0 (removes item)', async () => {
@@ -87,10 +84,7 @@ describe('POST /api/cart/update', () => {
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data.success).toBe(true);
-      expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(
-        VALID_CART_ITEM_ID,
-        0
-      );
+      expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(VALID_CART_ITEM_ID, 0);
     });
 
     it('should reject negative quantity (min is 0)', async () => {
@@ -120,10 +114,7 @@ describe('POST /api/cart/update', () => {
       const response = await cartUpdate(makeContext({ request: mockRequest }));
 
       expect(response.status).toBe(200);
-      expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(
-        VALID_CART_ITEM_ID,
-        100
-      );
+      expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(VALID_CART_ITEM_ID, 100);
     });
 
     it('should return 500 when update fails', async () => {
@@ -234,10 +225,7 @@ describe('POST /api/cart/update', () => {
 
       await cartUpdate(makeContext({ request: mockRequest }));
 
-      expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(
-        VALID_CART_ITEM_ID,
-        2
-      );
+      expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(VALID_CART_ITEM_ID, 2);
     });
   });
 

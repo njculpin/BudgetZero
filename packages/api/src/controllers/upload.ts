@@ -1,19 +1,19 @@
 import type { Controller } from '../context';
 import { unauthorized } from '../responses';
-import { z } from "zod";
+import { z } from 'zod';
 import {
   checkRateLimit,
   rateLimitIdentity,
   rateLimitedResponse,
   RATE_LIMITS,
-} from "@gameloopers/core/rate-limit";
+} from '@gameloopers/core/rate-limit';
 import {
   uploadFile,
   generateFilePath,
   validateFile,
   IMAGE_TYPES,
   DOCUMENT_TYPES,
-} from "@gameloopers/core/storage";
+} from '@gameloopers/core/storage';
 
 /**
  * Buckets this generic endpoint may write to.
@@ -24,31 +24,32 @@ import {
  * bucket without an ownership check.
  */
 const uploadSchema = z.object({
-  bucket: z.enum([
-    "product-images",
-    "user-avatars",
-    "document-attachments",
-  ]),
+  bucket: z.enum(['product-images', 'user-avatars', 'document-attachments']),
   prefix: z.string().optional(),
 });
 
-type UploadableBucket = z.infer<typeof uploadSchema>["bucket"];
+type UploadableBucket = z.infer<typeof uploadSchema>['bucket'];
 
 // Define allowed file types per bucket
 const BUCKET_FILE_TYPES: Record<UploadableBucket, string[]> = {
-  "product-images": IMAGE_TYPES,
-  "user-avatars": IMAGE_TYPES,
-  "document-attachments": DOCUMENT_TYPES,
+  'product-images': IMAGE_TYPES,
+  'user-avatars': IMAGE_TYPES,
+  'document-attachments': DOCUMENT_TYPES,
 };
 
 // Define max file sizes per bucket (in MB)
 const BUCKET_MAX_SIZES: Record<UploadableBucket, number> = {
-  "product-images": 10,
-  "user-avatars": 5,
-  "document-attachments": 50,
+  'product-images': 10,
+  'user-avatars': 5,
+  'document-attachments': 50,
 };
 
-export const upload: Controller = async ({ request, userId, clientAddress, accessToken }) => {
+export const upload: Controller = async ({
+  request,
+  userId,
+  clientAddress,
+  accessToken,
+}) => {
   // Check authentication
   if (!userId) return unauthorized('Not authenticated');
 
@@ -67,14 +68,14 @@ export const upload: Controller = async ({ request, userId, clientAddress, acces
   try {
     // Parse FormData
     const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const bucket = formData.get("bucket") as string;
-    const prefix = formData.get("prefix") as string | null;
+    const file = formData.get('file') as File;
+    const bucket = formData.get('bucket') as string;
+    const prefix = formData.get('prefix') as string | null;
 
     if (!file) {
-      return new Response(JSON.stringify({ error: "No file provided" }), {
+      return new Response(JSON.stringify({ error: 'No file provided' }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -92,16 +93,12 @@ export const upload: Controller = async ({ request, userId, clientAddress, acces
     if (validationError) {
       return new Response(JSON.stringify({ error: validationError }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     // Generate file path
-    const filePath = generateFilePath(
-      userId,
-      file.name,
-      validatedData.prefix
-    );
+    const filePath = generateFilePath(userId, file.name, validatedData.prefix);
 
     // Upload file
     // The access token must be forwarded: storage RLS scopes writes to the owning
@@ -115,13 +112,10 @@ export const upload: Controller = async ({ request, userId, clientAddress, acces
     });
 
     if (!result) {
-      return new Response(
-        JSON.stringify({ error: "Failed to upload file" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Failed to upload file' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(
@@ -136,32 +130,32 @@ export const upload: Controller = async ({ request, userId, clientAddress, acces
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error('Upload error:', error);
 
     if (error instanceof z.ZodError) {
       return new Response(
         JSON.stringify({
-          error: "Invalid upload data",
+          error: 'Invalid upload data',
           details: error.errors,
         }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Upload failed",
+        error: error instanceof Error ? error.message : 'Upload failed',
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

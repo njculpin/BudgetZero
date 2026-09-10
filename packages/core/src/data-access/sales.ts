@@ -1,5 +1,11 @@
 import { serverClient } from './client';
-import type { Sale, SaleItem, SaleStatus, PaymentMethod, ShippingAddress } from '../types';
+import type {
+  Sale,
+  SaleItem,
+  SaleStatus,
+  PaymentMethod,
+  ShippingAddress,
+} from '../types';
 
 export interface CreateSaleParams {
   userId: string;
@@ -28,9 +34,7 @@ export interface CreateSaleItemParams {
 /**
  * Create a new sale
  */
-export const createSale = async (
-  params: CreateSaleParams
-): Promise<Sale | null> => {
+export const createSale = async (params: CreateSaleParams): Promise<Sale | null> => {
   const { data, error } = await serverClient
     .from('sales')
     .insert({
@@ -44,7 +48,9 @@ export const createSale = async (
       payment_method: params.paymentMethod || 'stripe',
       shipping_address: params.shippingAddress || null,
       order_notes: params.orderNotes || null,
-      completed_at: params.completedAt || (params.status === 'paid' ? new Date().toISOString() : null),
+      completed_at:
+        params.completedAt ||
+        (params.status === 'paid' ? new Date().toISOString() : null),
     })
     .select()
     .single();
@@ -173,10 +179,7 @@ export const updateSaleStatus = async (
     updateData.completed_at = new Date().toISOString();
   }
 
-  const { error } = await serverClient
-    .from('sales')
-    .update(updateData)
-    .eq('id', saleId);
+  const { error } = await serverClient.from('sales').update(updateData).eq('id', saleId);
 
   if (error) {
     console.error('Error updating sale status:', error);
@@ -245,9 +248,7 @@ export const hasUserPurchasedProduct = async (
  * the components they embed. Returned as a Set so callers checking several products
  * (a download page, a purchase detail view) pay the query cost once.
  */
-export const getPurchasedProductIds = async (
-  userId: string
-): Promise<Set<string>> => {
+export const getPurchasedProductIds = async (userId: string): Promise<Set<string>> => {
   // Get user's paid sales
   const { data: sales, error: salesError } = await serverClient
     .from('sales')
@@ -260,7 +261,7 @@ export const getPurchasedProductIds = async (
     return new Set();
   }
 
-  const saleIds = sales.map(s => s.id);
+  const saleIds = sales.map((s) => s.id);
 
   // Products bought directly as line items
   const { data: saleItems, error: itemsError } = await serverClient
@@ -274,7 +275,7 @@ export const getPurchasedProductIds = async (
   }
 
   const accessibleIds = new Set<string>(
-    saleItems.map(item => item.product_id as string)
+    saleItems.map((item) => item.product_id as string)
   );
 
   // Expand into embedded components. One level of expansion matches how pricing and

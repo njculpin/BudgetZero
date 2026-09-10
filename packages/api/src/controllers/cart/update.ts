@@ -1,7 +1,7 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { updateCartItemQuantity } from "@gameloopers/core/data-access/cart";
-import { z } from "zod";
+import { updateCartItemQuantity } from '@gameloopers/core/data-access/cart';
+import { z } from 'zod';
 
 const updateCartItemSchema = z.object({
   cartItemId: z.string().uuid(),
@@ -22,33 +22,30 @@ export const cartUpdate: Controller = async ({ request, userId }) => {
     );
 
     if (!success) {
-      return new Response(
-        JSON.stringify({ error: "Failed to update cart item" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: 'Failed to update cart item' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({ error: "Validation failed", details: error.errors }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        JSON.stringify({ error: 'Validation failed', details: error.errors }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    console.error("Update cart item error:", error);
+    console.error('Update cart item error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to update cart item",
+        error: error instanceof Error ? error.message : 'Failed to update cart item',
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };

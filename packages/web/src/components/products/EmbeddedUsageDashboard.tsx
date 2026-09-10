@@ -1,5 +1,5 @@
-import { createSignal, createEffect, For, Show } from "solid-js";
-import "./embedded-usage-dashboard.css";
+import { createSignal, createEffect, For, Show } from 'solid-js';
+import './embedded-usage-dashboard.css';
 
 interface ParentProduct {
   id: string;
@@ -17,7 +17,7 @@ interface ParentProduct {
 export default function EmbeddedUsageDashboard() {
   const [parentProducts, setParentProducts] = createSignal<ParentProduct[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
-  const [error, setError] = createSignal("");
+  const [error, setError] = createSignal('');
 
   createEffect(() => {
     fetchEmbeddedUsage();
@@ -25,14 +25,14 @@ export default function EmbeddedUsageDashboard() {
 
   const fetchEmbeddedUsage = async () => {
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
-      const response = await fetch("/api/products/embedded-usage");
+      const response = await fetch('/api/products/embedded-usage');
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to load embedded usage data");
+        setError(data.error || 'Failed to load embedded usage data');
         setIsLoading(false);
         return;
       }
@@ -41,13 +41,16 @@ export default function EmbeddedUsageDashboard() {
       setParentProducts(data.parentProducts || []);
       setIsLoading(false);
     } catch {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
       setIsLoading(false);
     }
   };
 
   const totalEarnings = () => {
-    return parentProducts().reduce((sum, product) => sum + product.total_earnings_cents, 0);
+    return parentProducts().reduce(
+      (sum, product) => sum + product.total_earnings_cents,
+      0
+    );
   };
 
   const formatCurrency = (cents: number) => {
@@ -69,7 +72,9 @@ export default function EmbeddedUsageDashboard() {
         <Show when={!isLoading() && parentProducts().length > 0}>
           <div class="embedded-usage__total">
             <span class="embedded-usage__total-label">Total Royalties Earned</span>
-            <span class="embedded-usage__total-amount">{formatCurrency(totalEarnings())}</span>
+            <span class="embedded-usage__total-amount">
+              {formatCurrency(totalEarnings())}
+            </span>
           </div>
         </Show>
       </div>
@@ -95,7 +100,9 @@ export default function EmbeddedUsageDashboard() {
           <div class="embedded-usage__empty-icon">📦</div>
           <h3 class="embedded-usage__empty-title">No Embedded Products Yet</h3>
           <p class="embedded-usage__empty-text">
-            Your products haven't been embedded in other products yet. Make sure your products are marked as embeddable and set to public status to allow others to use them.
+            Your products haven't been embedded in other products yet. Make sure your
+            products are marked as embeddable and set to public status to allow others to
+            use them.
           </p>
         </div>
       </Show>
@@ -104,10 +111,7 @@ export default function EmbeddedUsageDashboard() {
         <div class="embedded-usage__grid">
           <For each={parentProducts()}>
             {(product) => (
-              <a
-                href={`/products/${product.handle}`}
-                class="embedded-product-card"
-              >
+              <a href={`/products/${product.handle}`} class="embedded-product-card">
                 <div class="embedded-product-card__image">
                   {product.cover_image_url ? (
                     <img
@@ -125,21 +129,32 @@ export default function EmbeddedUsageDashboard() {
                 <div class="embedded-product-card__content">
                   <h3 class="embedded-product-card__title">{product.title}</h3>
                   <p class="embedded-product-card__owner">
-                    by <span class="embedded-product-card__owner-name">{product.owner_name}</span>
+                    by{' '}
+                    <span class="embedded-product-card__owner-name">
+                      {product.owner_name}
+                    </span>
                   </p>
 
                   <div class="embedded-product-card__stats">
                     <div class="embedded-product-card__stat">
-                      <span class="embedded-product-card__stat-label">Your Component Price</span>
-                      <span class="embedded-product-card__stat-value">{formatCurrency(product.inherited_price_cents)}</span>
+                      <span class="embedded-product-card__stat-label">
+                        Your Component Price
+                      </span>
+                      <span class="embedded-product-card__stat-value">
+                        {formatCurrency(product.inherited_price_cents)}
+                      </span>
                     </div>
                     <div class="embedded-product-card__stat">
                       <span class="embedded-product-card__stat-label">Sales</span>
-                      <span class="embedded-product-card__stat-value">{product.sales_count}</span>
+                      <span class="embedded-product-card__stat-value">
+                        {product.sales_count}
+                      </span>
                     </div>
                     <div class="embedded-product-card__stat embedded-product-card__stat--highlight">
                       <span class="embedded-product-card__stat-label">Earned</span>
-                      <span class="embedded-product-card__stat-value">{formatCurrency(product.total_earnings_cents)}</span>
+                      <span class="embedded-product-card__stat-value">
+                        {formatCurrency(product.total_earnings_cents)}
+                      </span>
                     </div>
                   </div>
                 </div>

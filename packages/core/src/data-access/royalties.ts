@@ -10,7 +10,9 @@ export interface CreateRoyaltyParams {
 /**
  * Get all royalties for a product
  */
-export const getProductRoyalties = async (productId: string): Promise<ProductRoyalty[]> => {
+export const getProductRoyalties = async (
+  productId: string
+): Promise<ProductRoyalty[]> => {
   const { data, error } = await serverClient
     .from('product_royalties')
     .select('*')
@@ -29,7 +31,9 @@ export const getProductRoyalties = async (productId: string): Promise<ProductRoy
 /**
  * Get a specific royalty by ID
  */
-export const getRoyaltyById = async (royaltyId: string): Promise<ProductRoyalty | null> => {
+export const getRoyaltyById = async (
+  royaltyId: string
+): Promise<ProductRoyalty | null> => {
   const { data, error } = await serverClient
     .from('product_royalties')
     .select('*')
@@ -95,9 +99,7 @@ export const updateProductRoyalty = async (
 /**
  * Delete a royalty (soft delete)
  */
-export const deleteProductRoyalty = async (
-  royaltyId: string
-): Promise<boolean> => {
+export const deleteProductRoyalty = async (royaltyId: string): Promise<boolean> => {
   const { error } = await serverClient
     .from('product_royalties')
     .update({
@@ -118,9 +120,7 @@ export const deleteProductRoyalty = async (
  * Calculate total flat rate cost for a product
  * Returns the sum of all royalty flat rates in cents
  */
-export const calculateTotalProductCost = async (
-  productId: string
-): Promise<number> => {
+export const calculateTotalProductCost = async (productId: string): Promise<number> => {
   const royalties = await getProductRoyalties(productId);
   return royalties.reduce((total, royalty) => total + royalty.royalty_value, 0);
 };
@@ -132,13 +132,13 @@ export async function getUserRoyaltyTransactions(
   userId: string
 ): Promise<SaleRoyaltyTransaction[]> {
   const { data, error } = await serverClient
-    .from("sale_royalty_transactions")
-    .select("*")
-    .eq("recipient_user_id", userId)
-    .order("created_at", { ascending: false });
+    .from('sale_royalty_transactions')
+    .select('*')
+    .eq('recipient_user_id', userId)
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error("Error fetching royalty transactions:", error);
+    console.error('Error fetching royalty transactions:', error);
     return [];
   }
 
@@ -161,10 +161,7 @@ export async function getUserEarningsSummary(userId: string): Promise<{
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-  const totalEarnings = transactions.reduce(
-    (sum, t) => sum + t.calculated_cents,
-    0
-  );
+  const totalEarnings = transactions.reduce((sum, t) => sum + t.calculated_cents, 0);
 
   const thisMonthEarnings = transactions
     .filter((t) => new Date(t.created_at) >= thisMonthStart)
@@ -173,8 +170,7 @@ export async function getUserEarningsSummary(userId: string): Promise<{
   const lastMonthEarnings = transactions
     .filter(
       (t) =>
-        new Date(t.created_at) >= lastMonthStart &&
-        new Date(t.created_at) <= lastMonthEnd
+        new Date(t.created_at) >= lastMonthStart && new Date(t.created_at) <= lastMonthEnd
     )
     .reduce((sum, t) => sum + t.calculated_cents, 0);
 
@@ -225,7 +221,9 @@ export async function createRoyaltyTransactionsForProduct(params: {
 
     // Skip if calculated amount is 0 or negative
     if (calculatedCents <= 0) {
-      console.warn(`Calculated royalty is ${calculatedCents} for royalty ${royalty.id}, skipping`);
+      console.warn(
+        `Calculated royalty is ${calculatedCents} for royalty ${royalty.id}, skipping`
+      );
       continue;
     }
 
@@ -246,7 +244,10 @@ export async function createRoyaltyTransactionsForProduct(params: {
       .single();
 
     if (error) {
-      console.error(`Error creating royalty transaction for royalty ${royalty.id}:`, error);
+      console.error(
+        `Error creating royalty transaction for royalty ${royalty.id}:`,
+        error
+      );
       continue;
     }
 
@@ -274,9 +275,7 @@ export async function createRoyaltyTransactionsForProduct(params: {
  * of them, its amount no longer matches its items and it needs releasing — see the
  * caller in the charge.refunded webhook branch.
  */
-export async function markSaleRoyaltiesAsRefunded(
-  saleId: string
-): Promise<number> {
+export async function markSaleRoyaltiesAsRefunded(saleId: string): Promise<number> {
   const { data, error } = await serverClient
     .from('sale_royalty_transactions')
     .update({

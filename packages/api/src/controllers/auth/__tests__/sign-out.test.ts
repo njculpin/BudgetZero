@@ -14,7 +14,10 @@ import { makeContext } from '@gameloopers/api/test-support';
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { authSignOutPost, authSignOutGet } from '@gameloopers/api/controllers/auth/sign-out';
+import {
+  authSignOutPost,
+  authSignOutGet,
+} from '@gameloopers/api/controllers/auth/sign-out';
 import * as auth from '@gameloopers/core/auth';
 
 /** Where a 3xx response points, or null when it is not a redirect. */
@@ -40,7 +43,6 @@ describe('POST /api/auth/sign-out', () => {
       delete: vi.fn(),
       has: vi.fn(),
     };
-
   });
 
   afterEach(() => {

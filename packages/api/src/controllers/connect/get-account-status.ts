@@ -1,8 +1,11 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { getUserById } from "@gameloopers/core/data-access/users";
-import { getConnectAccountStatus, createLoginLink } from "@gameloopers/core/payments/connect";
-import { serverClient } from "@gameloopers/core/data-access/client";
+import { getUserById } from '@gameloopers/core/data-access/users';
+import {
+  getConnectAccountStatus,
+  createLoginLink,
+} from '@gameloopers/core/payments/connect';
+import { serverClient } from '@gameloopers/core/data-access/client';
 
 export const connectGetAccountStatus: Controller = async ({ userId }) => {
   if (!userId) return unauthorized('Not authenticated');
@@ -11,9 +14,9 @@ export const connectGetAccountStatus: Controller = async ({ userId }) => {
     // Get user data
     const user = await getUserById(userId);
     if (!user) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -26,7 +29,7 @@ export const connectGetAccountStatus: Controller = async ({ userId }) => {
         }),
         {
           status: 200,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
@@ -53,7 +56,7 @@ export const connectGetAccountStatus: Controller = async ({ userId }) => {
         const loginLink = await createLoginLink(user.stripe_connect_account_id);
         dashboardUrl = loginLink.url;
       } catch (error) {
-        console.error("Error creating login link:", error);
+        console.error('Error creating login link:', error);
       }
     }
 
@@ -65,18 +68,18 @@ export const connectGetAccountStatus: Controller = async ({ userId }) => {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Get account status error:", error);
+    console.error('Get account status error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to get account status",
+        error: error instanceof Error ? error.message : 'Failed to get account status',
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

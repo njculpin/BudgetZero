@@ -1,5 +1,5 @@
-import { createSignal, Show, For, onCleanup } from "solid-js";
-import "./navigation-dropdown.css";
+import { createSignal, Show, For, onCleanup } from 'solid-js';
+import './navigation-dropdown.css';
 
 export interface NavigationDropdownLink {
   href: string;
@@ -9,7 +9,7 @@ export interface NavigationDropdownLink {
 export interface NavigationDropdownProps {
   label: string;
   links: NavigationDropdownLink[];
-  variant?: "default" | "user";
+  variant?: 'default' | 'user';
 }
 
 export default function NavigationDropdown(props: NavigationDropdownProps) {
@@ -33,33 +33,33 @@ export default function NavigationDropdown(props: NavigationDropdownProps) {
 
   // Close dropdown on Escape key
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
+    if (event.key === 'Escape') {
       closeDropdown();
     }
   };
 
   // Set up event listeners
-  if (typeof window !== "undefined") {
-    window.addEventListener("click", handleClickOutside);
-    window.addEventListener("keydown", handleKeyDown);
+  if (typeof window !== 'undefined') {
+    window.addEventListener('click', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
 
     onCleanup(() => {
-      window.removeEventListener("click", handleClickOutside);
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
     });
   }
 
   return (
     <div class="nav-dropdown" ref={dropdownRef}>
       <button
-        class={`nav-dropdown__trigger ${props.variant === "user" ? "nav-dropdown__trigger--user" : ""}`}
+        class={`nav-dropdown__trigger ${props.variant === 'user' ? 'nav-dropdown__trigger--user' : ''}`}
         onClick={toggleDropdown}
         aria-expanded={isOpen()}
         aria-haspopup="true"
       >
         <span class="nav-dropdown__label">{props.label}</span>
         <svg
-          class={`nav-dropdown__icon ${isOpen() ? "nav-dropdown__icon--open" : ""}`}
+          class={`nav-dropdown__icon ${isOpen() ? 'nav-dropdown__icon--open' : ''}`}
           xmlns="http://www.w3.org/2000/svg"
           width="16"
           height="16"

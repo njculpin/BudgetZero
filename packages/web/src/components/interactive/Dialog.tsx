@@ -1,5 +1,5 @@
-import { Show } from "solid-js";
-import "./dialog.css";
+import { Show } from 'solid-js';
+import './dialog.css';
 import type { JSX } from 'solid-js';
 
 export interface DialogProps {
@@ -7,11 +7,11 @@ export interface DialogProps {
   onClose: () => void;
   title: string;
   children: JSX.Element;
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export default function Dialog(props: DialogProps) {
-  const sizeClass = props.size ? `dialog--${props.size}` : "dialog--md";
+  const sizeClass = props.size ? `dialog--${props.size}` : 'dialog--md';
 
   const handleOverlayClick = (e: MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -20,7 +20,7 @@ export default function Dialog(props: DialogProps) {
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       props.onClose();
     }
   };

@@ -120,7 +120,11 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-lg) var(--spacing-xl);
-  background: linear-gradient(135deg, var(--primary) 0%, oklch(from var(--primary) calc(l * 0.9) c h) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    oklch(from var(--primary) calc(l * 0.9) c h) 100%
+  );
   border-radius: var(--radius-md);
   border: var(--border-width-thick) solid var(--primary);
   box-shadow: var(--shadow-md);

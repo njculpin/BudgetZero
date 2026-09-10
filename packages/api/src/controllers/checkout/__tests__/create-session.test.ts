@@ -60,7 +60,9 @@ describe('POST /api/checkout/create-session', () => {
     // signature — are tested once in gateway.test.ts rather than in every
     // controller. What remains is this controller's own decision.
     it('rejects a caller who is not signed in', async () => {
-      const response = await checkoutCreateSession(makeContext({ userId: null, ...{ body: {} } }));
+      const response = await checkoutCreateSession(
+        makeContext({ userId: null, ...{ body: {} } })
+      );
 
       expect(response.status).toBe(401);
     });
@@ -406,7 +408,8 @@ describe('POST /api/checkout/create-session', () => {
 
       expect(payments.createCheckoutSession).toHaveBeenCalledWith(
         expect.objectContaining({
-          successUrl: 'http://localhost:4321/checkout/success?session_id={CHECKOUT_SESSION_ID}',
+          successUrl:
+            'http://localhost:4321/checkout/success?session_id={CHECKOUT_SESSION_ID}',
           cancelUrl: 'http://localhost:4321/checkout/failed?error=cancelled',
         })
       );

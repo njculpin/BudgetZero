@@ -1,19 +1,19 @@
-import type { JSX } from "solid-js";
-import "@/styles/button.css";
-import "./loading-button.css";
+import type { JSX } from 'solid-js';
+import '@/styles/button.css';
+import './loading-button.css';
 
 interface LoadingButtonProps {
-  type?: "button" | "submit" | "reset";
+  type?: 'button' | 'submit' | 'reset';
   variant?:
-    | "primary"
-    | "secondary"
-    | "ghost"
-    | "ghost-secondary"
-    | "outline"
-    | "destructive"
-    | "accent"
-    | "link";
-  size?: "sm" | "md" | "lg" | "icon";
+    | 'primary'
+    | 'secondary'
+    | 'ghost'
+    | 'ghost-secondary'
+    | 'outline'
+    | 'destructive'
+    | 'accent'
+    | 'link';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
   disabled?: boolean;
   class?: string;
@@ -23,24 +23,24 @@ interface LoadingButtonProps {
 }
 
 export default function LoadingButton(props: LoadingButtonProps) {
-  const variantClass = () => props.variant
-    ? `button--${props.variant}`
-    : "button--primary";
-  const sizeClass = () => props.size ? `button--${props.size}` : "button--md";
+  const variantClass = () =>
+    props.variant ? `button--${props.variant}` : 'button--primary';
+  const sizeClass = () => (props.size ? `button--${props.size}` : 'button--md');
 
-  const classes = () => [
-    "button",
-    variantClass(),
-    sizeClass(),
-    props.isLoading ? "button--loading" : "",
-    props.class,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const classes = () =>
+    [
+      'button',
+      variantClass(),
+      sizeClass(),
+      props.isLoading ? 'button--loading' : '',
+      props.class,
+    ]
+      .filter(Boolean)
+      .join(' ');
 
   return (
     <button
-      type={props.type || "submit"}
+      type={props.type || 'submit'}
       class={classes()}
       disabled={props.disabled || props.isLoading}
       onClick={props.onClick}
@@ -70,9 +70,7 @@ export default function LoadingButton(props: LoadingButtonProps) {
         </svg>
       )}
       <span class="button__text">
-        {props.isLoading && props.loadingText
-          ? props.loadingText
-          : props.children}
+        {props.isLoading && props.loadingText ? props.loadingText : props.children}
       </span>
     </button>
   );

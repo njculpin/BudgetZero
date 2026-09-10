@@ -69,7 +69,8 @@
   cursor: pointer;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
-  transition: background-color var(--duration-fast) var(--ease-in-out),
+  transition:
+    background-color var(--duration-fast) var(--ease-in-out),
     color var(--duration-fast) var(--ease-in-out);
 }
 

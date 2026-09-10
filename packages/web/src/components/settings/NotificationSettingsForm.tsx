@@ -1,15 +1,13 @@
-import { createSignal, Show } from "solid-js";
-import type { NotificationSettings } from "@gameloopers/core/types";
-import "./notification-settings-form.css";
+import { createSignal, Show } from 'solid-js';
+import type { NotificationSettings } from '@gameloopers/core/types';
+import './notification-settings-form.css';
 
 interface NotificationSettingsFormProps {
   userId: string;
   settings: NotificationSettings | null;
 }
 
-export default function NotificationSettingsForm(
-  props: NotificationSettingsFormProps
-) {
+export default function NotificationSettingsForm(props: NotificationSettingsFormProps) {
   const [loading, setLoading] = createSignal(false);
   const [success, setSuccess] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
@@ -18,9 +16,7 @@ export default function NotificationSettingsForm(
   const [emailProductConflicts, setEmailProductConflicts] = createSignal(
     props.settings?.email_product_conflicts ?? true
   );
-  const [emailSales, setEmailSales] = createSignal(
-    props.settings?.email_sales ?? true
-  );
+  const [emailSales, setEmailSales] = createSignal(props.settings?.email_sales ?? true);
   const [emailRoyaltyPayments, setEmailRoyaltyPayments] = createSignal(
     props.settings?.email_royalty_payments ?? true
   );
@@ -35,9 +31,7 @@ export default function NotificationSettingsForm(
   const [inappProductConflicts, setInappProductConflicts] = createSignal(
     props.settings?.inapp_product_conflicts ?? true
   );
-  const [inappSales, setInappSales] = createSignal(
-    props.settings?.inapp_sales ?? true
-  );
+  const [inappSales, setInappSales] = createSignal(props.settings?.inapp_sales ?? true);
   const [inappRoyaltyPayments, setInappRoyaltyPayments] = createSignal(
     props.settings?.inapp_royalty_payments ?? true
   );
@@ -64,24 +58,24 @@ export default function NotificationSettingsForm(
     };
 
     try {
-      const response = await fetch("/api/settings/notifications", {
-        method: "POST",
+      const response = await fetch('/api/settings/notifications', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(settings),
-        credentials: "include",
+        credentials: 'include',
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to save settings");
+        throw new Error(data.error || 'Failed to save settings');
       }
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save settings");
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
     } finally {
       setLoading(false);
     }
@@ -91,17 +85,13 @@ export default function NotificationSettingsForm(
     <form class="notification-settings-form" onSubmit={handleSubmit}>
       {/* Email Notifications */}
       <div class="notification-settings-form__section">
-        <h3 class="notification-settings-form__section-title">
-          Email Notifications
-        </h3>
+        <h3 class="notification-settings-form__section-title">Email Notifications</h3>
         <div class="notification-settings-form__group">
           <label class="notification-settings-form__checkbox">
             <input
               type="checkbox"
               checked={emailProductConflicts()}
-              onInput={(e) =>
-                setEmailProductConflicts(e.currentTarget.checked)
-              }
+              onInput={(e) => setEmailProductConflicts(e.currentTarget.checked)}
             />
             <span>Product Conflicts</span>
           </label>
@@ -169,17 +159,13 @@ export default function NotificationSettingsForm(
 
       {/* In-App Notifications */}
       <div class="notification-settings-form__section">
-        <h3 class="notification-settings-form__section-title">
-          In-App Notifications
-        </h3>
+        <h3 class="notification-settings-form__section-title">In-App Notifications</h3>
         <div class="notification-settings-form__group">
           <label class="notification-settings-form__checkbox">
             <input
               type="checkbox"
               checked={inappProductConflicts()}
-              onInput={(e) =>
-                setInappProductConflicts(e.currentTarget.checked)
-              }
+              onInput={(e) => setInappProductConflicts(e.currentTarget.checked)}
             />
             <span>Product Conflicts</span>
           </label>
@@ -236,7 +222,7 @@ export default function NotificationSettingsForm(
         class="notification-settings-form__submit"
         disabled={loading()}
       >
-        {loading() ? "Saving..." : "Save Settings"}
+        {loading() ? 'Saving...' : 'Save Settings'}
       </button>
     </form>
   );

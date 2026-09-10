@@ -106,7 +106,9 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       // Verify signUp was called
       expect(auth.signUp).toHaveBeenCalledWith({
@@ -277,7 +279,9 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       // Should still redirect successfully
       expect(redirectTarget(response)).toBe('/products');
@@ -300,7 +304,9 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
       expect(response.headers.get('Content-Type')).toBe('application/json');
@@ -324,7 +330,9 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
 
@@ -358,12 +366,16 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
 
       const data = await response.json();
-      expect(data.error).toBe('An account with this email already exists. Please sign in instead.');
+      expect(data.error).toBe(
+        'An account with this email already exists. Please sign in instead.'
+      );
 
       // Verify no cookies were set
       expect(mockCookies.set).not.toHaveBeenCalled();
@@ -391,7 +403,9 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
 
@@ -421,7 +435,9 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
 
@@ -451,12 +467,16 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
 
       const data = await response.json();
-      expect(data.error).toBe('Password must include: lowercase letter, uppercase letter, number, and special character (!@#$%^&* etc.)');
+      expect(data.error).toBe(
+        'Password must include: lowercase letter, uppercase letter, number, and special character (!@#$%^&* etc.)'
+      );
     });
 
     it('should return original error for unknown sign-up errors', async () => {
@@ -481,7 +501,9 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
 
@@ -520,10 +542,14 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
       // Should redirect to sign-in with message
-      expect(redirectTarget(response)).toBe('/sign-in?message=Account created. Please sign in.');
+      expect(redirectTarget(response)).toBe(
+        '/sign-in?message=Account created. Please sign in.'
+      );
 
       // Verify no cookies were set (since auto-login failed)
       expect(mockCookies.set).not.toHaveBeenCalled();
@@ -556,9 +582,13 @@ describe('POST /api/auth/sign-up', () => {
         body: formData.toString(),
       });
 
-      const response = await authSignUp(makeContext({ request: mockRequest, cookies: mockCookies }));
+      const response = await authSignUp(
+        makeContext({ request: mockRequest, cookies: mockCookies })
+      );
 
-      expect(redirectTarget(response)).toBe('/sign-in?message=Account created. Please sign in.');
+      expect(redirectTarget(response)).toBe(
+        '/sign-in?message=Account created. Please sign in.'
+      );
       expect(mockCookies.set).not.toHaveBeenCalled();
     });
   });

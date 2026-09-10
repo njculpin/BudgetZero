@@ -1,8 +1,14 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { getProductById, getProductDocuments } from "@gameloopers/core/data-access/products";
-import { getDocumentById, getDocumentContent } from "@gameloopers/core/data-access/documents";
-import { serverClient } from "@gameloopers/core/data-access/client";
+import {
+  getProductById,
+  getProductDocuments,
+} from '@gameloopers/core/data-access/products';
+import {
+  getDocumentById,
+  getDocumentContent,
+} from '@gameloopers/core/data-access/documents';
+import { serverClient } from '@gameloopers/core/data-access/client';
 
 /**
  * Generate PDFs for all documents attached to a product
@@ -13,21 +19,21 @@ export const productsGenerateDocumentPdfs: Controller = async ({ request, userId
 
   try {
     const formData = await request.formData();
-    const productId = formData.get("productId") as string;
+    const productId = formData.get('productId') as string;
 
     if (!productId) {
-      return new Response(JSON.stringify({ error: "Product ID is required" }), {
+      return new Response(JSON.stringify({ error: 'Product ID is required' }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     // Verify ownership
     const product = await getProductById(productId);
     if (!product || product.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 403,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -36,10 +42,10 @@ export const productsGenerateDocumentPdfs: Controller = async ({ request, userId
 
     if (productDocuments.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, message: "No documents to generate PDFs for" }),
+        JSON.stringify({ success: true, message: 'No documents to generate PDFs for' }),
         {
           status: 200,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
@@ -67,13 +73,13 @@ export const productsGenerateDocumentPdfs: Controller = async ({ request, userId
 
       // Update product_document with placeholder (will be replaced with actual PDF URL)
       const { error: updateError } = await serverClient
-        .from("product_documents")
+        .from('product_documents')
         .update({
           pdf_storage_path: storagePath,
           pdf_generated_at: new Date().toISOString(),
           // pdf_url will be set after actual PDF upload
         })
-        .eq("id", productDoc.id);
+        .eq('id', productDoc.id);
 
       if (updateError) {
         console.error(`Failed to update product_document ${productDoc.id}:`, updateError);
@@ -84,7 +90,7 @@ export const productsGenerateDocumentPdfs: Controller = async ({ request, userId
         documentId: document.id,
         documentTitle: document.title,
         storagePath,
-        status: "pending", // In production: "success" after actual generation
+        status: 'pending', // In production: "success" after actual generation
       });
     }
 
@@ -96,16 +102,16 @@ export const productsGenerateDocumentPdfs: Controller = async ({ request, userId
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Generate PDFs error:", error);
+    console.error('Generate PDFs error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to generate PDFs",
+        error: error instanceof Error ? error.message : 'Failed to generate PDFs',
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };

@@ -1,30 +1,38 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { getOrCreateCart, getCartItems } from "@gameloopers/core/data-access/cart";
-import { getProductById, getProductPriceBreakdown, getProductFiles } from "@gameloopers/core/data-access/products";
-import { createCheckoutSession } from "@gameloopers/core/payments";
+import { getOrCreateCart, getCartItems } from '@gameloopers/core/data-access/cart';
+import {
+  getProductById,
+  getProductPriceBreakdown,
+  getProductFiles,
+} from '@gameloopers/core/data-access/products';
+import { createCheckoutSession } from '@gameloopers/core/payments';
 
-export const checkoutCreateSession: Controller = async ({ request, userId, userEmail }) => {
+export const checkoutCreateSession: Controller = async ({
+  request,
+  userId,
+  userEmail,
+}) => {
   // Check authentication
   if (!userId) return unauthorized('Not authenticated');
-  const email = userEmail ?? "";
+  const email = userEmail ?? '';
 
   try {
     // Get or create cart
     const cart = await getOrCreateCart(userId);
     if (!cart) {
-      return new Response(JSON.stringify({ error: "Failed to get cart" }), {
+      return new Response(JSON.stringify({ error: 'Failed to get cart' }), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     // Get cart items
     const cartItems = await getCartItems(cart.id);
     if (!cartItems || cartItems.length === 0) {
-      return new Response(JSON.stringify({ error: "Cart is empty" }), {
+      return new Response(JSON.stringify({ error: 'Cart is empty' }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -53,7 +61,7 @@ export const checkoutCreateSession: Controller = async ({ request, userId, userE
 
         // Get product files to include in metadata (for download access)
         const productFiles = await getProductFiles(product.id);
-        const fileIds = productFiles.map(f => f.id);
+        const fileIds = productFiles.map((f) => f.id);
 
         return {
           price_data: {
@@ -99,18 +107,19 @@ export const checkoutCreateSession: Controller = async ({ request, userId, userE
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Checkout session creation error:", error);
+    console.error('Checkout session creation error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to create checkout session",
+        error:
+          error instanceof Error ? error.message : 'Failed to create checkout session',
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

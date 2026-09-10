@@ -1,4 +1,4 @@
-import type { JSX } from "solid-js";
+import type { JSX } from 'solid-js';
 
 interface TextAreaFieldProps {
   label: string;
@@ -33,7 +33,7 @@ export default function TextAreaField(props: TextAreaFieldProps) {
         }}
         name={props.name}
         id={fieldId}
-        class={`form-field__textarea ${hasError ? "form-field__textarea--error" : ""}`}
+        class={`form-field__textarea ${hasError ? 'form-field__textarea--error' : ''}`}
         value={props.value}
         onInput={props.onInput}
         placeholder={props.placeholder}

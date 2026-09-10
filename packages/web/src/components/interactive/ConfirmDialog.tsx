@@ -1,4 +1,4 @@
-import { ConfirmModal } from "@/components/modal/Modal";
+import { ConfirmModal } from '@/components/modal/Modal';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -6,7 +6,7 @@ interface ConfirmDialogProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: "danger" | "warning" | "info";
+  variant?: 'danger' | 'warning' | 'info';
   onConfirm: () => void;
   onCancel: () => void;
 }

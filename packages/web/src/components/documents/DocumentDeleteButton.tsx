@@ -1,7 +1,7 @@
-import { Show } from "solid-js";
-import { useDeleteConfirm } from "@/lib/hooks/useDeleteConfirm";
-import { LoadingButton, ErrorMessage, ConfirmDialog } from "@/components/interactive";
-import "@/components/interactive/base.css";
+import { Show } from 'solid-js';
+import { useDeleteConfirm } from '@/lib/hooks/useDeleteConfirm';
+import { LoadingButton, ErrorMessage, ConfirmDialog } from '@/components/interactive';
+import '@/components/interactive/base.css';
 
 export interface DocumentDeleteButtonProps {
   documentId: string;
@@ -11,15 +11,18 @@ export interface DocumentDeleteButtonProps {
 export default function DocumentDeleteButton(props: DocumentDeleteButtonProps) {
   const deleteAction = useDeleteConfirm({
     entityId: props.documentId,
-    entityParamName: "documentId",
-    deleteEndpoint: "/api/documents/delete-document",
-    redirectUrl: "/documents",
+    entityParamName: 'documentId',
+    deleteEndpoint: '/api/documents/delete-document',
+    redirectUrl: '/documents',
   });
 
   return (
     <div class="document-delete-button">
       <Show when={deleteAction.error()}>
-        <ErrorMessage message={deleteAction.error()} onDismiss={() => deleteAction.setError("")} />
+        <ErrorMessage
+          message={deleteAction.error()}
+          onDismiss={() => deleteAction.setError('')}
+        />
       </Show>
 
       <LoadingButton

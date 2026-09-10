@@ -1,4 +1,4 @@
-import { createSignal, createResource, Show, For } from "solid-js";
+import { createSignal, createResource, Show, For } from 'solid-js';
 
 export interface RoyaltyRecipient {
   user_id: string;
@@ -21,18 +21,18 @@ export default function RevenuePreview(props: RevenuePreviewProps) {
     async (productId) => {
       try {
         const response = await fetch(`/api/products/${productId}/royalties`);
-        if (!response.ok) throw new Error("Failed to fetch royalties");
+        if (!response.ok) throw new Error('Failed to fetch royalties');
         const data = await response.json();
         return data.royalties || [];
       } catch (error) {
-        console.error("Error fetching royalties:", error);
+        console.error('Error fetching royalties:', error);
         return [];
       }
     }
   );
 
   const formatPrice = (cents: number): string => {
-    if (cents === 0) return "$0.00";
+    if (cents === 0) return '$0.00';
     return `$${(cents / 100).toFixed(2)}`;
   };
 
@@ -46,7 +46,7 @@ export default function RevenuePreview(props: RevenuePreviewProps) {
   };
 
   const getPercentage = (amount: number): string => {
-    if (props.totalPrice === 0) return "0.0";
+    if (props.totalPrice === 0) return '0.0';
     return ((amount / props.totalPrice) * 100).toFixed(1);
   };
 
@@ -88,14 +88,12 @@ export default function RevenuePreview(props: RevenuePreviewProps) {
                 <div class="revenue-preview__row revenue-preview__row--owner">
                   <div class="revenue-preview__recipient">
                     <span class="revenue-preview__name">
-                      {props.productOwnerName || "You"}
+                      {props.productOwnerName || 'You'}
                     </span>
                     <span class="revenue-preview__label">(Owner)</span>
                   </div>
                   <div class="revenue-preview__amounts">
-                    <span class="revenue-preview__price">
-                      {formatPrice(ownerShare)}
-                    </span>
+                    <span class="revenue-preview__price">{formatPrice(ownerShare)}</span>
                     <span class="revenue-preview__percent">
                       {getPercentage(ownerShare)}%
                     </span>
@@ -107,12 +105,8 @@ export default function RevenuePreview(props: RevenuePreviewProps) {
                   {(royalty: RoyaltyRecipient) => (
                     <div class="revenue-preview__row">
                       <div class="revenue-preview__recipient">
-                        <span class="revenue-preview__name">
-                          {royalty.user_name}
-                        </span>
-                        <span class="revenue-preview__label">
-                          @{royalty.user_handle}
-                        </span>
+                        <span class="revenue-preview__name">{royalty.user_name}</span>
+                        <span class="revenue-preview__label">@{royalty.user_handle}</span>
                       </div>
                       <div class="revenue-preview__amounts">
                         <span class="revenue-preview__price">
@@ -127,9 +121,7 @@ export default function RevenuePreview(props: RevenuePreviewProps) {
                 </For>
               </div>
 
-              <p class="revenue-preview__note">
-                Platform fees deducted at checkout
-              </p>
+              <p class="revenue-preview__note">Platform fees deducted at checkout</p>
             </>
           );
         })()}

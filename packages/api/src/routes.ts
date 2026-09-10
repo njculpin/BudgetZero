@@ -55,7 +55,10 @@ import { productsSearchProducts } from './controllers/products/search-products';
 import { productsUnembedProduct } from './controllers/products/unembed-product';
 import { productsUpdateDocumentPrice } from './controllers/products/update-document-price';
 import { productsUpdateFilePrice } from './controllers/products/update-file-price';
-import { productsUpdateProductPost, productsUpdateProductPut } from './controllers/products/update-product';
+import {
+  productsUpdateProductPost,
+  productsUpdateProductPut,
+} from './controllers/products/update-product';
 import { productsUploadFiles } from './controllers/products/upload-files';
 import { settingsNotifications } from './controllers/settings/notifications';
 import { subscribe } from './controllers/subscribe';
@@ -83,15 +86,24 @@ import { webhooksStripe } from './controllers/webhooks/stripe';
  * by a route's absence from a list in another package.
  */
 export const routes: readonly RouteDefinition[] = [
-
   // auth
   { method: 'GET', path: '/auth/callback', controller: authCallback, public: true },
-  { method: 'POST', path: '/auth/reset-password', controller: authResetPassword, public: true },
+  {
+    method: 'POST',
+    path: '/auth/reset-password',
+    controller: authResetPassword,
+    public: true,
+  },
   { method: 'POST', path: '/auth/sign-in', controller: authSignIn, public: true },
   { method: 'GET', path: '/auth/sign-out', controller: authSignOutGet, public: true },
   { method: 'POST', path: '/auth/sign-out', controller: authSignOutPost, public: true },
   { method: 'POST', path: '/auth/sign-up', controller: authSignUp, public: true },
-  { method: 'POST', path: '/auth/update-password', controller: authUpdatePassword, public: true },
+  {
+    method: 'POST',
+    path: '/auth/update-password',
+    controller: authUpdatePassword,
+    public: true,
+  },
 
   // cart
   { method: 'POST', path: '/cart/add-to-cart', controller: cartAddToCart },
@@ -104,18 +116,54 @@ export const routes: readonly RouteDefinition[] = [
 
   // connect
   { method: 'POST', path: '/connect/create-account', controller: connectCreateAccount },
-  { method: 'POST', path: '/connect/create-account-link', controller: connectCreateAccountLink },
-  { method: 'GET', path: '/connect/get-account-status', controller: connectGetAccountStatus },
+  {
+    method: 'POST',
+    path: '/connect/create-account-link',
+    controller: connectCreateAccountLink,
+  },
+  {
+    method: 'GET',
+    path: '/connect/get-account-status',
+    controller: connectGetAccountStatus,
+  },
   { method: 'POST', path: '/connect/refresh-status', controller: connectRefreshStatus },
 
   // documents
-  { method: 'POST', path: '/documents/create-document', controller: documentsCreateDocument },
-  { method: 'POST', path: '/documents/delete-attachment', controller: documentsDeleteAttachment },
-  { method: 'POST', path: '/documents/delete-document', controller: documentsDeleteDocument },
-  { method: 'POST', path: '/documents/update-content', controller: documentsUpdateContent },
-  { method: 'POST', path: '/documents/update-document', controller: documentsUpdateDocument },
-  { method: 'POST', path: '/documents/upload-attachments', controller: documentsUploadAttachments },
-  { method: 'GET', path: '/documents/user-documents', controller: documentsUserDocuments },
+  {
+    method: 'POST',
+    path: '/documents/create-document',
+    controller: documentsCreateDocument,
+  },
+  {
+    method: 'POST',
+    path: '/documents/delete-attachment',
+    controller: documentsDeleteAttachment,
+  },
+  {
+    method: 'POST',
+    path: '/documents/delete-document',
+    controller: documentsDeleteDocument,
+  },
+  {
+    method: 'POST',
+    path: '/documents/update-content',
+    controller: documentsUpdateContent,
+  },
+  {
+    method: 'POST',
+    path: '/documents/update-document',
+    controller: documentsUpdateDocument,
+  },
+  {
+    method: 'POST',
+    path: '/documents/upload-attachments',
+    controller: documentsUploadAttachments,
+  },
+  {
+    method: 'GET',
+    path: '/documents/user-documents',
+    controller: documentsUserDocuments,
+  },
 
   // download
   { method: 'POST', path: '/download', controller: download },
@@ -124,9 +172,21 @@ export const routes: readonly RouteDefinition[] = [
   { method: 'GET', path: '/notifications', controller: notifications },
   { method: 'DELETE', path: '/notifications/:id', controller: notificationsId },
   { method: 'POST', path: '/notifications/:id/read', controller: notificationsIdRead },
-  { method: 'POST', path: '/notifications/:id/read-and-view', controller: notificationsIdReadAndView },
-  { method: 'POST', path: '/notifications/mark-all-read', controller: notificationsMarkAllRead },
-  { method: 'GET', path: '/notifications/unread-count', controller: notificationsUnreadCount },
+  {
+    method: 'POST',
+    path: '/notifications/:id/read-and-view',
+    controller: notificationsIdReadAndView,
+  },
+  {
+    method: 'POST',
+    path: '/notifications/mark-all-read',
+    controller: notificationsMarkAllRead,
+  },
+  {
+    method: 'GET',
+    path: '/notifications/unread-count',
+    controller: notificationsUnreadCount,
+  },
 
   // payouts
   { method: 'POST', path: '/payouts/execute', controller: payoutsExecute },
@@ -135,31 +195,95 @@ export const routes: readonly RouteDefinition[] = [
 
   // products
   { method: 'GET', path: '/products/:productId', controller: productsProductId },
-  { method: 'GET', path: '/products/:productId/documents', controller: productsProductIdDocuments },
-  { method: 'GET', path: '/products/:productId/embedded-products', controller: productsProductIdEmbeddedProducts },
-  { method: 'GET', path: '/products/:productId/files', controller: productsProductIdFiles },
-  { method: 'GET', path: '/products/:productId/price-breakdown', controller: productsProductIdPriceBreakdown },
-  { method: 'POST', path: '/products/:productId/resolve-conflict', controller: productsProductIdResolveConflict },
-  { method: 'GET', path: '/products/:productId/royalties', controller: productsProductIdRoyalties },
+  {
+    method: 'GET',
+    path: '/products/:productId/documents',
+    controller: productsProductIdDocuments,
+  },
+  {
+    method: 'GET',
+    path: '/products/:productId/embedded-products',
+    controller: productsProductIdEmbeddedProducts,
+  },
+  {
+    method: 'GET',
+    path: '/products/:productId/files',
+    controller: productsProductIdFiles,
+  },
+  {
+    method: 'GET',
+    path: '/products/:productId/price-breakdown',
+    controller: productsProductIdPriceBreakdown,
+  },
+  {
+    method: 'POST',
+    path: '/products/:productId/resolve-conflict',
+    controller: productsProductIdResolveConflict,
+  },
+  {
+    method: 'GET',
+    path: '/products/:productId/royalties',
+    controller: productsProductIdRoyalties,
+  },
   { method: 'POST', path: '/products/add-document', controller: productsAddDocument },
   { method: 'POST', path: '/products/create-product', controller: productsCreateProduct },
   { method: 'POST', path: '/products/delete-file', controller: productsDeleteFile },
   { method: 'POST', path: '/products/delete-image', controller: productsDeleteImage },
-  { method: 'DELETE', path: '/products/delete-product', controller: productsDeleteProduct },
+  {
+    method: 'DELETE',
+    path: '/products/delete-product',
+    controller: productsDeleteProduct,
+  },
   { method: 'POST', path: '/products/embed-product', controller: productsEmbedProduct },
   { method: 'GET', path: '/products/embeddable', controller: productsEmbeddable },
   { method: 'GET', path: '/products/embedded-usage', controller: productsEmbeddedUsage },
-  { method: 'POST', path: '/products/generate-document-pdfs', controller: productsGenerateDocumentPdfs },
-  { method: 'POST', path: '/products/remove-document', controller: productsRemoveDocument },
+  {
+    method: 'POST',
+    path: '/products/generate-document-pdfs',
+    controller: productsGenerateDocumentPdfs,
+  },
+  {
+    method: 'POST',
+    path: '/products/remove-document',
+    controller: productsRemoveDocument,
+  },
   { method: 'POST', path: '/products/reorder-files', controller: productsReorderFiles },
   { method: 'POST', path: '/products/reorder-images', controller: productsReorderImages },
-  { method: 'GET', path: '/products/search-embeddable', controller: productsSearchEmbeddable },
-  { method: 'GET', path: '/products/search-products', controller: productsSearchProducts },
-  { method: 'POST', path: '/products/unembed-product', controller: productsUnembedProduct },
-  { method: 'POST', path: '/products/update-document-price', controller: productsUpdateDocumentPrice },
-  { method: 'POST', path: '/products/update-file-price', controller: productsUpdateFilePrice },
-  { method: 'POST', path: '/products/update-product', controller: productsUpdateProductPost },
-  { method: 'PUT', path: '/products/update-product', controller: productsUpdateProductPut },
+  {
+    method: 'GET',
+    path: '/products/search-embeddable',
+    controller: productsSearchEmbeddable,
+  },
+  {
+    method: 'GET',
+    path: '/products/search-products',
+    controller: productsSearchProducts,
+  },
+  {
+    method: 'POST',
+    path: '/products/unembed-product',
+    controller: productsUnembedProduct,
+  },
+  {
+    method: 'POST',
+    path: '/products/update-document-price',
+    controller: productsUpdateDocumentPrice,
+  },
+  {
+    method: 'POST',
+    path: '/products/update-file-price',
+    controller: productsUpdateFilePrice,
+  },
+  {
+    method: 'POST',
+    path: '/products/update-product',
+    controller: productsUpdateProductPost,
+  },
+  {
+    method: 'PUT',
+    path: '/products/update-product',
+    controller: productsUpdateProductPut,
+  },
   { method: 'POST', path: '/products/upload-files', controller: productsUploadFiles },
 
   // settings
@@ -175,9 +299,18 @@ export const routes: readonly RouteDefinition[] = [
   { method: 'POST', path: '/upload', controller: upload },
 
   // users
-  { method: 'POST', path: '/users/complete-onboarding', controller: usersCompleteOnboarding },
+  {
+    method: 'POST',
+    path: '/users/complete-onboarding',
+    controller: usersCompleteOnboarding,
+  },
   { method: 'GET', path: '/users/me/recent-products', controller: usersMeRecentProducts },
-  { method: 'GET', path: '/users/search-users', controller: usersSearchUsers, public: true },
+  {
+    method: 'GET',
+    path: '/users/search-users',
+    controller: usersSearchUsers,
+    public: true,
+  },
   { method: 'POST', path: '/users/update-tags', controller: usersUpdateTags },
   { method: 'POST', path: '/users/update-user', controller: usersUpdateUser },
 

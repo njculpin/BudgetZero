@@ -5,8 +5,8 @@
  * Isolated from direct Supabase SDK usage - all queries go through this layer.
  */
 
-import { serverClient } from "./client";
-import type { Notification, NotificationSettings } from "../types";
+import { serverClient } from './client';
+import type { Notification, NotificationSettings } from '../types';
 
 /**
  * Get all notifications for a user
@@ -19,15 +19,15 @@ export async function getNotifications(
   const client = serverClient;
 
   const { data, error } = await client
-    .from("notifications")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("deleted", false)
-    .order("created_at", { ascending: false })
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('deleted', false)
+    .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) {
-    console.error("Error fetching notifications:", error);
+    console.error('Error fetching notifications:', error);
     return [];
   }
 
@@ -37,21 +37,19 @@ export async function getNotifications(
 /**
  * Get unread notifications for a user
  */
-export async function getUnreadNotifications(
-  userId: string
-): Promise<Notification[]> {
+export async function getUnreadNotifications(userId: string): Promise<Notification[]> {
   const client = serverClient;
 
   const { data, error } = await client
-    .from("notifications")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("read", false)
-    .eq("deleted", false)
-    .order("created_at", { ascending: false });
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('read', false)
+    .eq('deleted', false)
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error("Error fetching unread notifications:", error);
+    console.error('Error fetching unread notifications:', error);
     return [];
   }
 
@@ -61,20 +59,18 @@ export async function getUnreadNotifications(
 /**
  * Get unread notification count for a user
  */
-export async function getUnreadNotificationCount(
-  userId: string
-): Promise<number> {
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
   const client = serverClient;
 
   const { count, error } = await client
-    .from("notifications")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("read", false)
-    .eq("deleted", false);
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('read', false)
+    .eq('deleted', false);
 
   if (error) {
-    console.error("Error counting unread notifications:", error);
+    console.error('Error counting unread notifications:', error);
     return 0;
   }
 
@@ -84,20 +80,18 @@ export async function getUnreadNotificationCount(
 /**
  * Get a single notification by ID
  */
-export async function getNotificationById(
-  id: string
-): Promise<Notification | null> {
+export async function getNotificationById(id: string): Promise<Notification | null> {
   const client = serverClient;
 
   const { data, error } = await client
-    .from("notifications")
-    .select("*")
-    .eq("id", id)
-    .eq("deleted", false)
+    .from('notifications')
+    .select('*')
+    .eq('id', id)
+    .eq('deleted', false)
     .single();
 
   if (error) {
-    console.error("Error fetching notification:", error);
+    console.error('Error fetching notification:', error);
     return null;
   }
 
@@ -111,15 +105,15 @@ export async function markNotificationAsRead(id: string): Promise<boolean> {
   const client = serverClient;
 
   const { error } = await client
-    .from("notifications")
+    .from('notifications')
     .update({
       read: true,
       read_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq('id', id);
 
   if (error) {
-    console.error("Error marking notification as read:", error);
+    console.error('Error marking notification as read:', error);
     return false;
   }
 
@@ -129,22 +123,20 @@ export async function markNotificationAsRead(id: string): Promise<boolean> {
 /**
  * Mark all notifications as read for a user
  */
-export async function markAllNotificationsAsRead(
-  userId: string
-): Promise<boolean> {
+export async function markAllNotificationsAsRead(userId: string): Promise<boolean> {
   const client = serverClient;
 
   const { error } = await client
-    .from("notifications")
+    .from('notifications')
     .update({
       read: true,
       read_at: new Date().toISOString(),
     })
-    .eq("user_id", userId)
-    .eq("read", false);
+    .eq('user_id', userId)
+    .eq('read', false);
 
   if (error) {
-    console.error("Error marking all notifications as read:", error);
+    console.error('Error marking all notifications as read:', error);
     return false;
   }
 
@@ -158,15 +150,15 @@ export async function deleteNotification(id: string): Promise<boolean> {
   const client = serverClient;
 
   const { error } = await client
-    .from("notifications")
+    .from('notifications')
     .update({
       deleted: true,
       deleted_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq('id', id);
 
   if (error) {
-    console.error("Error deleting notification:", error);
+    console.error('Error deleting notification:', error);
     return false;
   }
 
@@ -182,17 +174,17 @@ export async function getNotificationSettings(
   const client = serverClient;
 
   const { data, error } = await client
-    .from("notification_settings")
-    .select("*")
-    .eq("user_id", userId)
+    .from('notification_settings')
+    .select('*')
+    .eq('user_id', userId)
     .single();
 
   if (error) {
     // If no settings exist, return default settings
-    if (error.code === "PGRST116") {
+    if (error.code === 'PGRST116') {
       return createDefaultNotificationSettings(userId);
     }
-    console.error("Error fetching notification settings:", error);
+    console.error('Error fetching notification settings:', error);
     return null;
   }
 
@@ -208,7 +200,7 @@ async function createDefaultNotificationSettings(
   const client = serverClient;
 
   const { data, error } = await client
-    .from("notification_settings")
+    .from('notification_settings')
     .insert({
       user_id: userId,
     })
@@ -216,7 +208,7 @@ async function createDefaultNotificationSettings(
     .single();
 
   if (error) {
-    console.error("Error creating default notification settings:", error);
+    console.error('Error creating default notification settings:', error);
     return null;
   }
 
@@ -228,19 +220,21 @@ async function createDefaultNotificationSettings(
  */
 export async function updateNotificationSettings(
   userId: string,
-  settings: Partial<Omit<NotificationSettings, "id" | "user_id" | "created_at" | "updated_at">>
+  settings: Partial<
+    Omit<NotificationSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+  >
 ): Promise<NotificationSettings | null> {
   const client = serverClient;
 
   const { data, error } = await client
-    .from("notification_settings")
+    .from('notification_settings')
     .update(settings)
-    .eq("user_id", userId)
+    .eq('user_id', userId)
     .select()
     .single();
 
   if (error) {
-    console.error("Error updating notification settings:", error);
+    console.error('Error updating notification settings:', error);
     return null;
   }
 
@@ -256,13 +250,13 @@ export async function resolveProductConflict(
 ): Promise<{ success: boolean; error?: string }> {
   const client = serverClient;
 
-  const { data, error } = await client.rpc("resolve_product_conflict", {
+  const { data, error } = await client.rpc('resolve_product_conflict', {
     p_product_id: productId,
     p_user_id: userId,
   });
 
   if (error) {
-    console.error("Error resolving product conflict:", error);
+    console.error('Error resolving product conflict:', error);
     return { success: false, error: error.message };
   }
 
@@ -272,27 +266,27 @@ export async function resolveProductConflict(
 /**
  * Get products that need attention for a user
  */
-export async function getProductsNeedingAttention(
-  userId: string
-): Promise<Array<{
-  id: string;
-  title: string;
-  handle: string;
-  attention_reason: string;
-  attention_since: string;
-}>> {
+export async function getProductsNeedingAttention(userId: string): Promise<
+  Array<{
+    id: string;
+    title: string;
+    handle: string;
+    attention_reason: string;
+    attention_since: string;
+  }>
+> {
   const client = serverClient;
 
   const { data, error } = await client
-    .from("products")
-    .select("id, title, handle, attention_reason, attention_since")
-    .eq("user_id", userId)
-    .eq("needs_attention", true)
-    .eq("deleted", false)
-    .order("attention_since", { ascending: false });
+    .from('products')
+    .select('id, title, handle, attention_reason, attention_since')
+    .eq('user_id', userId)
+    .eq('needs_attention', true)
+    .eq('deleted', false)
+    .order('attention_since', { ascending: false });
 
   if (error) {
-    console.error("Error fetching products needing attention:", error);
+    console.error('Error fetching products needing attention:', error);
     return [];
   }
 

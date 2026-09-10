@@ -1,9 +1,6 @@
-import { createSignal, Show, For, createEffect } from "solid-js";
-import {
-  ErrorMessage,
-  SuccessMessage,
-} from "@/components/interactive";
-import "./document-attachments-form.css";
+import { createSignal, Show, For, createEffect } from 'solid-js';
+import { ErrorMessage, SuccessMessage } from '@/components/interactive';
+import './document-attachments-form.css';
 
 export interface DocumentAttachment {
   id: string;
@@ -33,9 +30,11 @@ const formatFileSize = (bytes: number): string => {
 };
 
 export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormProps) {
-  const [attachments, setAttachments] = createSignal<DocumentAttachment[]>(props.existingAttachments);
-  const [error, setError] = createSignal("");
-  const [success, setSuccess] = createSignal("");
+  const [attachments, setAttachments] = createSignal<DocumentAttachment[]>(
+    props.existingAttachments
+  );
+  const [error, setError] = createSignal('');
+  const [success, setSuccess] = createSignal('');
   const [uploading, setUploading] = createSignal(false);
   const [selectedFiles, setSelectedFiles] = createSignal<File[]>([]);
 
@@ -57,7 +56,7 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
   const handleCancelSelection = () => {
     setSelectedFiles([]);
     if (fileInputRef) {
-      fileInputRef.value = "";
+      fileInputRef.value = '';
     }
   };
 
@@ -65,25 +64,25 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
     const files = selectedFiles();
     if (files.length === 0) return;
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setUploading(true);
 
     try {
       const formData = new FormData();
-      formData.append("documentId", props.documentId);
+      formData.append('documentId', props.documentId);
       files.forEach((file) => {
-        formData.append("files", file);
+        formData.append('files', file);
       });
 
-      const response = await fetch("/api/documents/upload-attachments", {
-        method: "POST",
+      const response = await fetch('/api/documents/upload-attachments', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to upload files");
+        setError(data.error || 'Failed to upload files');
         setUploading(false);
         return;
       }
@@ -92,16 +91,16 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
 
       // Reactively add new attachments to the list
       setAttachments([...attachments(), ...result.attachments]);
-      setSuccess(result.message || "Files uploaded successfully!");
+      setSuccess(result.message || 'Files uploaded successfully!');
       setSelectedFiles([]);
       if (fileInputRef) {
-        fileInputRef.value = "";
+        fileInputRef.value = '';
       }
 
       // Auto-dismiss success message
-      setTimeout(() => setSuccess(""), 3000);
+      setTimeout(() => setSuccess(''), 3000);
     } catch {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setUploading(false);
     }
@@ -110,44 +109,44 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
   const handleDeleteAttachment = async (attachmentId: string, title: string) => {
     if (!confirm(`Delete attachment "${title}"?`)) return;
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
 
     try {
       const formData = new FormData();
-      formData.append("attachmentId", attachmentId);
-      formData.append("documentId", props.documentId);
+      formData.append('attachmentId', attachmentId);
+      formData.append('documentId', props.documentId);
 
-      const response = await fetch("/api/documents/delete-attachment", {
-        method: "POST",
+      const response = await fetch('/api/documents/delete-attachment', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to delete attachment");
+        setError(data.error || 'Failed to delete attachment');
         return;
       }
 
       // Reactively remove the attachment from the list
-      setAttachments(attachments().filter(att => att.id !== attachmentId));
-      setSuccess("Attachment deleted successfully!");
+      setAttachments(attachments().filter((att) => att.id !== attachmentId));
+      setSuccess('Attachment deleted successfully!');
 
       // Auto-dismiss success message
-      setTimeout(() => setSuccess(""), 3000);
+      setTimeout(() => setSuccess(''), 3000);
     } catch {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     }
   };
 
   return (
     <div class="document-attachments-form">
       <Show when={error()}>
-        <ErrorMessage message={error()} onDismiss={() => setError("")} />
+        <ErrorMessage message={error()} onDismiss={() => setError('')} />
       </Show>
 
       <Show when={success()}>
-        <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
+        <SuccessMessage message={success()} onDismiss={() => setSuccess('')} />
       </Show>
 
       <div class="document-attachments-form__header">
@@ -192,7 +191,7 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
                   <div class="selected-files__info">
                     <div class="selected-files__name">{file.name}</div>
                     <div class="selected-files__meta">
-                      {formatFileSize(file.size)} · {file.type || "Unknown type"}
+                      {formatFileSize(file.size)} · {file.type || 'Unknown type'}
                     </div>
                   </div>
                 </div>
@@ -206,7 +205,7 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
               disabled={uploading()}
               class="selected-files__upload-button"
             >
-              {uploading() ? "Uploading..." : `Upload ${selectedFiles().length} file(s)`}
+              {uploading() ? 'Uploading...' : `Upload ${selectedFiles().length} file(s)`}
             </button>
             <button
               type="button"
@@ -221,14 +220,17 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
       </Show>
 
       {/* Existing attachments */}
-      <Show when={attachments().length > 0} fallback={
-        <div class="document-attachments-form__empty">
-          <p>No attachments yet</p>
-          <p class="document-attachments-form__empty-hint">
-            Add files to attach supporting documents, images, or other resources
-          </p>
-        </div>
-      }>
+      <Show
+        when={attachments().length > 0}
+        fallback={
+          <div class="document-attachments-form__empty">
+            <p>No attachments yet</p>
+            <p class="document-attachments-form__empty-hint">
+              Add files to attach supporting documents, images, or other resources
+            </p>
+          </div>
+        }
+      >
         <div class="attachments-list">
           <For each={attachments()}>
             {(attachment) => (
@@ -287,7 +289,9 @@ export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormPr
                   </a>
                   <button
                     type="button"
-                    onClick={() => handleDeleteAttachment(attachment.id, attachment.title)}
+                    onClick={() =>
+                      handleDeleteAttachment(attachment.id, attachment.title)
+                    }
                     class="attachments-list__delete-button"
                     aria-label={`Delete ${attachment.title}`}
                   >

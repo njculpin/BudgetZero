@@ -24,10 +24,7 @@ export {
   createLoginLink,
 } from './connect';
 
-export type {
-  CreateConnectAccountParams,
-  ConnectAccountStatus,
-} from './connect';
+export type { CreateConnectAccountParams, ConnectAccountStatus } from './connect';
 
 // Re-export types for convenience
 export type { default as Stripe } from 'stripe';

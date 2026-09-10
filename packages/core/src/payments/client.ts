@@ -32,8 +32,7 @@ function resolveClient(): Stripe {
     );
   }
 
-  const secretKey =
-    import.meta.env?.STRIPE_SECRET_KEY ?? process.env.STRIPE_SECRET_KEY;
+  const secretKey = import.meta.env?.STRIPE_SECRET_KEY ?? process.env.STRIPE_SECRET_KEY;
 
   if (!secretKey) {
     throw new Error(

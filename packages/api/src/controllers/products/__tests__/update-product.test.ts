@@ -54,7 +54,9 @@ describe('PUT /api/products/update-product', () => {
     // signature — are tested once in gateway.test.ts rather than in every
     // controller. What remains is this controller's own decision.
     it('rejects a caller who is not signed in', async () => {
-      const response = await productsUpdateProductPut(makeContext({ userId: null, ...{ body: {} } }));
+      const response = await productsUpdateProductPut(
+        makeContext({ userId: null, ...{ body: {} } })
+      );
 
       expect(response.status).toBe(401);
     });
@@ -74,7 +76,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(404);
       const data = await response.json();
@@ -97,7 +101,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(403);
       const data = await response.json();
@@ -125,7 +131,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(200);
     });
@@ -142,7 +150,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -172,7 +182,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(200);
     });
@@ -225,7 +237,9 @@ describe('PUT /api/products/update-product', () => {
           }),
         });
 
-        const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+        const response = await productsUpdateProductPut(
+          makeContext({ request: mockRequest })
+        );
 
         expect(response.status).toBe(200);
       }
@@ -258,7 +272,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(products.updateProduct).toHaveBeenCalledWith(VALID_PRODUCT_ID, {
         title: 'New Title',
@@ -393,11 +409,15 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
-      expect(data.error).toBe('Add at least one file or embed a product before publishing');
+      expect(data.error).toBe(
+        'Add at least one file or embed a product before publishing'
+      );
     });
 
     it('should allow publishing with files', async () => {
@@ -422,7 +442,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(200);
     });
@@ -474,7 +496,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(200);
     });
@@ -521,7 +545,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -548,7 +574,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(200);
       // getProductFiles should not have been called (no validation)
@@ -575,7 +603,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -589,9 +619,7 @@ describe('PUT /api/products/update-product', () => {
         title: 'Test Product',
       } as any);
 
-      vi.mocked(products.updateProduct).mockRejectedValue(
-        new Error('Database error')
-      );
+      vi.mocked(products.updateProduct).mockRejectedValue(new Error('Database error'));
 
       mockRequest = new Request('http://localhost/api/products/update-product', {
         method: 'PUT',
@@ -602,7 +630,9 @@ describe('PUT /api/products/update-product', () => {
         }),
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -616,7 +646,9 @@ describe('PUT /api/products/update-product', () => {
         body: 'invalid json{',
       });
 
-      const response = await productsUpdateProductPut(makeContext({ request: mockRequest }));
+      const response = await productsUpdateProductPut(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(500);
     });

@@ -1,6 +1,6 @@
-import { createSignal } from "solid-js";
-import { LoadingButton } from "@/components/interactive";
-import "./product-delete-button.css";
+import { createSignal } from 'solid-js';
+import { LoadingButton } from '@/components/interactive';
+import './product-delete-button.css';
 
 export interface ProductDeleteButtonProps {
   productId: string;
@@ -10,26 +10,26 @@ export interface ProductDeleteButtonProps {
 export default function ProductDeleteButton(props: ProductDeleteButtonProps) {
   const [showConfirmation, setShowConfirmation] = createSignal(false);
   const [isDeleting, setIsDeleting] = createSignal(false);
-  const [error, setError] = createSignal("");
+  const [error, setError] = createSignal('');
 
   const handleDeleteClick = () => {
     setShowConfirmation(true);
-    setError("");
+    setError('');
   };
 
   const handleCancel = () => {
     setShowConfirmation(false);
-    setError("");
+    setError('');
   };
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
-    setError("");
+    setError('');
 
     try {
-      const response = await fetch("/api/products/delete-product", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/products/delete-product', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: props.productId,
         }),
@@ -37,15 +37,15 @@ export default function ProductDeleteButton(props: ProductDeleteButtonProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to delete product");
+        setError(data.error || 'Failed to delete product');
         setIsDeleting(false);
         return;
       }
 
       // Redirect to products page after successful deletion
-      window.location.href = "/products";
+      window.location.href = '/products';
     } catch {
-      setError("An unexpected error occurred while deleting the product");
+      setError('An unexpected error occurred while deleting the product');
       setIsDeleting(false);
     }
   };
@@ -81,18 +81,15 @@ export default function ProductDeleteButton(props: ProductDeleteButtonProps) {
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
             <div class="product-delete__warning-text">
-              <p class="product-delete__warning-title">
-                Delete "{props.productTitle}"?
-              </p>
+              <p class="product-delete__warning-title">Delete "{props.productTitle}"?</p>
               <p class="product-delete__warning-description">
-                This action cannot be undone. All associated files, documents, and data will be permanently removed.
+                This action cannot be undone. All associated files, documents, and data
+                will be permanently removed.
               </p>
             </div>
           </div>
 
-          {error() && (
-            <div class="product-delete__error">{error()}</div>
-          )}
+          {error() && <div class="product-delete__error">{error()}</div>}
 
           <div class="product-delete__actions">
             <LoadingButton

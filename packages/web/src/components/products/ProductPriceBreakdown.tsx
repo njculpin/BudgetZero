@@ -1,5 +1,5 @@
-import { createSignal, createResource, Show, For, onMount } from "solid-js";
-import "./product-price-breakdown.css";
+import { createSignal, createResource, Show, For, onMount } from 'solid-js';
+import './product-price-breakdown.css';
 
 export interface ProductFile {
   id: string;
@@ -53,11 +53,17 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
 
         // Fetch documents
         const documentsResponse = await fetch(`/api/products/${productId}/documents`);
-        const documentsData = documentsResponse.ok ? await documentsResponse.json() : { documents: [] };
+        const documentsData = documentsResponse.ok
+          ? await documentsResponse.json()
+          : { documents: [] };
 
         // Fetch embedded products
-        const embeddedResponse = await fetch(`/api/products/${productId}/embedded-products`);
-        const embeddedData = embeddedResponse.ok ? await embeddedResponse.json() : { embeddedProducts: [] };
+        const embeddedResponse = await fetch(
+          `/api/products/${productId}/embedded-products`
+        );
+        const embeddedData = embeddedResponse.ok
+          ? await embeddedResponse.json()
+          : { embeddedProducts: [] };
 
         return {
           files: filesData.files || [],
@@ -65,7 +71,7 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
           embeddedProducts: embeddedData.embeddedProducts || [],
         } as BreakdownData;
       } catch (error) {
-        console.error("Error fetching pricing data:", error);
+        console.error('Error fetching pricing data:', error);
         return {
           files: [],
           documents: [],
@@ -90,7 +96,10 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
   const totalEmbeddedPrice = () => {
     const data = pricingData();
     if (!data) return 0;
-    return data.embeddedProducts.reduce((sum, product) => sum + product.inherited_price_cents, 0);
+    return data.embeddedProducts.reduce(
+      (sum, product) => sum + product.inherited_price_cents,
+      0
+    );
   };
 
   const totalPrice = () => {
@@ -114,7 +123,9 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
                     <div class="price-breakdown__item">
                       <span class="price-breakdown__item-icon">📄</span>
                       <span class="price-breakdown__item-name">{file.title}</span>
-                      <span class="price-breakdown__item-price">{formatPrice(file.price_cents)}</span>
+                      <span class="price-breakdown__item-price">
+                        {formatPrice(file.price_cents)}
+                      </span>
                     </div>
                   )}
                 </For>
@@ -122,7 +133,9 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
               <Show when={pricingData()!.files.length > 1}>
                 <div class="price-breakdown__subtotal">
                   <span class="price-breakdown__subtotal-label">Files Subtotal</span>
-                  <span class="price-breakdown__subtotal-value">{formatPrice(totalFilesPrice())}</span>
+                  <span class="price-breakdown__subtotal-value">
+                    {formatPrice(totalFilesPrice())}
+                  </span>
                 </div>
               </Show>
             </div>
@@ -137,7 +150,9 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
                     <div class="price-breakdown__item">
                       <span class="price-breakdown__item-icon">📝</span>
                       <span class="price-breakdown__item-name">{doc.title}</span>
-                      <span class="price-breakdown__item-price">{formatPrice(doc.price_cents)}</span>
+                      <span class="price-breakdown__item-price">
+                        {formatPrice(doc.price_cents)}
+                      </span>
                     </div>
                   )}
                 </For>
@@ -145,13 +160,20 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
               <Show when={pricingData()!.documents.length > 1}>
                 <div class="price-breakdown__subtotal">
                   <span class="price-breakdown__subtotal-label">Documents Subtotal</span>
-                  <span class="price-breakdown__subtotal-value">{formatPrice(totalDocumentsPrice())}</span>
+                  <span class="price-breakdown__subtotal-value">
+                    {formatPrice(totalDocumentsPrice())}
+                  </span>
                 </div>
               </Show>
             </div>
           </Show>
 
-          <Show when={pricingData()?.embeddedProducts && pricingData()!.embeddedProducts.length > 0}>
+          <Show
+            when={
+              pricingData()?.embeddedProducts &&
+              pricingData()!.embeddedProducts.length > 0
+            }
+          >
             <div class="price-breakdown__section">
               <h3 class="price-breakdown__section-title">Embedded Products</h3>
               <div class="price-breakdown__items">
@@ -161,17 +183,25 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
                       <span class="price-breakdown__item-icon">📦</span>
                       <div class="price-breakdown__item-info">
                         <span class="price-breakdown__item-name">{product.title}</span>
-                        <span class="price-breakdown__item-creator">by {product.creator_name}</span>
+                        <span class="price-breakdown__item-creator">
+                          by {product.creator_name}
+                        </span>
                       </div>
-                      <span class="price-breakdown__item-price">{formatPrice(product.inherited_price_cents)}</span>
+                      <span class="price-breakdown__item-price">
+                        {formatPrice(product.inherited_price_cents)}
+                      </span>
                     </div>
                   )}
                 </For>
               </div>
               <Show when={pricingData()!.embeddedProducts.length > 1}>
                 <div class="price-breakdown__subtotal">
-                  <span class="price-breakdown__subtotal-label">Embedded Products Subtotal</span>
-                  <span class="price-breakdown__subtotal-value">{formatPrice(totalEmbeddedPrice())}</span>
+                  <span class="price-breakdown__subtotal-label">
+                    Embedded Products Subtotal
+                  </span>
+                  <span class="price-breakdown__subtotal-value">
+                    {formatPrice(totalEmbeddedPrice())}
+                  </span>
                 </div>
               </Show>
             </div>
@@ -180,7 +210,9 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
           <Show when={totalPrice() > 0}>
             <div class="price-breakdown__total">
               <span class="price-breakdown__total-label">Total Price</span>
-              <span class="price-breakdown__total-value">{formatPrice(totalPrice())}</span>
+              <span class="price-breakdown__total-value">
+                {formatPrice(totalPrice())}
+              </span>
             </div>
           </Show>
 
@@ -188,7 +220,9 @@ export default function ProductPriceBreakdown(props: ProductPriceBreakdownProps)
             <div class="price-breakdown__empty">
               <span class="price-breakdown__empty-icon">💰</span>
               <p class="price-breakdown__empty-text">Free</p>
-              <p class="price-breakdown__empty-hint">No price set for files, documents, or embedded products</p>
+              <p class="price-breakdown__empty-hint">
+                No price set for files, documents, or embedded products
+              </p>
             </div>
           </Show>
         </div>

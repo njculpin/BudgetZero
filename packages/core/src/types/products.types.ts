@@ -1,8 +1,8 @@
-import type { BaseEntity } from "./common.types";
+import type { BaseEntity } from './common.types';
 
-export type ProductStatus = "draft" | "private" | "public" | "archived";
-export type ProductType = "digital" | "print_service" | "paint_service";
-export type ProductCollaboratorRole = "owner" | "editor" | "viewer";
+export type ProductStatus = 'draft' | 'private' | 'public' | 'archived';
+export type ProductType = 'digital' | 'print_service' | 'paint_service';
+export type ProductCollaboratorRole = 'owner' | 'editor' | 'viewer';
 export type RoyaltyType = 'fixed' | 'percentage';
 
 export interface Product extends BaseEntity {

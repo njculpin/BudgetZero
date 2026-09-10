@@ -14,7 +14,7 @@ interface TagSuggestion {
 }
 
 export default function TagInput(props: TagInputProps) {
-  const placeholder = props.placeholder
+  const placeholder = props.placeholder;
   const [tags, setTags] = createSignal<string[]>(props.initialTags || []);
   const [inputValue, setInputValue] = createSignal('');
   const [suggestions, setSuggestions] = createSignal<TagSuggestion[]>([]);
@@ -51,7 +51,9 @@ export default function TagInput(props: TagInputProps) {
     fetchTimeout = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/tags/suggestions?q=${encodeURIComponent(value)}`);
+        const response = await fetch(
+          `/api/tags/suggestions?q=${encodeURIComponent(value)}`
+        );
         if (response.ok) {
           const data = await response.json();
           // Filter out already added tags
@@ -81,7 +83,7 @@ export default function TagInput(props: TagInputProps) {
   };
 
   const removeTag = (tagToRemove: string) => {
-    const newTags = tags().filter(tag => tag !== tagToRemove);
+    const newTags = tags().filter((tag) => tag !== tagToRemove);
     setTags(newTags);
     if (props.onChange) props.onChange(newTags);
   };
@@ -109,11 +111,7 @@ export default function TagInput(props: TagInputProps) {
 
   return (
     <div class="tag-input">
-      <input
-        type="hidden"
-        name={props.name}
-        value={JSON.stringify(tags())}
-      />
+      <input type="hidden" name={props.name} value={JSON.stringify(tags())} />
 
       <div class="tag-input__tags">
         <For each={tags()}>
@@ -172,11 +170,7 @@ export default function TagInput(props: TagInputProps) {
             <div class="tag-input__loading">Loading...</div>
           </Show>
         </div>
-        <button
-          type="button"
-          class="tag-input__add-button"
-          onClick={() => addTag()}
-        >
+        <button type="button" class="tag-input__add-button" onClick={() => addTag()}>
           Add
         </button>
       </div>

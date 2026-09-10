@@ -50,7 +50,9 @@ describe('POST /api/products/create-product', () => {
     // signature — are tested once in gateway.test.ts rather than in every
     // controller. What remains is this controller's own decision.
     it('rejects a caller who is not signed in', async () => {
-      const response = await productsCreateProduct(makeContext({ userId: null, ...{ body: {} } }));
+      const response = await productsCreateProduct(
+        makeContext({ userId: null, ...{ body: {} } })
+      );
 
       expect(response.status).toBe(401);
     });
@@ -132,7 +134,9 @@ describe('POST /api/products/create-product', () => {
 
       // Verify createProduct was called with a generated title
       const callArgs = vi.mocked(products.createProduct).mock.calls[0];
-      expect(callArgs[1].title).toMatch(/New Product - \w+ \d+, \d{4} \d{2}:\d{2} (AM|PM)/);
+      expect(callArgs[1].title).toMatch(
+        /New Product - \w+ \d+, \d{4} \d{2}:\d{2} (AM|PM)/
+      );
     });
   });
 
@@ -216,7 +220,9 @@ describe('POST /api/products/create-product', () => {
       await productsCreateProduct(makeContext({ request: mockRequest }));
 
       const callArgs = vi.mocked(products.createProduct).mock.calls[0];
-      expect(callArgs[1].title).toMatch(/New Product - \w+ \d+, \d{4} \d{2}:\d{2} (AM|PM)/);
+      expect(callArgs[1].title).toMatch(
+        /New Product - \w+ \d+, \d{4} \d{2}:\d{2} (AM|PM)/
+      );
     });
   });
 
@@ -267,7 +273,9 @@ describe('POST /api/products/create-product', () => {
           }),
         });
 
-        const response = await productsCreateProduct(makeContext({ request: mockRequest }));
+        const response = await productsCreateProduct(
+          makeContext({ request: mockRequest })
+        );
 
         expect(response.status).toBe(201);
       }

@@ -1,12 +1,12 @@
-import { createSignal } from "solid-js";
-import LoadingButton from "./LoadingButton";
-import "./loading-button.css";
+import { createSignal } from 'solid-js';
+import LoadingButton from './LoadingButton';
+import './loading-button.css';
 
 interface FormSubmitButtonProps {
   action: string;
-  method?: "post" | "get";
-  variant?: "primary" | "secondary" | "ghost" | "outline" | "destructive" | "accent";
-  size?: "sm" | "md" | "lg";
+  method?: 'post' | 'get';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'outline' | 'destructive' | 'accent';
+  size?: 'sm' | 'md' | 'lg';
   children: string;
 }
 
@@ -21,9 +21,9 @@ export default function FormSubmitButton(props: FormSubmitButtonProps) {
 
     try {
       const response = await fetch(props.action, {
-        method: props.method || "post",
+        method: props.method || 'post',
         headers: {
-          "Accept": "application/json",
+          Accept: 'application/json',
         },
         body: new FormData(form),
         redirect: 'manual', // Don't auto-follow redirects
@@ -31,7 +31,7 @@ export default function FormSubmitButton(props: FormSubmitButtonProps) {
 
       // Handle redirect responses (3xx)
       if (response.status >= 300 && response.status < 400) {
-        const location = response.headers.get("Location");
+        const location = response.headers.get('Location');
         if (location) {
           window.location.href = location;
         } else {
@@ -42,9 +42,9 @@ export default function FormSubmitButton(props: FormSubmitButtonProps) {
 
       if (response.ok) {
         // Check content type before parsing
-        const contentType = response.headers.get("content-type");
+        const contentType = response.headers.get('content-type');
 
-        if (contentType && contentType.includes("application/json")) {
+        if (contentType && contentType.includes('application/json')) {
           // Parse JSON response
           const data = await response.json();
 
@@ -63,31 +63,31 @@ export default function FormSubmitButton(props: FormSubmitButtonProps) {
         }
       } else {
         // Handle error
-        const contentType = response.headers.get("content-type");
-        let errorMessage = "An error occurred. Please try again.";
+        const contentType = response.headers.get('content-type');
+        let errorMessage = 'An error occurred. Please try again.';
 
-        if (contentType && contentType.includes("application/json")) {
+        if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json().catch(() => ({ error: errorMessage }));
           errorMessage = errorData.error || errorMessage;
         }
 
-        console.error("Form submission error:", errorMessage);
+        console.error('Form submission error:', errorMessage);
         alert(errorMessage);
         setIsLoading(false);
       }
     } catch (error) {
-      console.error("Form submission error:", error);
-      alert("An error occurred. Please try again.");
+      console.error('Form submission error:', error);
+      alert('An error occurred. Please try again.');
       setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} action={props.action} method={props.method || "post"}>
+    <form onSubmit={handleSubmit} action={props.action} method={props.method || 'post'}>
       <LoadingButton
         type="submit"
-        variant={props.variant || "primary"}
-        size={props.size || "lg"}
+        variant={props.variant || 'primary'}
+        size={props.size || 'lg'}
         isLoading={isLoading()}
         loadingText={`${props.children}...`}
       >

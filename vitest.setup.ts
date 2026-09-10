@@ -15,8 +15,7 @@ import { beforeAll } from 'vitest';
 const ALLOWED_HOSTS = new Set(['127.0.0.1', 'localhost', '0.0.0.0', '[::1]']);
 
 beforeAll(() => {
-  const url =
-    process.env.PUBLIC_SUPABASE_URL ?? import.meta.env.PUBLIC_SUPABASE_URL;
+  const url = process.env.PUBLIC_SUPABASE_URL ?? import.meta.env.PUBLIC_SUPABASE_URL;
 
   if (!url) {
     throw new Error(

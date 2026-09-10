@@ -37,6 +37,12 @@ jobs:
       - name: Package boundaries
         run: npm run check:boundaries
 
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
       - name: Typecheck
         run: npm run check
 

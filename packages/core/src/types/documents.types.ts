@@ -1,6 +1,14 @@
-import type { BaseEntity } from "./common.types";
+import type { BaseEntity } from './common.types';
 
-export type DocumentBlockType = 'paragraph' | 'heading' | 'list_item' | 'image' | 'code' | 'table' | 'quote' | 'callout';
+export type DocumentBlockType =
+  | 'paragraph'
+  | 'heading'
+  | 'list_item'
+  | 'image'
+  | 'code'
+  | 'table'
+  | 'quote'
+  | 'callout';
 export type DocumentCollaboratorRole = 'owner' | 'editor' | 'viewer';
 
 export interface Document extends BaseEntity {

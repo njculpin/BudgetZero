@@ -1,16 +1,32 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Button from "@/components/Button.astro";
-import { ProductBasicInfoForm, ProductStatusEditor, ProductEmbeddableToggle, ProductTagsForm, ProductImagesForm, ProductContentManager, ProductDeleteButton } from "@/components/products";
-import ProductContributors from "@/components/products/ProductContributors.astro";
-import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributorsWithRoles, getProductComponentsWithDetails } from "@gameloopers/core/data-access/products";
-import { getUserById } from "@gameloopers/core/data-access/users";
-import { setSession } from "@gameloopers/core/auth";
-import Card from "@/components/card/Card.astro";
-import CardHeader from "@/components/card/CardHeader.astro";
-import CardTitle from "@/components/card/CardTitle.astro";
-import CardDescription from "@/components/card/CardDescription.astro";
-import CardContent from "@/components/card/CardContent.astro";
+import Layout from '@/layouts/Layout.astro';
+import Button from '@/components/Button.astro';
+import {
+  ProductBasicInfoForm,
+  ProductStatusEditor,
+  ProductEmbeddableToggle,
+  ProductTagsForm,
+  ProductImagesForm,
+  ProductContentManager,
+  ProductDeleteButton,
+} from '@/components/products';
+import ProductContributors from '@/components/products/ProductContributors.astro';
+import {
+  getProductByHandle,
+  getProductTags,
+  getProductImages,
+  getProductFiles,
+  getProductDocuments,
+  getProductContributorsWithRoles,
+  getProductComponentsWithDetails,
+} from '@gameloopers/core/data-access/products';
+import { getUserById } from '@gameloopers/core/data-access/users';
+import { setSession } from '@gameloopers/core/auth';
+import Card from '@/components/card/Card.astro';
+import CardHeader from '@/components/card/CardHeader.astro';
+import CardTitle from '@/components/card/CardTitle.astro';
+import CardDescription from '@/components/card/CardDescription.astro';
+import CardContent from '@/components/card/CardContent.astro';
 
 const { product } = Astro.params;
 
@@ -26,8 +42,8 @@ if (!productData) {
 
 // Auth check
 let currentUser = null;
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
+const accessToken = Astro.cookies.get('sb-access-token');
+const refreshToken = Astro.cookies.get('sb-refresh-token');
 
 if (accessToken && refreshToken) {
   try {
@@ -52,7 +68,14 @@ if (!isOwner) {
 }
 
 // Parallelize data fetching for better performance
-const [owner, tags, productImages, productFiles, productDocuments, embeddedProductsWithCreators] = await Promise.all([
+const [
+  owner,
+  tags,
+  productImages,
+  productFiles,
+  productDocuments,
+  embeddedProductsWithCreators,
+] = await Promise.all([
   getUserById(productData.user_id),
   getProductTags(productData.id),
   getProductImages(productData.id),
@@ -67,7 +90,9 @@ if (!owner) {
 }
 
 // Get product contributors with role information
-const productContributorsWithRoles = await getProductContributorsWithRoles(productData.id);
+const productContributorsWithRoles = await getProductContributorsWithRoles(
+  productData.id
+);
 ---
 
 <Layout title={`Edit ${productData.title} - Game Loopers`}>
@@ -114,7 +139,9 @@ const productContributorsWithRoles = await getProductContributorsWithRoles(produ
           <Card>
             <CardHeader>
               <CardTitle>Content & Pricing</CardTitle>
-              <CardDescription>Manage all content, pricing, and revenue distribution</CardDescription>
+              <CardDescription>
+                Manage all content, pricing, and revenue distribution
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ProductContentManager
@@ -161,7 +188,7 @@ const productContributorsWithRoles = await getProductContributorsWithRoles(produ
               <ProductTagsForm
                 client:load
                 productId={productData.id}
-                initialTags={tags.map(t => t.value)}
+                initialTags={tags.map((t) => t.value)}
               />
             </CardContent>
           </Card>
@@ -176,7 +203,9 @@ const productContributorsWithRoles = await getProductContributorsWithRoles(produ
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ProductContributors contributorsWithRoles={productContributorsWithRoles} />
+                <ProductContributors
+                  contributorsWithRoles={productContributorsWithRoles}
+                />
               </CardContent>
             </Card>
           )}

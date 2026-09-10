@@ -1,4 +1,4 @@
-import { createSignal, type Accessor, type Setter } from "solid-js";
+import { createSignal, type Accessor, type Setter } from 'solid-js';
 
 /**
  * Configuration for the useDeleteConfirm hook
@@ -35,13 +35,13 @@ export interface UseDeleteConfirmReturn {
 export function useDeleteConfirm(config: UseDeleteConfirmConfig): UseDeleteConfirmReturn {
   const [showConfirm, setShowConfirm] = createSignal(false);
   const [isDeleting, setIsDeleting] = createSignal(false);
-  const [error, setError] = createSignal("");
+  const [error, setError] = createSignal('');
 
   const openConfirm = () => setShowConfirm(true);
   const closeConfirm = () => setShowConfirm(false);
 
   const handleDelete = async () => {
-    setError("");
+    setError('');
     setIsDeleting(true);
 
     try {
@@ -49,13 +49,13 @@ export function useDeleteConfirm(config: UseDeleteConfirmConfig): UseDeleteConfi
       formData.append(config.entityParamName, config.entityId);
 
       const response = await fetch(config.deleteEndpoint, {
-        method: "POST",
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to delete");
+        setError(data.error || 'Failed to delete');
         setIsDeleting(false);
         setShowConfirm(false);
         return;
@@ -64,7 +64,7 @@ export function useDeleteConfirm(config: UseDeleteConfirmConfig): UseDeleteConfi
       // Redirect after successful delete
       window.location.href = config.redirectUrl;
     } catch {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
       setIsDeleting(false);
       setShowConfirm(false);
     }

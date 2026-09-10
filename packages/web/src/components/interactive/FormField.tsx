@@ -1,10 +1,10 @@
-import type { JSX } from "solid-js";
+import type { JSX } from 'solid-js';
 
 interface FormFieldProps {
   label: string;
   name: string;
   id?: string;
-  type?: "text" | "email" | "password" | "number" | "url" | "tel";
+  type?: 'text' | 'email' | 'password' | 'number' | 'url' | 'tel';
   value: string | number;
   onInput: JSX.EventHandler<HTMLInputElement, InputEvent>;
   placeholder?: string;
@@ -29,10 +29,10 @@ export default function FormField(props: FormFieldProps) {
         {props.required && <span class="form-field__required">*</span>}
       </label>
       <input
-        type={props.type || "text"}
+        type={props.type || 'text'}
         name={props.name}
         id={fieldId}
-        class={`form-field__input ${hasError ? "form-field__input--error" : ""}`}
+        class={`form-field__input ${hasError ? 'form-field__input--error' : ''}`}
         value={props.value}
         onInput={props.onInput}
         placeholder={props.placeholder}

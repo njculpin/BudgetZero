@@ -97,9 +97,7 @@ describe('markWebhookEventProcessed', () => {
 
     // Fulfilment already succeeded by this point. Failing to stamp the row must
     // not turn a completed order into a 500 and a pointless Stripe retry.
-    await expect(
-      markWebhookEventProcessed(EVENT_ID)
-    ).resolves.toBeUndefined();
+    await expect(markWebhookEventProcessed(EVENT_ID)).resolves.toBeUndefined();
   });
 });
 

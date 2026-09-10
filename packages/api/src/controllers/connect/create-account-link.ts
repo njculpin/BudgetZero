@@ -1,8 +1,11 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { getUserById } from "@gameloopers/core/data-access/users";
-import { createConnectAccount, createAccountLink } from "@gameloopers/core/payments/connect";
-import { serverClient } from "@gameloopers/core/data-access/client";
+import { getUserById } from '@gameloopers/core/data-access/users';
+import {
+  createConnectAccount,
+  createAccountLink,
+} from '@gameloopers/core/payments/connect';
+import { serverClient } from '@gameloopers/core/data-access/client';
 
 export const connectCreateAccountLink: Controller = async ({ url, userId }) => {
   if (!userId) return unauthorized('Not authenticated');
@@ -11,9 +14,9 @@ export const connectCreateAccountLink: Controller = async ({ url, userId }) => {
     // Get user data
     const user = await getUserById(userId);
     if (!user) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -43,11 +46,7 @@ export const connectCreateAccountLink: Controller = async ({ url, userId }) => {
     }
 
     // Create account link for onboarding
-    const accountLink = await createAccountLink(
-      stripeAccountId,
-      refreshUrl,
-      returnUrl
-    );
+    const accountLink = await createAccountLink(stripeAccountId, refreshUrl, returnUrl);
 
     return new Response(
       JSON.stringify({
@@ -56,18 +55,18 @@ export const connectCreateAccountLink: Controller = async ({ url, userId }) => {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Create account link error:", error);
+    console.error('Create account link error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to create account link",
+        error: error instanceof Error ? error.message : 'Failed to create account link',
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

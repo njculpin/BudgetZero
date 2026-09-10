@@ -34,8 +34,7 @@ import {
 
 const supabase = createClient(
   import.meta.env.PUBLIC_SUPABASE_URL,
-  (import.meta.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY)!,
+  (import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
@@ -49,12 +48,11 @@ describe('Payout lifecycle', () => {
   let saleItemId: string;
 
   beforeAll(async () => {
-    const { data: creator, error: creatorError } =
-      await supabase.auth.admin.createUser({
-        email: `payout-lifecycle-${suffix}@test.local`,
-        password: 'TestPassword123!',
-        email_confirm: true,
-      });
+    const { data: creator, error: creatorError } = await supabase.auth.admin.createUser({
+      email: `payout-lifecycle-${suffix}@test.local`,
+      password: 'TestPassword123!',
+      email_confirm: true,
+    });
 
     if (creatorError || !creator?.user) {
       throw new Error(`Failed to create test creator: ${creatorError?.message}`);
@@ -272,9 +270,9 @@ describe('Payout lifecycle', () => {
       // A late or duplicate webhook must not resurrect this as paid: it would
       // stamp a real-looking transfer id on a payout backed by nothing, while its
       // royalties sat claimable by a second, genuine payout.
-      await expect(
-        settlePayout(payoutId, 'tr_late_webhook')
-      ).rejects.toThrow(/cannot be settled/);
+      await expect(settlePayout(payoutId, 'tr_late_webhook')).rejects.toThrow(
+        /cannot be settled/
+      );
 
       const payout = await getPayoutById(payoutId);
       expect(payout?.status).toBe('failed');
@@ -293,9 +291,9 @@ describe('Payout lifecycle', () => {
       await settlePayout(payoutId, 'tr_already_paid');
 
       // Releasing would strip the audit trail from a transfer that really happened.
-      await expect(
-        releasePayout(payoutId, 'should not apply')
-      ).rejects.toThrow(/cannot be released/);
+      await expect(releasePayout(payoutId, 'should not apply')).rejects.toThrow(
+        /cannot be released/
+      );
 
       const payout = await getPayoutById(payoutId);
       expect(payout?.status).toBe('paid');
@@ -390,10 +388,7 @@ describe('Payout lifecycle', () => {
       await settlePayout(payoutId, `tr_reversed_${suffix}`);
       expect((await getAvailablePayoutBalance(creatorId)).totalCents).toBe(0);
 
-      const reversal = await reversePayout(
-        `tr_reversed_${suffix}`,
-        'reversed by Stripe'
-      );
+      const reversal = await reversePayout(`tr_reversed_${suffix}`, 'reversed by Stripe');
 
       expect(reversal).not.toBeNull();
       expect(reversal!.restoredCount).toBe(2);
@@ -410,10 +405,7 @@ describe('Payout lifecycle', () => {
     it('reports an orphaned reversal rather than failing silently', async () => {
       // A reversal for a transfer we have no payout for means money moved that
       // this system cannot account for. The caller alerts on null.
-      const reversal = await reversePayout(
-        `tr_orphan_${suffix}`,
-        'reversed by Stripe'
-      );
+      const reversal = await reversePayout(`tr_orphan_${suffix}`, 'reversed by Stripe');
 
       expect(reversal).toBeNull();
     });
@@ -504,9 +496,7 @@ describe('Payout lifecycle', () => {
       expect(clearing.totalCents).toBe(5000);
       expect(clearing.transactionCount).toBe(1);
       expect(clearing.nextAvailableAt).toBeTruthy();
-      expect(new Date(clearing.nextAvailableAt!).getTime()).toBeGreaterThan(
-        Date.now()
-      );
+      expect(new Date(clearing.nextAvailableAt!).getTime()).toBeGreaterThan(Date.now());
     });
 
     it('refuses a payout funded only by held royalties', async () => {

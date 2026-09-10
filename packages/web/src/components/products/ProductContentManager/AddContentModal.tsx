@@ -1,8 +1,8 @@
-import { createSignal, Show, For, createResource } from "solid-js";
-import Modal from "@/components/modal/Modal";
-import { LoadingButton } from "@/components/interactive";
-import type { ProductFile } from "@gameloopers/core/types";
-import type { EmbeddedProductData, ProductDocumentRelation } from "./ContentItem";
+import { createSignal, Show, For, createResource } from 'solid-js';
+import Modal from '@/components/modal/Modal';
+import { LoadingButton } from '@/components/interactive';
+import type { ProductFile } from '@gameloopers/core/types';
+import type { EmbeddedProductData, ProductDocumentRelation } from './ContentItem';
 
 /**
  * The fields this modal reads from `/api/products/search-embeddable`.
@@ -25,8 +25,7 @@ interface UserDocumentSummary {
   description: string | null;
 }
 
-
-type ContentType = "file" | "document" | "embedded" | null;
+type ContentType = 'file' | 'document' | 'embedded' | null;
 
 export interface AddContentModalProps {
   isOpen: boolean;
@@ -55,23 +54,23 @@ export default function AddContentModal(props: AddContentModalProps) {
 
   // Document attachment state
   const [selectedDocId, setSelectedDocId] = createSignal<string | null>(null);
-  const [docPrice, setDocPrice] = createSignal("0.00");
+  const [docPrice, setDocPrice] = createSignal('0.00');
 
   // Product embedding state
-  const [productSearch, setProductSearch] = createSignal("");
+  const [productSearch, setProductSearch] = createSignal('');
   const [searchResults, setSearchResults] = createSignal<EmbeddableSearchResult[]>([]);
 
   // Fetch user's documents
   const [userDocuments] = createResource(
-    () => selectedType() === "document" && props.userId,
+    () => selectedType() === 'document' && props.userId,
     async (userId) => {
       try {
         const response = await fetch(`/api/documents/user-documents?userId=${userId}`);
-        if (!response.ok) throw new Error("Failed to fetch documents");
+        if (!response.ok) throw new Error('Failed to fetch documents');
         const data = await response.json();
         return data.documents || [];
       } catch (error) {
-        console.error("Error fetching documents:", error);
+        console.error('Error fetching documents:', error);
         return [];
       }
     }
@@ -81,8 +80,8 @@ export default function AddContentModal(props: AddContentModalProps) {
     setSelectedType(null);
     setPendingFiles([]);
     setSelectedDocId(null);
-    setDocPrice("0.00");
-    setProductSearch("");
+    setDocPrice('0.00');
+    setProductSearch('');
     setSearchResults([]);
     setError(null);
     setSuccess(null);
@@ -97,11 +96,11 @@ export default function AddContentModal(props: AddContentModalProps) {
     const newFiles: PendingFile[] = Array.from(input.files).map((file) => ({
       file,
       title: file.name,
-      price: "0.00",
+      price: '0.00',
     }));
 
     setPendingFiles([...pendingFiles(), ...newFiles]);
-    input.value = "";
+    input.value = '';
   };
 
   const handleRemovePendingFile = (index: number) => {
@@ -109,9 +108,7 @@ export default function AddContentModal(props: AddContentModalProps) {
   };
 
   const handleUpdateFilePrice = (index: number, price: string) => {
-    setPendingFiles((prev) =>
-      prev.map((f, i) => (i === index ? { ...f, price } : f))
-    );
+    setPendingFiles((prev) => prev.map((f, i) => (i === index ? { ...f, price } : f)));
   };
 
   const handleUploadFiles = async () => {
@@ -122,7 +119,7 @@ export default function AddContentModal(props: AddContentModalProps) {
 
     try {
       const formData = new FormData();
-      formData.append("productId", props.productId);
+      formData.append('productId', props.productId);
 
       pendingFiles().forEach((pf) => {
         formData.append(`files`, pf.file);
@@ -133,12 +130,12 @@ export default function AddContentModal(props: AddContentModalProps) {
         formData.append(`titles`, pf.title);
       });
 
-      const response = await fetch("/api/products/upload-files", {
-        method: "POST",
+      const response = await fetch('/api/products/upload-files', {
+        method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Failed to upload files");
+      if (!response.ok) throw new Error('Failed to upload files');
 
       const data = await response.json();
       props.onFilesAdded(data.files);
@@ -149,7 +146,7 @@ export default function AddContentModal(props: AddContentModalProps) {
         handleClose();
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload files");
+      setError(err instanceof Error ? err.message : 'Failed to upload files');
     } finally {
       setIsLoading(false);
     }
@@ -161,28 +158,28 @@ export default function AddContentModal(props: AddContentModalProps) {
     setError(null);
 
     try {
-      const response = await fetch("/api/documents/create-document", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/documents/create-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: props.userId,
-          title: "Untitled Document",
+          title: 'Untitled Document',
           productId: props.productId,
           priceCents: 0,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to create document");
+      if (!response.ok) throw new Error('Failed to create document');
 
       const data = await response.json();
       props.onDocumentAdded(data.productDocument);
-      setSuccess("Document created and attached");
+      setSuccess('Document created and attached');
 
       setTimeout(() => {
         handleClose();
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create document");
+      setError(err instanceof Error ? err.message : 'Failed to create document');
     } finally {
       setIsLoading(false);
     }
@@ -198,9 +195,9 @@ export default function AddContentModal(props: AddContentModalProps) {
     try {
       const priceCents = Math.round(parseFloat(docPrice()) * 100);
 
-      const response = await fetch("/api/products/add-document", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/products/add-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: props.productId,
           documentId: docId,
@@ -208,17 +205,17 @@ export default function AddContentModal(props: AddContentModalProps) {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to attach document");
+      if (!response.ok) throw new Error('Failed to attach document');
 
       const data = await response.json();
       props.onDocumentAdded(data.productDocument);
-      setSuccess("Document attached successfully");
+      setSuccess('Document attached successfully');
 
       setTimeout(() => {
         handleClose();
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to attach document");
+      setError(err instanceof Error ? err.message : 'Failed to attach document');
     } finally {
       setIsLoading(false);
     }
@@ -237,12 +234,12 @@ export default function AddContentModal(props: AddContentModalProps) {
         `/api/products/search-embeddable?q=${encodeURIComponent(query)}&userId=${props.userId}`
       );
 
-      if (!response.ok) throw new Error("Failed to search products");
+      if (!response.ok) throw new Error('Failed to search products');
 
       const data = await response.json();
       setSearchResults(data.products || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to search products");
+      setError(err instanceof Error ? err.message : 'Failed to search products');
     } finally {
       setIsLoading(false);
     }
@@ -253,9 +250,9 @@ export default function AddContentModal(props: AddContentModalProps) {
     setError(null);
 
     try {
-      const response = await fetch("/api/products/embed-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/products/embed-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           parentProductId: props.productId,
           childProductId,
@@ -265,22 +262,21 @@ export default function AddContentModal(props: AddContentModalProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to embed product");
+        throw new Error(data.error || 'Failed to embed product');
       }
 
       props.onProductEmbedded(data.component);
-      setSuccess("Product embedded successfully");
+      setSuccess('Product embedded successfully');
 
       setTimeout(() => {
         handleClose();
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to embed product");
+      setError(err instanceof Error ? err.message : 'Failed to embed product');
     } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <Modal
@@ -289,13 +285,13 @@ export default function AddContentModal(props: AddContentModalProps) {
       title={
         selectedType()
           ? `Add ${
-              selectedType() === "file"
-                ? "Files"
-                : selectedType() === "document"
-                ? "Document"
-                : "Product"
+              selectedType() === 'file'
+                ? 'Files'
+                : selectedType() === 'document'
+                  ? 'Document'
+                  : 'Product'
             }`
-          : "Add Content"
+          : 'Add Content'
       }
       size="lg"
     >
@@ -315,7 +311,7 @@ export default function AddContentModal(props: AddContentModalProps) {
             <button
               type="button"
               class="add-content-modal__type-card"
-              onClick={() => setSelectedType("file")}
+              onClick={() => setSelectedType('file')}
             >
               <span class="add-content-modal__type-icon">📁</span>
               <span class="add-content-modal__type-label">Upload Files</span>
@@ -327,7 +323,7 @@ export default function AddContentModal(props: AddContentModalProps) {
             <button
               type="button"
               class="add-content-modal__type-card"
-              onClick={() => setSelectedType("document")}
+              onClick={() => setSelectedType('document')}
             >
               <span class="add-content-modal__type-icon">📄</span>
               <span class="add-content-modal__type-label">Attach Document</span>
@@ -339,7 +335,7 @@ export default function AddContentModal(props: AddContentModalProps) {
             <button
               type="button"
               class="add-content-modal__type-card"
-              onClick={() => setSelectedType("embedded")}
+              onClick={() => setSelectedType('embedded')}
             >
               <span class="add-content-modal__type-icon">📦</span>
               <span class="add-content-modal__type-label">Embed Product</span>
@@ -351,7 +347,7 @@ export default function AddContentModal(props: AddContentModalProps) {
         </Show>
 
         {/* File Upload Form */}
-        <Show when={selectedType() === "file"}>
+        <Show when={selectedType() === 'file'}>
           <div class="add-content-modal__form">
             {/* File Input */}
             <div class="add-content-modal__upload-area">
@@ -378,9 +374,7 @@ export default function AddContentModal(props: AddContentModalProps) {
             {/* Pending Files */}
             <Show when={pendingFiles().length > 0}>
               <div class="add-content-modal__pending-files">
-                <h4 class="add-content-modal__pending-title">
-                  Set Prices for New Files
-                </h4>
+                <h4 class="add-content-modal__pending-title">Set Prices for New Files</h4>
                 <For each={pendingFiles()}>
                   {(pf, index) => {
                     // Local state for this input to prevent re-renders on each keystroke
@@ -448,7 +442,7 @@ export default function AddContentModal(props: AddContentModalProps) {
         </Show>
 
         {/* Document Attachment Form */}
-        <Show when={selectedType() === "document"}>
+        <Show when={selectedType() === 'document'}>
           <div class="add-content-modal__form">
             <LoadingButton
               type="button"
@@ -483,7 +477,7 @@ export default function AddContentModal(props: AddContentModalProps) {
                       <div
                         class="add-content-modal__document-item"
                         classList={{
-                          "add-content-modal__document-item--selected":
+                          'add-content-modal__document-item--selected':
                             selectedDocId() === doc.id,
                         }}
                         onClick={() => setSelectedDocId(doc.id)}
@@ -503,11 +497,7 @@ export default function AddContentModal(props: AddContentModalProps) {
                   </For>
                 </div>
 
-                <a
-                  href="/documents"
-                  target="_blank"
-                  class="add-content-modal__view-all"
-                >
+                <a href="/documents" target="_blank" class="add-content-modal__view-all">
                   View all documents →
                 </a>
               </Show>
@@ -543,7 +533,7 @@ export default function AddContentModal(props: AddContentModalProps) {
         </Show>
 
         {/* Product Embedding Form */}
-        <Show when={selectedType() === "embedded"}>
+        <Show when={selectedType() === 'embedded'}>
           <div class="add-content-modal__form">
             <div class="add-content-modal__search-section">
               <input
@@ -553,7 +543,7 @@ export default function AddContentModal(props: AddContentModalProps) {
                 value={productSearch()}
                 onInput={(e) => setProductSearch(e.currentTarget.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSearchProducts();
+                  if (e.key === 'Enter') handleSearchProducts();
                 }}
               />
               <LoadingButton

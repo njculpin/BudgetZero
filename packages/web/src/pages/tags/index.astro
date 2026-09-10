@@ -1,8 +1,8 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/card/Card.astro";
-import CardContent from "@/components/card/CardContent.astro";
-import { getAllTags } from "@gameloopers/core/data-access/tags";
+import Layout from '@/layouts/Layout.astro';
+import Card from '@/components/card/Card.astro';
+import CardContent from '@/components/card/CardContent.astro';
+import { getAllTags } from '@gameloopers/core/data-access/tags';
 
 const tags = await getAllTags();
 ---
@@ -14,9 +14,7 @@ const tags = await getAllTags();
         <!-- Header -->
         <div class="tags-header">
           <h1 class="tags-header__title">Tags</h1>
-          <p class="tags-header__description">
-            Explore products and assets by topic
-          </p>
+          <p class="tags-header__description">Explore products and assets by topic</p>
         </div>
 
         <!-- Tags Grid -->
@@ -55,12 +53,22 @@ const tags = await getAllTags();
           <Card>
             <CardContent>
               <div class="tags-empty">
-                <svg class="tags-empty__icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  class="tags-empty__icon"
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
                   <line x1="7" y1="7" x2="7.01" y2="7"></line>
                 </svg>
                 <p class="tags-empty__text">No tags found</p>
-                <p class="tags-empty__description">Tags will appear here as products and assets are created</p>
+                <p class="tags-empty__description">
+                  Tags will appear here as products and assets are created
+                </p>
               </div>
             </CardContent>
           </Card>

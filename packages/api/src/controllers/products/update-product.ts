@@ -7,15 +7,15 @@ import {
   getProductFiles,
   getProductComponents,
   getProductImages,
-} from "@gameloopers/core/data-access/products";
-import { uploadFile, generateFilePath } from "@gameloopers/core/storage";
-import { z } from "zod";
+} from '@gameloopers/core/data-access/products';
+import { uploadFile, generateFilePath } from '@gameloopers/core/storage';
+import { z } from 'zod';
 
 const updateProductSchema = z.object({
   productId: z.string().uuid(),
   title: z.string().min(1).max(200).optional(),
   description: z.string().optional(),
-  status: z.enum(["draft", "private", "public", "archived"]).optional(),
+  status: z.enum(['draft', 'private', 'public', 'archived']).optional(),
   handle: z.string().optional(),
   tags: z.array(z.string()).optional(),
   isEmbeddable: z.boolean().optional(),
@@ -42,17 +42,17 @@ async function validatePublishStatus(
 
   // REQUIREMENT 1: At least one file OR embedded component
   if (files.length === 0 && components.length === 0) {
-    errors.push("Add at least one file or embed a product before publishing");
+    errors.push('Add at least one file or embed a product before publishing');
   }
 
   // REQUIREMENT 2: Product images (warning only)
   if (!images || images.length === 0) {
-    warnings.push("Product should have at least one image");
+    warnings.push('Product should have at least one image');
   }
 
   // REQUIREMENT 3: Description minimum length (warning only)
   if (!product?.description || product.description.trim().length < 20) {
-    warnings.push("Add a detailed description (at least 20 characters)");
+    warnings.push('Add a detailed description (at least 20 characters)');
   }
 
   // REQUIREMENT 4: Embedded products must be private or public (not draft/archived)
@@ -62,7 +62,7 @@ async function validatePublishStatus(
     );
 
     for (const child of childProducts) {
-      if (child && child.status !== "public" && child.status !== "private") {
+      if (child && child.status !== 'public' && child.status !== 'private') {
         errors.push(
           `Embedded product "${child.title}" must be private or published (not draft or archived)`
         );
@@ -93,16 +93,16 @@ export const productsUpdateProductPut: Controller = async ({ request, userId }) 
     // Check product ownership
     const product = await getProductById(validatedData.productId);
     if (!product) {
-      return new Response(JSON.stringify({ error: "Product not found" }), {
+      return new Response(JSON.stringify({ error: 'Product not found' }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     if (product.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 403,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -112,7 +112,7 @@ export const productsUpdateProductPut: Controller = async ({ request, userId }) 
       if (!validation.valid) {
         return new Response(JSON.stringify({ error: validation.error }), {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         });
       }
     }
@@ -128,10 +128,10 @@ export const productsUpdateProductPut: Controller = async ({ request, userId }) 
     });
 
     if (!updatedProduct) {
-      return new Response(
-        JSON.stringify({ error: "Failed to update product" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: 'Failed to update product' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Trigger PDF generation when product is published
@@ -139,76 +139,79 @@ export const productsUpdateProductPut: Controller = async ({ request, userId }) 
       // Status changed to public - generate PDFs for all documents
       try {
         const pdfFormData = new FormData();
-        pdfFormData.append("productId", validatedData.productId);
+        pdfFormData.append('productId', validatedData.productId);
 
-        await fetch(new URL("/api/products/generate-document-pdfs", request.url), {
-          method: "POST",
+        await fetch(new URL('/api/products/generate-document-pdfs', request.url), {
+          method: 'POST',
           headers: {
-            Cookie: request.headers.get("Cookie") || "",
+            Cookie: request.headers.get('Cookie') || '',
           },
           body: pdfFormData,
         });
         // Note: PDF generation happens asynchronously, don't wait for it
       } catch (error) {
-        console.error("Failed to trigger PDF generation:", error);
+        console.error('Failed to trigger PDF generation:', error);
         // Don't fail the product update if PDF generation fails
       }
     }
 
     return new Response(JSON.stringify({ product: updatedProduct }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({ error: "Validation failed", details: error.errors }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        JSON.stringify({ error: 'Validation failed', details: error.errors }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    console.error("Update product error:", error);
+    console.error('Update product error:', error);
     return new Response(
       JSON.stringify({
-        error:
-          error instanceof Error ? error.message : "Failed to update product",
+        error: error instanceof Error ? error.message : 'Failed to update product',
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };
 
 // POST handler for FormData with file uploads
-export const productsUpdateProductPost: Controller = async ({ request, userId, accessToken }) => {
+export const productsUpdateProductPost: Controller = async ({
+  request,
+  userId,
+  accessToken,
+}) => {
   if (!userId) return unauthorized('Not authenticated');
-  
+
   if (!accessToken) {
-    return new Response(JSON.stringify({ error: "No valid access token" }), {
+    return new Response(JSON.stringify({ error: 'No valid access token' }), {
       status: 401,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
   try {
     const formData = await request.formData();
-    const productId = formData.get("productId") as string;
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const status = formData.get("status") as string;
-    const tagsJson = formData.get("tags") as string;
-    const isEmbeddableString = formData.get("isEmbeddable") as string;
-    const embeddingRoyaltyCentsString = formData.get("embeddingRoyaltyCents") as string;
+    const productId = formData.get('productId') as string;
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const status = formData.get('status') as string;
+    const tagsJson = formData.get('tags') as string;
+    const isEmbeddableString = formData.get('isEmbeddable') as string;
+    const embeddingRoyaltyCentsString = formData.get('embeddingRoyaltyCents') as string;
 
     // Handle both single cover image and multiple images
-    const coverImageFile = formData.get("coverImage") as File | null;
-    const imageFiles = formData.getAll("images") as File[];
+    const coverImageFile = formData.get('coverImage') as File | null;
+    const imageFiles = formData.getAll('images') as File[];
 
     // Verify ownership
     const product = await getProductById(productId);
     if (!product || product.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Not authorized" }), {
+      return new Response(JSON.stringify({ error: 'Not authorized' }), {
         status: 403,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -218,7 +221,7 @@ export const productsUpdateProductPost: Controller = async ({ request, userId, a
         if (imageFile && imageFile.size > 0) {
           const filePath = generateFilePath(userId, imageFile.name, productId);
           const uploadResult = await uploadFile({
-            bucket: "product-images",
+            bucket: 'product-images',
             path: filePath,
             file: imageFile,
             accessToken: accessToken ?? undefined,
@@ -241,7 +244,7 @@ export const productsUpdateProductPost: Controller = async ({ request, userId, a
     else if (coverImageFile && coverImageFile.size > 0) {
       const filePath = generateFilePath(userId, coverImageFile.name, productId);
       const uploadResult = await uploadFile({
-        bucket: "product-images",
+        bucket: 'product-images',
         path: filePath,
         file: coverImageFile,
         accessToken: accessToken ?? undefined,
@@ -265,7 +268,7 @@ export const productsUpdateProductPost: Controller = async ({ request, userId, a
       if (!validation.valid) {
         return new Response(JSON.stringify({ error: validation.error }), {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         });
       }
     }
@@ -274,7 +277,7 @@ export const productsUpdateProductPost: Controller = async ({ request, userId, a
     const updateData: {
       title?: string;
       description?: string;
-      status?: "draft" | "private" | "public" | "archived";
+      status?: 'draft' | 'private' | 'public' | 'archived';
       tags?: string[];
       isEmbeddable?: boolean;
       embeddingRoyaltyCents?: number;
@@ -287,7 +290,7 @@ export const productsUpdateProductPost: Controller = async ({ request, userId, a
       updateData.description = description;
     }
     if (status) {
-      updateData.status = status as "draft" | "public" | "archived";
+      updateData.status = status as 'draft' | 'public' | 'archived';
     }
     if (tagsJson) {
       updateData.tags = JSON.parse(tagsJson);
@@ -295,20 +298,20 @@ export const productsUpdateProductPost: Controller = async ({ request, userId, a
     if (isEmbeddableString !== null && isEmbeddableString !== undefined) {
       updateData.isEmbeddable = isEmbeddableString === 'true';
     }
-    if (embeddingRoyaltyCentsString !== null && embeddingRoyaltyCentsString !== undefined) {
+    if (
+      embeddingRoyaltyCentsString !== null &&
+      embeddingRoyaltyCentsString !== undefined
+    ) {
       updateData.embeddingRoyaltyCents = parseInt(embeddingRoyaltyCentsString, 10);
     }
 
     const updatedProduct = await updateProduct(productId, updateData);
 
     if (!updatedProduct) {
-      return new Response(
-        JSON.stringify({ error: "Failed to update product" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Failed to update product' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(
@@ -318,19 +321,19 @@ export const productsUpdateProductPost: Controller = async ({ request, userId, a
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Update product error:", error);
+    console.error('Update product error:', error);
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Update failed",
+        error: error instanceof Error ? error.message : 'Update failed',
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

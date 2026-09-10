@@ -1,4 +1,4 @@
-import { resend } from "./client";
+import { resend } from './client';
 
 /**
  * Email abstraction layer - isolates Resend SDK from application code

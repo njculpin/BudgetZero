@@ -1,22 +1,39 @@
 import type { Controller } from '../../context';
-import { verifyWebhookSignature, type Stripe } from "@gameloopers/core/payments";
-import { createSale, createSaleItem, getSaleByStripeChargeId, getSaleItems, recordSaleRefund } from "@gameloopers/core/data-access/sales";
-import { releasePayoutsForSale, reversePayout } from "@gameloopers/core/data-access/payouts";
-import { syncConnectAccountStatus } from "@gameloopers/core/data-access/users";
-import { getCartItems, clearCart } from "@gameloopers/core/data-access/cart";
-import { getProductById, getProductPriceBreakdown, getProductComponents } from "@gameloopers/core/data-access/products";
-import { sendPurchaseConfirmation } from "@gameloopers/core/email/purchase-confirmation";
-import { markSaleRoyaltiesAsRefunded, createRoyaltyTransactionsForProduct } from "@gameloopers/core/data-access/royalties";
+import { verifyWebhookSignature, type Stripe } from '@gameloopers/core/payments';
+import {
+  createSale,
+  createSaleItem,
+  getSaleByStripeChargeId,
+  getSaleItems,
+  recordSaleRefund,
+} from '@gameloopers/core/data-access/sales';
+import {
+  releasePayoutsForSale,
+  reversePayout,
+} from '@gameloopers/core/data-access/payouts';
+import { syncConnectAccountStatus } from '@gameloopers/core/data-access/users';
+import { getCartItems, clearCart } from '@gameloopers/core/data-access/cart';
+import {
+  getProductById,
+  getProductPriceBreakdown,
+  getProductComponents,
+} from '@gameloopers/core/data-access/products';
+import { sendPurchaseConfirmation } from '@gameloopers/core/email/purchase-confirmation';
+import {
+  markSaleRoyaltiesAsRefunded,
+  createRoyaltyTransactionsForProduct,
+} from '@gameloopers/core/data-access/royalties';
 import {
   claimWebhookEvent,
   markWebhookEventProcessed,
   releaseWebhookEvent,
-} from "@gameloopers/core/data-access/webhook-events";
+} from '@gameloopers/core/data-access/webhook-events';
 
 import { USE_MOCK_STRIPE } from '@gameloopers/core/payments/mock-mode';
-import { captureError, captureMessage } from "@gameloopers/core/monitoring";
+import { captureError, captureMessage } from '@gameloopers/core/monitoring';
 
-const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
+const webhookSecret =
+  import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 
 if (!USE_MOCK_STRIPE && !webhookSecret) {
   console.error('STRIPE_WEBHOOK_SECRET is not set');
@@ -75,10 +92,10 @@ export const webhooksStripe: Controller = async ({ request }) => {
 
   if (!claimed) {
     // Already processed (or in flight). Acknowledge so Stripe stops retrying.
-    return new Response(
-      JSON.stringify({ received: true, duplicate: true }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ received: true, duplicate: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   // Handle the event
@@ -293,10 +310,10 @@ export const webhooksStripe: Controller = async ({ request }) => {
 
         await markWebhookEventProcessed(event.id);
 
-        return new Response(
-          JSON.stringify({ received: true, saleId: sale.id }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({ received: true, saleId: sale.id }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
 
       case 'payment_intent.succeeded': {
@@ -313,9 +330,10 @@ export const webhooksStripe: Controller = async ({ request }) => {
         const charge = event.data.object as Stripe.Charge;
 
         // Get the payment intent ID (used as stripe_charge_id in our sales)
-        const paymentIntentId = typeof charge.payment_intent === 'string'
-          ? charge.payment_intent
-          : charge.payment_intent?.id;
+        const paymentIntentId =
+          typeof charge.payment_intent === 'string'
+            ? charge.payment_intent
+            : charge.payment_intent?.id;
 
         if (!paymentIntentId) {
           console.error('No payment intent ID found on refunded charge');
@@ -412,23 +430,17 @@ export const webhooksStripe: Controller = async ({ request }) => {
         // Money that had reached a creator has come back to the platform. Without
         // handling this the payout stayed 'paid', the royalties stayed 'paid', and
         // the creator's balance was permanently wrong in our favour, silently.
-        const reversal = await reversePayout(
-          transfer.id,
-          'Transfer reversed by Stripe'
-        );
+        const reversal = await reversePayout(transfer.id, 'Transfer reversed by Stripe');
 
         if (!reversal) {
           // A reversal for a transfer we have no payout for. Money moved that this
           // system cannot account for — the loudest thing in the file.
-          captureError(
-            new Error('Transfer reversed with no matching payout'),
-            {
-              operation: 'webhook.transfer_reversed_orphan',
-              stripeEventId: event.id,
-              transferId: transfer.id,
-              amountCents: transfer.amount,
-            }
-          );
+          captureError(new Error('Transfer reversed with no matching payout'), {
+            operation: 'webhook.transfer_reversed_orphan',
+            stripeEventId: event.id,
+            transferId: transfer.id,
+            amountCents: transfer.amount,
+          });
 
           await markWebhookEventProcessed(event.id);
 
@@ -494,10 +506,10 @@ export const webhooksStripe: Controller = async ({ request }) => {
 
     await markWebhookEventProcessed(event.id);
 
-    return new Response(
-      JSON.stringify({ received: true }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     // A failure here means a customer has paid and fulfilment did not complete.
     // This is the single most important thing in the app to be alerted about.

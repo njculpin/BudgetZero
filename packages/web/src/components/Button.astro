@@ -1,41 +1,68 @@
 ---
-import type { HTMLAttributes } from "astro/types";
+import type { HTMLAttributes } from 'astro/types';
 
 // Extending Astro's button attributes rather than declaring an index signature:
 // the remaining props are forwarded to a real <button>, so they should be typed
 // as button attributes. `rest.disabled` below is read directly, which an
 // index signature of `unknown` cannot support and one of `any` only pretended to.
-interface Props extends HTMLAttributes<"button"> {
-  variant?: "primary" | "secondary" | "destructive" | "outline" | "ghost" | "ghost-secondary" | "accent" | "link";
-  size?: "sm" | "md" | "lg" | "icon";
+interface Props extends HTMLAttributes<'button'> {
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'destructive'
+    | 'outline'
+    | 'ghost'
+    | 'ghost-secondary'
+    | 'accent'
+    | 'link';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   loading?: boolean;
 }
 
-const { variant = "primary", size = "md", loading = false, class: className, ...rest } = Astro.props;
+const {
+  variant = 'primary',
+  size = 'md',
+  loading = false,
+  class: className,
+  ...rest
+} = Astro.props;
 const classNames = [
   `button`,
   `button--${variant}`,
   `button--${size}`,
   loading && `button--loading`,
-  className
-].filter(Boolean).join(' ');
+  className,
+]
+  .filter(Boolean)
+  .join(' ');
 ---
 
 <button class={classNames} disabled={loading || rest.disabled} {...rest}>
   {loading && (
     <span class="button__spinner" aria-hidden="true">
       <svg class="button__spinner-icon" viewBox="0 0 24 24" fill="none">
-        <circle class="button__spinner-circle" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="button__spinner-path" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        <circle
+          class="button__spinner-circle"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        />
+        <path
+          class="button__spinner-path"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        />
       </svg>
     </span>
   )}
-  <span class={loading ? "button__content button__content--hidden" : "button__content"}>
-    <slot name="icon" class="button__icon"></slot>
-    <slot name="text" class="button__text"></slot>
+  <span class={loading ? 'button__content button__content--hidden' : 'button__content'}>
+    <slot name="icon" class="button__icon" />
+    <slot name="text" class="button__text" />
   </span>
 </button>
 
 <style>
-@import "@/styles/button.css";
+  @import '@/styles/button.css';
 </style>

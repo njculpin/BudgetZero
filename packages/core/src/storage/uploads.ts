@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { storageClient, storageAdminClient } from "./client";
+import { createClient } from '@supabase/supabase-js';
+import { storageClient, storageAdminClient } from './client';
 
 /**
  * Storage buckets. These names must match the buckets created in
@@ -7,10 +7,10 @@ import { storageClient, storageAdminClient } from "./client";
  * only surfaces when a customer tries to download what they paid for.
  */
 export type StorageBucket =
-  | "product-files" // private: paid downloadable product files
-  | "product-images" // public: product cover art and gallery images
-  | "user-avatars" // public: profile images
-  | "document-attachments"; // private: files attached to collaborative documents
+  | 'product-files' // private: paid downloadable product files
+  | 'product-images' // public: product cover art and gallery images
+  | 'user-avatars' // public: profile images
+  | 'document-attachments'; // private: files attached to collaborative documents
 
 export interface UploadResult {
   path: string;
@@ -33,11 +33,16 @@ export interface UploadOptions {
  * @param options - Upload configuration
  * @returns Upload result with path, URL, size, and type
  */
-export async function uploadFile(
-  options: UploadOptions
-): Promise<UploadResult | null> {
+export async function uploadFile(options: UploadOptions): Promise<UploadResult | null> {
   try {
-    const { bucket, path, file, upsert = false, cacheControl = "3600", accessToken } = options;
+    const {
+      bucket,
+      path,
+      file,
+      upsert = false,
+      cacheControl = '3600',
+      accessToken,
+    } = options;
 
     // Create authenticated client if access token provided
     const client = accessToken
@@ -55,12 +60,10 @@ export async function uploadFile(
       : storageClient;
 
     // Upload file to storage
-    const { data, error } = await client.storage
-      .from(bucket)
-      .upload(path, file, {
-        cacheControl,
-        upsert,
-      });
+    const { data, error } = await client.storage.from(bucket).upload(path, file, {
+      cacheControl,
+      upsert,
+    });
 
     if (error) {
       console.error(`Error uploading file to ${bucket}:`, error);
@@ -68,9 +71,7 @@ export async function uploadFile(
     }
 
     // Get public URL
-    const { data: urlData } = client.storage
-      .from(bucket)
-      .getPublicUrl(data.path);
+    const { data: urlData } = client.storage.from(bucket).getPublicUrl(data.path);
 
     return {
       path: data.path,
@@ -79,7 +80,7 @@ export async function uploadFile(
       type: file.type,
     };
   } catch (error) {
-    console.error("Error in uploadFile:", error);
+    console.error('Error in uploadFile:', error);
     return null;
   }
 }
@@ -90,10 +91,7 @@ export async function uploadFile(
  * @param path - File path to delete
  * @returns Success boolean
  */
-export async function deleteFile(
-  bucket: StorageBucket,
-  path: string
-): Promise<boolean> {
+export async function deleteFile(bucket: StorageBucket, path: string): Promise<boolean> {
   try {
     // Service role: deletes are server-side actions taken after the caller's
     // ownership of the parent record has already been verified. The anon client
@@ -107,7 +105,7 @@ export async function deleteFile(
 
     return true;
   } catch (error) {
-    console.error("Error in deleteFile:", error);
+    console.error('Error in deleteFile:', error);
     return false;
   }
 }
@@ -151,7 +149,7 @@ export async function createSignedUrl(
 
     return data.signedUrl;
   } catch (error) {
-    console.error("Error in createSignedUrl:", error);
+    console.error('Error in createSignedUrl:', error);
     return null;
   }
 }
@@ -162,10 +160,7 @@ export async function createSignedUrl(
  * @param path - Directory path
  * @returns Array of file names
  */
-export async function listFiles(
-  bucket: StorageBucket,
-  path: string
-): Promise<string[]> {
+export async function listFiles(bucket: StorageBucket, path: string): Promise<string[]> {
   try {
     const { data, error } = await storageClient.storage.from(bucket).list(path);
 
@@ -176,7 +171,7 @@ export async function listFiles(
 
     return data.map((file) => file.name);
   } catch (error) {
-    console.error("Error in listFiles:", error);
+    console.error('Error in listFiles:', error);
     return [];
   }
 }
@@ -194,8 +189,8 @@ export function generateFilePath(
   prefix?: string
 ): string {
   const timestamp = Date.now();
-  const ext = filename.split(".").pop();
-  const baseName = filename.replace(`.${ext}`, "").replace(/[^a-zA-Z0-9-_]/g, "-");
+  const ext = filename.split('.').pop();
+  const baseName = filename.replace(`.${ext}`, '').replace(/[^a-zA-Z0-9-_]/g, '-');
   const uniqueName = `${baseName}-${timestamp}.${ext}`;
 
   if (prefix) {
@@ -219,7 +214,7 @@ export function validateFile(
 ): string | null {
   // Check file type
   if (!allowedTypes.includes(file.type)) {
-    return `Invalid file type. Allowed types: ${allowedTypes.join(", ")}`;
+    return `Invalid file type. Allowed types: ${allowedTypes.join(', ')}`;
   }
 
   // Check file size
@@ -232,15 +227,15 @@ export function validateFile(
 }
 
 // Common file type validators
-export const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-export const DOCUMENT_TYPES = ["application/pdf"];
+export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+export const DOCUMENT_TYPES = ['application/pdf'];
 export const ASSET_FILE_TYPES = [
   ...IMAGE_TYPES,
   ...DOCUMENT_TYPES,
-  "application/zip",
-  "application/x-zip-compressed",
-  "model/stl",
-  "model/obj",
-  "model/gltf+json",
-  "model/gltf-binary",
+  'application/zip',
+  'application/x-zip-compressed',
+  'model/stl',
+  'model/obj',
+  'model/gltf+json',
+  'model/gltf-binary',
 ];

@@ -53,9 +53,7 @@ export async function createAccountLink(
 /**
  * Retrieve Connect account details
  */
-export async function getConnectAccount(
-  accountId: string
-): Promise<Stripe.Account> {
+export async function getConnectAccount(accountId: string): Promise<Stripe.Account> {
   return await stripe.accounts.retrieve(accountId);
 }
 
@@ -108,8 +106,6 @@ export async function createTransfer(
 /**
  * Create a login link for Connect account dashboard
  */
-export async function createLoginLink(
-  accountId: string
-): Promise<Stripe.LoginLink> {
+export async function createLoginLink(accountId: string): Promise<Stripe.LoginLink> {
   return await stripe.accounts.createLoginLink(accountId);
 }

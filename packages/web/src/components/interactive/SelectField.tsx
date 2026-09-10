@@ -1,4 +1,4 @@
-import { For } from "solid-js";
+import { For } from 'solid-js';
 
 interface SelectOption {
   value: string;
@@ -31,7 +31,7 @@ export default function SelectField(props: SelectFieldProps) {
       <select
         name={props.name}
         id={fieldId}
-        class={`form-field__select ${hasError ? "form-field__select--error" : ""}`}
+        class={`form-field__select ${hasError ? 'form-field__select--error' : ''}`}
         value={props.value}
         onChange={props.onChange}
         required={props.required}

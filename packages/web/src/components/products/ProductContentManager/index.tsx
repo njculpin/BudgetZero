@@ -1,16 +1,16 @@
-import { createSignal, createMemo, Show } from "solid-js";
-import type { ProductFile } from "@gameloopers/core/types";
-import ContentList, { type SortOption } from "./ContentList";
+import { createSignal, createMemo, Show } from 'solid-js';
+import type { ProductFile } from '@gameloopers/core/types';
+import ContentList, { type SortOption } from './ContentList';
 import type {
   UnifiedItem,
   EmbeddedProductData,
   ProductDocumentRelation,
-} from "./ContentItem";
-import PricingBreakdown from "./PricingBreakdown";
-import RevenuePreview from "./RevenuePreview";
-import PurchaseActions from "./PurchaseActions";
-import AddContentModal from "./AddContentModal";
-import "./product-content-manager.css";
+} from './ContentItem';
+import PricingBreakdown from './PricingBreakdown';
+import RevenuePreview from './RevenuePreview';
+import PurchaseActions from './PurchaseActions';
+import AddContentModal from './AddContentModal';
+import './product-content-manager.css';
 
 export interface ProductContentManagerProps {
   productId: string;
@@ -48,27 +48,27 @@ export default function ProductContentManager(props: ProductContentManagerProps)
       component_id: p.id,
       title: p.title,
       handle: p.handle,
-      status: "public",
+      status: 'public',
       inherited_price_cents: p.inherited_price_cents,
       creator_name: p.creator_name,
-      creator_handle: "",
+      creator_handle: '',
       file_count: 0,
     }))
   );
 
   // UI State
-  const [sortBy, setSortBy] = createSignal<SortOption>("type");
+  const [sortBy, setSortBy] = createSignal<SortOption>('type');
   const [showAddModal, setShowAddModal] = createSignal(false);
 
   // Sort items helper function (must be defined before unifiedItems memo)
   const sortItems = (items: UnifiedItem[], sortOption: SortOption): UnifiedItem[] => {
     const sorted = [...items];
     switch (sortOption) {
-      case "name":
+      case 'name':
         return sorted.sort((a, b) => a.name.localeCompare(b.name));
-      case "price":
+      case 'price':
         return sorted.sort((a, b) => b.price - a.price);
-      case "type":
+      case 'type':
       default:
         return sorted.sort((a, b) => {
           const typeOrder = { file: 0, document: 1, embedded: 2 };
@@ -81,7 +81,7 @@ export default function ProductContentManager(props: ProductContentManagerProps)
   const unifiedItems = createMemo<UnifiedItem[]>(() => {
     const fileItems: UnifiedItem[] = files().map((f) => ({
       id: f.id,
-      type: "file" as const,
+      type: 'file' as const,
       name: f.title,
       price: f.price_cents,
       position: f.position,
@@ -91,7 +91,7 @@ export default function ProductContentManager(props: ProductContentManagerProps)
 
     const docItems: UnifiedItem[] = documents().map((d) => ({
       id: d.id,
-      type: "document" as const,
+      type: 'document' as const,
       name: d.document.title,
       price: d.price_cents,
       position: d.position,
@@ -101,7 +101,7 @@ export default function ProductContentManager(props: ProductContentManagerProps)
 
     const embeddedItems: UnifiedItem[] = embeddedProducts().map((p) => ({
       id: p.id,
-      type: "embedded" as const,
+      type: 'embedded' as const,
       name: p.title,
       price: p.inherited_price_cents,
       position: 999,
@@ -123,37 +123,37 @@ export default function ProductContentManager(props: ProductContentManagerProps)
     if (!item || !item.editable) return;
 
     try {
-      if (item.type === "file") {
-        const response = await fetch("/api/products/update-file-price", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+      if (item.type === 'file') {
+        const response = await fetch('/api/products/update-file-price', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileId: itemId, priceCents: newPrice }),
         });
 
-        if (!response.ok) throw new Error("Failed to update file price");
+        if (!response.ok) throw new Error('Failed to update file price');
 
         setFiles((prev) =>
           prev.map((f) => (f.id === itemId ? { ...f, price_cents: newPrice } : f))
         );
-      } else if (item.type === "document") {
-        const response = await fetch("/api/products/update-document-price", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+      } else if (item.type === 'document') {
+        const response = await fetch('/api/products/update-document-price', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             productDocumentId: itemId,
             priceCents: newPrice,
           }),
         });
 
-        if (!response.ok) throw new Error("Failed to update document price");
+        if (!response.ok) throw new Error('Failed to update document price');
 
         setDocuments((prev) =>
           prev.map((d) => (d.id === itemId ? { ...d, price_cents: newPrice } : d))
         );
       }
     } catch (error) {
-      console.error("Error updating price:", error);
-      alert("Failed to update price");
+      console.error('Error updating price:', error);
+      alert('Failed to update price');
     }
   };
 
@@ -162,56 +162,56 @@ export default function ProductContentManager(props: ProductContentManagerProps)
     if (!item) return;
 
     try {
-      if (item.type === "file") {
-        const response = await fetch("/api/products/delete-file", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+      if (item.type === 'file') {
+        const response = await fetch('/api/products/delete-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileId: itemId }),
         });
 
-        if (!response.ok) throw new Error("Failed to delete file");
+        if (!response.ok) throw new Error('Failed to delete file');
 
         setFiles((prev) => prev.filter((f) => f.id !== itemId));
-      } else if (item.type === "document") {
-        const response = await fetch("/api/products/remove-document", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+      } else if (item.type === 'document') {
+        const response = await fetch('/api/products/remove-document', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             productId: props.productId,
             documentId: itemId,
           }),
         });
 
-        if (!response.ok) throw new Error("Failed to remove document");
+        if (!response.ok) throw new Error('Failed to remove document');
 
         setDocuments((prev) => prev.filter((d) => d.id !== itemId));
-      } else if (item.type === "embedded") {
+      } else if (item.type === 'embedded') {
         const embeddedData = item.data as EmbeddedProductData;
-        const response = await fetch("/api/products/unembed-product", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/products/unembed-product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             productId: props.productId,
             componentId: embeddedData.component_id,
           }),
         });
 
-        if (!response.ok) throw new Error("Failed to unembed product");
+        if (!response.ok) throw new Error('Failed to unembed product');
 
         setEmbeddedProducts((prev) => prev.filter((p) => p.id !== itemId));
       }
     } catch (error) {
-      console.error("Error deleting item:", error);
-      alert("Failed to delete item");
+      console.error('Error deleting item:', error);
+      alert('Failed to delete item');
     }
   };
 
   const handleReorder = async (itemId: string, newPosition: number) => {
     const item = unifiedItems().find((i) => i.id === itemId);
-    if (!item || item.type === "embedded") return;
+    if (!item || item.type === 'embedded') return;
 
     try {
-      if (item.type === "file") {
+      if (item.type === 'file') {
         // Reorder files array
         const currentFiles = files();
         const itemIndex = currentFiles.findIndex((f) => f.id === itemId);
@@ -230,17 +230,17 @@ export default function ProductContentManager(props: ProductContentManagerProps)
         setFiles(updatedFiles);
 
         // Save to API
-        const response = await fetch("/api/products/reorder-files", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/products/reorder-files', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             productId: props.productId,
             fileIds: updatedFiles.map((f) => f.id),
           }),
         });
 
-        if (!response.ok) throw new Error("Failed to reorder files");
-      } else if (item.type === "document") {
+        if (!response.ok) throw new Error('Failed to reorder files');
+      } else if (item.type === 'document') {
         // Similar logic for documents
         const currentDocs = documents();
         const itemIndex = currentDocs.findIndex((d) => d.id === itemId);
@@ -258,20 +258,20 @@ export default function ProductContentManager(props: ProductContentManagerProps)
         setDocuments(updatedDocs);
 
         // Save to API (assuming endpoint exists)
-        const response = await fetch("/api/products/reorder-documents", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/products/reorder-documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             productId: props.productId,
             documentIds: updatedDocs.map((d) => d.id),
           }),
         });
 
-        if (!response.ok) throw new Error("Failed to reorder documents");
+        if (!response.ok) throw new Error('Failed to reorder documents');
       }
     } catch (error) {
-      console.error("Error reordering:", error);
-      alert("Failed to reorder items");
+      console.error('Error reordering:', error);
+      alert('Failed to reorder items');
     }
   };
 

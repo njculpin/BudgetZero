@@ -22,7 +22,7 @@
 }
 
 .editable-breadcrumb__item:not(:last-child)::after {
-  content: "/";
+  content: '/';
   color: var(--border);
   margin-left: var(--gap-sm);
 }

@@ -18,7 +18,9 @@
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: color 0.2s var(--ease-in-out), background-color 0.2s var(--ease-in-out);
+  transition:
+    color 0.2s var(--ease-in-out),
+    background-color 0.2s var(--ease-in-out);
 }
 
 .nav-dropdown__trigger:hover {

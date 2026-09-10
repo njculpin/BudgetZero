@@ -1,13 +1,13 @@
 import type { Controller } from '../../context';
-import { searchUsers } from "@gameloopers/core/data-access/users";
+import { searchUsers } from '@gameloopers/core/data-access/users';
 
 export const usersSearchUsers: Controller = async ({ url }) => {
-  const query = url.searchParams.get("q");
+  const query = url.searchParams.get('q');
 
   if (!query) {
-    return new Response(JSON.stringify({ error: "Query parameter required" }), {
+    return new Response(JSON.stringify({ error: 'Query parameter required' }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -25,17 +25,14 @@ export const usersSearchUsers: Controller = async ({ url }) => {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Error searching users:", error);
-    return new Response(
-      JSON.stringify({ error: "An unexpected error occurred" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    console.error('Error searching users:', error);
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };

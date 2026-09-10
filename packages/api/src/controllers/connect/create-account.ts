@@ -4,7 +4,11 @@ import { getUserById } from '@gameloopers/core/data-access/users';
 import { createConnectAccount, createAccountLink } from '@gameloopers/core/payments';
 import { serverClient } from '@gameloopers/core/data-access/client';
 
-export const connectCreateAccount: Controller = async ({ request, userId, userEmail }) => {
+export const connectCreateAccount: Controller = async ({
+  request,
+  userId,
+  userEmail,
+}) => {
   // Check authentication
   if (!userId) return unauthorized('Not authenticated');
   const email = userEmail ?? '';
@@ -30,13 +34,10 @@ export const connectCreateAccount: Controller = async ({ request, userId, userEm
         `${origin}/settings`
       );
 
-      return new Response(
-        JSON.stringify({ url: accountLink.url }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ url: accountLink.url }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Create new Connect account
@@ -70,18 +71,16 @@ export const connectCreateAccount: Controller = async ({ request, userId, userEm
       `${origin}/settings`
     );
 
-    return new Response(
-      JSON.stringify({ url: accountLink.url }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ url: accountLink.url }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Connect account creation error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : 'Failed to create Connect account',
+        error:
+          error instanceof Error ? error.message : 'Failed to create Connect account',
       }),
       {
         status: 500,

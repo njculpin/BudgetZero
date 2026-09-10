@@ -51,7 +51,9 @@ describe('route table integrity', () => {
       expect(route.path, 'must start with a slash').toMatch(/^\//);
       expect(route.path, 'no trailing slash').not.toMatch(/.\/$/);
       expect(route.path, 'square brackets are file-router syntax').not.toMatch(/[[\]]/);
-      expect(route.path, 'the /api prefix is added by the mount point').not.toMatch(/^\/api\//);
+      expect(route.path, 'the /api prefix is added by the mount point').not.toMatch(
+        /^\/api\//
+      );
     }
   });
 
@@ -75,7 +77,10 @@ describe('route table integrity', () => {
 
     const unreferenced = files.filter((file) => !imported.has(file));
 
-    expect(unreferenced, `unreachable controller files:\n${unreferenced.join('\n')}`).toEqual([]);
+    expect(
+      unreferenced,
+      `unreachable controller files:\n${unreferenced.join('\n')}`
+    ).toEqual([]);
   });
 
   it('resolves every declared path back to its own controller', () => {
@@ -97,23 +102,28 @@ describe('route table integrity', () => {
   });
 
   it('protects by default — only deliberately public routes are open', () => {
-    const open = routes.filter((r) => r.public).map((r) => `${r.method} ${r.path}`).sort();
+    const open = routes
+      .filter((r) => r.public)
+      .map((r) => `${r.method} ${r.path}`)
+      .sort();
 
     // Pinned deliberately. Adding a route to this list means anyone on the
     // internet can call it, so it should be a visible diff in review.
-    expect(open).toEqual([
-      'GET /auth/callback',
-      'GET /auth/sign-out',
-      'GET /tags/suggestions',
-      'GET /users/search-users',
-      'POST /auth/reset-password',
-      'POST /auth/sign-in',
-      'POST /auth/sign-out',
-      'POST /auth/sign-up',
-      'POST /auth/update-password',
-      'POST /subscribe',
-      'POST /webhooks/stripe',
-    ].sort());
+    expect(open).toEqual(
+      [
+        'GET /auth/callback',
+        'GET /auth/sign-out',
+        'GET /tags/suggestions',
+        'GET /users/search-users',
+        'POST /auth/reset-password',
+        'POST /auth/sign-in',
+        'POST /auth/sign-out',
+        'POST /auth/sign-up',
+        'POST /auth/update-password',
+        'POST /subscribe',
+        'POST /webhooks/stripe',
+      ].sort()
+    );
   });
 
   it('names each controller after the path it serves', () => {

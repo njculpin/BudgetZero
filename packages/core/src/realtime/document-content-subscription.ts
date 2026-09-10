@@ -4,7 +4,7 @@
  */
 
 interface DocumentContentPayload {
-  type: "content_update";
+  type: 'content_update';
   content: Record<string, unknown>;
   userId: string;
   timestamp: number;
@@ -38,13 +38,13 @@ export const subscribeToDocumentContent = async (
   callbacks: DocumentRealtimeCallbacks
 ): Promise<DocumentRealtimeReturn> => {
   try {
-    const { createClient } = await import("@supabase/supabase-js");
+    const { createClient } = await import('@supabase/supabase-js');
 
     const url = import.meta.env.PUBLIC_SUPABASE_URL as string | undefined;
     const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY as string | undefined;
 
     if (!url || !key) {
-      console.warn("Supabase env vars not available for realtime");
+      console.warn('Supabase env vars not available for realtime');
       return {
         broadcastContent: () => {},
         updatePresence: () => {},
@@ -63,14 +63,14 @@ export const subscribeToDocumentContent = async (
         },
       })
       // Listen for content updates via broadcast
-      .on("broadcast", { event: "content_update" }, (payload) => {
+      .on('broadcast', { event: 'content_update' }, (payload) => {
         const data = payload.payload as DocumentContentPayload;
         if (data.userId !== userId) {
           callbacks.onContentUpdate(data.content, data.userId);
         }
       })
       // Track presence of other editors
-      .on("presence", { event: "sync" }, () => {
+      .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState<PresencePayload>();
         presenceState.clear();
 
@@ -87,7 +87,7 @@ export const subscribeToDocumentContent = async (
 
         callbacks.onPresenceUpdate(presenceState);
       })
-      .on("presence", { event: "join" }, ({ newPresences }) => {
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
         for (const presence of newPresences) {
           const data = presence as unknown as PresencePayload;
           if (data.userId !== userId) {
@@ -96,7 +96,7 @@ export const subscribeToDocumentContent = async (
         }
         callbacks.onPresenceUpdate(presenceState);
       })
-      .on("presence", { event: "leave" }, ({ leftPresences }) => {
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
         for (const presence of leftPresences) {
           const data = presence as unknown as PresencePayload;
           presenceState.delete(data.userId);
@@ -109,10 +109,10 @@ export const subscribeToDocumentContent = async (
     return {
       broadcastContent: (content: Record<string, unknown>, senderId: string) => {
         channel.send({
-          type: "broadcast",
-          event: "content_update",
+          type: 'broadcast',
+          event: 'content_update',
           payload: {
-            type: "content_update",
+            type: 'content_update',
             content,
             userId: senderId,
             timestamp: Date.now(),
@@ -127,7 +127,7 @@ export const subscribeToDocumentContent = async (
       },
     };
   } catch (e) {
-    console.warn("Failed to set up document realtime subscription:", e);
+    console.warn('Failed to set up document realtime subscription:', e);
     return {
       broadcastContent: () => {},
       updatePresence: () => {},

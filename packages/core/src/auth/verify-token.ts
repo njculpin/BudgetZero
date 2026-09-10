@@ -50,8 +50,7 @@ export type VerifyFailure =
   | 'unconfigured';
 
 export type VerifyResult =
-  | { ok: true; token: VerifiedToken }
-  | { ok: false; reason: VerifyFailure };
+  { ok: true; token: VerifiedToken } | { ok: false; reason: VerifyFailure };
 
 /** Algorithms we will verify. `none` and anything unlisted is rejected outright. */
 const SYMMETRIC_ALGS = ['HS256'] as const;
@@ -129,11 +128,9 @@ export async function verifyAccessToken(token: string): Promise<VerifyResult> {
       const secret = readEnv('SUPABASE_JWT_SECRET');
       if (!secret) return { ok: false, reason: 'unconfigured' };
 
-      const { payload } = await jwtVerify(
-        token,
-        new TextEncoder().encode(secret),
-        { algorithms: [...SYMMETRIC_ALGS] }
-      );
+      const { payload } = await jwtVerify(token, new TextEncoder().encode(secret), {
+        algorithms: [...SYMMETRIC_ALGS],
+      });
       return toVerifiedToken(payload);
     }
 

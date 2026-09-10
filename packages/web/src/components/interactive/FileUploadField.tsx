@@ -1,4 +1,4 @@
-import { createSignal, Show, For } from "solid-js";
+import { createSignal, Show, For } from 'solid-js';
 
 export interface FileUploadFieldProps {
   label: string;
@@ -33,11 +33,11 @@ export default function FileUploadField(props: FileUploadFieldProps) {
 
       // Check file type if accept is specified
       if (props.accept) {
-        const acceptedTypes = props.accept.split(",").map((t) => t.trim());
+        const acceptedTypes = props.accept.split(',').map((t) => t.trim());
         const isAccepted = acceptedTypes.some((type) => {
-          if (type.endsWith("/*")) {
-            const category = type.split("/")[0];
-            return file.type.startsWith(category + "/");
+          if (type.endsWith('/*')) {
+            const category = type.split('/')[0];
+            return file.type.startsWith(category + '/');
           }
           return file.type === type;
         });
@@ -55,7 +55,7 @@ export default function FileUploadField(props: FileUploadFieldProps) {
 
     const urls: string[] = [];
     files.forEach((file) => {
-      if (file.type.startsWith("image/")) {
+      if (file.type.startsWith('image/')) {
         const url = URL.createObjectURL(file);
         urls.push(url);
       }
@@ -126,11 +126,11 @@ export default function FileUploadField(props: FileUploadFieldProps) {
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes";
+    if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   return (
@@ -141,9 +141,9 @@ export default function FileUploadField(props: FileUploadFieldProps) {
       </label>
 
       <div
-        class={`file-upload ${isDragging() ? "file-upload--dragging" : ""} ${
-          props.error ? "file-upload--error" : ""
-        } ${props.disabled ? "file-upload--disabled" : ""}`}
+        class={`file-upload ${isDragging() ? 'file-upload--dragging' : ''} ${
+          props.error ? 'file-upload--error' : ''
+        } ${props.disabled ? 'file-upload--disabled' : ''}`}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
@@ -159,7 +159,7 @@ export default function FileUploadField(props: FileUploadFieldProps) {
           required={props.required}
           disabled={props.disabled}
           onChange={handleChange}
-          aria-invalid={props.error ? "true" : "false"}
+          aria-invalid={props.error ? 'true' : 'false'}
           aria-describedby={
             props.error
               ? `${fieldId}-error`
@@ -187,12 +187,11 @@ export default function FileUploadField(props: FileUploadFieldProps) {
 
           <div class="file-upload__text">
             <p class="file-upload__primary">
-              <span class="file-upload__link">Click to upload</span> or drag and
-              drop
+              <span class="file-upload__link">Click to upload</span> or drag and drop
             </p>
             <p class="file-upload__secondary">
-              {props.accept ? `Accepted: ${props.accept}` : "Any file type"}
-              {" • "}
+              {props.accept ? `Accepted: ${props.accept}` : 'Any file type'}
+              {' • '}
               Max {props.maxSizeMB || 10}MB
             </p>
           </div>

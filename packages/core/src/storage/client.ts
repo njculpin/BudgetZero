@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Anon-key storage client.
@@ -15,9 +15,9 @@ export const storageClient = createClient(
   import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
   {
     auth: {
-      flowType: "pkce",
+      flowType: 'pkce',
     },
-  },
+  }
 );
 
 /**
@@ -40,5 +40,5 @@ export const storageAdminClient = createClient(
       autoRefreshToken: false,
       persistSession: false,
     },
-  },
+  }
 );

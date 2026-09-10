@@ -40,7 +40,6 @@ describe('GET /api/auth/callback', () => {
       delete: vi.fn(),
       has: vi.fn(),
     };
-
   });
 
   afterEach(() => {
@@ -65,7 +64,9 @@ describe('GET /api/auth/callback', () => {
         error: null,
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      const response = await authCallback(
+        makeContext({ url: mockUrl.toString(), cookies: mockCookies })
+      );
 
       // Verify exchangeCodeForSession was called
       expect(auth.exchangeCodeForSession).toHaveBeenCalledWith(authCode);
@@ -115,7 +116,9 @@ describe('GET /api/auth/callback', () => {
         error: null,
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      const response = await authCallback(
+        makeContext({ url: mockUrl.toString(), cookies: mockCookies })
+      );
 
       expect(auth.exchangeCodeForSession).toHaveBeenCalledWith(googleCode);
       expect(mockCookies.set).toHaveBeenCalledTimes(2);
@@ -153,7 +156,9 @@ describe('GET /api/auth/callback', () => {
     it('should return 400 when code parameter is missing', async () => {
       mockUrl = new URL('http://localhost/api/auth/callback');
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      const response = await authCallback(
+        makeContext({ url: mockUrl.toString(), cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
       const text = await response.text();
@@ -169,14 +174,18 @@ describe('GET /api/auth/callback', () => {
     it('should return 400 when code parameter is empty', async () => {
       mockUrl = new URL('http://localhost/api/auth/callback?code=');
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      const response = await authCallback(
+        makeContext({ url: mockUrl.toString(), cookies: mockCookies })
+      );
 
       expect(response.status).toBe(400);
       expect(auth.exchangeCodeForSession).not.toHaveBeenCalled();
     });
 
     it('should handle URL with other query parameters', async () => {
-      mockUrl = new URL('http://localhost/api/auth/callback?code=valid123&state=abc&redirect=/custom');
+      mockUrl = new URL(
+        'http://localhost/api/auth/callback?code=valid123&state=abc&redirect=/custom'
+      );
 
       vi.mocked(auth.exchangeCodeForSession).mockResolvedValue({
         data: {
@@ -209,7 +218,9 @@ describe('GET /api/auth/callback', () => {
         },
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      const response = await authCallback(
+        makeContext({ url: mockUrl.toString(), cookies: mockCookies })
+      );
 
       expect(response.status).toBe(500);
       const text = await response.text();
@@ -234,7 +245,9 @@ describe('GET /api/auth/callback', () => {
         },
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      const response = await authCallback(
+        makeContext({ url: mockUrl.toString(), cookies: mockCookies })
+      );
 
       expect(response.status).toBe(500);
       const text = await response.text();
@@ -255,7 +268,9 @@ describe('GET /api/auth/callback', () => {
         },
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      const response = await authCallback(
+        makeContext({ url: mockUrl.toString(), cookies: mockCookies })
+      );
 
       expect(response.status).toBe(500);
       expect(mockCookies.set).not.toHaveBeenCalled();
@@ -347,7 +362,9 @@ describe('GET /api/auth/callback', () => {
         error: null,
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      const response = await authCallback(
+        makeContext({ url: mockUrl.toString(), cookies: mockCookies })
+      );
 
       expect(redirectTarget(response)).toBe('/products');
       expect(response.status).toBe(303);
@@ -365,7 +382,9 @@ describe('GET /api/auth/callback', () => {
         },
       } as any);
 
-      const response = await authCallback(makeContext({ url: mockUrl.toString(), cookies: mockCookies }));
+      const response = await authCallback(
+        makeContext({ url: mockUrl.toString(), cookies: mockCookies })
+      );
 
       expect(redirectTarget(response)).toBeNull();
     });

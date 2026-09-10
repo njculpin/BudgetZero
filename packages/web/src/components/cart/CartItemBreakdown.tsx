@@ -1,5 +1,5 @@
-import { createSignal, createResource, Show, For, onMount } from "solid-js";
-import "./cart-item-breakdown.css";
+import { createSignal, createResource, Show, For, onMount } from 'solid-js';
+import './cart-item-breakdown.css';
 
 export interface ProductFile {
   id: string;
@@ -39,7 +39,7 @@ export default function CartItemBreakdown(props: CartItemBreakdownProps) {
   });
 
   const formatPrice = (cents: number): string => {
-    if (cents === 0) return "Free";
+    if (cents === 0) return 'Free';
     return `$${(cents / 100).toFixed(2)}`;
   };
 
@@ -54,11 +54,17 @@ export default function CartItemBreakdown(props: CartItemBreakdownProps) {
 
         // Fetch documents
         const documentsResponse = await fetch(`/api/products/${productId}/documents`);
-        const documentsData = documentsResponse.ok ? await documentsResponse.json() : { documents: [] };
+        const documentsData = documentsResponse.ok
+          ? await documentsResponse.json()
+          : { documents: [] };
 
         // Fetch embedded products
-        const embeddedResponse = await fetch(`/api/products/${productId}/embedded-products`);
-        const embeddedData = embeddedResponse.ok ? await embeddedResponse.json() : { embeddedProducts: [] };
+        const embeddedResponse = await fetch(
+          `/api/products/${productId}/embedded-products`
+        );
+        const embeddedData = embeddedResponse.ok
+          ? await embeddedResponse.json()
+          : { embeddedProducts: [] };
 
         return {
           files: filesData.files || [],
@@ -66,7 +72,7 @@ export default function CartItemBreakdown(props: CartItemBreakdownProps) {
           embeddedProducts: embeddedData.embeddedProducts || [],
         } as BreakdownData;
       } catch (error) {
-        console.error("Error fetching breakdown data:", error);
+        console.error('Error fetching breakdown data:', error);
         return {
           files: [],
           documents: [],
@@ -79,7 +85,11 @@ export default function CartItemBreakdown(props: CartItemBreakdownProps) {
   const hasContent = () => {
     const data = breakdownData();
     if (!data) return false;
-    return data.files.length > 0 || data.documents.length > 0 || data.embeddedProducts.length > 0;
+    return (
+      data.files.length > 0 ||
+      data.documents.length > 0 ||
+      data.embeddedProducts.length > 0
+    );
   };
 
   return (
@@ -99,7 +109,9 @@ export default function CartItemBreakdown(props: CartItemBreakdownProps) {
                     <span class="cart-item-breakdown__icon">📄</span>
                     <span class="cart-item-breakdown__name">{file.title}</span>
                     <Show when={file.price_cents > 0}>
-                      <span class="cart-item-breakdown__price">{formatPrice(file.price_cents)}</span>
+                      <span class="cart-item-breakdown__price">
+                        {formatPrice(file.price_cents)}
+                      </span>
                     </Show>
                   </div>
                 )}
@@ -108,7 +120,9 @@ export default function CartItemBreakdown(props: CartItemBreakdownProps) {
           </Show>
 
           {/* Documents */}
-          <Show when={breakdownData()?.documents && breakdownData()!.documents.length > 0}>
+          <Show
+            when={breakdownData()?.documents && breakdownData()!.documents.length > 0}
+          >
             <div class="cart-item-breakdown__section">
               <For each={breakdownData()!.documents}>
                 {(doc) => (
@@ -116,7 +130,9 @@ export default function CartItemBreakdown(props: CartItemBreakdownProps) {
                     <span class="cart-item-breakdown__icon">📝</span>
                     <span class="cart-item-breakdown__name">{doc.title}</span>
                     <Show when={doc.price_cents > 0}>
-                      <span class="cart-item-breakdown__price">{formatPrice(doc.price_cents)}</span>
+                      <span class="cart-item-breakdown__price">
+                        {formatPrice(doc.price_cents)}
+                      </span>
                     </Show>
                   </div>
                 )}
@@ -125,7 +141,12 @@ export default function CartItemBreakdown(props: CartItemBreakdownProps) {
           </Show>
 
           {/* Embedded Products */}
-          <Show when={breakdownData()?.embeddedProducts && breakdownData()!.embeddedProducts.length > 0}>
+          <Show
+            when={
+              breakdownData()?.embeddedProducts &&
+              breakdownData()!.embeddedProducts.length > 0
+            }
+          >
             <div class="cart-item-breakdown__section">
               <For each={breakdownData()!.embeddedProducts}>
                 {(product) => (
@@ -133,10 +154,14 @@ export default function CartItemBreakdown(props: CartItemBreakdownProps) {
                     <span class="cart-item-breakdown__icon">📦</span>
                     <div class="cart-item-breakdown__product-info">
                       <span class="cart-item-breakdown__name">{product.title}</span>
-                      <span class="cart-item-breakdown__creator">by {product.creator_name}</span>
+                      <span class="cart-item-breakdown__creator">
+                        by {product.creator_name}
+                      </span>
                     </div>
                     <Show when={product.inherited_price_cents > 0}>
-                      <span class="cart-item-breakdown__price">{formatPrice(product.inherited_price_cents)}</span>
+                      <span class="cart-item-breakdown__price">
+                        {formatPrice(product.inherited_price_cents)}
+                      </span>
                     </Show>
                   </div>
                 )}

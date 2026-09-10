@@ -255,7 +255,7 @@
 }
 
 .content-item__tooltip::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 100%;
   left: 50%;
@@ -814,7 +814,7 @@
 
 .add-content-modal__divider::before,
 .add-content-modal__divider::after {
-  content: "";
+  content: '';
   flex: 1;
   height: 1px;
   background-color: var(--border);

@@ -1,5 +1,5 @@
-import { createSignal } from "solid-js";
-import "./document-create-asset-button.css";
+import { createSignal } from 'solid-js';
+import './document-create-asset-button.css';
 
 interface DocumentCreateAssetButtonProps {
   documentId: string;
@@ -17,19 +17,19 @@ export default function DocumentCreateAssetButton(props: DocumentCreateAssetButt
     setSuccess(null);
 
     try {
-      const response = await fetch("/api/documents/create-asset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/documents/create-asset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ documentId: props.documentId }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create asset");
+        throw new Error(data.error || 'Failed to create asset');
       }
 
-      setSuccess("Asset created successfully!");
+      setSuccess('Asset created successfully!');
 
       // Redirect to the new asset after a short delay
       if (data.asset?.handle) {
@@ -38,7 +38,7 @@ export default function DocumentCreateAssetButton(props: DocumentCreateAssetButt
         }, 1500);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create asset");
+      setError(err instanceof Error ? err.message : 'Failed to create asset');
     } finally {
       setIsLoading(false);
     }
@@ -78,13 +78,9 @@ export default function DocumentCreateAssetButton(props: DocumentCreateAssetButt
         )}
       </button>
 
-      {error() && (
-        <p class="document-create-asset__error">{error()}</p>
-      )}
+      {error() && <p class="document-create-asset__error">{error()}</p>}
 
-      {success() && (
-        <p class="document-create-asset__success">{success()}</p>
-      )}
+      {success() && <p class="document-create-asset__success">{success()}</p>}
 
       <p class="document-create-asset__hint">
         Generate a PDF from this document and save it as a downloadable asset.

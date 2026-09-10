@@ -86,7 +86,9 @@ describe('POST /api/cart/clear', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const response = await cartClear(makeContext({ request: mockRequest, userId: expectedUserId }));
+      const response = await cartClear(
+        makeContext({ request: mockRequest, userId: expectedUserId })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -106,7 +108,9 @@ describe('POST /api/cart/clear', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const response = await cartClear(makeContext({ request: mockRequest, userId: expectedUserId }));
+      const response = await cartClear(
+        makeContext({ request: mockRequest, userId: expectedUserId })
+      );
 
       expect(response.status).toBe(200);
       const data = await response.json();
@@ -127,7 +131,9 @@ describe('POST /api/cart/clear', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const response = await cartClear(makeContext({ request: mockRequest, userId: expectedUserId }));
+      const response = await cartClear(
+        makeContext({ request: mockRequest, userId: expectedUserId })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -170,7 +176,9 @@ describe('POST /api/cart/clear', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const response = await cartClear(makeContext({ request: mockRequest, userId: expectedUserId }));
+      const response = await cartClear(
+        makeContext({ request: mockRequest, userId: expectedUserId })
+      );
 
       expect(response.status).toBe(200);
       const data = await response.json();
@@ -213,7 +221,9 @@ describe('POST /api/cart/clear', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const response = await cartClear(makeContext({ request: mockRequest, userId: expectedUserId }));
+      const response = await cartClear(
+        makeContext({ request: mockRequest, userId: expectedUserId })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -233,7 +243,9 @@ describe('POST /api/cart/clear', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const response = await cartClear(makeContext({ request: mockRequest, userId: expectedUserId }));
+      const response = await cartClear(
+        makeContext({ request: mockRequest, userId: expectedUserId })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -250,7 +262,9 @@ describe('POST /api/cart/clear', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const response = await cartClear(makeContext({ request: mockRequest, userId: expectedUserId }));
+      const response = await cartClear(
+        makeContext({ request: mockRequest, userId: expectedUserId })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -272,7 +286,9 @@ describe('POST /api/cart/clear', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const response = await cartClear(makeContext({ request: mockRequest, userId: expectedUserId }));
+      const response = await cartClear(
+        makeContext({ request: mockRequest, userId: expectedUserId })
+      );
 
       expect(response.headers.get('Content-Type')).toBe('application/json');
       const data = await response.json();
@@ -292,7 +308,9 @@ describe('POST /api/cart/clear', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const response = await cartClear(makeContext({ request: mockRequest, userId: expectedUserId }));
+      const response = await cartClear(
+        makeContext({ request: mockRequest, userId: expectedUserId })
+      );
 
       expect(response.headers.get('Content-Type')).toBe('application/json');
       const data = await response.json();

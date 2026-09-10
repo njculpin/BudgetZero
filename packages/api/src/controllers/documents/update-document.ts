@@ -1,10 +1,10 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { z } from "zod";
+import { z } from 'zod';
 import {
   updateDocument,
   canUserEditDocument,
-} from "@gameloopers/core/data-access/documents";
+} from '@gameloopers/core/data-access/documents';
 
 const updateDocumentSchema = z.object({
   documentId: z.string().uuid(),
@@ -17,9 +17,9 @@ export const documentsUpdateDocument: Controller = async ({ request, userId }) =
 
   try {
     const formData = await request.formData();
-    const documentId = formData.get("documentId") as string;
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
+    const documentId = formData.get('documentId') as string;
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
 
     // Validate input
     const validatedData = updateDocumentSchema.parse({
@@ -31,10 +31,13 @@ export const documentsUpdateDocument: Controller = async ({ request, userId }) =
     // Check permission
     const canEdit = await canUserEditDocument(documentId, userId);
     if (!canEdit) {
-      return new Response(JSON.stringify({ error: "Not authorized to edit this document" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Not authorized to edit this document' }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Update document
@@ -44,9 +47,9 @@ export const documentsUpdateDocument: Controller = async ({ request, userId }) =
     });
 
     if (!updatedDocument) {
-      return new Response(JSON.stringify({ error: "Failed to update document" }), {
+      return new Response(JSON.stringify({ error: 'Failed to update document' }), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -57,32 +60,32 @@ export const documentsUpdateDocument: Controller = async ({ request, userId }) =
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Update document error:", error);
+    console.error('Update document error:', error);
 
     if (error instanceof z.ZodError) {
       return new Response(
         JSON.stringify({
-          error: "Validation failed",
+          error: 'Validation failed',
           details: error.errors,
         }),
         {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to update document",
+        error: error instanceof Error ? error.message : 'Failed to update document',
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

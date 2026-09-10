@@ -5,7 +5,7 @@ import { unauthorized } from '../../responses';
  * Update notification settings for the current user
  */
 
-import { updateNotificationSettings } from "@gameloopers/core/data-access/notifications";
+import { updateNotificationSettings } from '@gameloopers/core/data-access/notifications';
 
 export const settingsNotifications: Controller = async ({ request, userId }) => {
   // Authenticate user
@@ -16,9 +16,9 @@ export const settingsNotifications: Controller = async ({ request, userId }) => 
   try {
     settings = await request.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid request body" }), {
+    return new Response(JSON.stringify({ error: 'Invalid request body' }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -26,17 +26,14 @@ export const settingsNotifications: Controller = async ({ request, userId }) => 
   const updated = await updateNotificationSettings(userId, settings);
 
   if (!updated) {
-    return new Response(JSON.stringify({ error: "Failed to update settings" }), {
+    return new Response(JSON.stringify({ error: 'Failed to update settings' }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  return new Response(
-    JSON.stringify({ success: true, settings: updated }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+  return new Response(JSON.stringify({ success: true, settings: updated }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
 };

@@ -7,6 +7,7 @@ This directory contains tests for Row Level Security (RLS) policies using pgTAP.
 ### Prerequisites
 
 1. Start Supabase local development:
+
 ```bash
 supabase start
 ```
@@ -28,9 +29,11 @@ supabase test db asset_rls_policies.test.sql
 ## Test Files
 
 ### `asset_rls_policies.test.sql`
+
 Tests RLS policies for the 4-state asset status system:
 
 **What it tests:**
+
 - ✅ Anonymous users can only see public assets
 - ✅ Anonymous users cannot see draft/private/archived assets
 - ✅ Owners can see all their own assets (all statuses)

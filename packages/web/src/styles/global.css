@@ -7,8 +7,7 @@
 
 :root {
   /* ===== Font Family ===== */
-  --font-family-sans: "Inter", Impact, Haettenschweiler, "Arial Narrow Bold",
-    sans-serif;
+  --font-family-sans: 'Inter', Impact, sans-serif;
 
   /* ===== Colors ===== */
   --background: oklch(1 0 0);
@@ -25,7 +24,7 @@
   --muted-foreground: oklch(0.45 0 0);
   --accent: oklch(0.55 0.17 162.48);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.50 0.245 27.325);
+  --destructive: oklch(0.5 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.45 0 0);
@@ -76,7 +75,7 @@
      was being used for the warning badge, alert copy, and the checkout button's
      warning icon. This variant measures 5.09:1 on white, 4.50:1 on the tint.
      Amber cannot clear AA above roughly L=0.55, so this is a large shift. */
-  --warning-fg: oklch(0.540 0.189 84.429);
+  --warning-fg: oklch(0.54 0.189 84.429);
   --warning-border: oklch(from var(--color-warning) l c h / 0.3);
   --info-bg: oklch(from var(--color-info) l c h / 0.1);
   /* 3.66:1 as a fill; 5.11:1 on white and 4.51:1 on the tint as text. */
@@ -87,7 +86,7 @@
      5.59:1 on white, 4.61:1 on the tint.
      This is a token for text on a LIGHT background. On a dark surface it is
      the wrong direction — use --accent-on-dark. */
-  --accent-fg: oklch(0.480 0.17 162.48);
+  --accent-fg: oklch(0.48 0.17 162.48);
   /* --accent-fg inverted for text on --primary and other near-black surfaces,
      where darkening reduces contrast instead of increasing it. 8.72:1 on
      --primary (#171717). */
@@ -106,11 +105,11 @@
   --status-private-bg: oklch(0.95 0.02 240);
   --status-private-fg: oklch(0.35 0.08 240);
   --status-private-border: oklch(0.85 0.04 240);
-  --status-public-bg: oklch(0.95 0.10 145);
+  --status-public-bg: oklch(0.95 0.1 145);
   --status-public-fg: oklch(0.35 0.15 145);
-  --status-public-border: oklch(0.80 0.12 145);
+  --status-public-border: oklch(0.8 0.12 145);
   --status-archived-bg: oklch(0.95 0.02 0);
-  --status-archived-fg: oklch(0.40 0 0);
+  --status-archived-fg: oklch(0.4 0 0);
   --status-archived-border: oklch(0.85 0 0);
 
   /* ===== Interactive Colors ===== */
@@ -274,10 +273,8 @@
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
-    0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
-    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 
   --inset-shadow-2xs: inset 0 1px rgb(0 0 0 / 0.05);
@@ -293,11 +290,14 @@
 
   --text-shadow-2xs: 0px 1px 0px rgb(0 0 0 / 0.15);
   --text-shadow-xs: 0px 1px 1px rgb(0 0 0 / 0.2);
-  --text-shadow-sm: 0px 1px 0px rgb(0 0 0 / 0.075),
-    0px 1px 1px rgb(0 0 0 / 0.075), 0px 2px 2px rgb(0 0 0 / 0.075);
-  --text-shadow-md: 0px 1px 1px rgb(0 0 0 / 0.1), 0px 1px 2px rgb(0 0 0 / 0.1),
+  --text-shadow-sm:
+    0px 1px 0px rgb(0 0 0 / 0.075), 0px 1px 1px rgb(0 0 0 / 0.075),
+    0px 2px 2px rgb(0 0 0 / 0.075);
+  --text-shadow-md:
+    0px 1px 1px rgb(0 0 0 / 0.1), 0px 1px 2px rgb(0 0 0 / 0.1),
     0px 2px 4px rgb(0 0 0 / 0.1);
-  --text-shadow-lg: 0px 1px 2px rgb(0 0 0 / 0.1), 0px 3px 2px rgb(0 0 0 / 0.1),
+  --text-shadow-lg:
+    0px 1px 2px rgb(0 0 0 / 0.1), 0px 3px 2px rgb(0 0 0 / 0.1),
     0px 4px 8px rgb(0 0 0 / 0.1);
 
   /* ===== Transitions ===== */
@@ -559,7 +559,7 @@ a:focus-visible {
 
 /* Code */
 code {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
   font-size: var(--text-sm);
   padding: var(--spacing-xxs) var(--spacing-xs);
   background-color: var(--muted);
@@ -567,7 +567,7 @@ code {
 }
 
 pre {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
   font-size: var(--text-sm);
   padding: var(--spacing-2xl);
   background-color: var(--muted);
@@ -693,7 +693,7 @@ blockquote {
 
 .status-badge--unlisted {
   background: oklch(0.95 0.02 280);
-  color: oklch(0.40 0.08 280);
+  color: oklch(0.4 0.08 280);
   border: var(--border-width-default) solid oklch(0.85 0.04 280);
 }
 
@@ -921,7 +921,6 @@ blockquote {
   margin-bottom: var(--spacing-6xl);
 }
 
-
 .product-card {
   display: flex;
   flex-direction: column;
@@ -929,7 +928,9 @@ blockquote {
   color: inherit;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: transform var(--duration-normal) var(--ease-in-out), box-shadow var(--duration-normal) var(--ease-in-out);
+  transition:
+    transform var(--duration-normal) var(--ease-in-out),
+    box-shadow var(--duration-normal) var(--ease-in-out);
 }
 
 .product-card:hover {
@@ -1259,13 +1260,21 @@ blockquote {
 
 /* Shake animation for errors */
 @keyframes shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: translateX(-4px);
   }
-  20%, 40%, 60%, 80% {
+  20%,
+  40%,
+  60%,
+  80% {
     transform: translateX(4px);
   }
 }
@@ -1314,8 +1323,8 @@ blockquote {
   .navigation__link,
   .filter-tag,
   .browse-tags__tag,
-  input[type="checkbox"],
-  input[type="radio"],
+  input[type='checkbox'],
+  input[type='radio'],
   .dialog__close {
     min-height: 44px;
   }

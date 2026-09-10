@@ -7,9 +7,9 @@ import { unauthorized } from '../../responses';
  * earns a royalty on every sale of the parent.
  */
 
-import { z } from "zod";
-import { embedProduct } from "@gameloopers/core/data-access/products";
-import { captureError } from "@gameloopers/core/monitoring";
+import { z } from 'zod';
+import { embedProduct } from '@gameloopers/core/data-access/products';
+import { captureError } from '@gameloopers/core/monitoring';
 
 /**
  * `inheritedPriceCents` is deliberately NOT accepted. It used to be, which meant
@@ -30,7 +30,6 @@ const ERROR_STATUS: Record<string, number> = {
 };
 
 export const productsEmbedProduct: Controller = async ({ request, userId }) => {
-
   if (!userId) {
     return unauthorized();
   }
@@ -51,29 +50,29 @@ export const productsEmbedProduct: Controller = async ({ request, userId }) => {
           inherited_price_cents: result.inheritedPriceCents,
         },
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({ error: "Invalid request", details: error.errors }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        JSON.stringify({ error: 'Invalid request', details: error.errors }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     // embed_product raises with a specific SQLSTATE and a message written for the
     // person embedding, so surface it rather than replacing it with a generic one.
-    const message = error instanceof Error ? error.message : "Failed to embed product";
+    const message = error instanceof Error ? error.message : 'Failed to embed product';
     const code = (error as { code?: string })?.code;
     const status: number = (code ? ERROR_STATUS[code] : undefined) ?? 400;
 
     if (status >= 500) {
-      captureError(error, { operation: "products.embed", userId });
+      captureError(error, { operation: 'products.embed', userId });
     }
 
     return new Response(JSON.stringify({ error: message }), {
       status,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 };

@@ -1,7 +1,7 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { createProduct, createProductTag } from "@gameloopers/core/data-access/products";
-import { z } from "zod";
+import { createProduct, createProductTag } from '@gameloopers/core/data-access/products';
+import { z } from 'zod';
 
 /**
  * Generate a unique default product title with timestamp
@@ -11,12 +11,12 @@ const generateDefaultTitle = (): string => {
   const dateStr = now.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
   const timeStr = now.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
+    hour12: true,
   });
   return `New Product - ${dateStr} ${timeStr}`;
 };
@@ -24,7 +24,7 @@ const generateDefaultTitle = (): string => {
 const createProductSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().optional(),
-  status: z.enum(["draft", "public", "archived"]).default("draft"),
+  status: z.enum(['draft', 'public', 'archived']).default('draft'),
   tags: z.array(z.string()).optional(),
 });
 
@@ -35,24 +35,24 @@ export const productsCreateProduct: Controller = async ({ request, userId }) => 
   try {
     // Handle both FormData and JSON
     let data: Record<string, unknown>;
-    const contentType = request.headers.get("content-type");
+    const contentType = request.headers.get('content-type');
 
-    if (contentType?.includes("application/json")) {
+    if (contentType?.includes('application/json')) {
       data = await request.json();
     } else {
       // Handle FormData (from HTML form submission)
       const formData = await request.formData();
       data = {
-        title: formData.get("title") || generateDefaultTitle(),
-        description: formData.get("description") || undefined,
-        status: formData.get("status") || "draft",
+        title: formData.get('title') || generateDefaultTitle(),
+        description: formData.get('description') || undefined,
+        status: formData.get('status') || 'draft',
       };
 
       // Handle tags if provided
-      const tagsString = formData.get("tags");
-      if (tagsString && typeof tagsString === "string") {
+      const tagsString = formData.get('tags');
+      if (tagsString && typeof tagsString === 'string') {
         data.tags = tagsString
-          .split(",")
+          .split(',')
           .map((t) => t.trim())
           .filter(Boolean);
       }
@@ -68,14 +68,14 @@ export const productsCreateProduct: Controller = async ({ request, userId }) => 
     const product = await createProduct(userId, {
       title: validatedData.title,
       description: validatedData.description,
-      status: validatedData.status || "draft",
+      status: validatedData.status || 'draft',
     });
 
     if (!product) {
-      return new Response(
-        JSON.stringify({ error: "Failed to create product" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: 'Failed to create product' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Create tags if provided
@@ -86,10 +86,10 @@ export const productsCreateProduct: Controller = async ({ request, userId }) => 
     }
 
     // Redirect to edit page for form submissions, return JSON for API calls
-    if (contentType?.includes("application/json")) {
+    if (contentType?.includes('application/json')) {
       return new Response(JSON.stringify({ product }), {
         status: 201,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     } else {
       return new Response(null, {
@@ -100,20 +100,19 @@ export const productsCreateProduct: Controller = async ({ request, userId }) => 
       });
     }
   } catch (error) {
-    console.error("Error creating product:", error);
+    console.error('Error creating product:', error);
     if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({ error: "Validation failed", details: error.errors }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        JSON.stringify({ error: 'Validation failed', details: error.errors }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response(
       JSON.stringify({
-        error:
-          error instanceof Error ? error.message : "Failed to create product",
+        error: error instanceof Error ? error.message : 'Failed to create product',
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };

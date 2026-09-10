@@ -23,21 +23,25 @@
 ## Design Principles
 
 ### 1. **Clarity Over Cleverness**
+
 - Interfaces should be immediately understandable
 - Minimize cognitive load for creators and buyers
 - Use conventional patterns (don't reinvent UI)
 
 ### 2. **Content First**
+
 - Design serves content, not the other way around
 - Creator work (products, assets) is the star
 - UI should stay out of the way
 
 ### 3. **Progressive Disclosure**
+
 - Show essential information first
 - Hide complexity until needed
 - Use modals/popovers for secondary actions
 
 ### 4. **Accessible by Default**
+
 - WCAG 2.1 Level AA compliance minimum
 - Keyboard navigation for all interactive elements
 - Screen reader support built into components
@@ -52,14 +56,15 @@ Game Loopers implements a unified **product-centric** system where products cont
 
 #### Product Status (4-State)
 
-| Status | Description | Visibility | Use Case |
-|--------|-------------|------------|----------|
-| `draft` | Work in progress, not ready for any use | Owner only | Initial creation, active editing |
-| `private` | Ready but restricted to owner's use only | Owner + contributors | Testing, internal products, owner-exclusive content |
-| `public` | Ready for sale and visible in marketplace | Public listings + search | General release, maximum visibility |
-| `archived` | No longer available for sale | Hidden | Removed from marketplace, historical record |
+| Status     | Description                               | Visibility               | Use Case                                            |
+| ---------- | ----------------------------------------- | ------------------------ | --------------------------------------------------- |
+| `draft`    | Work in progress, not ready for any use   | Owner only               | Initial creation, active editing                    |
+| `private`  | Ready but restricted to owner's use only  | Owner + contributors     | Testing, internal products, owner-exclusive content |
+| `public`   | Ready for sale and visible in marketplace | Public listings + search | General release, maximum visibility                 |
+| `archived` | No longer available for sale              | Hidden                   | Removed from marketplace, historical record         |
 
 **Status Transitions:**
+
 - Products start as `draft` on creation
 - Can move to `private` for owner and contributor access (still hidden from marketplace)
 - Move to `public` when ready for full marketplace visibility and sales
@@ -71,12 +76,14 @@ Game Loopers implements a unified **product-centric** system where products cont
 Products have an `is_embeddable` boolean flag that determines if they can be used as components in other products:
 
 **Embeddable Products** (`is_embeddable=true`):
+
 - Can be embedded in other products as components
 - Creator earns royalties when embedded (captured at link time in `product_components.royalty_amount_cents`)
 - Can still be sold directly with `direct_sale_price_cents`
 - Example: STL file product, illustration pack, map tiles
 
 **Non-Embeddable Products** (`is_embeddable=false`):
+
 - Complete products sold as standalone items only
 - Cannot be used as components in other products
 - Example: Full game package, complete adventure module
@@ -84,6 +91,7 @@ Products have an `is_embeddable` boolean flag that determines if they can be use
 #### Product Files
 
 Products can have multiple files attached (`product_files` table):
+
 - **ProductFiles**: Downloadable content (PDFs, STLs, images, ZIP archives)
 - Each file has title, description, file_url, storage_path, mime_type
 - Files are ordered by `position` field
@@ -92,12 +100,14 @@ Products can have multiple files attached (`product_files` table):
 #### Product Components (Embedding)
 
 Products can embed other products via the `product_components` table:
+
 - Links a **parent variant** to a **child product**
 - Captures royalty amount at link time (ensures price stability)
 - Child product owner earns royalty on every sale of parent product
 - Enables collaborative revenue sharing across creators
 
 **Example:**
+
 ```
 Parent Product: "Fantasy RPG Starter Kit" ($25)
 ├── Component: "Dragon STL Pack" (royalty: $5)
@@ -114,22 +124,26 @@ Sale Revenue Split:
 #### Publishing Validation
 
 **Critical Rule**: Products can only be public if they have either:
+
 1. At least one file (`product_files`), OR
 2. At least one embedded component (`product_components`), OR
 3. Both files and components
 
 **Why this matters**:
+
 - Prevents empty products from being published
 - Ensures customers always receive something when they purchase
 - Maintains marketplace quality and trust
 
 **UI Implications**:
+
 - Publish button should be disabled if product has no files and no components
 - Clear messaging: "Add files or embed products before publishing"
 - Product editor should show file count and component count
 - Easy path to add first file or link first component
 
 **Edge Cases Handled**:
+
 - ✅ Products with only files (no components) can be public
 - ✅ Products with only components (no direct files) can be public
 - ✅ Products can be draft indefinitely while being built
@@ -149,15 +163,15 @@ Game Loopers uses a semantic color system that adapts to light/dark themes.
 
 ```css
 /* Primary Brand Colors */
---primary: oklch(20% 0 0);          /* Black in light mode */
+--primary: oklch(20% 0 0); /* Black in light mode */
 --primary-foreground: oklch(100% 0 0); /* White text on primary */
 
 /* Secondary Colors */
---secondary: oklch(96% 0 0);        /* Light gray */
+--secondary: oklch(96% 0 0); /* Light gray */
 --secondary-foreground: oklch(20% 0 0);
 
 /* Destructive (Errors, Delete Actions) */
---destructive: oklch(55% 0.22 25);  /* Red */
+--destructive: oklch(55% 0.22 25); /* Red */
 --destructive-foreground: oklch(100% 0 0);
 
 /* Accent (Highlights, Hover States) */
@@ -165,41 +179,41 @@ Game Loopers uses a semantic color system that adapts to light/dark themes.
 --accent-foreground: oklch(20% 0 0);
 
 /* Background Layers */
---background: oklch(100% 0 0);      /* Page background */
---foreground: oklch(20% 0 0);       /* Primary text */
+--background: oklch(100% 0 0); /* Page background */
+--foreground: oklch(20% 0 0); /* Primary text */
 
---card: oklch(100% 0 0);            /* Card backgrounds */
+--card: oklch(100% 0 0); /* Card backgrounds */
 --card-foreground: oklch(20% 0 0);
 
 /* Muted (Low Emphasis) */
---muted: oklch(96% 0 0);            /* Secondary backgrounds */
+--muted: oklch(96% 0 0); /* Secondary backgrounds */
 --muted-foreground: oklch(45% 0 0); /* Secondary text */
 
 /* Borders */
---border: oklch(90% 0 0);           /* Default borders */
---input: oklch(90% 0 0);            /* Input borders */
+--border: oklch(90% 0 0); /* Default borders */
+--input: oklch(90% 0 0); /* Input borders */
 
 /* Interactive States */
---ring: oklch(20% 0 0);             /* Focus ring color */
+--ring: oklch(20% 0 0); /* Focus ring color */
 ```
 
 ### Status Colors
 
 ```css
 /* Success (Confirmations, Completed States) */
---color-success: oklch(70% 0.15 145);       /* Green */
+--color-success: oklch(70% 0.15 145); /* Green */
 --color-success-foreground: oklch(100% 0 0);
 
 /* Warning (Cautions, Pending States) */
---color-warning: oklch(75% 0.15 85);        /* Yellow */
+--color-warning: oklch(75% 0.15 85); /* Yellow */
 --color-warning-foreground: oklch(20% 0 0);
 
 /* Error (Failures, Validation Errors) */
---color-error: oklch(55% 0.22 25);          /* Red */
+--color-error: oklch(55% 0.22 25); /* Red */
 --color-error-foreground: oklch(100% 0 0);
 
 /* Info (Notifications, Tips) */
---color-info: oklch(60% 0.15 250);          /* Blue */
+--color-info: oklch(60% 0.15 250); /* Blue */
 --color-info-foreground: oklch(100% 0 0);
 ```
 
@@ -229,15 +243,15 @@ Game Loopers uses a semantic color system that adapts to light/dark themes.
 Based on a modular scale (1.25 ratio):
 
 ```css
---text-xs: 0.75rem;    /* 12px */
---text-sm: 0.875rem;   /* 14px */
---text-base: 1rem;     /* 16px */
---text-lg: 1.125rem;   /* 18px */
---text-xl: 1.25rem;    /* 20px */
---text-2xl: 1.5rem;    /* 24px */
---text-3xl: 1.875rem;  /* 30px */
---text-4xl: 2.25rem;   /* 36px */
---text-5xl: 3rem;      /* 48px */
+--text-xs: 0.75rem; /* 12px */
+--text-sm: 0.875rem; /* 14px */
+--text-base: 1rem; /* 16px */
+--text-lg: 1.125rem; /* 18px */
+--text-xl: 1.25rem; /* 20px */
+--text-2xl: 1.5rem; /* 24px */
+--text-3xl: 1.875rem; /* 30px */
+--text-4xl: 2.25rem; /* 36px */
+--text-5xl: 3rem; /* 48px */
 ```
 
 ### Font Weights
@@ -262,14 +276,14 @@ Based on a modular scale (1.25 ratio):
 
 ### Typography Scale Usage
 
-| Element | Size | Weight | Line Height |
-|---------|------|--------|-------------|
-| Page Title (H1) | 3xl–5xl | bold | tight |
-| Section Heading (H2) | 2xl–3xl | semibold | tight |
-| Card Heading (H3) | lg–xl | semibold | snug |
-| Body Text | base | normal | normal |
-| Small Text | sm | normal | normal |
-| Caption | xs | normal | normal |
+| Element              | Size    | Weight   | Line Height |
+| -------------------- | ------- | -------- | ----------- |
+| Page Title (H1)      | 3xl–5xl | bold     | tight       |
+| Section Heading (H2) | 2xl–3xl | semibold | tight       |
+| Card Heading (H3)    | lg–xl   | semibold | snug        |
+| Body Text            | base    | normal   | normal      |
+| Small Text           | sm      | normal   | normal      |
+| Caption              | xs      | normal   | normal      |
 
 ---
 
@@ -278,16 +292,16 @@ Based on a modular scale (1.25 ratio):
 ### Spacing Scale (8px Grid)
 
 ```css
---spacing-xs: 0.25rem;   /* 4px */
---spacing-sm: 0.5rem;    /* 8px */
---spacing-md: 1rem;      /* 16px */
---spacing-lg: 1.5rem;    /* 24px */
---spacing-xl: 2rem;      /* 32px */
---spacing-2xl: 3rem;     /* 48px */
---spacing-3xl: 4rem;     /* 64px */
---spacing-4xl: 6rem;     /* 96px */
---spacing-5xl: 8rem;     /* 128px */
---spacing-6xl: 12rem;    /* 192px */
+--spacing-xs: 0.25rem; /* 4px */
+--spacing-sm: 0.5rem; /* 8px */
+--spacing-md: 1rem; /* 16px */
+--spacing-lg: 1.5rem; /* 24px */
+--spacing-xl: 2rem; /* 32px */
+--spacing-2xl: 3rem; /* 48px */
+--spacing-3xl: 4rem; /* 64px */
+--spacing-4xl: 6rem; /* 96px */
+--spacing-5xl: 8rem; /* 128px */
+--spacing-6xl: 12rem; /* 192px */
 ```
 
 ### Gap Utilities
@@ -304,12 +318,12 @@ Based on a modular scale (1.25 ratio):
 ### Border Radius
 
 ```css
---radius-sm: 0.125rem;   /* 2px */
---radius-md: 0.375rem;   /* 6px */
---radius-lg: 0.5rem;     /* 8px */
---radius-xl: 0.75rem;    /* 12px */
---radius-2xl: 1rem;      /* 16px */
---radius-full: 9999px;   /* Fully rounded */
+--radius-sm: 0.125rem; /* 2px */
+--radius-md: 0.375rem; /* 6px */
+--radius-lg: 0.5rem; /* 8px */
+--radius-xl: 0.75rem; /* 12px */
+--radius-2xl: 1rem; /* 16px */
+--radius-full: 9999px; /* Fully rounded */
 ```
 
 ### Shadows
@@ -318,7 +332,8 @@ Based on a modular scale (1.25 ratio):
 --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
---shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+--shadow-xl:
+  0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 ```
 
 ### Animation System
@@ -328,23 +343,24 @@ Based on a modular scale (1.25 ratio):
 #### Duration Tokens
 
 ```css
---duration-fast: 150ms;    /* Quick interactions (hover, focus) */
---duration-normal: 300ms;  /* Standard transitions (modals, dropdowns) */
---duration-slow: 500ms;    /* Emphasis animations (success states) */
+--duration-fast: 150ms; /* Quick interactions (hover, focus) */
+--duration-normal: 300ms; /* Standard transitions (modals, dropdowns) */
+--duration-slow: 500ms; /* Emphasis animations (success states) */
 ```
 
 #### Easing Functions
 
 ```css
---ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);     /* Smooth start and end */
---ease-out: cubic-bezier(0, 0, 0.2, 1);          /* Fast start, slow end */
---ease-in: cubic-bezier(0.4, 0, 1, 1);           /* Slow start, fast end */
+--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1); /* Smooth start and end */
+--ease-out: cubic-bezier(0, 0, 0.2, 1); /* Fast start, slow end */
+--ease-in: cubic-bezier(0.4, 0, 1, 1); /* Slow start, fast end */
 --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Playful bounce */
 ```
 
 #### Animation Patterns
 
 **Button Interactions:**
+
 ```css
 .button {
   transition: all var(--duration-fast) var(--ease-in-out);
@@ -360,6 +376,7 @@ Based on a modular scale (1.25 ratio):
 ```
 
 **Modal Entrance:**
+
 ```css
 .dialog {
   animation: dialog-fade-in var(--duration-normal) var(--ease-out);
@@ -370,8 +387,12 @@ Based on a modular scale (1.25 ratio):
 }
 
 @keyframes dialog-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes dialog-scale-in {
@@ -387,6 +408,7 @@ Based on a modular scale (1.25 ratio):
 ```
 
 **Loading Skeletons:**
+
 ```css
 .skeleton {
   background: linear-gradient(
@@ -400,22 +422,45 @@ Based on a modular scale (1.25 ratio):
 }
 
 @keyframes skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 ```
 
 **Success/Error Feedback:**
+
 ```css
 @keyframes checkmark-draw {
-  0% { stroke-dashoffset: 100; }
-  100% { stroke-dashoffset: 0; }
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-  20%, 40%, 60%, 80% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 @keyframes scale-pop {
@@ -442,6 +487,7 @@ Based on a modular scale (1.25 ratio):
 5. **Consistent timing** - Use design tokens, not arbitrary durations
 
 **Accessibility:**
+
 ```css
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -513,6 +559,7 @@ Shared components for browsing products.
 ```
 
 **Elements**:
+
 - `.browse-cta__text` - Message text
 - `.browse-cta__actions` - Button container
 
@@ -531,6 +578,7 @@ Shared components for browsing products.
 ```
 
 **Elements**:
+
 - `.browse-search__wrapper` - Flex container for input + button
 - `.browse-search__input` - Search text input
 - `.browse-search__btn` - Submit button
@@ -613,13 +661,12 @@ Shared components for browsing products.
 
 ```astro
 <Card>
-  <CardContent>
-    <!-- Content here -->
-  </CardContent>
+  <CardContent><!-- Content here --></CardContent>
 </Card>
 ```
 
 **Styles**:
+
 ```css
 .card {
   background-color: var(--card);
@@ -639,6 +686,7 @@ Shared components for browsing products.
 **Purpose**: Provides compact, consistent page headers across the application. Replaces bloated hero sections that previously consumed ~250px of vertical space.
 
 **Usage**:
+
 ```astro
 <PageHeader
   title="Products"
@@ -647,6 +695,7 @@ Shared components for browsing products.
 ```
 
 **Elements**:
+
 ```css
 .page-header                    /* Root container */
 .page-header__title             /* H1 heading (text-4xl, bold) */
@@ -654,6 +703,7 @@ Shared components for browsing products.
 ```
 
 **Styles**:
+
 ```css
 .page-header {
   text-align: left;
@@ -686,9 +736,12 @@ Game Loopers follows strict BEM (Block Element Modifier) naming conventions.
 #### Blocks (Components)
 
 ```css
-.button { }
-.product-card { }
-.browse-cta { }
+.button {
+}
+.product-card {
+}
+.browse-cta {
+}
 ```
 
 - Lowercase
@@ -698,9 +751,12 @@ Game Loopers follows strict BEM (Block Element Modifier) naming conventions.
 #### Elements (Parts of Components)
 
 ```css
-.button__text { }
-.product-card__title { }
-.browse-cta__actions { }
+.button__text {
+}
+.product-card__title {
+}
+.browse-cta__actions {
+}
 ```
 
 - Double underscore (`__`) separates block from element
@@ -710,9 +766,12 @@ Game Loopers follows strict BEM (Block Element Modifier) naming conventions.
 #### Modifiers (Variations)
 
 ```css
-.button--primary { }
-.button--lg { }
-.product-card--featured { }
+.button--primary {
+}
+.button--lg {
+}
+.product-card--featured {
+}
 ```
 
 - Double hyphen (`--`) separates block/element from modifier
@@ -722,24 +781,34 @@ Game Loopers follows strict BEM (Block Element Modifier) naming conventions.
 ### BEM Best Practices
 
 ✅ **DO**:
+
 ```css
-.browse-card { }
-.browse-card__title { }
-.browse-card__footer { }
-.browse-card--featured { }
+.browse-card {
+}
+.browse-card__title {
+}
+.browse-card__footer {
+}
+.browse-card--featured {
+}
 ```
 
 ❌ **DON'T**:
+
 ```css
 /* Avoid nested BEM */
-.browse-card__footer__price { } /* Too deep */
+.browse-card__footer__price {
+} /* Too deep */
 
 /* Avoid element modifiers */
-.browse-card__title--large { } /* Modify block instead */
+.browse-card__title--large {
+} /* Modify block instead */
 
 /* Avoid camelCase or underscores */
-.browseCard { }
-.browse_card { }
+.browseCard {
+}
+.browse_card {
+}
 ```
 
 ### When to Break from BEM
@@ -778,13 +847,13 @@ All interactive elements must have visible focus states:
 
 #### Keyboard Shortcuts
 
-| Action | Key |
-|--------|-----|
-| Navigate forward | `Tab` |
-| Navigate backward | `Shift + Tab` |
-| Activate button/link | `Enter` or `Space` |
-| Close modal | `Escape` |
-| Submit form | `Enter` (in form fields) |
+| Action               | Key                      |
+| -------------------- | ------------------------ |
+| Navigate forward     | `Tab`                    |
+| Navigate backward    | `Shift + Tab`            |
+| Activate button/link | `Enter` or `Space`       |
+| Close modal          | `Escape`                 |
+| Submit form          | `Enter` (in form fields) |
 
 ### Screen Readers
 
@@ -799,6 +868,7 @@ Dynamic content that updates must announce changes:
 ```
 
 **ARIA Live Politeness**:
+
 - `polite`: Non-urgent updates (chat messages, notifications)
 - `assertive`: Urgent updates (errors, warnings)
 - `off`: Don't announce (default)
@@ -842,6 +912,7 @@ All text must meet minimum contrast ratios:
 #### Modals & Dialogs
 
 When opening a modal:
+
 1. Move focus to first focusable element
 2. Trap focus inside modal (Tab cycles through modal only)
 3. Return focus to trigger element on close
@@ -863,10 +934,18 @@ When opening a modal:
 
 ```css
 /* Mobile-first approach */
-@media (max-width: 480px)  { /* Small phones */ }
-@media (max-width: 768px)  { /* Tablets */ }
-@media (max-width: 1024px) { /* Small desktops */ }
-@media (min-width: 1280px) { /* Large desktops */ }
+@media (max-width: 480px) {
+  /* Small phones */
+}
+@media (max-width: 768px) {
+  /* Tablets */
+}
+@media (max-width: 1024px) {
+  /* Small desktops */
+}
+@media (min-width: 1280px) {
+  /* Large desktops */
+}
 ```
 
 ### Layout Patterns
@@ -1154,6 +1233,7 @@ When opening a modal:
 #### Data Structure
 
 Fetches data from three API endpoints:
+
 - `/api/products/{id}/files` - Product files with individual prices
 - `/api/products/{id}/documents` - Attached documents with prices
 - `/api/products/{id}/embedded-products` - Embedded products with inherited prices
@@ -1161,10 +1241,7 @@ Fetches data from three API endpoints:
 #### Usage
 
 ```tsx
-<ProductPriceBreakdown
-  productId={product.id}
-  client:load
-/>
+<ProductPriceBreakdown productId={product.id} client:load />
 ```
 
 ---
@@ -1186,12 +1263,12 @@ Fetches data from three API endpoints:
 
 #### Status Definitions
 
-| Status | Visibility | Purchasable | Use Case |
-|--------|-----------|-------------|----------|
-| **Draft** | Owner only | No | Work in progress, not ready for any use |
-| **Private** | Owner + contributors | No | Testing, internal-only products |
-| **Public** | Everyone | Yes | Listed in marketplace, available for purchase |
-| **Archived** | Hidden | No | Removed from marketplace |
+| Status       | Visibility           | Purchasable | Use Case                                      |
+| ------------ | -------------------- | ----------- | --------------------------------------------- |
+| **Draft**    | Owner only           | No          | Work in progress, not ready for any use       |
+| **Private**  | Owner + contributors | No          | Testing, internal-only products               |
+| **Public**   | Everyone             | Yes         | Listed in marketplace, available for purchase |
+| **Archived** | Hidden               | No          | Removed from marketplace                      |
 
 #### Elements
 
@@ -1220,6 +1297,7 @@ Fetches data from three API endpoints:
 #### Business Rules
 
 **Publishing Validation**: Products can only be set to `public` if:
+
 1. All linked assets are `private` OR `public` status
 2. Draft or archived assets will prevent publishing (enforced by database trigger)
 
@@ -1357,23 +1435,23 @@ These components are core to Game Loopers' value proposition of **revenue transp
 
 ## Component Inventory
 
-| Component | Location | BEM Block | Description |
-|-----------|----------|-----------|-------------|
-| Button | `/src/components/Button.astro` | `.button` | Primary interactive element |
-| Card | `/src/components/Card.astro` | `.card` | Container for grouped content |
-| BrowseCTA | `/src/components/BrowseCTA.astro` | `.browse-cta` | Guest user call-to-action |
-| PageHeader | `/src/components/PageHeader.astro` | `.page-header` | Compact page title + description |
-| ProductChat | `/src/components/products/ProductChat.tsx` | `.product-chat` | Real-time product chat |
-| DocumentChat | `/src/components/islands/DocumentChat.tsx` | `.document-chat` | Real-time document chat |
-| ConfirmDialog | `/src/components/islands/ConfirmDialog.tsx` | `.confirm-dialog` | Modal confirmation |
-| Navigation | `/src/components/Navigation.astro` | `.navigation` | Main site navigation |
-| AddToCartButton | `/src/components/products/AddToCartButton.tsx` | `.add-to-cart` | Add product to cart with modal |
-| ProductDocumentsForm | `/src/components/products/ProductDocumentsForm.tsx` | `.product-documents-form` | Attach/manage documents on product |
-| ProductContributors | `/src/components/products/ProductContributors.astro` | `.product-contributors` | Display product contributors |
-| ProductPriceBreakdown | `/src/components/products/ProductPriceBreakdown.tsx` | `.price-breakdown` | Itemized price breakdown (buyer-facing) |
-| ProductStatusEditor | `/src/components/products/ProductStatusEditor.tsx` | `.status-editor` | 4-state product status system |
-| ProductRevenuePreview | `/src/components/products/ProductRevenuePreview.tsx` | `.revenue-preview` | Revenue calculator for creators |
-| ProductRoyaltyBreakdown | `/src/components/products/ProductRoyaltyBreakdown.tsx` | `.royalty-breakdown` | Royalty distribution visualization |
+| Component               | Location                                               | BEM Block                 | Description                             |
+| ----------------------- | ------------------------------------------------------ | ------------------------- | --------------------------------------- |
+| Button                  | `/src/components/Button.astro`                         | `.button`                 | Primary interactive element             |
+| Card                    | `/src/components/Card.astro`                           | `.card`                   | Container for grouped content           |
+| BrowseCTA               | `/src/components/BrowseCTA.astro`                      | `.browse-cta`             | Guest user call-to-action               |
+| PageHeader              | `/src/components/PageHeader.astro`                     | `.page-header`            | Compact page title + description        |
+| ProductChat             | `/src/components/products/ProductChat.tsx`             | `.product-chat`           | Real-time product chat                  |
+| DocumentChat            | `/src/components/islands/DocumentChat.tsx`             | `.document-chat`          | Real-time document chat                 |
+| ConfirmDialog           | `/src/components/islands/ConfirmDialog.tsx`            | `.confirm-dialog`         | Modal confirmation                      |
+| Navigation              | `/src/components/Navigation.astro`                     | `.navigation`             | Main site navigation                    |
+| AddToCartButton         | `/src/components/products/AddToCartButton.tsx`         | `.add-to-cart`            | Add product to cart with modal          |
+| ProductDocumentsForm    | `/src/components/products/ProductDocumentsForm.tsx`    | `.product-documents-form` | Attach/manage documents on product      |
+| ProductContributors     | `/src/components/products/ProductContributors.astro`   | `.product-contributors`   | Display product contributors            |
+| ProductPriceBreakdown   | `/src/components/products/ProductPriceBreakdown.tsx`   | `.price-breakdown`        | Itemized price breakdown (buyer-facing) |
+| ProductStatusEditor     | `/src/components/products/ProductStatusEditor.tsx`     | `.status-editor`          | 4-state product status system           |
+| ProductRevenuePreview   | `/src/components/products/ProductRevenuePreview.tsx`   | `.revenue-preview`        | Revenue calculator for creators         |
+| ProductRoyaltyBreakdown | `/src/components/products/ProductRoyaltyBreakdown.tsx` | `.royalty-breakdown`      | Royalty distribution visualization      |
 
 ### Browse Page Shared Classes
 
@@ -1477,6 +1555,7 @@ Consider adding motion tokens:
 ### Icon System
 
 Currently using inline SVGs. Consider:
+
 - Icon component library (Heroicons, Lucide)
 - SVG sprite sheet for performance
 - Consistent sizing (`16px`, `20px`, `24px`)

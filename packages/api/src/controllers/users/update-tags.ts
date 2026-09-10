@@ -1,6 +1,10 @@
 import type { Controller } from '../../context';
 import { unauthorized } from '../../responses';
-import { addUserTag, removeUserTag, getUserTags } from "@gameloopers/core/data-access/users";
+import {
+  addUserTag,
+  removeUserTag,
+  getUserTags,
+} from '@gameloopers/core/data-access/users';
 
 export const usersUpdateTags: Controller = async ({ request, userId }) => {
   // Check authentication
@@ -8,12 +12,12 @@ export const usersUpdateTags: Controller = async ({ request, userId }) => {
 
   try {
     const formData = await request.formData();
-    const tagsJson = formData.get("tags") as string;
+    const tagsJson = formData.get('tags') as string;
 
     if (!tagsJson) {
-      return new Response(JSON.stringify({ error: "Missing tags data" }), {
+      return new Response(JSON.stringify({ error: 'Missing tags data' }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -39,22 +43,19 @@ export const usersUpdateTags: Controller = async ({ request, userId }) => {
     // Get updated tags
     const updatedTags = await getUserTags(userId);
 
-    return new Response(
-      JSON.stringify({ success: true, tags: updatedTags }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ success: true, tags: updatedTags }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    console.error("Update tags error:", error);
+    console.error('Update tags error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to update tags",
+        error: error instanceof Error ? error.message : 'Failed to update tags',
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

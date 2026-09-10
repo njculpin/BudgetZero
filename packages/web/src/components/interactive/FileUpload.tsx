@@ -1,8 +1,8 @@
-import { createSignal } from "solid-js";
-import { FileUploadField, ErrorMessage, SuccessMessage } from "@/components/interactive";
-import "@/components/interactive/base.css";
-import "./file-upload.css";
-import type { StorageBucket } from "@gameloopers/core/storage";
+import { createSignal } from 'solid-js';
+import { FileUploadField, ErrorMessage, SuccessMessage } from '@/components/interactive';
+import '@/components/interactive/base.css';
+import './file-upload.css';
+import type { StorageBucket } from '@gameloopers/core/storage';
 
 export interface UploadedFile {
   path: string;
@@ -29,14 +29,14 @@ interface FileUploadProps {
 export default function FileUpload(props: FileUploadProps) {
   const [isUploading, setIsUploading] = createSignal(false);
   const [uploadProgress, setUploadProgress] = createSignal(0);
-  const [error, setError] = createSignal("");
-  const [success, setSuccess] = createSignal("");
+  const [error, setError] = createSignal('');
+  const [success, setSuccess] = createSignal('');
 
   const handleFilesSelected = async (files: File[]) => {
     if (files.length === 0) return;
 
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -47,14 +47,14 @@ export default function FileUpload(props: FileUploadProps) {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const formData = new FormData();
-        formData.append("file", file);
-        formData.append("bucket", props.bucket);
+        formData.append('file', file);
+        formData.append('bucket', props.bucket);
         if (props.prefix) {
-          formData.append("prefix", props.prefix);
+          formData.append('prefix', props.prefix);
         }
 
-        const response = await fetch("/api/upload", {
-          method: "POST",
+        const response = await fetch('/api/upload', {
+          method: 'POST',
           body: formData,
         });
 
@@ -71,9 +71,7 @@ export default function FileUpload(props: FileUploadProps) {
       }
 
       setSuccess(
-        `Successfully uploaded ${results.length} file${
-          results.length > 1 ? "s" : ""
-        }`
+        `Successfully uploaded ${results.length} file${results.length > 1 ? 's' : ''}`
       );
       setIsUploading(false);
 
@@ -81,7 +79,7 @@ export default function FileUpload(props: FileUploadProps) {
         props.onUploadComplete(results);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Upload failed";
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
       setError(errorMessage);
       setIsUploading(false);
 
@@ -97,12 +95,10 @@ export default function FileUpload(props: FileUploadProps) {
 
   return (
     <div class="file-upload-wrapper">
-      {error() && (
-        <ErrorMessage message={error()} onDismiss={() => setError("")} />
-      )}
+      {error() && <ErrorMessage message={error()} onDismiss={() => setError('')} />}
 
       {success() && (
-        <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
+        <SuccessMessage message={success()} onDismiss={() => setSuccess('')} />
       )}
 
       <FileUploadField

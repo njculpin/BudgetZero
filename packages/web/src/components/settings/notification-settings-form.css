@@ -1,4 +1,4 @@
-@import "../interactive/base.css";
+@import '../interactive/base.css';
 
 .notification-settings-form {
   display: flex;
@@ -37,7 +37,7 @@
   font-weight: var(--font-weight-medium);
 }
 
-.notification-settings-form__checkbox input[type="checkbox"] {
+.notification-settings-form__checkbox input[type='checkbox'] {
   width: 1.125rem;
   height: 1.125rem;
   cursor: pointer;

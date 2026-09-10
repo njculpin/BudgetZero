@@ -14,17 +14,17 @@ their original numbering noted, and the ones that were fixed are simply gone.
 
 ## Current state
 
-| Check | Result |
-|---|---|
-| `npm run check` | ✅ **0 errors** across 237 files, all three packages |
-| `npm run check:boundaries` | ✅ `web → api → core`, no Astro below `web` |
-| `npm run test:run` | ✅ **400 unit tests**, 9 integration suites |
-| `npm audit` | ⚠️ 3 high, **0 critical** |
-| Migrations 00001–00013 | ✅ applied and verified against a live database |
-| Purchase → download → royalty → payout | ✅ repaired, covered by tests |
-| Prices shown to buyers | ❌ **10% below what Stripe charges** |
-| Legal pages | ❌ still 11-line stubs |
-| e2e suite | ❌ deleted — it tested routes that do not exist |
+| Check                                  | Result                                               |
+| -------------------------------------- | ---------------------------------------------------- |
+| `npm run check`                        | ✅ **0 errors** across 237 files, all three packages |
+| `npm run check:boundaries`             | ✅ `web → api → core`, no Astro below `web`          |
+| `npm run test:run`                     | ✅ **400 unit tests**, 9 integration suites          |
+| `npm audit`                            | ⚠️ 3 high, **0 critical**                            |
+| Migrations 00001–00013                 | ✅ applied and verified against a live database      |
+| Purchase → download → royalty → payout | ✅ repaired, covered by tests                        |
+| Prices shown to buyers                 | ❌ **10% below what Stripe charges**                 |
+| Legal pages                            | ❌ still 11-line stubs                               |
+| e2e suite                              | ❌ deleted — it tested routes that do not exist      |
 
 The money path works. What stands between here and launch is that **the buyer is
 shown the wrong price**, the legal documents are empty, and none of it has been
@@ -46,12 +46,12 @@ UI never shows it:
   entirely — so a document-only product displays as **"Free"** in the grid.
 - `ProductContentViewer.tsx` labels the bare item sum "Total".
 
-For the persona whose stated pain is *"doesn't know where the money goes"*, an
+For the persona whose stated pain is _"doesn't know where the money goes"_, an
 undisclosed 10% appearing at the payment step is the worst available failure mode,
 and it is a Stripe compliance risk.
 
 **Fix:** one function as the single source of price truth; show subtotal, fee and
-total explicitly everywhere a price appears. ~3–4 h. *(audit P0 #4)*
+total explicitly everywhere a price appears. ~3–4 h. _(audit P0 #4)_
 
 ### 2. `price_cents` is a phantom field, so Add to Cart never renders
 
@@ -66,7 +66,7 @@ The only surviving purchase path is a secondary button inside "What's Included",
 which renders only if the product has content.
 
 **Fix:** delete `price_cents` from the `Product` type and have the product page
-call `getProductPriceBreakdown`. ~1–2 h. Also fixes #3. *(audit P0 #2)*
+call `getProductPriceBreakdown`. ~1–2 h. Also fixes #3. _(audit P0 #2)_
 
 This is the third phantom field found in this codebase (`products.price_cents`,
 `users.full_name`, `products.embedding_royalty_cents`). All three were declared
@@ -84,7 +84,7 @@ The correct value is already in scope: `cart.astro` sets `item.price_cents` from
 the real breakdown. The component reads `item.product.price_cents` instead.
 
 **Fix:** one-word change. 15 min. Highest-abandonment moment in the funnel, and a
-chargeback generator until then. *(audit P0 #3)*
+chargeback generator until then. _(audit P0 #3)_
 
 ### 4. Buyers are charged for documents that are never delivered
 
@@ -92,7 +92,7 @@ chargeback generator until then. *(audit P0 #3)*
 Documents are priced, added to carts, and paid for; no file is ever produced.
 
 **Fix:** either implement generation or remove documents from the purchasable set
-before launch. Selling something undeliverable is not a bug to defer. *(audit P0 #8)*
+before launch. Selling something undeliverable is not a bug to defer. _(audit P0 #8)_
 
 ### 5. Legal pages are empty
 
@@ -153,7 +153,9 @@ The previous suite targeted `/dashboard`, `/assets`, `/assets/new` and
 specs pass without asserting anything. It never ran in CI. A suite that cannot
 fail is worse than no suite, so it was removed rather than repaired.
 
-The Playwright harness is still configured. The manual checks in P0 #6 are the
+The Playwright config and dependency were removed with it, rather than left
+behind pointing at an empty directory. Reinstating them is `npm i -D
+@playwright/test && npx playwright init`. The manual checks in P0 #6 are the
 right first specs to write.
 
 ### 10. Three high-severity advisories with no upstream fix
@@ -220,7 +222,7 @@ before launch; document the decision if still unfixed.
 ## The short version
 
 The money path is fixed and tested. The remaining launch blockers are all in what
-the buyer *sees*: a price that is 10% too low, a missing Add to Cart button, cart
+the buyer _sees_: a price that is 10% too low, a missing Add to Cart button, cart
 rows that say FREE, documents sold but never delivered, and no legal terms. None
 of them are deep — the largest is half a day — but every one of them is on the
 path between a visitor and a completed purchase.

@@ -1,22 +1,25 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/card/Card.astro";
-import CardHeader from "@/components/card/CardHeader.astro";
-import CardTitle from "@/components/card/CardTitle.astro";
-import CardContent from "@/components/card/CardContent.astro";
-import Button from "@/components/Button.astro";
-import CartItemRow from "@/components/cart/CartItemRow";
-import CheckoutButton from "@/components/checkout/CheckoutButton";
-import { setSession } from "@gameloopers/core/auth";
-import EmptyState from "@/components/EmptyState.astro";
-import { getOrCreateCart, getCartItems } from "@gameloopers/core/data-access/cart";
-import { getProductById, getProductPriceBreakdown } from "@gameloopers/core/data-access/products";
+import Layout from '@/layouts/Layout.astro';
+import Card from '@/components/card/Card.astro';
+import CardHeader from '@/components/card/CardHeader.astro';
+import CardTitle from '@/components/card/CardTitle.astro';
+import CardContent from '@/components/card/CardContent.astro';
+import Button from '@/components/Button.astro';
+import CartItemRow from '@/components/cart/CartItemRow';
+import CheckoutButton from '@/components/checkout/CheckoutButton';
+import { setSession } from '@gameloopers/core/auth';
+import EmptyState from '@/components/EmptyState.astro';
+import { getOrCreateCart, getCartItems } from '@gameloopers/core/data-access/cart';
+import {
+  getProductById,
+  getProductPriceBreakdown,
+} from '@gameloopers/core/data-access/products';
 
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
+const accessToken = Astro.cookies.get('sb-access-token');
+const refreshToken = Astro.cookies.get('sb-refresh-token');
 
 if (!accessToken || !refreshToken) {
-  return Astro.redirect("/sign-in?redirect=/cart");
+  return Astro.redirect('/sign-in?redirect=/cart');
 }
 
 let session;
@@ -26,20 +29,20 @@ try {
     access_token: accessToken.value,
   });
   if (session.error) {
-    Astro.cookies.delete("sb-access-token", { path: "/" });
-    Astro.cookies.delete("sb-refresh-token", { path: "/" });
-    return Astro.redirect("/sign-in?redirect=/cart");
+    Astro.cookies.delete('sb-access-token', { path: '/' });
+    Astro.cookies.delete('sb-refresh-token', { path: '/' });
+    return Astro.redirect('/sign-in?redirect=/cart');
   }
 } catch {
-  Astro.cookies.delete("sb-access-token", { path: "/" });
-  Astro.cookies.delete("sb-refresh-token", { path: "/" });
-  return Astro.redirect("/sign-in?redirect=/cart");
+  Astro.cookies.delete('sb-access-token', { path: '/' });
+  Astro.cookies.delete('sb-refresh-token', { path: '/' });
+  return Astro.redirect('/sign-in?redirect=/cart');
 }
 
 const userId = session.data.user?.id;
 
 if (!userId) {
-  return Astro.redirect("/sign-in?redirect=/cart");
+  return Astro.redirect('/sign-in?redirect=/cart');
 }
 
 // Get cart and items (cart operations now handled client-side)
@@ -70,7 +73,7 @@ const cartItemsWithDetails = await Promise.all(
 // Calculate totals
 const subtotal = cartItemsWithDetails.reduce((total, item) => {
   const itemPrice = item.price_cents || 0;
-  return total + (itemPrice * item.quantity);
+  return total + itemPrice * item.quantity;
 }, 0);
 
 const showAddedMessage = Astro.url.searchParams.get('added') === 'true';
@@ -85,9 +88,7 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
       </div>
 
       {showAddedMessage && (
-        <div class="cart-alert cart-alert--success">
-          Item added to cart!
-        </div>
+        <div class="cart-alert cart-alert--success">Item added to cart!</div>
       )}
 
       {showCancelledMessage && (
@@ -103,10 +104,7 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
               <CardContent>
                 <div class="cart-items__list">
                   {cartItemsWithDetails.map((item) => (
-                    <CartItemRow
-                      client:load
-                      item={item}
-                    />
+                    <CartItemRow client:load item={item} />
                   ))}
                 </div>
               </CardContent>
@@ -122,11 +120,15 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
                 <div class="cart-summary__content">
                   <div class="cart-summary__row">
                     <span class="cart-summary__label">Subtotal</span>
-                    <span class="cart-summary__value">USD {(subtotal / 100).toFixed(2)}</span>
+                    <span class="cart-summary__value">
+                      USD {(subtotal / 100).toFixed(2)}
+                    </span>
                   </div>
                   <div class="cart-summary__row cart-summary__row--total">
                     <span class="cart-summary__label">Total</span>
-                    <span class="cart-summary__value">USD {(subtotal / 100).toFixed(2)}</span>
+                    <span class="cart-summary__value">
+                      USD {(subtotal / 100).toFixed(2)}
+                    </span>
                   </div>
 
                   <div class="cart-summary__checkout">
@@ -163,116 +165,116 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
 </Layout>
 
 <style>
-.cart-alert {
-  padding: var(--spacing-2xl);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-2xl);
-}
-
-.cart-alert--success {
-  background-color: var(--success-bg);
-  color: var(--success-fg);
-  border: var(--border-width-default) solid var(--success);
-}
-
-.cart-alert--error {
-  background-color: var(--destructive-bg);
-  color: var(--destructive-fg);
-  border: var(--border-width-default) solid var(--destructive);
-}
-
-.cart-layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--gap-2xl);
-}
-
-@media (min-width: 1024px) {
-  .cart-layout {
-    grid-template-columns: 2fr 1fr;
+  .cart-alert {
+    padding: var(--spacing-2xl);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-2xl);
   }
-}
 
-.cart-items__list {
-  display: flex;
-  flex-direction: column;
-}
+  .cart-alert--success {
+    background-color: var(--success-bg);
+    color: var(--success-fg);
+    border: var(--border-width-default) solid var(--success);
+  }
 
-.cart-summary__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-lg);
-}
+  .cart-alert--error {
+    background-color: var(--destructive-bg);
+    color: var(--destructive-fg);
+    border: var(--border-width-default) solid var(--destructive);
+  }
 
-.cart-summary__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-md) 0;
-}
+  .cart-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gap-2xl);
+  }
 
-.cart-summary__row--total {
-  border-top: var(--border-width-thick) solid var(--border);
-  padding-top: var(--spacing-2xl);
-  margin-top: var(--spacing-md);
-}
+  @media (min-width: 1024px) {
+    .cart-layout {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
 
-.cart-summary__label {
-  font-size: var(--text-base);
-  color: var(--muted-foreground);
-}
+  .cart-items__list {
+    display: flex;
+    flex-direction: column;
+  }
 
-.cart-summary__row--total .cart-summary__label {
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
+  .cart-summary__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-lg);
+  }
 
-.cart-summary__value {
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
+  .cart-summary__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) 0;
+  }
 
-.cart-summary__row--total .cart-summary__value {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--primary);
-}
+  .cart-summary__row--total {
+    border-top: var(--border-width-thick) solid var(--border);
+    padding-top: var(--spacing-2xl);
+    margin-top: var(--spacing-md);
+  }
 
-.cart-summary__checkout {
-  width: 100%;
-}
+  .cart-summary__label {
+    font-size: var(--text-base);
+    color: var(--muted-foreground);
+  }
 
-.cart-summary__continue {
-  margin-top: var(--spacing-2xl);
-}
+  .cart-summary__row--total .cart-summary__label {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
 
-.cart-summary__continue a {
-  display: block;
-  text-decoration: none;
-}
+  .cart-summary__value {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
 
-.cart-summary__continue button {
-  width: 100%;
-}
+  .cart-summary__row--total .cart-summary__value {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary);
+  }
 
-.cart-empty {
-  text-align: center;
-  padding: var(--spacing-5xl) var(--spacing-3xl);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--gap-2xl);
-}
+  .cart-summary__checkout {
+    width: 100%;
+  }
 
-.cart-empty__text {
-  margin: 0;
-  font-size: var(--text-lg);
-  color: var(--muted-foreground);
-}
+  .cart-summary__continue {
+    margin-top: var(--spacing-2xl);
+  }
 
-.cart-empty a {
-  text-decoration: none;
-}
+  .cart-summary__continue a {
+    display: block;
+    text-decoration: none;
+  }
+
+  .cart-summary__continue button {
+    width: 100%;
+  }
+
+  .cart-empty {
+    text-align: center;
+    padding: var(--spacing-5xl) var(--spacing-3xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap-2xl);
+  }
+
+  .cart-empty__text {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: var(--muted-foreground);
+  }
+
+  .cart-empty a {
+    text-decoration: none;
+  }
 </style>

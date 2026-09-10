@@ -1,9 +1,9 @@
 import type { Controller } from '../context';
 import { redirect } from '../responses';
-import { hasUserPurchasedProduct } from "@gameloopers/core/data-access/sales";
-import { getProductFileById } from "@gameloopers/core/data-access/products";
-import { createSignedUrl } from "@gameloopers/core/storage";
-import { captureError } from "@gameloopers/core/monitoring";
+import { hasUserPurchasedProduct } from '@gameloopers/core/data-access/sales';
+import { getProductFileById } from '@gameloopers/core/data-access/products';
+import { createSignedUrl } from '@gameloopers/core/storage';
+import { captureError } from '@gameloopers/core/monitoring';
 
 /** Signed download links are bearer credentials for paid content: 5 minutes is
  *  ample to start a download and short enough that a leaked link expires fast. */
@@ -17,10 +17,10 @@ export const download: Controller = async ({ request, userId }) => {
 
   // Get form data
   const formData = await request.formData();
-  const fileId = formData.get("file_id") as string;
+  const fileId = formData.get('file_id') as string;
 
   if (!fileId) {
-    return new Response("Missing file_id", { status: 400 });
+    return new Response('Missing file_id', { status: 400 });
   }
 
   try {
@@ -31,7 +31,7 @@ export const download: Controller = async ({ request, userId }) => {
     const file = await getProductFileById(fileId);
 
     if (!file) {
-      return new Response("File not found", { status: 404 });
+      return new Response('File not found', { status: 404 });
     }
 
     // Check if user has purchased the product that owns this file. This also covers
@@ -39,7 +39,7 @@ export const download: Controller = async ({ request, userId }) => {
     const hasPurchased = await hasUserPurchasedProduct(userId, file.product_id);
 
     if (!hasPurchased) {
-      return new Response("You have not purchased this product", { status: 403 });
+      return new Response('You have not purchased this product', { status: 403 });
     }
 
     // Create a short-lived signed download URL. The link is a bearer credential for
@@ -52,16 +52,13 @@ export const download: Controller = async ({ request, userId }) => {
     );
 
     if (!signedUrl) {
-      return new Response("Failed to create download URL", { status: 500 });
+      return new Response('Failed to create download URL', { status: 500 });
     }
 
     // Redirect to the signed URL
     return redirect(signedUrl);
   } catch (error) {
     captureError(error, { operation: 'download.signed_url', userId, fileId });
-    return new Response(
-      "Failed to process download",
-      { status: 500 }
-    );
+    return new Response('Failed to process download', { status: 500 });
   }
 };

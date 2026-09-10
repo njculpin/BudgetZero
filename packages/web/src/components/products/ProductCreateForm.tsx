@@ -1,47 +1,50 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, Show } from 'solid-js';
 import {
   FormField,
   TextAreaField,
   SelectField,
   LoadingButton,
   ErrorMessage,
-} from "@/components/interactive";
-import TagInput from "@/components/interactive/TagInput";
-import ProductCreatedModal from "./ProductCreatedModal";
-import "./product-create-form.css";
+} from '@/components/interactive';
+import TagInput from '@/components/interactive/TagInput';
+import ProductCreatedModal from './ProductCreatedModal';
+import './product-create-form.css';
 
 export default function ProductCreateForm() {
-  const [title, setTitle] = createSignal<string>("");
-  const [description, setDescription] = createSignal<string>("");
-  const [status, setStatus] = createSignal<string>("draft");
+  const [title, setTitle] = createSignal<string>('');
+  const [description, setDescription] = createSignal<string>('');
+  const [status, setStatus] = createSignal<string>('draft');
   const [tags, setTags] = createSignal<string[]>([]);
-  const [error, setError] = createSignal<string>("");
+  const [error, setError] = createSignal<string>('');
   const [isLoading, setIsLoading] = createSignal<boolean>(false);
   const [showSuccessModal, setShowSuccessModal] = createSignal<boolean>(false);
-  const [createdProduct, setCreatedProduct] = createSignal<{ title: string; handle: string } | null>(null);
+  const [createdProduct, setCreatedProduct] = createSignal<{
+    title: string;
+    handle: string;
+  } | null>(null);
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/products/create-product", {
-        method: "POST",
+      const response = await fetch('/api/products/create-product', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           title: title(),
           description: description() || undefined,
-          status: status() as "draft" | "private" | "public" | "archived",
+          status: status() as 'draft' | 'private' | 'public' | 'archived',
           tags: tags().length > 0 ? tags() : undefined,
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to create product. Please try again.");
+        setError(data.error || 'Failed to create product. Please try again.');
         setIsLoading(false);
         return;
       }
@@ -60,7 +63,7 @@ export default function ProductCreateForm() {
         window.dispatchEvent(new CustomEvent('product:created'));
       }
     } catch {
-      setError("An unexpected error occurred. Please try again.");
+      setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
   };
@@ -81,7 +84,7 @@ export default function ProductCreateForm() {
 
         <form onSubmit={handleSubmit} class="product-create-form__form">
           <Show when={error()}>
-            <ErrorMessage message={error()} onDismiss={() => setError("")} />
+            <ErrorMessage message={error()} onDismiss={() => setError('')} />
           </Show>
 
           <FormField
@@ -129,9 +132,9 @@ export default function ProductCreateForm() {
               setStatus((e.currentTarget as HTMLSelectElement).value)
             }
             options={[
-              { value: "draft", label: "Draft" },
-              { value: "private", label: "Private" },
-              { value: "public", label: "Public" },
+              { value: 'draft', label: 'Draft' },
+              { value: 'private', label: 'Private' },
+              { value: 'public', label: 'Public' },
             ]}
             helpText="Public products are visible in the marketplace"
             disabled={isLoading()}

@@ -72,10 +72,7 @@ describe('createRouter — specificity', () => {
   });
 
   it('prefers the pattern with more static segments', () => {
-    const router = createRouter([
-      route('GET', '/a/:b/:c'),
-      route('GET', '/a/b/:c'),
-    ]);
+    const router = createRouter([route('GET', '/a/:b/:c'), route('GET', '/a/b/:c')]);
 
     const result = router.match('GET', '/a/b/c');
     expect(result.kind).toBe('match');
@@ -87,10 +84,7 @@ describe('createRouter — specificity', () => {
     // Both patterns have two static segments, so counting alone cannot choose.
     // The convention is that the leftmost static segment wins, which makes
     // matching left-to-right and therefore predictable to read.
-    const router = createRouter([
-      route('GET', '/a/:b/c'),
-      route('GET', '/a/b/:c'),
-    ]);
+    const router = createRouter([route('GET', '/a/:b/c'), route('GET', '/a/b/:c')]);
 
     const result = router.match('GET', '/a/b/c');
     expect(result.kind).toBe('match');

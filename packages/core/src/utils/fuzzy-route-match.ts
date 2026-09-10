@@ -36,31 +36,52 @@ function levenshteinDistance(str1: string, str2: string): number {
  */
 export const AVAILABLE_ROUTES = [
   // Main pages
-  { path: "/", label: "Homepage", description: "Landing page and site overview" },
-  { path: "/about", label: "About", description: "About Game Loopers" },
-  { path: "/terms", label: "Terms", description: "Terms of Service" },
-  { path: "/privacy", label: "Privacy", description: "Privacy Policy" },
+  { path: '/', label: 'Homepage', description: 'Landing page and site overview' },
+  { path: '/about', label: 'About', description: 'About Game Loopers' },
+  { path: '/terms', label: 'Terms', description: 'Terms of Service' },
+  { path: '/privacy', label: 'Privacy', description: 'Privacy Policy' },
 
   // Product & Asset pages
-  { path: "/products", label: "Products", description: "Browse game products and digital downloads" },
-  { path: "/assets", label: "Assets", description: "Digital assets (3D models, PDFs, images)" },
-  { path: "/tags", label: "Tags", description: "Browse by tags" },
+  {
+    path: '/products',
+    label: 'Products',
+    description: 'Browse game products and digital downloads',
+  },
+  {
+    path: '/assets',
+    label: 'Assets',
+    description: 'Digital assets (3D models, PDFs, images)',
+  },
+  { path: '/tags', label: 'Tags', description: 'Browse by tags' },
 
   // User & Social
-  { path: "/users", label: "Creators", description: "Creator directory - Find illustrators, designers, 3D modelers, and more" },
-  { path: "/feed", label: "Feed", description: "Activity feed" },
+  {
+    path: '/users',
+    label: 'Creators',
+    description:
+      'Creator directory - Find illustrators, designers, 3D modelers, and more',
+  },
+  { path: '/feed', label: 'Feed', description: 'Activity feed' },
 
   // Documents (authenticated)
-  { path: "/documents", label: "Documents", description: "Collaborative document editor" },
+  {
+    path: '/documents',
+    label: 'Documents',
+    description: 'Collaborative document editor',
+  },
 
   // Commerce
-  { path: "/cart", label: "Cart", description: "Shopping cart" },
-  { path: "/purchases", label: "Purchases", description: "Your purchase history" },
+  { path: '/cart', label: 'Cart', description: 'Shopping cart' },
+  { path: '/purchases', label: 'Purchases', description: 'Your purchase history' },
 
   // Auth & Account
-  { path: "/sign-in", label: "Sign In", description: "User authentication" },
-  { path: "/sign-up", label: "Sign Up", description: "Create an account" },
-  { path: "/settings", label: "Settings", description: "Account settings and payout setup" },
+  { path: '/sign-in', label: 'Sign In', description: 'User authentication' },
+  { path: '/sign-up', label: 'Sign Up', description: 'Create an account' },
+  {
+    path: '/settings',
+    label: 'Settings',
+    description: 'Account settings and payout setup',
+  },
 ];
 
 export interface RouteMatch {
@@ -123,28 +144,28 @@ export function findSimilarRoutes(
  * Useful for detecting patterns like /products/:id or /users/:handle
  */
 export function detectPatternMatch(requestedPath: string): string | null {
-  const segments = requestedPath.split("/").filter(Boolean);
+  const segments = requestedPath.split('/').filter(Boolean);
 
   if (segments.length === 0) return null;
 
   // Pattern: /products/:something -> suggest /products
-  if (segments[0] === "products" && segments.length > 1) {
-    return "/products";
+  if (segments[0] === 'products' && segments.length > 1) {
+    return '/products';
   }
 
   // Pattern: /assets/:something -> suggest /assets
-  if (segments[0] === "assets" && segments.length > 1) {
-    return "/assets";
+  if (segments[0] === 'assets' && segments.length > 1) {
+    return '/assets';
   }
 
   // Pattern: /users/:something -> suggest /users
-  if (segments[0] === "users" && segments.length > 1) {
-    return "/users";
+  if (segments[0] === 'users' && segments.length > 1) {
+    return '/users';
   }
 
   // Pattern: /documents/:something -> suggest /documents
-  if (segments[0] === "documents" && segments.length > 1) {
-    return "/documents";
+  if (segments[0] === 'documents' && segments.length > 1) {
+    return '/documents';
   }
 
   return null;

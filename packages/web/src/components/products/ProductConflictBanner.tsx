@@ -1,6 +1,6 @@
-import { createSignal, Show } from "solid-js";
-import { LoadingButton } from "@/components/interactive";
-import "./product-conflict-banner.css";
+import { createSignal, Show } from 'solid-js';
+import { LoadingButton } from '@/components/interactive';
+import './product-conflict-banner.css';
 
 interface ProductConflictBannerProps {
   productId: string;
@@ -10,19 +10,17 @@ interface ProductConflictBannerProps {
   onResolve?: () => void;
 }
 
-export default function ProductConflictBanner(
-  props: ProductConflictBannerProps
-) {
+export default function ProductConflictBanner(props: ProductConflictBannerProps) {
   const [resolving, setResolving] = createSignal(false);
   const [dismissed, setDismissed] = createSignal(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
     });
   };
 
@@ -30,16 +28,13 @@ export default function ProductConflictBanner(
     setResolving(true);
 
     try {
-      const response = await fetch(
-        `/api/products/${props.productId}/resolve-conflict`,
-        {
-          method: "POST",
-        }
-      );
+      const response = await fetch(`/api/products/${props.productId}/resolve-conflict`, {
+        method: 'POST',
+      });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to resolve conflict");
+        throw new Error(data.error || 'Failed to resolve conflict');
       }
 
       setDismissed(true);
@@ -47,8 +42,8 @@ export default function ProductConflictBanner(
         props.onResolve();
       }
     } catch (err) {
-      console.error("Failed to resolve conflict:", err);
-      alert("Failed to resolve conflict. Please try again.");
+      console.error('Failed to resolve conflict:', err);
+      alert('Failed to resolve conflict. Please try again.');
     } finally {
       setResolving(false);
     }
@@ -59,12 +54,8 @@ export default function ProductConflictBanner(
       <div class="product-conflict-banner">
         <div class="product-conflict-banner__icon">⚠️</div>
         <div class="product-conflict-banner__content">
-          <h3 class="product-conflict-banner__title">
-            Product Needs Attention
-          </h3>
-          <p class="product-conflict-banner__message">
-            {props.attentionReason}
-          </p>
+          <h3 class="product-conflict-banner__title">Product Needs Attention</h3>
+          <p class="product-conflict-banner__message">{props.attentionReason}</p>
           <p class="product-conflict-banner__timestamp">
             Flagged on {formatDate(props.attentionSince)}
           </p>

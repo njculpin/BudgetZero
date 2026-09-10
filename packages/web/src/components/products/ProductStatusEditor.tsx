@@ -1,65 +1,63 @@
-import { createSignal, Show, For } from "solid-js";
-import {
-  ErrorMessage,
-  SuccessMessage,
-  LoadingButton,
-} from "@/components/interactive";
-import "./product-status-editor.css";
+import { createSignal, Show, For } from 'solid-js';
+import { ErrorMessage, SuccessMessage, LoadingButton } from '@/components/interactive';
+import './product-status-editor.css';
 
 export interface ProductStatusEditorProps {
   productId: string;
-  currentStatus: "draft" | "private" | "public" | "archived";
+  currentStatus: 'draft' | 'private' | 'public' | 'archived';
 }
 
 type StatusOption = {
-  value: "draft" | "private" | "public" | "archived";
+  value: 'draft' | 'private' | 'public' | 'archived';
   label: string;
   icon: string;
   description: string;
-  color: "muted" | "info" | "success" | "warning";
+  color: 'muted' | 'info' | 'success' | 'warning';
 };
 
 const statusOptions: StatusOption[] = [
   {
-    value: "draft",
-    label: "Draft",
-    icon: "📝",
-    description: "Continue editing without publishing",
-    color: "muted",
+    value: 'draft',
+    label: 'Draft',
+    icon: '📝',
+    description: 'Continue editing without publishing',
+    color: 'muted',
   },
   {
-    value: "private",
-    label: "Private",
-    icon: "🔒",
-    description: "Share with select collaborators via link",
-    color: "info",
+    value: 'private',
+    label: 'Private',
+    icon: '🔒',
+    description: 'Share with select collaborators via link',
+    color: 'info',
   },
   {
-    value: "public",
-    label: "Public",
-    icon: "🌐",
-    description: "Available for purchase in marketplace",
-    color: "success",
+    value: 'public',
+    label: 'Public',
+    icon: '🌐',
+    description: 'Available for purchase in marketplace',
+    color: 'success',
   },
   {
-    value: "archived",
-    label: "Archived",
-    icon: "📦",
-    description: "Hidden from public view",
-    color: "warning",
+    value: 'archived',
+    label: 'Archived',
+    icon: '📦',
+    description: 'Hidden from public view',
+    color: 'warning',
   },
 ];
 
 export default function ProductStatusEditor(props: ProductStatusEditorProps) {
   const [status, setStatus] = createSignal(props.currentStatus);
   const [isLoading, setIsLoading] = createSignal(false);
-  const [error, setError] = createSignal("");
-  const [success, setSuccess] = createSignal("");
+  const [error, setError] = createSignal('');
+  const [success, setSuccess] = createSignal('');
   const [showPublishConfirm, setShowPublishConfirm] = createSignal(false);
 
-  const handleStatusChange = async (newStatus: "draft" | "private" | "public" | "archived") => {
+  const handleStatusChange = async (
+    newStatus: 'draft' | 'private' | 'public' | 'archived'
+  ) => {
     // Show confirmation dialog for publishing
-    if (newStatus === "public" && status() !== "public") {
+    if (newStatus === 'public' && status() !== 'public') {
       setShowPublishConfirm(true);
       return;
     }
@@ -67,25 +65,25 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
     await updateStatus(newStatus);
   };
 
-  const updateStatus = async (newStatus: "draft" | "private" | "public" | "archived") => {
-    setError("");
-    setSuccess("");
+  const updateStatus = async (newStatus: 'draft' | 'private' | 'public' | 'archived') => {
+    setError('');
+    setSuccess('');
     setIsLoading(true);
     setShowPublishConfirm(false);
 
     try {
       const formData = new FormData();
-      formData.append("productId", props.productId);
-      formData.append("status", newStatus);
+      formData.append('productId', props.productId);
+      formData.append('status', newStatus);
 
-      const response = await fetch("/api/products/update-product", {
-        method: "POST",
+      const response = await fetch('/api/products/update-product', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to update status");
+        setError(data.error || 'Failed to update status');
         setIsLoading(false);
         return;
       }
@@ -99,7 +97,7 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
         window.location.reload();
       }, 1500);
     } catch {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
       setIsLoading(false);
     }
   };
@@ -107,11 +105,11 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
   return (
     <div class="status-editor">
       <Show when={error()}>
-        <ErrorMessage message={error()} onDismiss={() => setError("")} />
+        <ErrorMessage message={error()} onDismiss={() => setError('')} />
       </Show>
 
       <Show when={success()}>
-        <SuccessMessage message={success()} onDismiss={() => setSuccess("")} />
+        <SuccessMessage message={success()} onDismiss={() => setSuccess('')} />
       </Show>
 
       {/* Status Options Grid */}
@@ -121,7 +119,7 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
             <button
               type="button"
               class={`status-editor__option status-editor__option--${option.color} ${
-                status() === option.value ? "status-editor__option--active" : ""
+                status() === option.value ? 'status-editor__option--active' : ''
               }`}
               onClick={() => handleStatusChange(option.value)}
               disabled={isLoading()}
@@ -141,13 +139,16 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
 
       {/* Publish Confirmation Dialog */}
       <Show when={showPublishConfirm()}>
-        <div class="status-editor__modal-overlay" onClick={() => setShowPublishConfirm(false)}>
+        <div
+          class="status-editor__modal-overlay"
+          onClick={() => setShowPublishConfirm(false)}
+        >
           <div class="status-editor__modal" onClick={(e) => e.stopPropagation()}>
             <div class="status-editor__modal-icon">🌐</div>
             <h3 class="status-editor__modal-title">Publish Product?</h3>
             <p class="status-editor__modal-description">
-              Your product will be visible in the marketplace and available for purchase by anyone.
-              Make sure you've completed all requirements before publishing.
+              Your product will be visible in the marketplace and available for purchase
+              by anyone. Make sure you've completed all requirements before publishing.
             </p>
             <div class="status-editor__modal-actions">
               <LoadingButton
@@ -162,7 +163,7 @@ export default function ProductStatusEditor(props: ProductStatusEditorProps) {
                 type="button"
                 variant="primary"
                 size="md"
-                onClick={() => updateStatus("public")}
+                onClick={() => updateStatus('public')}
                 isLoading={isLoading()}
                 loadingText="Publishing..."
               >

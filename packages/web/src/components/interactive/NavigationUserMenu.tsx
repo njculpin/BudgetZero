@@ -1,6 +1,6 @@
-import { createSignal, Show, For, onCleanup, onMount } from "solid-js";
-import type { ProductStatus } from "@gameloopers/core/types";
-import "./navigation-user-menu.css";
+import { createSignal, Show, For, onCleanup, onMount } from 'solid-js';
+import type { ProductStatus } from '@gameloopers/core/types';
+import './navigation-user-menu.css';
 
 export interface NavigationUserMenuLink {
   href?: string;
@@ -34,7 +34,9 @@ export interface NavigationUserMenuProps {
 
 export default function NavigationUserMenu(props: NavigationUserMenuProps) {
   const [isOpen, setIsOpen] = createSignal(false);
-  const [products, setProducts] = createSignal<ProductSummary[]>(props.recentProducts || []);
+  const [products, setProducts] = createSignal<ProductSummary[]>(
+    props.recentProducts || []
+  );
   const [productCount, setProductCount] = createSignal(props.totalProductCount || 0);
   let menuRef: HTMLDivElement | undefined;
 
@@ -111,19 +113,19 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
 
   // Close menu on Escape key
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
+    if (event.key === 'Escape') {
       closeMenu();
     }
   };
 
   // Set up event listeners
-  if (typeof window !== "undefined") {
-    window.addEventListener("click", handleClickOutside);
-    window.addEventListener("keydown", handleKeyDown);
+  if (typeof window !== 'undefined') {
+    window.addEventListener('click', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
 
     onCleanup(() => {
-      window.removeEventListener("click", handleClickOutside);
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
     });
   }
 
@@ -141,7 +143,7 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
         </span>
         <span class="nav-user-menu__handle">@{props.userHandle}</span>
         <svg
-          class={`nav-user-menu__icon ${isOpen() ? "nav-user-menu__icon--open" : ""}`}
+          class={`nav-user-menu__icon ${isOpen() ? 'nav-user-menu__icon--open' : ''}`}
           xmlns="http://www.w3.org/2000/svg"
           width="16"
           height="16"
@@ -205,7 +207,9 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
                   <polyline points="14 2 14 8 20 8"></polyline>
                 </svg>
                 <p class="nav-user-menu__empty-title">No projects yet</p>
-                <p class="nav-user-menu__empty-text">Create your first game to start selling</p>
+                <p class="nav-user-menu__empty-text">
+                  Create your first game to start selling
+                </p>
               </div>
             }
           >
@@ -234,7 +238,9 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
                       <div class="nav-user-menu__project-header">
                         <span class="nav-user-menu__project-title">{product.title}</span>
                         <Show when={getStatusBadge(product.status)}>
-                          <span class={`nav-user-menu__project-badge nav-user-menu__project-badge--${product.status}`}>
+                          <span
+                            class={`nav-user-menu__project-badge nav-user-menu__project-badge--${product.status}`}
+                          >
                             {getStatusBadge(product.status)}
                           </span>
                         </Show>
@@ -281,7 +287,11 @@ export default function NavigationUserMenu(props: NavigationUserMenuProps) {
                   </a>
                 </Show>
                 <Show when={link.isSignOut}>
-                  <form action="/api/auth/sign-out" method="post" class="nav-user-menu__signout">
+                  <form
+                    action="/api/auth/sign-out"
+                    method="post"
+                    class="nav-user-menu__signout"
+                  >
                     <button
                       type="submit"
                       class="nav-user-menu__item nav-user-menu__item--signout"

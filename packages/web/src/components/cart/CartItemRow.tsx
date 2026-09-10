@@ -1,9 +1,9 @@
-import { createSignal, Show } from "solid-js";
-import { ErrorMessage, ConfirmDialog } from "@/components/interactive";
-import CartItemBreakdown from "./CartItemBreakdown";
-import "@/components/interactive/base.css";
-import "./cart-item-row.css";
-import type { CartItem, Product } from "@gameloopers/core/types";
+import { createSignal, Show } from 'solid-js';
+import { ErrorMessage, ConfirmDialog } from '@/components/interactive';
+import CartItemBreakdown from './CartItemBreakdown';
+import '@/components/interactive/base.css';
+import './cart-item-row.css';
+import type { CartItem, Product } from '@gameloopers/core/types';
 
 interface CartItemRowProps {
   item: CartItem & {
@@ -17,15 +17,15 @@ export default function CartItemRow(props: CartItemRowProps) {
   const [quantity, setQuantity] = createSignal(props.item.quantity);
   const [isUpdating, setIsUpdating] = createSignal(false);
   const [isRemoving, setIsRemoving] = createSignal(false);
-  const [error, setError] = createSignal("");
+  const [error, setError] = createSignal('');
   const [showDeleteDialog, setShowDeleteDialog] = createSignal(false);
-  const [liveMessage, setLiveMessage] = createSignal("");
+  const [liveMessage, setLiveMessage] = createSignal('');
 
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity < 1) return;
     if (newQuantity === quantity()) return;
 
-    setError("");
+    setError('');
     setIsUpdating(true);
 
     // Store previous value for rollback
@@ -35,10 +35,10 @@ export default function CartItemRow(props: CartItemRowProps) {
     setQuantity(newQuantity);
 
     try {
-      const response = await fetch("/api/cart/update", {
-        method: "POST",
+      const response = await fetch('/api/cart/update', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           cartItemId: props.item.id,
@@ -50,7 +50,7 @@ export default function CartItemRow(props: CartItemRowProps) {
         const data = await response.json();
         // Rollback on error
         setQuantity(previousQuantity);
-        setError(data.error || "Failed to update quantity");
+        setError(data.error || 'Failed to update quantity');
         setIsUpdating(false);
         return;
       }
@@ -58,9 +58,9 @@ export default function CartItemRow(props: CartItemRowProps) {
       setIsUpdating(false);
 
       // Announce change to screen readers
-      const productName = props.item.product?.title || "Product";
+      const productName = props.item.product?.title || 'Product';
       setLiveMessage(`${productName} quantity updated to ${newQuantity}`);
-      setTimeout(() => setLiveMessage(""), 3000);
+      setTimeout(() => setLiveMessage(''), 3000);
 
       // Notify parent to refresh cart
       if (props.onUpdate) {
@@ -69,21 +69,21 @@ export default function CartItemRow(props: CartItemRowProps) {
     } catch {
       // Rollback on network error
       setQuantity(previousQuantity);
-      setError("Network error - please try again");
+      setError('Network error - please try again');
       setIsUpdating(false);
     }
   };
 
   const handleRemove = async () => {
     setShowDeleteDialog(false);
-    setError("");
+    setError('');
     setIsRemoving(true);
 
     try {
-      const response = await fetch("/api/cart/remove", {
-        method: "POST",
+      const response = await fetch('/api/cart/remove', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           cartItemId: props.item.id,
@@ -92,13 +92,13 @@ export default function CartItemRow(props: CartItemRowProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to remove item");
+        setError(data.error || 'Failed to remove item');
         setIsRemoving(false);
         return;
       }
 
       // Announce removal to screen readers
-      const productName = props.item.product?.title || "Product";
+      const productName = props.item.product?.title || 'Product';
       setLiveMessage(`${productName} removed from cart`);
 
       // Notify parent to refresh cart
@@ -106,13 +106,13 @@ export default function CartItemRow(props: CartItemRowProps) {
         props.onRemove();
       }
     } catch {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
       setIsRemoving(false);
     }
   };
 
   const formatPrice = (cents: number) => {
-    if (cents === 0) return "FREE";
+    if (cents === 0) return 'FREE';
     return `$${(cents / 100).toFixed(2)}`;
   };
 
@@ -128,20 +128,13 @@ export default function CartItemRow(props: CartItemRowProps) {
   return (
     <div class="cart-item-row">
       {/* Visually hidden live region for screen reader announcements */}
-      <div
-        aria-live="polite"
-        aria-atomic="true"
-        class="sr-only"
-      >
+      <div aria-live="polite" aria-atomic="true" class="sr-only">
         {liveMessage()}
       </div>
 
       {error() && (
         <div class="cart-item-row__error">
-          <ErrorMessage
-            message={error()}
-            onDismiss={() => setError("")}
-          />
+          <ErrorMessage message={error()} onDismiss={() => setError('')} />
         </div>
       )}
 
@@ -149,12 +142,10 @@ export default function CartItemRow(props: CartItemRowProps) {
         <div class="cart-item-row__info">
           <h3 class="cart-item-row__product-name">
             <a href={`/products/${props.item.product?.handle}`}>
-              {props.item.product?.title || "Unknown Product"}
+              {props.item.product?.title || 'Unknown Product'}
             </a>
           </h3>
-          <p class="cart-item-row__price">
-            {formatPrice(unitPrice())} each
-          </p>
+          <p class="cart-item-row__price">{formatPrice(unitPrice())} each</p>
           <Show when={props.item.product?.id}>
             <CartItemBreakdown productId={props.item.product!.id} />
           </Show>
@@ -162,7 +153,10 @@ export default function CartItemRow(props: CartItemRowProps) {
 
         <div class="cart-item-row__actions">
           <div class="cart-item-row__quantity">
-            <label for={`quantity-${props.item.id}`} class="cart-item-row__quantity-label">
+            <label
+              for={`quantity-${props.item.id}`}
+              class="cart-item-row__quantity-label"
+            >
               Qty:
             </label>
             <input
@@ -185,7 +179,7 @@ export default function CartItemRow(props: CartItemRowProps) {
                 }
               }}
               onKeyPress={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === 'Enter') {
                   const value = parseInt(e.currentTarget.value);
                   if (!isNaN(value) && value > 0) {
                     handleQuantityChange(value);
@@ -201,16 +195,12 @@ export default function CartItemRow(props: CartItemRowProps) {
             onClick={() => setShowDeleteDialog(true)}
             disabled={isUpdating() || isRemoving()}
           >
-            <span class="button__text">
-              {isRemoving() ? "Removing..." : "Remove"}
-            </span>
+            <span class="button__text">{isRemoving() ? 'Removing...' : 'Remove'}</span>
           </button>
         </div>
 
         <div class="cart-item-row__total">
-          <p class="cart-item-row__total-price">
-            {formatPrice(totalPrice())}
-          </p>
+          <p class="cart-item-row__total-price">{formatPrice(totalPrice())}</p>
         </div>
       </div>
 

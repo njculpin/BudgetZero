@@ -31,11 +31,13 @@ npm run supabase:reset # Reapply all migrations from scratch
 
 npm run check          # Typechecks every package. Must report 0 errors.
 npm run check:boundaries # Enforces web -> api -> core
+npm run lint           # ESLint. Must report 0 errors.
+npm run format         # Prettier, write. `format:check` in CI.
 npm run test:run       # Unit + integration tests (integration needs Supabase up)
 npm run test:e2e       # Playwright
 ```
 
-CI runs `npm ci && npm run check:boundaries && npm run check && npm run test:run && npm run build` on every push
+CI runs `npm ci`, then boundaries, formatting, lint, typecheck, tests and build on every push
 and pull request (`.github/workflows/ci.yml`). Vercel auto-deploys `main`.
 
 ## Tech Stack
@@ -222,12 +224,24 @@ Components use BEM (Block Element Modifier) naming convention. Reference example
 </button>
 
 <style>
-.button { /* Block */ }
-.button__icon { /* Element */ }
-.button__text { /* Element */ }
-.button--primary { /* Modifier */ }
-.button--secondary { /* Modifier */ }
-.button--md { /* Modifier */ }
+  .button {
+    /* Block */
+  }
+  .button__icon {
+    /* Element */
+  }
+  .button__text {
+    /* Element */
+  }
+  .button--primary {
+    /* Modifier */
+  }
+  .button--secondary {
+    /* Modifier */
+  }
+  .button--md {
+    /* Modifier */
+  }
 </style>
 ```
 
@@ -273,13 +287,13 @@ is a generic one and belongs at the root.
 
 ```tsx
 // Generic components (root)
-import Button from "@/components/Button.astro";
-import { FormField, Input } from "@/components/base";
-import { LoadingButton, TagInput } from "@/components/interactive";
+import Button from '@/components/Button.astro';
+import { FormField, Input } from '@/components/base';
+import { LoadingButton, TagInput } from '@/components/interactive';
 
 // Page-specific components
-import { ProductEditForm, ProductContentViewer } from "@/components/products";
-import { NotificationCenter } from "@/components/notifications";
+import { ProductEditForm, ProductContentViewer } from '@/components/products';
+import { NotificationCenter } from '@/components/notifications';
 ```
 
 **Key Principles:**
@@ -359,16 +373,16 @@ Interactive components are organized by domain (e.g., `/src/components/products/
 
 ```tsx
 // Example: SignInForm.tsx
-import { createSignal } from "solid-js";
+import { createSignal } from 'solid-js';
 
 export default function SignInForm() {
-  const [email, setEmail] = createSignal("");
-  const [password, setPassword] = createSignal("");
+  const [email, setEmail] = createSignal('');
+  const [password, setPassword] = createSignal('');
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    const response = await fetch("/api/auth/sign-in", {
-      method: "POST",
+    const response = await fetch('/api/auth/sign-in', {
+      method: 'POST',
       body: new FormData(e.target as HTMLFormElement),
     });
     // handle response

@@ -56,532 +56,542 @@ npm run check -w @gameloopers/core
 ```
 
 ## Language & Framework
+
 Astro 7 (server mode, Vercel adapter)
 SolidJS / Signal Islands
 
 ## Auth
+
 Supabase
 
 ## Database
+
 Supabase Postgres (with SDK, isolated in data-access layer)
 
 ## Storage
+
 Supabase Storage (with SDK, isolated in storage layer)
 
 ## Host
+
 Vercel
 
 ## UI
+
 BEM CSS (Block Element Modifier)
 Component examples in `packages/web/src/components/` demonstrate the BEM pattern
 
 ## Form Validation
+
 Zod
 
 ## Payments
+
 Stripe (Checkout + Connect), isolated in the payments layer
 
 ## Email
+
 Resend, isolated in the email layer
 
 ## Testing
+
 Vitest (unit + integration), Playwright (e2e)
 
 ## Data Model
+
 Users {
-    id: uuid
-    handle: string // unique and global
-    email: string // unique and global
-    name: string
-    bio: string
-    avatar_url: string
-    stripe_account_id: string
-    stripe_customer_id: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+handle: string // unique and global
+email: string // unique and global
+name: string
+bio: string
+avatar_url: string
+stripe_account_id: string
+stripe_customer_id: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 UserTags {
-    id: uuid
-    user_id: uuid ref to Users
-    value: string
-    created_at: timestamp
-    updated_at: timestamp 
-    deleted: boolean
-    deleted_at: timestamp 
+id: uuid
+user_id: uuid ref to Users
+value: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 UserReviews {
-    id: uuid
-    user_id: uuid ref to Users // user being reviewed
-    reviewer_id: uuid ref to Users // user writing the review
-    review_rating: number // 0 to 5
-    review_text: string // max 120 chars
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+user_id: uuid ref to Users // user being reviewed
+reviewer_id: uuid ref to Users // user writing the review
+review_rating: number // 0 to 5
+review_text: string // max 120 chars
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
-
 Documents {
-    id: uuid
-    handle: string // unique and global
-    title: string
-    description: string
-    user_id: uuid ref to Users // owner id
-    current_version: number
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+handle: string // unique and global
+title: string
+description: string
+user_id: uuid ref to Users // owner id
+current_version: number
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 DocumentVersions {
-    id: uuid
-    document_id: uuid ref to Documents
-    version_number: number
-    title: string
-    description: string
-    blocks_snapshot: jsonb
-    created_by: uuid ref to Users
-    created_at: timestamp
-    change_notes: string
-    UNIQUE(document_id, version_number)
+id: uuid
+document_id: uuid ref to Documents
+version_number: number
+title: string
+description: string
+blocks_snapshot: jsonb
+created_by: uuid ref to Users
+created_at: timestamp
+change_notes: string
+UNIQUE(document_id, version_number)
 }
 
 DocumentBlocks {
-    id: uuid
-    document_id: uuid ref to Documents
-    parent_id: uuid ref to DocumentBlocks
-    block_type: 'paragraph' | 'heading' | 'list_item' | 'image' | 'code' | 'table' | 'quote' | 'callout'
-    content: jsonb // {"text": "Hello world", "style": {"bold": true}}
-    position: number // order within the parent block
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+document_id: uuid ref to Documents
+parent_id: uuid ref to DocumentBlocks
+block_type: 'paragraph' | 'heading' | 'list_item' | 'image' | 'code' | 'table' | 'quote' | 'callout'
+content: jsonb // {"text": "Hello world", "style": {"bold": true}}
+position: number // order within the parent block
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 DocumentAttachments {
-    id: uuid
-    document_id: uuid ref to Documents
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp 
+id: uuid
+document_id: uuid ref to Documents
+title: string
+description: string
+file_url: string
+storage_path: string
+file_size_bytes: number
+mime_type: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 DocumentCollaborators {
-    id: uuid
-    document_id: uuid ref to Documents
-    user_id: uuid ref to Users
-    role: 'owner' | 'editor' | 'viewer'
-    can_edit: boolean
-    can_delete: boolean
-    can_invite: boolean
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+document_id: uuid ref to Documents
+user_id: uuid ref to Users
+role: 'owner' | 'editor' | 'viewer'
+can_edit: boolean
+can_delete: boolean
+can_invite: boolean
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 Licenses {
-    id: uuid
-    title: string
-    current_version: number
-    agreement: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+title: string
+current_version: number
+agreement: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 LicenseVersions {
-    id: uuid
-    license_id: uuid ref to Licenses
-    version_number: number
-    title: string
-    agreement: string
-    created_by: uuid ref to Users
-    created_at: timestamp
-    change_notes: string
-    UNIQUE(license_id, version_number)
+id: uuid
+license_id: uuid ref to Licenses
+version_number: number
+title: string
+agreement: string
+created_by: uuid ref to Users
+created_at: timestamp
+change_notes: string
+UNIQUE(license_id, version_number)
 }
 
 Products {
-    id: uuid
-    handle: string // unique and global
-    title: string
-    user_id: uuid ref to Users // owner
-    description: string
-    status: 'draft' | 'public'
-    current_version: number
-    view_count: number
-    public_at: timestamp
-    is_embeddable: boolean // can be embedded in other products
-    direct_sale_price_cents: number // price when sold directly
-    embedding_royalty_cents: number // royalty when embedded in another product
-    download_count: number
-    total_size_bytes: number
-    file_count: number
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+handle: string // unique and global
+title: string
+user_id: uuid ref to Users // owner
+description: string
+status: 'draft' | 'public'
+current_version: number
+view_count: number
+public_at: timestamp
+is_embeddable: boolean // can be embedded in other products
+direct_sale_price_cents: number // price when sold directly
+embedding_royalty_cents: number // royalty when embedded in another product
+download_count: number
+total_size_bytes: number
+file_count: number
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductVersions {
-    id: uuid
-    product_id: uuid ref to Products
-    version_number: number
-    title: string
-    description: string
-    status: 'draft' | 'public'
-    variants_snapshot: jsonb
-    files_snapshot: jsonb
-    components_snapshot: jsonb
-    created_by: uuid ref to Users
-    created_at: timestamp
-    change_notes: string
-    UNIQUE(product_id, version_number)
+id: uuid
+product_id: uuid ref to Products
+version_number: number
+title: string
+description: string
+status: 'draft' | 'public'
+variants_snapshot: jsonb
+files_snapshot: jsonb
+components_snapshot: jsonb
+created_by: uuid ref to Users
+created_at: timestamp
+change_notes: string
+UNIQUE(product_id, version_number)
 }
 
 ProductCollaborators {
-    id: uuid
-    product_id: uuid ref to Products
-    user_id: uuid ref to Users
-    role: 'owner' | 'editor' | 'viewer'
-    can_edit: boolean
-    can_delete: boolean
-    can_invite: boolean
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+product_id: uuid ref to Products
+user_id: uuid ref to Users
+role: 'owner' | 'editor' | 'viewer'
+can_edit: boolean
+can_delete: boolean
+can_invite: boolean
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductImages {
-    id: uuid
-    product_id: uuid ref to Products
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    position: number
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp 
+id: uuid
+product_id: uuid ref to Products
+title: string
+description: string
+file_url: string
+storage_path: string
+file_size_bytes: number
+mime_type: string
+position: number
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductVariants {
-    id: uuid
-    product_id: uuid ref to Products
-    title: string
-    description: string
-    sku: string
-    options: jsonb
-    position: number
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+product_id: uuid ref to Products
+title: string
+description: string
+sku: string
+options: jsonb
+position: number
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductVariantPrices {
-    id: uuid
-    variant_id: uuid ref to ProductVariants
-    default_amount_cents: number
-    default_currency: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+variant_id: uuid ref to ProductVariants
+default_amount_cents: number
+default_currency: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductPriceBreaks {
-    id: uuid
-    price_id: uuid ref to ProductVariantPrices
-    min_quantity: number
-    max_quantity: number
-    amount_cents: number
-    currency: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+price_id: uuid ref to ProductVariantPrices
+min_quantity: number
+max_quantity: number
+amount_cents: number
+currency: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductVariantImages {
-    id: uuid
-    product_id: uuid ref to Products
-    variant_id: uuid ref to ProductVariants
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    position: number
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+product_id: uuid ref to Products
+variant_id: uuid ref to ProductVariants
+title: string
+description: string
+file_url: string
+storage_path: string
+file_size_bytes: number
+mime_type: string
+position: number
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductFiles {
-    id: uuid
-    product_id: uuid ref to Products
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    position: number
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+product_id: uuid ref to Products
+title: string
+description: string
+file_url: string
+storage_path: string
+file_size_bytes: number
+mime_type: string
+position: number
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductComponents {
-    id: uuid
-    parent_variant_id: uuid ref to ProductVariants // variant that contains component
-    child_product_id: uuid ref to Products // product being embedded
-    royalty_amount_cents: number // royalty captured at link time
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+parent_variant_id: uuid ref to ProductVariants // variant that contains component
+child_product_id: uuid ref to Products // product being embedded
+royalty_amount_cents: number // royalty captured at link time
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductRoyalties {
-    id: uuid
-    product_id: uuid ref to Products
-    user_id: uuid ref to Users
-    royalty_type: 'fixed' | 'percentage'
-    royalty_value: number // fixed: cents | percentage: 0-100
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+product_id: uuid ref to Products
+user_id: uuid ref to Users
+royalty_type: 'fixed' | 'percentage'
+royalty_value: number // fixed: cents | percentage: 0-100
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductReview {
-    id: uuid
-    user_id: uuid ref to Users
-    product_id: uuid ref to Products
-    review_rating: number // 0 to 5
-    review_text: string // max 120 chars
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+user_id: uuid ref to Users
+product_id: uuid ref to Products
+review_rating: number // 0 to 5
+review_text: string // max 120 chars
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductChatMessage {
-    id: uuid
-    product_id: uuid ref to Products
-    user_id: uuid ref to Users
-    message: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+product_id: uuid ref to Products
+user_id: uuid ref to Users
+message: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductChatMessageReaction {
-    id: uuid
-    message_id: uuid ref to ProductChatMessage
-    user_id: uuid ref to Users
-    emoji: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+message_id: uuid ref to ProductChatMessage
+user_id: uuid ref to Users
+emoji: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductChatMessageAttachments {
-    id: uuid
-    message_id: uuid ref to ProductChatMessage
-    title: string
-    description: string
-    file_url: string
-    storage_path: string
-    file_size_bytes: number
-    mime_type: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+message_id: uuid ref to ProductChatMessage
+title: string
+description: string
+file_url: string
+storage_path: string
+file_size_bytes: number
+mime_type: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ProductTags {
-    id: uuid
-    product_id: uuid ref to Products
-    value: string
-    created_at: timestamp
-    updated_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+product_id: uuid ref to Products
+value: string
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 Cart {
-    id: uuid
-    user_id: uuid ref to Users
-    created_at: timestamp
-    updated_at: timestamp
+id: uuid
+user_id: uuid ref to Users
+created_at: timestamp
+updated_at: timestamp
 }
 
 CartItems {
-    id: uuid
-    cart_id: uuid ref to Cart
-    product_id: uuid ref to Products
-    variant_id: uuid ref to ProductVariants
-    quantity: number
-    created_at: timestamp
-    updated_at: timestamp
+id: uuid
+cart_id: uuid ref to Cart
+product_id: uuid ref to Products
+variant_id: uuid ref to ProductVariants
+quantity: number
+created_at: timestamp
+updated_at: timestamp
 }
 
 Sales {
-  id: uuid
-  user_id: uuid ref to Users // who bought it
-  user_email: string // who bought it
-  price_cents: number
-  tax_cents: number
-  currency: string
-  stripe_charge_id: string
-  status: 'pending' | 'paid' | 'failed' | 'refunded'
-  refund_reason: string
-  created_at: timestamp
-  updated_at: timestamp
-  completed_at: timestamp
-  deleted: boolean
-  deleted_at: timestamp
+id: uuid
+user_id: uuid ref to Users // who bought it
+user_email: string // who bought it
+price_cents: number
+tax_cents: number
+currency: string
+stripe_charge_id: string
+status: 'pending' | 'paid' | 'failed' | 'refunded'
+refund_reason: string
+created_at: timestamp
+updated_at: timestamp
+completed_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 SaleItems {
-  id: uuid
-  sale_id: uuid ref to Sales
-  product_id: uuid ref to Products
-  variant_id: uuid ref to ProductVariants
-  price_cents: number
-  currency: string
-  quantity: number
-  snapshot: jsonb
-  created_at: timestamp
-  updated_at: timestamp
-  deleted: boolean
-  deleted_at: timestamp
+id: uuid
+sale_id: uuid ref to Sales
+product_id: uuid ref to Products
+variant_id: uuid ref to ProductVariants
+price_cents: number
+currency: string
+quantity: number
+snapshot: jsonb
+created_at: timestamp
+updated_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 SaleRoyaltyTransactions {
-  id: uuid
-  sale_id: uuid ref to Sales
-  sale_item_id: uuid ref to SaleItems
-  product_royalty_id: uuid ref to ProductRoyalties
-  recipient_user_id: uuid ref to Users
-  royalty_type: 'fixed' | 'percentage'
-  royalty_value: number
-  calculated_cents: number
-  status: 'pending' | 'ready_to_pay' | 'paid' | 'failed' | 'refunded'
-  stripe_transfer_id: string
-  created_at: timestamp
-  updated_at: timestamp
-  paid_at: timestamp
-  deleted: boolean
-  deleted_at: timestamp
+id: uuid
+sale_id: uuid ref to Sales
+sale_item_id: uuid ref to SaleItems
+product_royalty_id: uuid ref to ProductRoyalties
+recipient_user_id: uuid ref to Users
+royalty_type: 'fixed' | 'percentage'
+royalty_value: number
+calculated_cents: number
+status: 'pending' | 'ready_to_pay' | 'paid' | 'failed' | 'refunded'
+stripe_transfer_id: string
+created_at: timestamp
+updated_at: timestamp
+paid_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 Notifications {
-    id: uuid
-    user_id: uuid ref to Users // who receives it
-    title: string
-    message: string
-    entity_type: 'user' | 'document' | 'product' | 'sale'
-    entity_id: uuid
-    snapshot: jsonb
-    delivery_type: 'push' | 'email' | 'inapp'
-    created_at: timestamp
-    updated_at: timestamp
-    read: boolean
-    read_at: timestamp
-    deleted: boolean
-    deleted_at: timestamp
+id: uuid
+user_id: uuid ref to Users // who receives it
+title: string
+message: string
+entity_type: 'user' | 'document' | 'product' | 'sale'
+entity_id: uuid
+snapshot: jsonb
+delivery_type: 'push' | 'email' | 'inapp'
+created_at: timestamp
+updated_at: timestamp
+read: boolean
+read_at: timestamp
+deleted: boolean
+deleted_at: timestamp
 }
 
 ActivityFeed {
-    id: uuid
-    user_id: uuid ref to Users // who performed the action
-    entity_type: 'user' | 'document' | 'product' | 'sale' | 'jam'
-    entity_id: uuid
-    action_type: 'created' | 'updated' | 'deleted' | 'public' | 'purchased' | 'reviewed'
-    snapshot: jsonb
-    created_at: timestamp
+id: uuid
+user_id: uuid ref to Users // who performed the action
+entity_type: 'user' | 'document' | 'product' | 'sale' | 'jam'
+entity_id: uuid
+action_type: 'created' | 'updated' | 'deleted' | 'public' | 'purchased' | 'reviewed'
+snapshot: jsonb
+created_at: timestamp
 }
 
 Sessions {
-    id: uuid
-    user_id: uuid ref to Users
-    token: string
-    expires_at: timestamp
-    created_at: timestamp
-    updated_at: timestamp
+id: uuid
+user_id: uuid ref to Users
+token: string
+expires_at: timestamp
+created_at: timestamp
+updated_at: timestamp
 }
 
 VerificationTokens {
-    id: uuid
-    user_id: uuid ref to Users
-    token: string
-    type: 'email_verification' | 'password_reset'
-    expires_at: timestamp
-    created_at: timestamp
+id: uuid
+user_id: uuid ref to Users
+token: string
+type: 'email_verification' | 'password_reset'
+expires_at: timestamp
+created_at: timestamp
 }
 
 StripeWebhookEvents {
-    id: uuid
-    stripe_event_id: string // unique from Stripe
-    event_type: string
-    payload: jsonb
-    processed: boolean
-    processed_at: timestamp
-    created_at: timestamp
+id: uuid
+stripe_event_id: string // unique from Stripe
+event_type: string
+payload: jsonb
+processed: boolean
+processed_at: timestamp
+created_at: timestamp
 }
 
 UserFollows {
-    id: uuid
-    follower_id: uuid ref to Users // who is following
-    following_id: uuid ref to Users // who is being followed
-    created_at: timestamp
+id: uuid
+follower_id: uuid ref to Users // who is following
+following_id: uuid ref to Users // who is being followed
+created_at: timestamp
 }
 
 Wishlists {
-    id: uuid
-    user_id: uuid ref to Users
-    product_id: uuid ref to Products
-    created_at: timestamp
+id: uuid
+user_id: uuid ref to Users
+product_id: uuid ref to Products
+created_at: timestamp
 }
 
 // general audit logging with snapshots of the event
 LogEvents {
-    id: uuid
-    title: string
-    message: string
-    entity_type: 'user' | 'document' | 'product' | 'sale'
-    snapshot: jsonb
-    created_at: timestamp
+id: uuid
+title: string
+message: string
+entity_type: 'user' | 'document' | 'product' | 'sale'
+snapshot: jsonb
+created_at: timestamp
 }
 
 ## Views
@@ -589,6 +599,7 @@ LogEvents {
 Dynamic segments are `[user]` / `[product]` / `[document]` / `[tag]`.
 
 **Public**
+
 - `/` - landing page, featured products
 - `/users`, `/users/[user]` - directory; profile shows the edit view to its owner
 - `/products`, `/products/[product]` - marketplace; product detail
@@ -597,6 +608,7 @@ Dynamic segments are `[user]` / `[product]` / `[document]` / `[tag]`.
 - `/sign-in`, `/sign-up`
 
 **Authenticated**
+
 - `/cart`, `/checkout/success`, `/checkout/failed`
 - `/create` - create a product
 - `/products/[product]/edit`
@@ -606,6 +618,7 @@ Dynamic segments are `[user]` / `[product]` / `[document]` / `[tag]`.
 - `/notifications`, `/settings`
 
 **Admin** (`users.role = 'admin'`)
+
 - `/admin/payouts` - payout queue
 
 ### Not built
@@ -619,7 +632,9 @@ gap is explicit rather than mistaken for something already shipped:
   per-entity activity feeds
 
 ## APIs
+
 Astro API Routes + Supabase Direct:
+
 - Static pages rendered at build time where possible
 - SolidJS islands for interactive components (auth forms, file uploads, cart, etc.)
 - Astro API routes (`packages/web/src/pages/api/`) are thin adapters; the
@@ -630,23 +645,28 @@ Astro API Routes + Supabase Direct:
 - Nanostores for cross-island state if needed
 
 ## Architecture Layers
+
 **Data Access Layer** (`packages/core/src/data-access/`)
+
 - All Supabase DB SDK calls isolated here
 - Export service functions (e.g., `getUserById`, `createProduct`)
 - No direct Supabase imports outside this layer
 - Enables easy migration to different backend
 
 **Storage Layer** (`packages/core/src/storage/`)
+
 - All Supabase Storage SDK calls isolated here
 - Export storage functions (e.g., `uploadProductFile`, `uploadProductImage`, `createSignedUrl`)
 - No direct Storage SDK imports outside this layer
 
 **Auth Layer** (`packages/core/src/auth/`)
+
 - Supabase Auth configuration and utilities
 - Session helpers for server/client
 - Auth middleware for Astro API routes
 
 **Island Components** (organised by domain, e.g. `packages/web/src/components/products/`)
+
 - SolidJS components with client-side interactivity
 - Use Signals for local state
 - Call Astro API routes; never the Supabase client directly
@@ -654,19 +674,23 @@ Astro API Routes + Supabase Direct:
 - Examples: SignInForm, ProductContentManager, AddToCartButton
 
 **Payments Layer** (`packages/core/src/payments/`)
+
 - All Stripe SDK calls isolated here (Checkout, Connect, transfers)
 - No direct Stripe imports outside this layer
 
 **Email Layer** (`packages/core/src/email/`) and **Monitoring Layer** (`packages/core/src/monitoring/`)
+
 - Same rule: the SDK appears only inside its layer
 
 ## Deployment
+
 Vercel deploys automatically on git push to the main branch.
 
 Anything touching money must be atomic in SQL rather than read-modify-write from
 JS — see the September 2026 notes in `CLAUDE.md` for why.
 
 ## Guard Rails
+
 - Never use "Any" Types
 - Never have unused imports
 - Components should be DRY as possible
@@ -695,19 +719,19 @@ JS — see the September 2026 notes in `CLAUDE.md` for why.
   - This person will be able to make purchases for games and products
   - This person will have confidence in the idea that they are helping to support the livelihood of contributors to the games they purchase
 
-  ### (Contributor)  Illustrator
+  ### (Contributor) Illustrator
   - Someone who creates embeddable illustration products (character designs, maps, tokens, etc.)
   - Someone who can offer services to other members, ex: a game designer hires an illustrator to do work on their game.
   - Someone who can sell digital art products
   - Someone who earns royalties when their products are embedded in other products
 
-  ### (Contributor)  3D modeler
+  ### (Contributor) 3D modeler
   - Someone who creates embeddable 3D model products (STL files, OBJs, etc.)
   - Someone who can offer services to other members, ex: a game designer hires an 3d Modeler to do work on their game.
   - Someone who can sell STL files as digital download products
   - Someone who earns royalties when their products are embedded in other products
 
-  ### (Contributor)  3D printer
+  ### (Contributor) 3D printer
   - Someone who can accept 3d print orders from sales as an upgrade to the sale. ex: A buyer makes a game purchase and as an upsell during checkout we compare with available local printers who can take the job then send them the order.
 
   ### (Contributor) Game Designer

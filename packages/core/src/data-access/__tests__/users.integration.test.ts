@@ -4,7 +4,7 @@ import {
   getUserById,
   getUserByHandle,
   updateUserProfile,
-  checkHandleAvailability
+  checkHandleAvailability,
 } from '../users';
 
 const supabase = createClient(
@@ -116,10 +116,7 @@ describe('User Data Access Layer', () => {
       };
 
       // Use service role client to bypass RLS for testing
-      await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', testUserId);
+      await supabase.from('users').update(updates).eq('id', testUserId);
 
       const updatedUser = await getUserById(testUserId);
 
@@ -133,10 +130,7 @@ describe('User Data Access Layer', () => {
       const updates = { handle: newHandle };
 
       // Use service role client to bypass RLS for testing
-      await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', testUserId);
+      await supabase.from('users').update(updates).eq('id', testUserId);
 
       const updatedUser = await getUserById(testUserId);
 
@@ -180,10 +174,7 @@ describe('User Data Access Layer', () => {
       const avatarUrl = 'https://example.com/avatar.jpg';
 
       // Use service role client to bypass RLS for testing
-      await supabase
-        .from('users')
-        .update({ avatar_url: avatarUrl })
-        .eq('id', testUserId);
+      await supabase.from('users').update({ avatar_url: avatarUrl }).eq('id', testUserId);
 
       const updatedUser = await getUserById(testUserId);
 
@@ -202,7 +193,7 @@ describe('User Data Access Layer', () => {
       expect(available).toBe(false);
     });
 
-    it('should return true for current user\'s own handle', async () => {
+    it("should return true for current user's own handle", async () => {
       const available = await checkHandleAvailability(testUserHandle, testUserId);
       expect(available).toBe(true);
     });

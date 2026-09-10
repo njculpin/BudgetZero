@@ -78,8 +78,16 @@ export function setSessionCookies(
   cookies: CookieJar,
   tokens: { accessToken: string; refreshToken: string }
 ): void {
-  cookies.set(ACCESS_TOKEN_COOKIE, tokens.accessToken, sessionCookieOptions(ACCESS_MAX_AGE));
-  cookies.set(REFRESH_TOKEN_COOKIE, tokens.refreshToken, sessionCookieOptions(REFRESH_MAX_AGE));
+  cookies.set(
+    ACCESS_TOKEN_COOKIE,
+    tokens.accessToken,
+    sessionCookieOptions(ACCESS_MAX_AGE)
+  );
+  cookies.set(
+    REFRESH_TOKEN_COOKIE,
+    tokens.refreshToken,
+    sessionCookieOptions(REFRESH_MAX_AGE)
+  );
 }
 
 export function clearSessionCookies(cookies: CookieJar): void {
@@ -127,7 +135,12 @@ export async function resolveAuth(cookies: CookieJar): Promise<ResolvedAuth> {
     // silently sign everybody out and read as an auth bug rather than a
     // deployment one.
     if (result.reason === 'unconfigured') {
-      return { userId: null, accessToken: null, userEmail: null, failure: 'unconfigured' };
+      return {
+        userId: null,
+        accessToken: null,
+        userEmail: null,
+        failure: 'unconfigured',
+      };
     }
 
     if (result.reason === 'invalid') {

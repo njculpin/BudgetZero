@@ -48,13 +48,10 @@ export const connectRefreshStatus: Controller = async ({ userId }) => {
       });
     }
 
-    return new Response(
-      JSON.stringify(status),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify(status), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Connect status refresh error:', error);
     return new Response(

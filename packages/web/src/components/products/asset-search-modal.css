@@ -75,7 +75,9 @@
   border-radius: var(--radius-md);
   color: var(--muted-foreground);
   cursor: pointer;
-  transition: background-color 0.2s var(--ease-in-out), color 0.2s var(--ease-in-out);
+  transition:
+    background-color 0.2s var(--ease-in-out),
+    color 0.2s var(--ease-in-out);
 }
 
 .asset-modal__close:hover {
@@ -100,7 +102,9 @@
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: color 0.2s var(--ease-in-out), border-color 0.2s var(--ease-in-out);
+  transition:
+    color 0.2s var(--ease-in-out),
+    border-color 0.2s var(--ease-in-out);
 }
 
 .asset-modal__tab:hover {
@@ -136,7 +140,9 @@
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: opacity 0.2s var(--ease-in-out), background-color 0.2s var(--ease-in-out);
+  transition:
+    opacity 0.2s var(--ease-in-out),
+    background-color 0.2s var(--ease-in-out);
 }
 
 .asset-modal__button:disabled {
@@ -235,7 +241,9 @@
   border: 2px solid var(--border);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: border-color 0.2s var(--ease-in-out), background-color 0.2s var(--ease-in-out);
+  transition:
+    border-color 0.2s var(--ease-in-out),
+    background-color 0.2s var(--ease-in-out);
   text-align: left;
 }
 
@@ -304,7 +312,9 @@
   border: 2px dashed var(--border);
   border-radius: var(--radius-lg);
   padding: var(--spacing-5xl) var(--spacing-3xl);
-  transition: border-color 0.2s var(--ease-in-out), background-color 0.2s var(--ease-in-out);
+  transition:
+    border-color 0.2s var(--ease-in-out),
+    background-color 0.2s var(--ease-in-out);
 }
 
 .asset-upload__dropzone:hover {
@@ -388,7 +398,9 @@
   font-size: var(--text-xl);
   color: var(--muted-foreground);
   cursor: pointer;
-  transition: background-color 0.2s var(--ease-in-out), color 0.2s var(--ease-in-out);
+  transition:
+    background-color 0.2s var(--ease-in-out),
+    color 0.2s var(--ease-in-out);
 }
 
 .file-item__remove:hover {

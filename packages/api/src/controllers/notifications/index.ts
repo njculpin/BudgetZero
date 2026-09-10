@@ -5,7 +5,7 @@ import { unauthorized } from '../../responses';
  * Fetch notifications for the current user
  */
 
-import { getNotifications } from "@gameloopers/core/data-access/notifications";
+import { getNotifications } from '@gameloopers/core/data-access/notifications';
 
 export const notifications: Controller = async ({ url, userId }) => {
   // Authenticate user
@@ -15,8 +15,8 @@ export const notifications: Controller = async ({ url, userId }) => {
   }
 
   // Get pagination params
-  const limit = parseInt(url.searchParams.get("limit") || "50");
-  const offset = parseInt(url.searchParams.get("offset") || "0");
+  const limit = parseInt(url.searchParams.get('limit') || '50');
+  const offset = parseInt(url.searchParams.get('offset') || '0');
 
   // Fetch notifications
   const notifications = await getNotifications(userId, limit, offset);
@@ -28,7 +28,7 @@ export const notifications: Controller = async ({ url, userId }) => {
     }),
     {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     }
   );
 };

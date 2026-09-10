@@ -1,4 +1,4 @@
-@import "../interactive/base.css";
+@import '../interactive/base.css';
 
 /* Notification Center */
 .notification-center {
@@ -237,7 +237,7 @@
 }
 
 .notification-center__item--unread::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 0;
   top: 0;

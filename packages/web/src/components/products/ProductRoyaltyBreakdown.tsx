@@ -1,5 +1,5 @@
-import { createSignal, createResource, Show, For } from "solid-js";
-import "./product-royalty-breakdown.css";
+import { createSignal, createResource, Show, For } from 'solid-js';
+import './product-royalty-breakdown.css';
 
 export interface ProductRoyaltyBreakdownProps {
   productId: string;
@@ -7,7 +7,6 @@ export interface ProductRoyaltyBreakdownProps {
   productOwnerHandle?: string;
   productOwnerName?: string;
 }
-
 
 export default function ProductRoyaltyBreakdown(props: ProductRoyaltyBreakdownProps) {
   const [mounted, setMounted] = createSignal(false);
@@ -20,14 +19,14 @@ export default function ProductRoyaltyBreakdown(props: ProductRoyaltyBreakdownPr
         // Fetch product price breakdown
         const priceResponse = await fetch(`/api/products/${productId}/price-breakdown`);
         if (!priceResponse.ok) {
-          throw new Error("Failed to fetch price breakdown");
+          throw new Error('Failed to fetch price breakdown');
         }
         const priceData = await priceResponse.json();
 
         // Fetch product royalties
         const royaltiesResponse = await fetch(`/api/products/${productId}/royalties`);
         if (!royaltiesResponse.ok) {
-          throw new Error("Failed to fetch royalties");
+          throw new Error('Failed to fetch royalties');
         }
         const royaltiesData = await royaltiesResponse.json();
 
@@ -36,21 +35,21 @@ export default function ProductRoyaltyBreakdown(props: ProductRoyaltyBreakdownPr
           totalPrice: priceData.totalPrice || 0,
           platformFee: priceData.platformFee || 0,
           productOwner: {
-            userId: props.productOwnerId || "",
-            userHandle: props.productOwnerHandle || "Unknown",
-            userName: props.productOwnerName || props.productOwnerHandle || "Unknown",
+            userId: props.productOwnerId || '',
+            userHandle: props.productOwnerHandle || 'Unknown',
+            userName: props.productOwnerName || props.productOwnerHandle || 'Unknown',
           },
           royalties: royaltiesData.royalties || [],
         };
       } catch (error) {
-        console.error("Error fetching royalty data:", error);
+        console.error('Error fetching royalty data:', error);
         return null;
       }
     }
   );
 
   const formatPrice = (cents: number) => {
-    if (cents === 0) return "$0.00";
+    if (cents === 0) return '$0.00';
     return `$${(cents / 100).toFixed(2)}`;
   };
 
@@ -75,7 +74,7 @@ export default function ProductRoyaltyBreakdown(props: ProductRoyaltyBreakdownPr
 
   const getPlatformFeePercentage = () => {
     const data = royaltyData();
-    if (!data || !data.platformFee) return "10.0";
+    if (!data || !data.platformFee) return '10.0';
     return ((data.platformFee / data.totalPrice) * 100).toFixed(1);
   };
 
@@ -180,12 +179,14 @@ export default function ProductRoyaltyBreakdown(props: ProductRoyaltyBreakdownPr
                             </svg>
                             <div class="royalty-breakdown__item-details">
                               <span class="royalty-breakdown__item-name">
-                                {royalty.user_name || "Contributor"}
+                                {royalty.user_name || 'Contributor'}
                               </span>
                               <span class="royalty-breakdown__item-handle">
-                                @{royalty.user_handle || "unknown"}
+                                @{royalty.user_handle || 'unknown'}
                               </span>
-                              <span class="royalty-breakdown__item-role">Contributor</span>
+                              <span class="royalty-breakdown__item-role">
+                                Contributor
+                              </span>
                             </div>
                           </div>
                           <div class="royalty-breakdown__item-amount">
@@ -222,9 +223,7 @@ export default function ProductRoyaltyBreakdown(props: ProductRoyaltyBreakdownPr
                           <line x1="9" y1="15" x2="15" y2="15" />
                         </svg>
                         <div class="royalty-breakdown__item-details">
-                          <span class="royalty-breakdown__item-name">
-                            Platform Fee
-                          </span>
+                          <span class="royalty-breakdown__item-name">Platform Fee</span>
                           <span class="royalty-breakdown__item-role">Game Loopers</span>
                         </div>
                       </div>

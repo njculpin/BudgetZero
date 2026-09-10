@@ -1,8 +1,15 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Button from "@/components/Button.astro";
-import { getAllProducts, getProductImages, getProductFiles, getProductDocuments, getProductComponents, getProductPriceBreakdown } from "@gameloopers/core/data-access/products";
-import { getUserById } from "@gameloopers/core/data-access/users";
+import Layout from '@/layouts/Layout.astro';
+import Button from '@/components/Button.astro';
+import {
+  getAllProducts,
+  getProductImages,
+  getProductFiles,
+  getProductDocuments,
+  getProductComponents,
+  getProductPriceBreakdown,
+} from '@gameloopers/core/data-access/products';
+import { getUserById } from '@gameloopers/core/data-access/users';
 
 // Fetch products with full details
 const allProducts = await getAllProducts();
@@ -12,23 +19,24 @@ const getProductCards = async (products: typeof allProducts) => {
   return await Promise.all(
     products.map(async (product) => {
       const images = await getProductImages(product.id);
-      const coverImage = images.length > 0
-        ? images.sort((a, b) => a.position - b.position)[0]
-        : null;
+      const coverImage =
+        images.length > 0 ? images.sort((a, b) => a.position - b.position)[0] : null;
       const owner = await getUserById(product.user_id);
 
       // Get content counts for "What's Included" preview
       const files = await getProductFiles(product.id);
       const documents = await getProductDocuments(product.id);
       const components = await getProductComponents(product.id);
-      const prices = await getProductPriceBreakdown(product.id)
+      const prices = await getProductPriceBreakdown(product.id);
 
       return {
         id: product.id,
         handle: product.handle,
         title: product.title,
         description: product.description?.slice(0, 100) + '...' || '',
-        imageUrl: coverImage?.file_url || 'https://placehold.co/600x400?text=' + encodeURIComponent(product.title),
+        imageUrl:
+          coverImage?.file_url ||
+          'https://placehold.co/600x400?text=' + encodeURIComponent(product.title),
         ownerName: owner?.name || owner?.handle || 'Creator',
         ownerHandle: owner?.handle || '',
         status: product.status,
@@ -36,7 +44,7 @@ const getProductCards = async (products: typeof allProducts) => {
         fileCount: files.length,
         documentCount: documents.length,
         componentCount: components.length,
-        prices: prices
+        prices: prices,
       };
     })
   );
@@ -52,79 +60,77 @@ const formatPrice = (cents: number): string => {
 
 <Layout title="Game Loopers - Bring Creative Projects to Life">
   <div class="home-wrapper">
-
     <div class="page">
       <div class="page__container">
-
-      <!-- New Launches Section -->
-      <section class="section">
-        <div class="section__header">
-          <h2 class="section__title">New Launches</h2>
-          <a href="/products?sort=newest" class="section__link">See more</a>
-        </div>
-        <div class="product-grid">
-          {newLaunches.map((product) => (
-            <a href={`/products/${product.handle}`} class="product-card">
-              <div class="product-card__image">
-                <img src={product.imageUrl} alt={product.title} />
-              </div>
-              <div class="product-card__content">
-                <p class="product-card__creator">
-                  by {product.ownerName}
-                </p>
-                <h3 class="product-card__title">{product.title}</h3>
-                {formatPrice(product.prices.totalPrice)}
-              </div>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <!-- Trending Section -->
-      <section class="section">
-        <div class="section__header">
-          <h2 class="section__title">Trending Now</h2>
-          <a href="/products?sort=popular" class="section__link">See more</a>
-        </div>
-        <div class="product-grid">
-          {trending.map((product) => (
-            <a href={`/products/${product.handle}`} class="product-card">
-              <div class="product-card__image">
-                <img src={product.imageUrl} alt={product.title} />
-              </div>
-              <div class="product-card__content">
-                <p class="product-card__creator">
-                  by {product.ownerName}
-                </p>
-                <h3 class="product-card__title">{product.title}</h3>
-              </div>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <!-- CTA Section -->
-      <section class="cta-section">
-        <div class="cta-section__content">
-          <h2 class="cta-section__title">Ready to bring your game to life?</h2>
-          <p class="cta-section__description">
-            Join thousands of creators sharing their tabletop game projects with the community
-          </p>
-          <div class="cta-section__actions">
-            <a href="/sign-up">
-              <Button variant="primary" size="lg">
-                <span slot="text">Start Creating</span>
-              </Button>
-            </a>
-            <a href="/products">
-              <Button variant="outline" size="lg">
-                <span slot="text">Explore Products</span>
-              </Button>
+        <!-- New Launches Section -->
+        <section class="section">
+          <div class="section__header">
+            <h2 class="section__title">New Launches</h2>
+            <a href="/products?sort=newest" class="section__link">
+              See more
             </a>
           </div>
-        </div>
-      </section>
+          <div class="product-grid">
+            {newLaunches.map((product) => (
+              <a href={`/products/${product.handle}`} class="product-card">
+                <div class="product-card__image">
+                  <img src={product.imageUrl} alt={product.title} />
+                </div>
+                <div class="product-card__content">
+                  <p class="product-card__creator">by {product.ownerName}</p>
+                  <h3 class="product-card__title">{product.title}</h3>
+                  {formatPrice(product.prices.totalPrice)}
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
 
+        <!-- Trending Section -->
+        <section class="section">
+          <div class="section__header">
+            <h2 class="section__title">Trending Now</h2>
+            <a href="/products?sort=popular" class="section__link">
+              See more
+            </a>
+          </div>
+          <div class="product-grid">
+            {trending.map((product) => (
+              <a href={`/products/${product.handle}`} class="product-card">
+                <div class="product-card__image">
+                  <img src={product.imageUrl} alt={product.title} />
+                </div>
+                <div class="product-card__content">
+                  <p class="product-card__creator">by {product.ownerName}</p>
+                  <h3 class="product-card__title">{product.title}</h3>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+          <div class="cta-section__content">
+            <h2 class="cta-section__title">Ready to bring your game to life?</h2>
+            <p class="cta-section__description">
+              Join thousands of creators sharing their tabletop game projects with the
+              community
+            </p>
+            <div class="cta-section__actions">
+              <a href="/sign-up">
+                <Button variant="primary" size="lg">
+                  <span slot="text">Start Creating</span>
+                </Button>
+              </a>
+              <a href="/products">
+                <Button variant="outline" size="lg">
+                  <span slot="text">Explore Products</span>
+                </Button>
+              </a>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </div>
@@ -180,7 +186,9 @@ const formatPrice = (cents: number): string => {
     color: inherit;
     border-radius: var(--radius-lg);
     overflow: hidden;
-    transition: transform 0.2s var(--ease-in-out), box-shadow 0.2s var(--ease-in-out);
+    transition:
+      transform 0.2s var(--ease-in-out),
+      box-shadow 0.2s var(--ease-in-out);
   }
 
   .product-card:hover {
@@ -312,5 +320,4 @@ const formatPrice = (cents: number): string => {
       width: 100%;
     }
   }
-
 </style>

@@ -10,7 +10,7 @@ import {
   getUserRoyaltyTransactions,
   getUserEarningsSummary,
   createRoyaltyTransactionsForProduct,
-  markSaleRoyaltiesAsRefunded
+  markSaleRoyaltiesAsRefunded,
 } from '../royalties';
 import { createProduct } from '../products';
 
@@ -99,18 +99,16 @@ describe('Product Royalty System', () => {
     embeddedProductId = embeddedProduct.id;
 
     // Add file to embedded product
-    await supabase
-      .from('product_files')
-      .insert({
-        product_id: embeddedProductId,
-        name: 'Embedded File.pdf',
-        file_url: 'https://example.com/embedded.pdf',
-        storage_path: 'test/embedded.pdf',
-        file_size_kb: 500,
-        mime_type: 'application/pdf',
-        position: 0,
-        price_cents: 1000, // $10.00
-      });
+    await supabase.from('product_files').insert({
+      product_id: embeddedProductId,
+      name: 'Embedded File.pdf',
+      file_url: 'https://example.com/embedded.pdf',
+      storage_path: 'test/embedded.pdf',
+      file_size_kb: 500,
+      mime_type: 'application/pdf',
+      position: 0,
+      price_cents: 1000, // $10.00
+    });
 
     // Create main test product (owned by user1)
     const product = await createProduct(testUser1Id, {
@@ -123,27 +121,23 @@ describe('Product Royalty System', () => {
     testProductId = product.id;
 
     // Add file to main product
-    await supabase
-      .from('product_files')
-      .insert({
-        product_id: testProductId,
-        name: 'Main Product File.pdf',
-        file_url: 'https://example.com/main.pdf',
-        storage_path: 'test/main.pdf',
-        file_size_kb: 1000,
-        mime_type: 'application/pdf',
-        position: 0,
-        price_cents: 3000, // $30.00
-      });
+    await supabase.from('product_files').insert({
+      product_id: testProductId,
+      name: 'Main Product File.pdf',
+      file_url: 'https://example.com/main.pdf',
+      storage_path: 'test/main.pdf',
+      file_size_kb: 1000,
+      mime_type: 'application/pdf',
+      position: 0,
+      price_cents: 3000, // $30.00
+    });
 
     // Embed the contributor's product
-    await supabase
-      .from('product_components')
-      .insert({
-        parent_product_id: testProductId,
-        child_product_id: embeddedProductId,
-        inherited_price_cents: 1000, // $10.00 inherited
-      });
+    await supabase.from('product_components').insert({
+      parent_product_id: testProductId,
+      child_product_id: embeddedProductId,
+      inherited_price_cents: 1000, // $10.00 inherited
+    });
   });
 
   afterAll(async () => {
@@ -215,7 +209,7 @@ describe('Product Royalty System', () => {
       expect(royalties).toBeDefined();
       expect(Array.isArray(royalties)).toBe(true);
       expect(royalties.length).toBeGreaterThanOrEqual(2); // At least royalty1 and royalty2
-      expect(royalties.every(r => r.product_id === testProductId)).toBe(true);
+      expect(royalties.every((r) => r.product_id === testProductId)).toBe(true);
     });
 
     it('should not return deleted royalties', async () => {
@@ -228,7 +222,7 @@ describe('Product Royalty System', () => {
       await deleteProductRoyalty(tempRoyalty!.id);
 
       const royalties = await getProductRoyalties(testProductId);
-      const hasDeleted = royalties.some(r => r.id === tempRoyalty!.id);
+      const hasDeleted = royalties.some((r) => r.id === tempRoyalty!.id);
 
       expect(hasDeleted).toBe(false);
     });
@@ -418,13 +412,17 @@ describe('Product Royalty System', () => {
       expect(transactions.length).toBeGreaterThanOrEqual(2);
 
       // Verify transaction for contributor (500 cents)
-      const contributorTransaction = transactions.find(t => t.recipient_user_id === testContributorId);
+      const contributorTransaction = transactions.find(
+        (t) => t.recipient_user_id === testContributorId
+      );
       expect(contributorTransaction).toBeDefined();
       expect(contributorTransaction?.calculated_cents).toBe(500);
       expect(contributorTransaction?.status).toBe('ready_to_pay');
 
       // Verify transaction for user2 (300 cents)
-      const user2Transaction = transactions.find(t => t.recipient_user_id === testUser2Id);
+      const user2Transaction = transactions.find(
+        (t) => t.recipient_user_id === testUser2Id
+      );
       expect(user2Transaction).toBeDefined();
       expect(user2Transaction?.calculated_cents).toBe(300);
     });
@@ -436,28 +434,24 @@ describe('Product Royalty System', () => {
         status: 'public',
       });
 
-      await supabase
-        .from('product_files')
-        .insert({
-          product_id: percentProduct!.id,
-          name: 'Percent File.pdf',
-          file_url: 'https://example.com/percent.pdf',
-          storage_path: 'test/percent.pdf',
-          file_size_kb: 500,
-          mime_type: 'application/pdf',
-          position: 0,
-          price_cents: 2000, // $20.00
-        });
+      await supabase.from('product_files').insert({
+        product_id: percentProduct!.id,
+        name: 'Percent File.pdf',
+        file_url: 'https://example.com/percent.pdf',
+        storage_path: 'test/percent.pdf',
+        file_size_kb: 500,
+        mime_type: 'application/pdf',
+        position: 0,
+        price_cents: 2000, // $20.00
+      });
 
       // Create percentage royalty (20%)
-      await supabase
-        .from('product_royalties')
-        .insert({
-          product_id: percentProduct!.id,
-          user_id: testContributorId,
-          royalty_type: 'percentage',
-          royalty_value: 20, // 20%
-        });
+      await supabase.from('product_royalties').insert({
+        product_id: percentProduct!.id,
+        user_id: testContributorId,
+        royalty_type: 'percentage',
+        royalty_value: 20, // 20%
+      });
 
       // Create sale
       const { data: newSale } = await supabase
@@ -516,27 +510,23 @@ describe('Product Royalty System', () => {
         status: 'public',
       });
 
-      await supabase
-        .from('product_files')
-        .insert({
-          product_id: zeroProduct!.id,
-          name: 'Zero File.pdf',
-          file_url: 'https://example.com/zero.pdf',
-          storage_path: 'test/zero.pdf',
-          file_size_kb: 100,
-          mime_type: 'application/pdf',
-          position: 0,
-          price_cents: 100,
-        });
+      await supabase.from('product_files').insert({
+        product_id: zeroProduct!.id,
+        name: 'Zero File.pdf',
+        file_url: 'https://example.com/zero.pdf',
+        storage_path: 'test/zero.pdf',
+        file_size_kb: 100,
+        mime_type: 'application/pdf',
+        position: 0,
+        price_cents: 100,
+      });
 
-      await supabase
-        .from('product_royalties')
-        .insert({
-          product_id: zeroProduct!.id,
-          user_id: testUser1Id,
-          royalty_type: 'fixed',
-          royalty_value: 0,
-        });
+      await supabase.from('product_royalties').insert({
+        product_id: zeroProduct!.id,
+        user_id: testUser1Id,
+        royalty_type: 'fixed',
+        royalty_value: 0,
+      });
 
       const { data: zeroSale } = await supabase
         .from('sales')
@@ -583,18 +573,16 @@ describe('Product Royalty System', () => {
         status: 'public',
       });
 
-      await supabase
-        .from('product_files')
-        .insert({
-          product_id: emptyProduct!.id,
-          name: 'Empty File.pdf',
-          file_url: 'https://example.com/empty.pdf',
-          storage_path: 'test/empty.pdf',
-          file_size_kb: 100,
-          mime_type: 'application/pdf',
-          position: 0,
-          price_cents: 100,
-        });
+      await supabase.from('product_files').insert({
+        product_id: emptyProduct!.id,
+        name: 'Empty File.pdf',
+        file_url: 'https://example.com/empty.pdf',
+        storage_path: 'test/empty.pdf',
+        file_size_kb: 100,
+        mime_type: 'application/pdf',
+        position: 0,
+        price_cents: 100,
+      });
 
       const { data: emptySale } = await supabase
         .from('sales')
@@ -641,15 +629,17 @@ describe('Product Royalty System', () => {
 
       expect(transactions).toBeDefined();
       expect(Array.isArray(transactions)).toBe(true);
-      expect(transactions.every(t => t.recipient_user_id === testContributorId)).toBe(true);
+      expect(transactions.every((t) => t.recipient_user_id === testContributorId)).toBe(
+        true
+      );
     });
 
     it('should not include other users transactions', async () => {
       const contributorTransactions = await getUserRoyaltyTransactions(testContributorId);
       const user2Transactions = await getUserRoyaltyTransactions(testUser2Id);
 
-      const hasOverlap = contributorTransactions.some(t1 =>
-        user2Transactions.some(t2 => t1.id === t2.id)
+      const hasOverlap = contributorTransactions.some((t1) =>
+        user2Transactions.some((t2) => t1.id === t2.id)
       );
 
       expect(hasOverlap).toBe(false);
@@ -721,23 +711,21 @@ describe('Product Royalty System', () => {
         .select()
         .single();
 
-      await supabase
-        .from('sale_royalty_transactions')
-        .insert({
-          sale_id: paidSale!.id,
-          sale_item_id: testSaleItemId,
-          sale_item_asset_id: testProductId,
-          asset_royalty_id: testRoyalty1Id,
-          recipient_user_id: testContributorId,
-          royalty_type: 'fixed',
-          royalty_value: 500,
-          calculated_cents: 500,
-          currency: 'usd',
-          status: 'paid',
-          // Matured past the hold period: this suite tests payout mechanics, not the
-          // hold. Without it a royalty is held 14 days and never reads as available.
-          available_at: new Date(Date.now() - 86_400_000).toISOString(),
-        });
+      await supabase.from('sale_royalty_transactions').insert({
+        sale_id: paidSale!.id,
+        sale_item_id: testSaleItemId,
+        sale_item_asset_id: testProductId,
+        asset_royalty_id: testRoyalty1Id,
+        recipient_user_id: testContributorId,
+        royalty_type: 'fixed',
+        royalty_value: 500,
+        calculated_cents: 500,
+        currency: 'usd',
+        status: 'paid',
+        // Matured past the hold period: this suite tests payout mechanics, not the
+        // hold. Without it a royalty is held 14 days and never reads as available.
+        available_at: new Date(Date.now() - 86_400_000).toISOString(),
+      });
 
       const refundedCount = await markSaleRoyaltiesAsRefunded(paidSale!.id);
 
@@ -748,7 +736,7 @@ describe('Product Royalty System', () => {
   describe('platform fee considerations', () => {
     it('should validate total royalties do not exceed 90% (platform reserves 10%)', async () => {
       const salePriceCents = 10000; // $100.00
-      const maxRoyaltiesCents = Math.round(salePriceCents * 0.90); // $90.00
+      const maxRoyaltiesCents = Math.round(salePriceCents * 0.9); // $90.00
 
       // Example: Create product with 80% total royalties (should be valid)
       const feeTestProduct = await createProduct(testUser1Id, {
@@ -756,38 +744,32 @@ describe('Product Royalty System', () => {
         status: 'public',
       });
 
-      await supabase
-        .from('product_files')
-        .insert({
-          product_id: feeTestProduct!.id,
-          name: 'Fee Test File.pdf',
-          file_url: 'https://example.com/fee.pdf',
-          storage_path: 'test/fee.pdf',
-          file_size_kb: 1000,
-          mime_type: 'application/pdf',
-          position: 0,
-          price_cents: salePriceCents,
-        });
+      await supabase.from('product_files').insert({
+        product_id: feeTestProduct!.id,
+        name: 'Fee Test File.pdf',
+        file_url: 'https://example.com/fee.pdf',
+        storage_path: 'test/fee.pdf',
+        file_size_kb: 1000,
+        mime_type: 'application/pdf',
+        position: 0,
+        price_cents: salePriceCents,
+      });
 
       // Add 40% royalty
-      await supabase
-        .from('product_royalties')
-        .insert({
-          product_id: feeTestProduct!.id,
-          user_id: testContributorId,
-          royalty_type: 'percentage',
-          royalty_value: 40,
-        });
+      await supabase.from('product_royalties').insert({
+        product_id: feeTestProduct!.id,
+        user_id: testContributorId,
+        royalty_type: 'percentage',
+        royalty_value: 40,
+      });
 
       // Add another 30% royalty
-      await supabase
-        .from('product_royalties')
-        .insert({
-          product_id: feeTestProduct!.id,
-          user_id: testUser2Id,
-          royalty_type: 'percentage',
-          royalty_value: 30,
-        });
+      await supabase.from('product_royalties').insert({
+        product_id: feeTestProduct!.id,
+        user_id: testUser2Id,
+        royalty_type: 'percentage',
+        royalty_value: 30,
+      });
 
       // Calculate total royalties (should be 70% = $70.00)
       const royalty1 = Math.round((salePriceCents * 40) / 100); // $40.00

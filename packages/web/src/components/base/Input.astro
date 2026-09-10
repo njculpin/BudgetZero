@@ -1,7 +1,7 @@
 ---
 interface Props {
   /** Mirrors the HTML input type attribute accepted by astro-jsx. */
-  type?: astroHTML.JSX.InputHTMLAttributes["type"];
+  type?: astroHTML.JSX.InputHTMLAttributes['type'];
   name: string;
   id?: string;
   value?: string;
@@ -13,7 +13,7 @@ interface Props {
 }
 
 const {
-  type = "text",
+  type = 'text',
   name,
   id,
   value,
@@ -21,7 +21,7 @@ const {
   required = false,
   disabled = false,
   error = false,
-  className = ""
+  className = '',
 } = Astro.props;
 ---
 
@@ -37,44 +37,47 @@ const {
 />
 
 <style>
-.input {
-  min-width: 0;
-  height: var(--height-input-md);
-  padding: var(--spacing-xxs) var(--spacing-lg);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--input);
-  background-color: transparent;
-  color: var(--foreground);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-  transition: border-color var(--duration-fast) var(--ease-in-out),
-    box-shadow var(--duration-fast) var(--ease-in-out);
-  outline: none;
-}
+  .input {
+    min-width: 0;
+    height: var(--height-input-md);
+    padding: var(--spacing-xxs) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--input);
+    background-color: transparent;
+    color: var(--foreground);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    transition:
+      border-color var(--duration-fast) var(--ease-in-out),
+      box-shadow var(--duration-fast) var(--ease-in-out);
+    outline: none;
+  }
 
-.input::placeholder {
-  color: var(--muted-foreground);
-}
+  .input::placeholder {
+    color: var(--muted-foreground);
+  }
 
-.input:focus-visible {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2),
-    inset 0 1px 2px oklch(from var(--foreground) l c h / 0.05);
-}
+  .input:focus-visible {
+    border-color: var(--ring);
+    box-shadow:
+      0 0 0 3px oklch(from var(--ring) l c h / 0.2),
+      inset 0 1px 2px oklch(from var(--foreground) l c h / 0.05);
+  }
 
-.input:disabled {
-  pointer-events: none;
-  cursor: not-allowed;
-  opacity: var(--opacity-disabled);
-}
+  .input:disabled {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: var(--opacity-disabled);
+  }
 
-.input--error {
-  border-color: var(--destructive);
-}
+  .input--error {
+    border-color: var(--destructive);
+  }
 
-.input--error:focus-visible {
-  border-color: var(--destructive);
-  box-shadow: 0 0 0 3px oklch(from var(--destructive) l c h / 0.2),
-    inset 0 1px 2px oklch(from var(--foreground) l c h / 0.05);
-}
+  .input--error:focus-visible {
+    border-color: var(--destructive);
+    box-shadow:
+      0 0 0 3px oklch(from var(--destructive) l c h / 0.2),
+      inset 0 1px 2px oklch(from var(--foreground) l c h / 0.05);
+  }
 </style>

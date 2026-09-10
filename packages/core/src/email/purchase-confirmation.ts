@@ -139,7 +139,7 @@ ORDER CONFIRMED
 Order #${data.saleId.slice(0, 8).toUpperCase()}
 
 ORDER SUMMARY
-${data.items.map(item => `${item.productTitle}\nQuantity: ${item.quantity} × ${data.currency.toUpperCase()} ${(item.priceCents / item.quantity / 100).toFixed(2)} = ${data.currency.toUpperCase()} ${(item.priceCents / 100).toFixed(2)}`).join('\n\n')}
+${data.items.map((item) => `${item.productTitle}\nQuantity: ${item.quantity} × ${data.currency.toUpperCase()} ${(item.priceCents / item.quantity / 100).toFixed(2)} = ${data.currency.toUpperCase()} ${(item.priceCents / 100).toFixed(2)}`).join('\n\n')}
 
 Total: ${data.currency.toUpperCase()} ${(data.totalCents / 100).toFixed(2)}
 

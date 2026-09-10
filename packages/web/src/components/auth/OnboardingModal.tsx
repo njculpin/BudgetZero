@@ -1,16 +1,16 @@
-import { createSignal, Show } from "solid-js";
-import "./onboarding-modal.css";
+import { createSignal, Show } from 'solid-js';
+import './onboarding-modal.css';
 
-type Persona = "creator" | "buyer" | "both" | null;
+type Persona = 'creator' | 'buyer' | 'both' | null;
 
 export default function OnboardingModal() {
-  const [step, setStep] = createSignal<"persona" | "next-steps">("persona");
+  const [step, setStep] = createSignal<'persona' | 'next-steps'>('persona');
   const [selectedPersona, setSelectedPersona] = createSignal<Persona>(null);
   const [isSubmitting, setIsSubmitting] = createSignal(false);
 
   const handlePersonaSelect = (persona: Persona) => {
     setSelectedPersona(persona);
-    setStep("next-steps");
+    setStep('next-steps');
   };
 
   const handleComplete = async () => {
@@ -18,27 +18,27 @@ export default function OnboardingModal() {
 
     try {
       // Mark onboarding as completed in the database
-      const response = await fetch("/api/users/complete-onboarding", {
-        method: "POST",
+      const response = await fetch('/api/users/complete-onboarding', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error("Failed to complete onboarding");
+        throw new Error('Failed to complete onboarding');
       }
 
       // Redirect based on persona
       const persona = selectedPersona();
-      if (persona === "creator" || persona === "both") {
-        window.location.href = "/products";
+      if (persona === 'creator' || persona === 'both') {
+        window.location.href = '/products';
       } else {
-        window.location.href = "/products";
+        window.location.href = '/products';
       }
     } catch (error) {
-      console.error("Error completing onboarding:", error);
+      console.error('Error completing onboarding:', error);
       setIsSubmitting(false);
     }
   };
@@ -46,67 +46,67 @@ export default function OnboardingModal() {
   const getNextSteps = () => {
     const persona = selectedPersona();
 
-    if (persona === "creator") {
+    if (persona === 'creator') {
       return {
-        title: "Get Started as a Creator",
+        title: 'Get Started as a Creator',
         steps: [
           {
-            icon: "📝",
-            text: "Create your first product",
-            action: "/products",
+            icon: '📝',
+            text: 'Create your first product',
+            action: '/products',
           },
           {
-            icon: "🎨",
-            text: "Complete your profile",
-            action: "/settings",
+            icon: '🎨',
+            text: 'Complete your profile',
+            action: '/settings',
           },
           {
-            icon: "💰",
-            text: "Connect Stripe for payouts",
-            action: "/settings",
+            icon: '💰',
+            text: 'Connect Stripe for payouts',
+            action: '/settings',
           },
         ],
       };
-    } else if (persona === "buyer") {
+    } else if (persona === 'buyer') {
       return {
-        title: "Start Exploring",
+        title: 'Start Exploring',
         steps: [
           {
-            icon: "🔍",
-            text: "Browse the marketplace",
-            action: "/products",
+            icon: '🔍',
+            text: 'Browse the marketplace',
+            action: '/products',
           },
           {
-            icon: "🛒",
-            text: "Add products to your cart",
-            action: "/products",
+            icon: '🛒',
+            text: 'Add products to your cart',
+            action: '/products',
           },
           {
-            icon: "👤",
-            text: "Complete your profile",
-            action: "/settings",
+            icon: '👤',
+            text: 'Complete your profile',
+            action: '/settings',
           },
         ],
       };
     } else {
       // both
       return {
-        title: "Your Creative Journey Begins",
+        title: 'Your Creative Journey Begins',
         steps: [
           {
-            icon: "📝",
-            text: "Create your first product",
-            action: "/products",
+            icon: '📝',
+            text: 'Create your first product',
+            action: '/products',
           },
           {
-            icon: "🔍",
-            text: "Browse the marketplace",
-            action: "/products",
+            icon: '🔍',
+            text: 'Browse the marketplace',
+            action: '/products',
           },
           {
-            icon: "💰",
-            text: "Connect Stripe for payouts",
-            action: "/settings",
+            icon: '💰',
+            text: 'Connect Stripe for payouts',
+            action: '/settings',
           },
         ],
       };
@@ -117,19 +117,20 @@ export default function OnboardingModal() {
     <div class="onboarding-modal">
       <div class="onboarding-modal__overlay"></div>
       <div class="onboarding-modal__content">
-        <Show when={step() === "persona"}>
+        <Show when={step() === 'persona'}>
           <div class="onboarding-modal__step">
             <div class="onboarding-modal__icon">🎮</div>
             <h2 class="onboarding-modal__title">Welcome to Game Loopers!</h2>
             <p class="onboarding-modal__description">
-              A social commerce platform where tabletop game creators collaborate, publish, and earn together.
+              A social commerce platform where tabletop game creators collaborate,
+              publish, and earn together.
             </p>
 
             <div class="onboarding-modal__personas">
               <button
                 type="button"
                 class="onboarding-modal__persona-card"
-                onClick={() => handlePersonaSelect("creator")}
+                onClick={() => handlePersonaSelect('creator')}
               >
                 <span class="onboarding-modal__persona-icon">🎨</span>
                 <h3 class="onboarding-modal__persona-title">I'm a Creator</h3>
@@ -141,7 +142,7 @@ export default function OnboardingModal() {
               <button
                 type="button"
                 class="onboarding-modal__persona-card"
-                onClick={() => handlePersonaSelect("buyer")}
+                onClick={() => handlePersonaSelect('buyer')}
               >
                 <span class="onboarding-modal__persona-icon">🛒</span>
                 <h3 class="onboarding-modal__persona-title">I'm a Buyer</h3>
@@ -153,7 +154,7 @@ export default function OnboardingModal() {
               <button
                 type="button"
                 class="onboarding-modal__persona-card"
-                onClick={() => handlePersonaSelect("both")}
+                onClick={() => handlePersonaSelect('both')}
               >
                 <span class="onboarding-modal__persona-icon">✨</span>
                 <h3 class="onboarding-modal__persona-title">Both!</h3>
@@ -165,13 +166,11 @@ export default function OnboardingModal() {
           </div>
         </Show>
 
-        <Show when={step() === "next-steps"}>
+        <Show when={step() === 'next-steps'}>
           <div class="onboarding-modal__step">
             <div class="onboarding-modal__icon">🚀</div>
             <h2 class="onboarding-modal__title">{getNextSteps().title}</h2>
-            <p class="onboarding-modal__description">
-              Here's what you can do next:
-            </p>
+            <p class="onboarding-modal__description">Here's what you can do next:</p>
 
             <div class="onboarding-modal__next-steps">
               {getNextSteps().steps.map((stepItem) => (
@@ -181,32 +180,28 @@ export default function OnboardingModal() {
                   onClick={async () => {
                     setIsSubmitting(true);
                     try {
-                      const response = await fetch("/api/users/complete-onboarding", {
-                        method: "POST",
+                      const response = await fetch('/api/users/complete-onboarding', {
+                        method: 'POST',
                         headers: {
-                          "Content-Type": "application/json",
+                          'Content-Type': 'application/json',
                         },
-                        credentials: "include",
+                        credentials: 'include',
                       });
 
                       if (!response.ok) {
-                        throw new Error("Failed to complete onboarding");
+                        throw new Error('Failed to complete onboarding');
                       }
 
                       window.location.href = stepItem.action;
                     } catch (error) {
-                      console.error("Error completing onboarding:", error);
+                      console.error('Error completing onboarding:', error);
                       setIsSubmitting(false);
                     }
                   }}
                   disabled={isSubmitting()}
                 >
-                  <span class="onboarding-modal__next-step-icon">
-                    {stepItem.icon}
-                  </span>
-                  <span class="onboarding-modal__next-step-text">
-                    {stepItem.text}
-                  </span>
+                  <span class="onboarding-modal__next-step-icon">{stepItem.icon}</span>
+                  <span class="onboarding-modal__next-step-text">{stepItem.text}</span>
                   <span class="onboarding-modal__next-step-arrow">→</span>
                 </button>
               ))}
@@ -218,7 +213,7 @@ export default function OnboardingModal() {
               onClick={handleComplete}
               disabled={isSubmitting()}
             >
-              {isSubmitting() ? "Loading..." : "I'll explore on my own"}
+              {isSubmitting() ? 'Loading...' : "I'll explore on my own"}
             </button>
           </div>
         </Show>

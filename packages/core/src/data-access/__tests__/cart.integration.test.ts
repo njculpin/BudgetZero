@@ -8,7 +8,7 @@ import {
   updateCartItemQuantity,
   removeFromCart,
   clearCart,
-  getCartItemCount
+  getCartItemCount,
 } from '../cart';
 import { createProduct } from '../products';
 
@@ -98,11 +98,7 @@ describe('Cart Data Access Layer', () => {
 
   describe('addToCart', () => {
     it('should add a new item to cart', async () => {
-      const cartItem = await addToCart(
-        testCartId,
-        testProductId,
-        2
-      );
+      const cartItem = await addToCart(testCartId, testProductId, 2);
 
       expect(cartItem).toBeDefined();
       expect(cartItem?.cart_id).toBe(testCartId);
@@ -116,11 +112,7 @@ describe('Cart Data Access Layer', () => {
 
     it('should increase quantity if item already exists in cart', async () => {
       // Add the same item again
-      const cartItem = await addToCart(
-        testCartId,
-        testProductId,
-        3
-      );
+      const cartItem = await addToCart(testCartId, testProductId, 3);
 
       expect(cartItem).toBeDefined();
       expect(cartItem?.quantity).toBe(5); // 2 + 3 = 5
@@ -134,11 +126,7 @@ describe('Cart Data Access Layer', () => {
         status: 'public',
       });
 
-      const cartItem = await addToCart(
-        testCartId,
-        product2!.id,
-        1
-      );
+      const cartItem = await addToCart(testCartId, product2!.id, 1);
 
       expect(cartItem).toBeDefined();
       expect(cartItem?.product_id).toBe(product2!.id);
@@ -157,7 +145,7 @@ describe('Cart Data Access Layer', () => {
       expect(items).toBeDefined();
       expect(Array.isArray(items)).toBe(true);
       expect(items.length).toBeGreaterThan(0);
-      expect(items.every(item => item.cart_id === testCartId)).toBe(true);
+      expect(items.every((item) => item.cart_id === testCartId)).toBe(true);
     });
 
     it('should return empty array for cart with no items', async () => {
@@ -196,7 +184,7 @@ describe('Cart Data Access Layer', () => {
       expect(result).toBe(true);
 
       const items = await getCartItems(testCartId);
-      const updatedItem = items.find(item => item.id === testCartItemId);
+      const updatedItem = items.find((item) => item.id === testCartItemId);
       expect(updatedItem?.quantity).toBe(10);
     });
 
@@ -213,17 +201,13 @@ describe('Cart Data Access Layer', () => {
 
     it('should remove item if quantity is negative', async () => {
       // Add a new item to test with
-      const cartItem = await addToCart(
-        testCartId,
-        testProductId,
-        1
-      );
+      const cartItem = await addToCart(testCartId, testProductId, 1);
 
       const result = await updateCartItemQuantity(cartItem!.id, -1);
       expect(result).toBe(true);
 
       const items = await getCartItems(testCartId);
-      const removedItem = items.find(item => item.id === cartItem!.id);
+      const removedItem = items.find((item) => item.id === cartItem!.id);
       expect(removedItem).toBeUndefined();
     });
   });
@@ -231,11 +215,7 @@ describe('Cart Data Access Layer', () => {
   describe('removeFromCart', () => {
     it('should remove an item from cart', async () => {
       // Add a new item to remove
-      const cartItem = await addToCart(
-        testCartId,
-        testProductId,
-        1
-      );
+      const cartItem = await addToCart(testCartId, testProductId, 1);
 
       const itemsBefore = await getCartItems(testCartId);
       const itemCountBefore = itemsBefore.length;
@@ -246,7 +226,7 @@ describe('Cart Data Access Layer', () => {
       const itemsAfter = await getCartItems(testCartId);
       expect(itemsAfter.length).toBe(itemCountBefore - 1);
 
-      const removedItem = itemsAfter.find(item => item.id === cartItem!.id);
+      const removedItem = itemsAfter.find((item) => item.id === cartItem!.id);
       expect(removedItem).toBeUndefined();
     });
   });

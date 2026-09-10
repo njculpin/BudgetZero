@@ -91,7 +91,8 @@
   text-align: center;
   background-color: transparent;
   color: var(--foreground);
-  transition: border-color var(--duration-fast) var(--ease-in-out),
+  transition:
+    border-color var(--duration-fast) var(--ease-in-out),
     box-shadow var(--duration-fast) var(--ease-in-out);
 }
 

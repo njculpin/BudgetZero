@@ -6,7 +6,7 @@ import {
   rateLimitIdentity,
   rateLimitedResponse,
   RATE_LIMITS,
-} from "@gameloopers/core/rate-limit";
+} from '@gameloopers/core/rate-limit';
 
 export const authResetPassword: Controller = async ({ request, clientAddress }) => {
   // Password reset sends email, so unbounded requests cost money and sender

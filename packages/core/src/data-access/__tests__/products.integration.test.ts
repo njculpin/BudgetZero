@@ -11,7 +11,7 @@ import {
   getProductsByTag,
   checkHandleAvailability,
   createProductTag,
-  getProductTags
+  getProductTags,
 } from '../products';
 
 const supabase = createClient(
@@ -59,15 +59,12 @@ describe('Product Data Access Layer', () => {
       'updated-test-product',
       'product-for-description-update',
       'product-for-status-update',
-      'archived-product'
+      'archived-product',
     ];
 
     for (const handle of testHandles) {
       // Delete all products with these base handles (including -1, -2, etc.)
-      await supabase
-        .from('products')
-        .delete()
-        .like('handle', `${handle}%`);
+      await supabase.from('products').delete().like('handle', `${handle}%`);
     }
 
     // Create a test user
@@ -228,18 +225,18 @@ describe('Product Data Access Layer', () => {
       expect(Array.isArray(products)).toBe(true);
 
       // Verify all returned products are public
-      const allpublic = products.every(p => p.status === 'public');
+      const allpublic = products.every((p) => p.status === 'public');
       expect(allpublic).toBe(true);
 
       // Verify draft product is NOT included
-      const hasDraft = products.some(p => p.id === draftProductId);
+      const hasDraft = products.some((p) => p.id === draftProductId);
       expect(hasDraft).toBe(false);
     });
 
     it('should filter draft products even with search query', async () => {
       const products = await getAllProducts('Draft Product');
 
-      const hasDraft = products.some(p => p.id === draftProductId);
+      const hasDraft = products.some((p) => p.id === draftProductId);
       expect(hasDraft).toBe(false);
     });
 
@@ -252,7 +249,7 @@ describe('Product Data Access Layer', () => {
 
       const products = await getAllProducts();
 
-      const hasArchived = products.some(p => p.id === archivedProduct?.id);
+      const hasArchived = products.some((p) => p.id === archivedProduct?.id);
       expect(hasArchived).toBe(false);
     });
   });
@@ -277,11 +274,11 @@ describe('Product Data Access Layer', () => {
       const products = await getProductsByTag('tag-filter-test');
 
       // Should include public product
-      const hasPublic = products.some(p => p.id === publicProduct!.id);
+      const hasPublic = products.some((p) => p.id === publicProduct!.id);
       expect(hasPublic).toBe(true);
 
       // Should NOT include draft product
-      const hasDraft = products.some(p => p.id === draftProduct!.id);
+      const hasDraft = products.some((p) => p.id === draftProduct!.id);
       expect(hasDraft).toBe(false);
     });
   });
@@ -376,9 +373,9 @@ describe('Product Data Access Layer', () => {
 
       const tags = await getProductTags(testProductId);
       expect(tags.length).toBe(3);
-      expect(tags.map(t => t.value)).toContain('tag1');
-      expect(tags.map(t => t.value)).toContain('tag2');
-      expect(tags.map(t => t.value)).toContain('tag3');
+      expect(tags.map((t) => t.value)).toContain('tag1');
+      expect(tags.map((t) => t.value)).toContain('tag2');
+      expect(tags.map((t) => t.value)).toContain('tag3');
     });
   });
 
@@ -417,15 +414,15 @@ describe('Product Data Access Layer', () => {
       expect(products.length).toBeGreaterThan(0);
 
       // Verify all products belong to the user
-      const allOwnedByUser = products.every(p => p.user_id === testUserId);
+      const allOwnedByUser = products.every((p) => p.user_id === testUserId);
       expect(allOwnedByUser).toBe(true);
     });
 
     it('should include both public and draft products for owner', async () => {
       const products = await getUserProducts(testUserId);
 
-      const haspublic = products.some(p => p.id === testProductId);
-      const hasDraft = products.some(p => p.id === draftProductId);
+      const haspublic = products.some((p) => p.id === testProductId);
+      const hasDraft = products.some((p) => p.id === draftProductId);
 
       expect(haspublic).toBe(true);
       expect(hasDraft).toBe(true);
@@ -440,7 +437,7 @@ describe('Product Data Access Layer', () => {
       await deleteProduct(tempProduct!.id);
 
       const products = await getUserProducts(testUserId);
-      const hasDeleted = products.some(p => p.id === tempProduct!.id);
+      const hasDeleted = products.some((p) => p.id === tempProduct!.id);
 
       expect(hasDeleted).toBe(false);
     });
@@ -476,7 +473,7 @@ describe('Product Data Access Layer', () => {
       expect(result).toBe(true);
 
       const tags = await getProductTags(tagTestProduct!.id);
-      expect(tags.some(t => t.value === 'board game')).toBe(true); // Normalized to lowercase
+      expect(tags.some((t) => t.value === 'board game')).toBe(true); // Normalized to lowercase
     });
 
     it('should normalize tags to lowercase', async () => {
@@ -489,7 +486,7 @@ describe('Product Data Access Layer', () => {
       await createProductTag(tagTestProduct2!.id, 'RPG');
 
       const tags = await getProductTags(tagTestProduct2!.id);
-      expect(tags.some(t => t.value === 'rpg')).toBe(true);
+      expect(tags.some((t) => t.value === 'rpg')).toBe(true);
     });
 
     it('should handle duplicate tags gracefully', async () => {
@@ -506,7 +503,7 @@ describe('Product Data Access Layer', () => {
       expect(result2).toBe(true); // Should not throw error
 
       const tags = await getProductTags(tagTestProduct3!.id);
-      const tabletopTags = tags.filter(t => t.value === 'tabletop');
+      const tabletopTags = tags.filter((t) => t.value === 'tabletop');
       expect(tabletopTags.length).toBe(1); // Only one tag
     });
   });

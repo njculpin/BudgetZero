@@ -1,7 +1,7 @@
-import { createSignal, Show } from "solid-js";
-import type { ProductFile } from "@gameloopers/core/types";
+import { createSignal, Show } from 'solid-js';
+import type { ProductFile } from '@gameloopers/core/types';
 
-export type ContentItemType = "file" | "document" | "embedded";
+export type ContentItemType = 'file' | 'document' | 'embedded';
 
 export interface ProductDocumentRelation {
   id: string;
@@ -50,7 +50,7 @@ export interface ContentItemProps {
 
 export default function ContentItem(props: ContentItemProps) {
   const [isEditingPrice, setIsEditingPrice] = createSignal(false);
-  const [priceInput, setPriceInput] = createSignal("");
+  const [priceInput, setPriceInput] = createSignal('');
   const [showTooltip, setShowTooltip] = createSignal(false);
 
   const formatPrice = (cents: number): string => {
@@ -59,27 +59,27 @@ export default function ContentItem(props: ContentItemProps) {
 
   const getTypeIcon = (type: ContentItemType): string => {
     switch (type) {
-      case "file":
-        return "📁";
-      case "document":
-        return "📄";
-      case "embedded":
-        return "📦";
+      case 'file':
+        return '📁';
+      case 'document':
+        return '📄';
+      case 'embedded':
+        return '📦';
       default:
-        return "📄";
+        return '📄';
     }
   };
 
   const getTypeName = (type: ContentItemType): string => {
     switch (type) {
-      case "file":
-        return "File";
-      case "document":
-        return "Document";
-      case "embedded":
-        return "Product";
+      case 'file':
+        return 'File';
+      case 'document':
+        return 'Document';
+      case 'embedded':
+        return 'Product';
       default:
-        return "Item";
+        return 'Item';
     }
   };
 
@@ -99,7 +99,7 @@ export default function ContentItem(props: ContentItemProps) {
 
   const handleCancelEdit = () => {
     setIsEditingPrice(false);
-    setPriceInput("");
+    setPriceInput('');
   };
 
   const handleDelete = () => {
@@ -109,7 +109,7 @@ export default function ContentItem(props: ContentItemProps) {
   };
 
   const getCreatorInfo = (): string | null => {
-    if (props.item.type === "embedded") {
+    if (props.item.type === 'embedded') {
       const data = props.item.data as EmbeddedProductData;
       return `by ${data.creator_name}`;
     }
@@ -120,7 +120,7 @@ export default function ContentItem(props: ContentItemProps) {
     <div
       class="content-item"
       classList={{
-        "content-item--draggable": props.isDraggable,
+        'content-item--draggable': props.isDraggable,
         [`content-item--${props.item.type}`]: true,
       }}
       draggable={props.isDraggable}
@@ -137,7 +137,12 @@ export default function ContentItem(props: ContentItemProps) {
             fill="currentColor"
             aria-hidden="true"
           >
-            <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path
+              d="M2 4h12M2 8h12M2 12h12"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
           </svg>
         </div>
       </Show>
@@ -161,7 +166,7 @@ export default function ContentItem(props: ContentItemProps) {
         <Show when={!isEditingPrice()}>
           <div
             class="content-item__price"
-            classList={{ "content-item__price--editable": props.item.editable }}
+            classList={{ 'content-item__price--editable': props.item.editable }}
             onClick={handleEditPrice}
             onMouseEnter={() => !props.item.editable && setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
@@ -187,8 +192,8 @@ export default function ContentItem(props: ContentItemProps) {
                 value={priceInput()}
                 onInput={(e) => setPriceInput(e.currentTarget.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSavePrice();
-                  if (e.key === "Escape") handleCancelEdit();
+                  if (e.key === 'Enter') handleSavePrice();
+                  if (e.key === 'Escape') handleCancelEdit();
                 }}
                 ref={(el) => setTimeout(() => el.focus(), 0)}
               />
@@ -200,7 +205,14 @@ export default function ContentItem(props: ContentItemProps) {
               aria-label="Save price"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M13.5 2.5l-8 8-3-3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                  d="M13.5 2.5l-8 8-3-3"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
             </button>
             <button
@@ -210,7 +222,12 @@ export default function ContentItem(props: ContentItemProps) {
               aria-label="Cancel"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <path
+                  d="M12 4L4 12M4 4l8 8"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
               </svg>
             </button>
           </div>
@@ -228,18 +245,18 @@ export default function ContentItem(props: ContentItemProps) {
           >
             <svg
               width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M3 4h10M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M13 4v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4h10z" />
-          </svg>
-        </button>
-      </div>
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 4h10M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M13 4v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4h10z" />
+            </svg>
+          </button>
+        </div>
       </Show>
     </div>
   );

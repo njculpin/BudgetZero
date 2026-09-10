@@ -1,5 +1,5 @@
 ---
-const { className = "" } = Astro.props;
+const { className = '' } = Astro.props;
 ---
 
 <div class={`card__header ${className}`}>
@@ -7,10 +7,10 @@ const { className = "" } = Astro.props;
 </div>
 
 <style>
-.card__header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-xxs);
-  padding: var(--spacing-3xl);
-}
+  .card__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xxs);
+    padding: var(--spacing-3xl);
+  }
 </style>

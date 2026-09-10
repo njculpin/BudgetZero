@@ -1,7 +1,7 @@
-import { createSignal, onCleanup } from "solid-js";
-import CreatorTypeSelector from "./CreatorTypeSelector";
-import "./user-edit-form.css";
-import "./creator-type-selector.css";
+import { createSignal, onCleanup } from 'solid-js';
+import CreatorTypeSelector from './CreatorTypeSelector';
+import './user-edit-form.css';
+import './creator-type-selector.css';
 
 interface UserEditFormProps {
   handle: string;
@@ -14,12 +14,12 @@ interface UserEditFormProps {
 
 export default function UserEditForm(props: UserEditFormProps) {
   const [handle, setHandle] = createSignal<string>(props.handle);
-  const [name, setName] = createSignal<string>(props.name || "");
-  const [bio, setBio] = createSignal<string>(props.bio || "");
-  const [error, setError] = createSignal<string>("");
+  const [name, setName] = createSignal<string>(props.name || '');
+  const [bio, setBio] = createSignal<string>(props.bio || '');
+  const [error, setError] = createSignal<string>('');
   const [isSaving, setIsSaving] = createSignal<boolean>(false);
-  const [saveStatus, setSaveStatus] = createSignal<string>("");
-  const [avatarPreview, setAvatarPreview] = createSignal<string>(props.avatarUrl || "");
+  const [saveStatus, setSaveStatus] = createSignal<string>('');
+  const [avatarPreview, setAvatarPreview] = createSignal<string>(props.avatarUrl || '');
 
   let saveTimeout: number | undefined;
 
@@ -32,41 +32,41 @@ export default function UserEditForm(props: UserEditFormProps) {
 
   // Auto-save function
   const saveProfile = async (avatarFile?: File) => {
-    setError("");
+    setError('');
     setIsSaving(true);
-    setSaveStatus("Saving...");
+    setSaveStatus('Saving...');
 
     try {
       const formData = new FormData();
-      formData.append("handle", handle());
-      formData.append("name", name());
-      formData.append("bio", bio());
+      formData.append('handle', handle());
+      formData.append('name', name());
+      formData.append('bio', bio());
 
       if (avatarFile) {
-        formData.append("avatar", avatarFile);
+        formData.append('avatar', avatarFile);
       }
 
-      const response = await fetch("/api/users/update-user", {
-        method: "POST",
+      const response = await fetch('/api/users/update-user', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Failed to save changes");
-        setSaveStatus("");
+        setError(data.error || 'Failed to save changes');
+        setSaveStatus('');
         setIsSaving(false);
         return;
       }
 
-      setSaveStatus("Saved");
+      setSaveStatus('Saved');
       setIsSaving(false);
 
       // Clear status after 2 seconds
-      setTimeout(() => setSaveStatus(""), 2000);
+      setTimeout(() => setSaveStatus(''), 2000);
     } catch {
-      setError("Failed to save changes");
-      setSaveStatus("");
+      setError('Failed to save changes');
+      setSaveStatus('');
       setIsSaving(false);
     }
   };
@@ -76,7 +76,7 @@ export default function UserEditForm(props: UserEditFormProps) {
     if (saveTimeout) {
       clearTimeout(saveTimeout);
     }
-    setSaveStatus("Unsaved changes...");
+    setSaveStatus('Unsaved changes...');
     saveTimeout = window.setTimeout(() => {
       saveProfile();
     }, 1000);
@@ -90,18 +90,18 @@ export default function UserEditForm(props: UserEditFormProps) {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith("image/")) {
-      setError("Please select a valid image file");
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file');
       return;
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be smaller than 5MB");
+      setError('Image must be smaller than 5MB');
       return;
     }
 
-    setError("");
+    setError('');
 
     // Create preview
     const reader = new FileReader();
@@ -118,7 +118,9 @@ export default function UserEditForm(props: UserEditFormProps) {
     <div class="edit-profile-form">
       {/* Save Status Indicator */}
       {saveStatus() && (
-        <div class={`edit-profile-form__status edit-profile-form__status--${saveStatus() === 'Saved' ? 'success' : 'pending'}`}>
+        <div
+          class={`edit-profile-form__status edit-profile-form__status--${saveStatus() === 'Saved' ? 'success' : 'pending'}`}
+        >
           {saveStatus()}
         </div>
       )}
@@ -157,7 +159,7 @@ export default function UserEditForm(props: UserEditFormProps) {
           />
           <span class="button button--ghost button--md">
             <span class="button__text">
-              {isSaving() ? "Uploading..." : "Choose Image"}
+              {isSaving() ? 'Uploading...' : 'Choose Image'}
             </span>
           </span>
         </label>
@@ -217,7 +219,9 @@ export default function UserEditForm(props: UserEditFormProps) {
           placeholder="Tell us about yourself..."
           rows={4}
           disabled={isSaving()}
-        >{bio()}</textarea>
+        >
+          {bio()}
+        </textarea>
       </div>
 
       <div class="edit-profile-form__divider"></div>

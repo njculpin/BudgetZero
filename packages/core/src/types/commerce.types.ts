@@ -1,5 +1,5 @@
-import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
-import type { RoyaltyType } from "./products.types";
+import type { BaseEntity, BaseEntityWithoutDelete } from './common.types';
+import type { RoyaltyType } from './products.types';
 
 export type SaleStatus =
   | 'pending'
@@ -18,12 +18,7 @@ export type PaymentMethod = 'stripe';
  * the same earnings being withdrawn twice.
  */
 export type RoyaltyTransactionStatus =
-  | 'pending'
-  | 'ready_to_pay'
-  | 'reserved'
-  | 'paid'
-  | 'failed'
-  | 'refunded';
+  'pending' | 'ready_to_pay' | 'reserved' | 'paid' | 'failed' | 'refunded';
 
 export interface ShippingAddress {
   name: string;

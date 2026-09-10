@@ -1,11 +1,11 @@
-import { serverClient } from "./client";
+import { serverClient } from './client';
 import type {
   Document,
   DocumentCollaborator,
   DocumentCollaboratorRole,
   User,
-} from "../types";
-import { generateHandle } from "./handles";
+} from '../types';
+import { generateHandle } from './handles';
 
 export interface CreateDocumentParams {
   handle: string;
@@ -50,18 +50,18 @@ export const createDocument = async (userId: string): Promise<Document | null> =
   const baseHandle = generateHandle();
   const handle = await generateUniqueHandle(baseHandle);
   const { data, error } = await serverClient
-    .from("documents")
+    .from('documents')
     .insert({
       user_id: userId,
       handle: handle,
       title: handle,
-      description: "",
+      description: '',
     })
     .select()
     .single();
 
   if (error) {
-    console.error("Error creating document:", error);
+    console.error('Error creating document:', error);
     return null;
   }
 
@@ -69,18 +69,18 @@ export const createDocument = async (userId: string): Promise<Document | null> =
 
   // Automatically add creator as owner collaborator
   const { error: collaboratorError } = await serverClient
-    .from("document_collaborators")
+    .from('document_collaborators')
     .insert({
       document_id: document.id,
       user_id: userId,
-      role: "owner",
+      role: 'owner',
       can_edit: true,
       can_delete: true,
       can_invite: true,
     });
 
   if (collaboratorError) {
-    console.error("Error creating document collaborator:", collaboratorError);
+    console.error('Error creating document collaborator:', collaboratorError);
   }
 
   return document;
@@ -92,10 +92,10 @@ export const createDocument = async (userId: string): Promise<Document | null> =
  */
 export const getDocumentById = async (documentId: string): Promise<Document | null> => {
   const { data, error } = await serverClient
-    .from("documents")
-    .select("*")
-    .eq("id", documentId)
-    .eq("deleted", false)
+    .from('documents')
+    .select('*')
+    .eq('id', documentId)
+    .eq('deleted', false)
     .single();
 
   if (error) {
@@ -111,10 +111,10 @@ export const getDocumentById = async (documentId: string): Promise<Document | nu
  */
 export const getDocumentByHandle = async (handle: string): Promise<Document | null> => {
   const { data, error } = await serverClient
-    .from("documents")
-    .select("*")
-    .eq("handle", handle)
-    .eq("deleted", false)
+    .from('documents')
+    .select('*')
+    .eq('handle', handle)
+    .eq('deleted', false)
     .single();
 
   if (error) {
@@ -130,26 +130,26 @@ export const getDocumentByHandle = async (handle: string): Promise<Document | nu
 export const getUserDocuments = async (userId: string): Promise<Document[]> => {
   // Get documents owned by the user
   const { data: ownedDocs, error: ownedError } = await serverClient
-    .from("documents")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("deleted", false)
-    .order("updated_at", { ascending: false });
+    .from('documents')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('deleted', false)
+    .order('updated_at', { ascending: false });
 
   if (ownedError) {
-    console.error("Error fetching user documents:", ownedError);
+    console.error('Error fetching user documents:', ownedError);
     return [];
   }
 
   // Get documents user collaborates on
   const { data: collabData, error: collabError } = await serverClient
-    .from("document_collaborators")
-    .select("document_id")
-    .eq("user_id", userId)
-    .eq("deleted", false);
+    .from('document_collaborators')
+    .select('document_id')
+    .eq('user_id', userId)
+    .eq('deleted', false);
 
   if (collabError) {
-    console.error("Error fetching collaborations:", collabError);
+    console.error('Error fetching collaborations:', collabError);
     return ownedDocs as Document[];
   }
 
@@ -162,20 +162,22 @@ export const getUserDocuments = async (userId: string): Promise<Document[]> => {
   }
 
   const { data: collabDocs, error: collabDocsError } = await serverClient
-    .from("documents")
-    .select("*")
-    .in("id", collabDocIds)
-    .eq("deleted", false)
-    .order("updated_at", { ascending: false });
+    .from('documents')
+    .select('*')
+    .in('id', collabDocIds)
+    .eq('deleted', false)
+    .order('updated_at', { ascending: false });
 
   if (collabDocsError) {
-    console.error("Error fetching collab documents:", collabDocsError);
+    console.error('Error fetching collab documents:', collabDocsError);
     return ownedDocs as Document[];
   }
 
   // Combine and sort by updated_at
   const allDocs = [...(ownedDocs || []), ...(collabDocs || [])];
-  allDocs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+  allDocs.sort(
+    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
 
   return allDocs as Document[];
 };
@@ -194,8 +196,8 @@ export const updateDocument = async (
   if (updates.title) {
     const titleSlug = updates.title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
 
     const isAvailable = await checkHandleAvailability(titleSlug, documentId);
 
@@ -217,12 +219,12 @@ export const updateDocument = async (
   }
 
   const { error } = await serverClient
-    .from("documents")
+    .from('documents')
     .update({
       ...updatesToApply,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", documentId);
+    .eq('id', documentId);
 
   if (error) {
     throw error;
@@ -239,15 +241,15 @@ export const updateDocumentContent = async (
   content: TipTapContent
 ): Promise<boolean> => {
   const { error } = await serverClient
-    .from("documents")
+    .from('documents')
     .update({
       content: content,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", documentId);
+    .eq('id', documentId);
 
   if (error) {
-    console.error("Error updating document content:", error);
+    console.error('Error updating document content:', error);
     return false;
   }
 
@@ -261,14 +263,14 @@ export const getDocumentContent = async (
   documentId: string
 ): Promise<TipTapContent | null> => {
   const { data, error } = await serverClient
-    .from("documents")
-    .select("content")
-    .eq("id", documentId)
-    .eq("deleted", false)
+    .from('documents')
+    .select('content')
+    .eq('id', documentId)
+    .eq('deleted', false)
     .single();
 
   if (error) {
-    console.error("Error fetching document content:", error);
+    console.error('Error fetching document content:', error);
     return null;
   }
 
@@ -283,19 +285,19 @@ export const checkHandleAvailability = async (
   currentDocumentId?: string
 ): Promise<boolean> => {
   let query = serverClient
-    .from("documents")
-    .select("id")
-    .eq("handle", handle)
-    .eq("deleted", false);
+    .from('documents')
+    .select('id')
+    .eq('handle', handle)
+    .eq('deleted', false);
 
   if (currentDocumentId) {
-    query = query.neq("id", currentDocumentId);
+    query = query.neq('id', currentDocumentId);
   }
 
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error checking handle availability:", error);
+    console.error('Error checking handle availability:', error);
     return false;
   }
 
@@ -307,15 +309,15 @@ export const checkHandleAvailability = async (
  */
 export const deleteDocument = async (documentId: string): Promise<boolean> => {
   const { error } = await serverClient
-    .from("documents")
+    .from('documents')
     .update({
       deleted: true,
       deleted_at: new Date().toISOString(),
     })
-    .eq("id", documentId);
+    .eq('id', documentId);
 
   if (error) {
-    console.error("Error deleting document:", error);
+    console.error('Error deleting document:', error);
     return false;
   }
 
@@ -333,16 +335,18 @@ export const getDocumentCollaborators = async (
   documentId: string
 ): Promise<(DocumentCollaborator & { user: User })[]> => {
   const { data, error } = await serverClient
-    .from("document_collaborators")
-    .select(`
+    .from('document_collaborators')
+    .select(
+      `
       *,
       user:users!user_id (*)
-    `)
-    .eq("document_id", documentId)
-    .eq("deleted", false);
+    `
+    )
+    .eq('document_id', documentId)
+    .eq('deleted', false);
 
   if (error) {
-    console.error("Error fetching document collaborators:", error);
+    console.error('Error fetching document collaborators:', error);
     return [];
   }
 
@@ -356,25 +360,25 @@ export const getDocumentCollaboratorUsers = async (
   documentId: string
 ): Promise<User[]> => {
   const { data: collabs, error: collabError } = await serverClient
-    .from("document_collaborators")
-    .select("user_id")
-    .eq("document_id", documentId)
-    .eq("deleted", false);
+    .from('document_collaborators')
+    .select('user_id')
+    .eq('document_id', documentId)
+    .eq('deleted', false);
 
   if (collabError) {
-    console.error("Error fetching document collaborators:", collabError);
+    console.error('Error fetching document collaborators:', collabError);
     return [];
   }
 
   const userIds = collabs.map((c) => c.user_id);
 
   const { data: users, error: usersError } = await serverClient
-    .from("users")
-    .select("*")
-    .in("id", userIds);
+    .from('users')
+    .select('*')
+    .in('id', userIds);
 
   if (usersError) {
-    console.error("Error fetching users:", usersError);
+    console.error('Error fetching users:', usersError);
     return [];
   }
 
@@ -387,13 +391,17 @@ export const getDocumentCollaboratorUsers = async (
 export const addDocumentCollaborator = async (
   documentId: string,
   userId: string,
-  role: DocumentCollaboratorRole = "editor",
+  role: DocumentCollaboratorRole = 'editor',
   permissions: { canEdit?: boolean; canDelete?: boolean; canInvite?: boolean } = {}
 ): Promise<DocumentCollaborator | null> => {
-  const { canEdit = role === "editor", canDelete = false, canInvite = false } = permissions;
+  const {
+    canEdit = role === 'editor',
+    canDelete = false,
+    canInvite = false,
+  } = permissions;
 
   const { data, error } = await serverClient
-    .from("document_collaborators")
+    .from('document_collaborators')
     .insert({
       document_id: documentId,
       user_id: userId,
@@ -406,7 +414,7 @@ export const addDocumentCollaborator = async (
     .single();
 
   if (error) {
-    console.error("Error adding document collaborator:", error);
+    console.error('Error adding document collaborator:', error);
     return null;
   }
 
@@ -420,15 +428,15 @@ export const removeDocumentCollaborator = async (
   collaboratorId: string
 ): Promise<boolean> => {
   const { error } = await serverClient
-    .from("document_collaborators")
+    .from('document_collaborators')
     .update({
       deleted: true,
       deleted_at: new Date().toISOString(),
     })
-    .eq("id", collaboratorId);
+    .eq('id', collaboratorId);
 
   if (error) {
-    console.error("Error removing document collaborator:", error);
+    console.error('Error removing document collaborator:', error);
     return false;
   }
 
@@ -450,11 +458,11 @@ export const canUserEditDocument = async (
 
   // Check if collaborator with edit permission
   const { data, error } = await serverClient
-    .from("document_collaborators")
-    .select("can_edit")
-    .eq("document_id", documentId)
-    .eq("user_id", userId)
-    .eq("deleted", false)
+    .from('document_collaborators')
+    .select('can_edit')
+    .eq('document_id', documentId)
+    .eq('user_id', userId)
+    .eq('deleted', false)
     .single();
 
   if (error) {
@@ -479,11 +487,11 @@ export const canUserViewDocument = async (
 
   // Check if collaborator
   const { data, error } = await serverClient
-    .from("document_collaborators")
-    .select("id")
-    .eq("document_id", documentId)
-    .eq("user_id", userId)
-    .eq("deleted", false)
+    .from('document_collaborators')
+    .select('id')
+    .eq('document_id', documentId)
+    .eq('user_id', userId)
+    .eq('deleted', false)
     .single();
 
   if (error) {
@@ -511,15 +519,15 @@ export const getRecentDocuments = async (
   limit: number = 5
 ): Promise<DocumentSummary[]> => {
   const { data, error } = await serverClient
-    .from("documents")
-    .select("id, handle, title, updated_at")
-    .eq("user_id", userId)
-    .eq("deleted", false)
-    .order("updated_at", { ascending: false })
+    .from('documents')
+    .select('id, handle, title, updated_at')
+    .eq('user_id', userId)
+    .eq('deleted', false)
+    .order('updated_at', { ascending: false })
     .limit(limit);
 
   if (error) {
-    console.error("Error fetching recent documents:", error);
+    console.error('Error fetching recent documents:', error);
     return [];
   }
 
@@ -559,14 +567,14 @@ export const getDocumentAttachments = async (
   documentId: string
 ): Promise<DocumentAttachment[]> => {
   const { data, error } = await serverClient
-    .from("document_attachments")
-    .select("*")
-    .eq("document_id", documentId)
-    .eq("deleted", false)
-    .order("created_at", { ascending: true });
+    .from('document_attachments')
+    .select('*')
+    .eq('document_id', documentId)
+    .eq('deleted', false)
+    .order('created_at', { ascending: true });
 
   if (error) {
-    console.error("Error fetching document attachments:", error);
+    console.error('Error fetching document attachments:', error);
     return [];
   }
 
@@ -581,11 +589,11 @@ export const createDocumentAttachment = async (
   params: CreateDocumentAttachmentParams
 ): Promise<DocumentAttachment | null> => {
   const { data, error } = await serverClient
-    .from("document_attachments")
+    .from('document_attachments')
     .insert({
       document_id: documentId,
       title: params.title,
-      description: params.description || "",
+      description: params.description || '',
       file_url: params.file_url,
       storage_path: params.storage_path,
       file_size_bytes: params.file_size_bytes,
@@ -595,7 +603,7 @@ export const createDocumentAttachment = async (
     .single();
 
   if (error) {
-    console.error("Error creating document attachment:", error);
+    console.error('Error creating document attachment:', error);
     return null;
   }
 
@@ -609,12 +617,12 @@ export const deleteDocumentAttachment = async (
   attachmentId: string
 ): Promise<boolean> => {
   const { error } = await serverClient
-    .from("document_attachments")
+    .from('document_attachments')
     .update({ deleted: true, deleted_at: new Date().toISOString() })
-    .eq("id", attachmentId);
+    .eq('id', attachmentId);
 
   if (error) {
-    console.error("Error deleting document attachment:", error);
+    console.error('Error deleting document attachment:', error);
     return false;
   }
 

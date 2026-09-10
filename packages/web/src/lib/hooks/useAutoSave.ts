@@ -1,6 +1,6 @@
-import { createSignal, onCleanup, type Accessor } from "solid-js";
+import { createSignal, onCleanup, type Accessor } from 'solid-js';
 
-export type SaveStatus = "idle" | "saving" | "saved" | "error";
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export interface UseAutoSaveConfig {
   /** Debounce delay in milliseconds */
@@ -24,7 +24,7 @@ export interface UseAutoSaveReturn {
  * Provides save status and manual trigger capabilities
  */
 export function useAutoSave(config: UseAutoSaveConfig): UseAutoSaveReturn {
-  const [saveStatus, setSaveStatus] = createSignal<SaveStatus>("idle");
+  const [saveStatus, setSaveStatus] = createSignal<SaveStatus>('idle');
   let debounceTimer: NodeJS.Timeout | null = null;
   let statusResetTimer: NodeJS.Timeout | null = null;
   let isSaving = false; // Guard against concurrent saves
@@ -57,7 +57,7 @@ export function useAutoSave(config: UseAutoSaveConfig): UseAutoSaveReturn {
     }
 
     // Check for Response objects with retryable status codes
-    if (error && typeof error === "object" && "status" in error) {
+    if (error && typeof error === 'object' && 'status' in error) {
       const status = (error as { status: number }).status;
       // Retry on: 408 (timeout), 429 (rate limit), 5xx (server errors)
       // Don't retry on: 4xx client errors (except 408, 429)
@@ -85,7 +85,7 @@ export function useAutoSave(config: UseAutoSaveConfig): UseAutoSaveReturn {
     try {
       isSaving = true;
       clearStatusResetTimer(); // Clear any pending status reset
-      setSaveStatus("saving");
+      setSaveStatus('saving');
 
       // Retry logic with exponential backoff
       let lastError: unknown;
@@ -94,13 +94,13 @@ export function useAutoSave(config: UseAutoSaveConfig): UseAutoSaveReturn {
           await config.onSave();
 
           // Success - exit retry loop
-          setSaveStatus("saved");
+          setSaveStatus('saved');
 
           // Reset to idle after showing "saved" for 2 seconds
           statusResetTimer = setTimeout(() => {
             // Only reset if still in "saved" state (prevents race condition)
-            if (saveStatus() === "saved") {
-              setSaveStatus("idle");
+            if (saveStatus() === 'saved') {
+              setSaveStatus('idle');
             }
           }, 2000);
 
@@ -115,7 +115,10 @@ export function useAutoSave(config: UseAutoSaveConfig): UseAutoSaveReturn {
 
           // Calculate exponential backoff: retryDelayMs * 2^attempt
           const delay = retryDelayMs * Math.pow(2, attempt);
-          console.warn(`Auto-save failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`, error);
+          console.warn(
+            `Auto-save failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`,
+            error
+          );
 
           // Wait before retrying
           await sleep(delay);
@@ -125,13 +128,13 @@ export function useAutoSave(config: UseAutoSaveConfig): UseAutoSaveReturn {
       // This shouldn't be reached, but throw last error if it somehow is
       throw lastError;
     } catch (error) {
-      setSaveStatus("error");
-      console.error("Auto-save error:", error);
+      setSaveStatus('error');
+      console.error('Auto-save error:', error);
 
       // Reset error after 3 seconds
       statusResetTimer = setTimeout(() => {
-        if (saveStatus() === "error") {
-          setSaveStatus("idle");
+        if (saveStatus() === 'error') {
+          setSaveStatus('idle');
         }
       }, 3000);
     } finally {

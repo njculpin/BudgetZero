@@ -5,15 +5,18 @@ import { unauthorized } from '../../../responses';
  * Mark a product conflict as resolved
  */
 
-import { resolveProductConflict } from "@gameloopers/core/data-access/notifications";
+import { resolveProductConflict } from '@gameloopers/core/data-access/notifications';
 
-export const productsProductIdResolveConflict: Controller = async ({ params, userId }) => {
+export const productsProductIdResolveConflict: Controller = async ({
+  params,
+  userId,
+}) => {
   const { productId } = params;
 
   if (!productId) {
-    return new Response(JSON.stringify({ error: "Product ID required" }), {
+    return new Response(JSON.stringify({ error: 'Product ID required' }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -25,19 +28,16 @@ export const productsProductIdResolveConflict: Controller = async ({ params, use
 
   if (!result.success) {
     return new Response(
-      JSON.stringify({ error: result.error || "Failed to resolve conflict" }),
+      JSON.stringify({ error: result.error || 'Failed to resolve conflict' }),
       {
-        status: result.error === "Unauthorized" ? 403 : 500,
-        headers: { "Content-Type": "application/json" },
+        status: result.error === 'Unauthorized' ? 403 : 500,
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }
 
-  return new Response(
-    JSON.stringify({ success: true }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
 };

@@ -48,7 +48,9 @@ describe('POST /api/users/complete-onboarding', () => {
     // Token verification, expiry and refresh belong to the gateway and are
     // tested once in gateway.test.ts. This is the controller's own decision.
     it('rejects a caller who is not signed in', async () => {
-      const response = await usersCompleteOnboarding(makeContext({ userId: null, body: {} }));
+      const response = await usersCompleteOnboarding(
+        makeContext({ userId: null, body: {} })
+      );
 
       expect(response.status).toBe(401);
     });
@@ -64,7 +66,9 @@ describe('POST /api/users/complete-onboarding', () => {
         credits_balance: 0,
       } as any);
 
-      const response = await usersCompleteOnboarding(makeContext({ request: mockRequest }));
+      const response = await usersCompleteOnboarding(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(200);
       const data = await response.json();
@@ -77,7 +81,9 @@ describe('POST /api/users/complete-onboarding', () => {
     it('should return 500 when completeOnboarding returns null', async () => {
       vi.mocked(users.completeOnboarding).mockResolvedValue(null);
 
-      const response = await usersCompleteOnboarding(makeContext({ request: mockRequest }));
+      const response = await usersCompleteOnboarding(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -113,7 +119,9 @@ describe('POST /api/users/complete-onboarding', () => {
 
       vi.mocked(users.completeOnboarding).mockResolvedValue(mockUser as any);
 
-      const response = await usersCompleteOnboarding(makeContext({ request: mockRequest }));
+      const response = await usersCompleteOnboarding(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(200);
       const data = await response.json();
@@ -128,7 +136,9 @@ describe('POST /api/users/complete-onboarding', () => {
         new Error('Database connection failed')
       );
 
-      const response = await usersCompleteOnboarding(makeContext({ request: mockRequest }));
+      const response = await usersCompleteOnboarding(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -138,7 +148,9 @@ describe('POST /api/users/complete-onboarding', () => {
     it('should handle generic errors', async () => {
       vi.mocked(users.completeOnboarding).mockRejectedValue('Unexpected error');
 
-      const response = await usersCompleteOnboarding(makeContext({ request: mockRequest }));
+      const response = await usersCompleteOnboarding(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.status).toBe(500);
       const data = await response.json();
@@ -153,7 +165,10 @@ describe('POST /api/users/complete-onboarding', () => {
 
       await usersCompleteOnboarding(makeContext({ request: mockRequest }));
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error in complete-onboarding:', testError);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error in complete-onboarding:',
+        testError
+      );
 
       consoleErrorSpy.mockRestore();
     });
@@ -167,7 +182,9 @@ describe('POST /api/users/complete-onboarding', () => {
         onboarding_completed: true,
       } as any);
 
-      const response = await usersCompleteOnboarding(makeContext({ request: mockRequest }));
+      const response = await usersCompleteOnboarding(
+        makeContext({ request: mockRequest })
+      );
 
       expect(response.headers.get('Content-Type')).toBe('application/json');
     });
@@ -181,7 +198,9 @@ describe('POST /api/users/complete-onboarding', () => {
 
       vi.mocked(users.completeOnboarding).mockResolvedValue(mockUser as any);
 
-      const response = await usersCompleteOnboarding(makeContext({ request: mockRequest }));
+      const response = await usersCompleteOnboarding(
+        makeContext({ request: mockRequest })
+      );
 
       const data = await response.json();
       expect(data).toHaveProperty('success', true);
@@ -192,7 +211,9 @@ describe('POST /api/users/complete-onboarding', () => {
     it('should return error object on failure', async () => {
       vi.mocked(users.completeOnboarding).mockResolvedValue(null);
 
-      const response = await usersCompleteOnboarding(makeContext({ request: mockRequest }));
+      const response = await usersCompleteOnboarding(
+        makeContext({ request: mockRequest })
+      );
 
       const data = await response.json();
       expect(data).toHaveProperty('error');

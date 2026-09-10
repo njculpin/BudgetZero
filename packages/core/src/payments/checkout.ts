@@ -50,7 +50,7 @@ export async function createCheckoutSession(
   if (USE_MOCK_STRIPE) {
     // MOCK MODE: Return mock checkout session
     const totalAmount = params.lineItems.reduce(
-      (sum, item) => sum + (item.price_data.unit_amount * item.quantity),
+      (sum, item) => sum + item.price_data.unit_amount * item.quantity,
       0
     );
 
@@ -104,7 +104,8 @@ export function verifyWebhookSignature(
 ): Stripe.Event {
   if (USE_MOCK_STRIPE) {
     // MOCK MODE: Return mock Stripe event
-    const parsedPayload = typeof payload === 'string' ? JSON.parse(payload) : JSON.parse(payload.toString());
+    const parsedPayload =
+      typeof payload === 'string' ? JSON.parse(payload) : JSON.parse(payload.toString());
 
     const mockEvent: Stripe.Event = {
       id: `evt_mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

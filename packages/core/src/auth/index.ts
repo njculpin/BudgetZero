@@ -1,8 +1,8 @@
-import { authClient } from "./client";
-import type { Provider } from "@supabase/supabase-js";
+import { authClient } from './client';
+import type { Provider } from '@supabase/supabase-js';
 
 // Re-export types to maintain SDK isolation
-export type { Provider } from "@supabase/supabase-js";
+export type { Provider } from '@supabase/supabase-js';
 
 export interface SignInWithPasswordParams {
   email: string;
@@ -19,11 +19,17 @@ export interface SignUpParams {
   password: string;
 }
 
-export const signInWithPassword = async ({ email, password }: SignInWithPasswordParams) => {
+export const signInWithPassword = async ({
+  email,
+  password,
+}: SignInWithPasswordParams) => {
   return authClient.auth.signInWithPassword({ email, password });
 };
 
-export const signInWithOAuth = async ({ provider, redirectTo }: SignInWithOAuthParams) => {
+export const signInWithOAuth = async ({
+  provider,
+  redirectTo,
+}: SignInWithOAuthParams) => {
   return authClient.auth.signInWithOAuth({
     provider,
     options: { redirectTo },
@@ -50,7 +56,10 @@ export const getUser = async () => {
   return authClient.auth.getUser();
 };
 
-export const setSession = async (params: { access_token: string; refresh_token: string }) => {
+export const setSession = async (params: {
+  access_token: string;
+  refresh_token: string;
+}) => {
   return authClient.auth.setSession(params);
 };
 
@@ -59,7 +68,10 @@ export interface ResetPasswordParams {
   redirectTo?: string;
 }
 
-export const resetPasswordForEmail = async ({ email, redirectTo }: ResetPasswordParams) => {
+export const resetPasswordForEmail = async ({
+  email,
+  redirectTo,
+}: ResetPasswordParams) => {
   return authClient.auth.resetPasswordForEmail(email, {
     redirectTo: redirectTo || `${window.location.origin}/reset-password`,
   });

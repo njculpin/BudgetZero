@@ -1,55 +1,62 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/card/Card.astro";
-import CardContent from "@/components/card/CardContent.astro";
-import Button from "@/components/Button.astro";
+import Layout from '@/layouts/Layout.astro';
+import Card from '@/components/card/Card.astro';
+import CardContent from '@/components/card/CardContent.astro';
+import Button from '@/components/Button.astro';
 // This page renders the same for everyone, so it resolves no session. It
 // previously exchanged the auth cookies with the provider and looked the user
 // up, then rendered neither — a network round trip and a query per view, for
 // nothing.
 
 // Get error code from query param
-const errorCode = Astro.url.searchParams.get("error") || "unknown";
+const errorCode = Astro.url.searchParams.get('error') || 'unknown';
 
 // Map Stripe error codes to user-friendly messages
-const errorMessages: Record<string, { title: string; description: string; canRetry: boolean }> = {
+const errorMessages: Record<
+  string,
+  { title: string; description: string; canRetry: boolean }
+> = {
   card_declined: {
-    title: "Card Declined",
-    description: "Your card was declined. Please try a different payment method or contact your bank.",
+    title: 'Card Declined',
+    description:
+      'Your card was declined. Please try a different payment method or contact your bank.',
     canRetry: true,
   },
   insufficient_funds: {
-    title: "Insufficient Funds",
-    description: "Your card has insufficient funds. Please try a different payment method.",
+    title: 'Insufficient Funds',
+    description:
+      'Your card has insufficient funds. Please try a different payment method.',
     canRetry: true,
   },
   expired_card: {
-    title: "Expired Card",
-    description: "Your card has expired. Please use a different payment method.",
+    title: 'Expired Card',
+    description: 'Your card has expired. Please use a different payment method.',
     canRetry: true,
   },
   incorrect_cvc: {
-    title: "Incorrect Security Code",
-    description: "The card security code (CVC) you entered is incorrect. Please try again.",
+    title: 'Incorrect Security Code',
+    description:
+      'The card security code (CVC) you entered is incorrect. Please try again.',
     canRetry: true,
   },
   processing_error: {
-    title: "Processing Error",
-    description: "There was an error processing your payment. Please try again.",
+    title: 'Processing Error',
+    description: 'There was an error processing your payment. Please try again.',
     canRetry: true,
   },
   cancelled: {
-    title: "Payment Cancelled",
-    description: "You cancelled the payment. Your items are still in your cart.",
+    title: 'Payment Cancelled',
+    description: 'You cancelled the payment. Your items are still in your cart.',
     canRetry: true,
   },
   session_expired: {
-    title: "Session Expired",
-    description: "Your checkout session has expired. Please start checkout again from your cart.",
+    title: 'Session Expired',
+    description:
+      'Your checkout session has expired. Please start checkout again from your cart.',
     canRetry: true,
   },
   unknown: {
-    title: "Payment Failed",
+    title: 'Payment Failed',
     description: "We couldn't process your payment. Please try again or contact support.",
     canRetry: true,
   },
@@ -85,9 +92,7 @@ const errorInfo = errorMessages[errorCode] || errorMessages.unknown;
 
               <!-- Error Message -->
               <h1 class="payment-failed__title">{errorInfo.title}</h1>
-              <p class="payment-failed__description">
-                {errorInfo.description}
-              </p>
+              <p class="payment-failed__description">{errorInfo.description}</p>
 
               <!-- Actions -->
               <div class="payment-failed__actions">
@@ -109,8 +114,11 @@ const errorInfo = errorMessages[errorCode] || errorMessages.unknown;
               <!-- Support Link -->
               <div class="payment-failed__support">
                 <p class="payment-failed__support-text">
-                  Need help?{" "}
-                  <a href="mailto:support@gameloopers.com" class="payment-failed__support-link">
+                  Need help?{' '}
+                  <a
+                    href="mailto:support@gameloopers.com"
+                    class="payment-failed__support-link"
+                  >
                     Contact Support
                   </a>
                 </p>

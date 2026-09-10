@@ -31,7 +31,8 @@
   color: var(--foreground);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
-  transition: color var(--duration-normal) var(--ease-in-out),
+  transition:
+    color var(--duration-normal) var(--ease-in-out),
     border-color var(--duration-normal) var(--ease-in-out);
   outline: none;
   font-family: inherit;
@@ -387,7 +388,8 @@
   color: var(--muted-foreground);
   cursor: pointer;
   border-radius: var(--radius-sm);
-  transition: background-color var(--duration-fast) var(--ease-in-out),
+  transition:
+    background-color var(--duration-fast) var(--ease-in-out),
     color var(--duration-fast) var(--ease-in-out);
 }
 
@@ -453,7 +455,8 @@
   border-radius: var(--radius-md);
   background-color: transparent;
   cursor: pointer;
-  transition: border-color var(--duration-normal) var(--ease-in-out),
+  transition:
+    border-color var(--duration-normal) var(--ease-in-out),
     background-color var(--duration-normal) var(--ease-in-out);
 }
 
@@ -580,7 +583,8 @@
   color: var(--muted-foreground);
   cursor: pointer;
   border-radius: var(--radius-sm);
-  transition: background-color var(--duration-fast) var(--ease-in-out),
+  transition:
+    background-color var(--duration-fast) var(--ease-in-out),
     color var(--duration-fast) var(--ease-in-out);
   flex-shrink: 0;
 }

@@ -105,15 +105,18 @@ describe('cartAddToCart', () => {
     }
   );
 
-  it.each(['private', 'public'])('allows a product whose status is %s', async (status) => {
-    vi.mocked(products.getProductById).mockResolvedValue(productWithStatus(status));
+  it.each(['private', 'public'])(
+    'allows a product whose status is %s',
+    async (status) => {
+      vi.mocked(products.getProductById).mockResolvedValue(productWithStatus(status));
 
-    const response = await cartAddToCart(
-      makeContext({ body: { productId: VALID_PRODUCT_ID, quantity: 1 } })
-    );
+      const response = await cartAddToCart(
+        makeContext({ body: { productId: VALID_PRODUCT_ID, quantity: 1 } })
+      );
 
-    expect(response.status).toBe(200);
-  });
+      expect(response.status).toBe(200);
+    }
+  );
 
   it('rejects a malformed body rather than passing it through', async () => {
     const response = await cartAddToCart(

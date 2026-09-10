@@ -1,9 +1,9 @@
-import { createSignal, Show } from "solid-js";
-import { useAutoSave } from "@/lib/hooks/useAutoSave";
-import { ErrorMessage } from "@/components/interactive";
-import TagInput from "@/components/interactive/TagInput";
-import "@/components/interactive/base.css";
-import "@/styles/save-status.css";
+import { createSignal, Show } from 'solid-js';
+import { useAutoSave } from '@/lib/hooks/useAutoSave';
+import { ErrorMessage } from '@/components/interactive';
+import TagInput from '@/components/interactive/TagInput';
+import '@/components/interactive/base.css';
+import '@/styles/save-status.css';
 
 export interface ProductTagsFormProps {
   productId: string;
@@ -12,24 +12,24 @@ export interface ProductTagsFormProps {
 
 export default function ProductTagsForm(props: ProductTagsFormProps) {
   const [tags, setTags] = createSignal<string[]>(props.initialTags);
-  const [error, setError] = createSignal("");
+  const [error, setError] = createSignal('');
 
   // Auto-save handler
   const saveData = async () => {
-    setError("");
+    setError('');
 
     const formData = new FormData();
-    formData.append("productId", props.productId);
-    formData.append("tags", JSON.stringify(tags()));
+    formData.append('productId', props.productId);
+    formData.append('tags', JSON.stringify(tags()));
 
-    const response = await fetch("/api/products/update-product", {
-      method: "POST",
+    const response = await fetch('/api/products/update-product', {
+      method: 'POST',
       body: formData,
     });
 
     if (!response.ok) {
       const data = await response.json();
-      const errorMessage = data.error || "Failed to update tags";
+      const errorMessage = data.error || 'Failed to update tags';
       setError(errorMessage);
 
       // Throw error with status for retry logic
@@ -52,12 +52,12 @@ export default function ProductTagsForm(props: ProductTagsFormProps) {
   return (
     <div class="product-form">
       <Show when={error()}>
-        <ErrorMessage message={error()} onDismiss={() => setError("")} />
+        <ErrorMessage message={error()} onDismiss={() => setError('')} />
       </Show>
 
       {/* Save Status Indicator */}
       <div class="product-form__save-status">
-        <Show when={autoSave.saveStatus() === "saving"}>
+        <Show when={autoSave.saveStatus() === 'saving'}>
           <span
             class="save-status save-status--saving"
             role="status"
@@ -68,7 +68,7 @@ export default function ProductTagsForm(props: ProductTagsFormProps) {
             Saving...
           </span>
         </Show>
-        <Show when={autoSave.saveStatus() === "saved"}>
+        <Show when={autoSave.saveStatus() === 'saved'}>
           <span
             class="save-status save-status--saved"
             role="status"
@@ -78,7 +78,7 @@ export default function ProductTagsForm(props: ProductTagsFormProps) {
             ✓ Saved
           </span>
         </Show>
-        <Show when={autoSave.saveStatus() === "error"}>
+        <Show when={autoSave.saveStatus() === 'error'}>
           <span
             class="save-status save-status--error"
             role="status"
@@ -99,7 +99,8 @@ export default function ProductTagsForm(props: ProductTagsFormProps) {
           onChange={handleTagsChange}
         />
         <p class="form-field__help-text">
-          Add tags to help users discover your product (e.g., "rpg", "fantasy", "miniatures")
+          Add tags to help users discover your product (e.g., "rpg", "fantasy",
+          "miniatures")
         </p>
       </div>
     </div>

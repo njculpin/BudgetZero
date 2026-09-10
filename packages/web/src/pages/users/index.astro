@@ -1,7 +1,7 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import PageHeader from "@/components/PageHeader.astro";
-import { getCreators } from "@gameloopers/core/data-access/users";
+import Layout from '@/layouts/Layout.astro';
+import PageHeader from '@/components/PageHeader.astro';
+import { getCreators } from '@gameloopers/core/data-access/users';
 
 // Get all creators with their tags
 const creators = await getCreators({ limit: 100 });
@@ -40,7 +40,11 @@ const tagsList = Array.from(allTags).sort();
           <div class="browse-tags">
             <span class="browse-tags__label">Filter by tag:</span>
             <div class="browse-tags__list">
-              <button type="button" class="browse-tags__tag browse-tags__tag--active" data-tag="all">
+              <button
+                type="button"
+                class="browse-tags__tag browse-tags__tag--active"
+                data-tag="all"
+              >
                 All
               </button>
               {tagsList.map((tag) => (
@@ -73,7 +77,10 @@ const tagsList = Array.from(allTags).sort();
               >
                 <div class="creator-card__avatar">
                   <img
-                    src={user.avatar_url || `https://placehold.co/200x200?text=${encodeURIComponent(user.name)}`}
+                    src={
+                      user.avatar_url ||
+                      `https://placehold.co/200x200?text=${encodeURIComponent(user.name)}`
+                    }
                     alt={user.name}
                     class="creator-card__avatar-img"
                   />
@@ -109,7 +116,8 @@ const tagsList = Array.from(allTags).sort();
       const cardSearch = element.dataset.search || '';
       const cardTags = element.dataset.tags || '';
 
-      const matchesSearch = !currentSearch || cardSearch.toLowerCase().includes(currentSearch.toLowerCase());
+      const matchesSearch =
+        !currentSearch || cardSearch.toLowerCase().includes(currentSearch.toLowerCase());
       const matchesTag = currentTag === 'all' || cardTags.includes(currentTag);
 
       if (matchesSearch && matchesTag) {

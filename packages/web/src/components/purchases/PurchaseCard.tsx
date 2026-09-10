@@ -1,6 +1,6 @@
-import { createSignal, Show, For } from "solid-js";
-import type { Sale, SaleItem } from "@gameloopers/core/types";
-import "./purchase-card.css";
+import { createSignal, Show, For } from 'solid-js';
+import type { Sale, SaleItem } from '@gameloopers/core/types';
+import './purchase-card.css';
 
 export interface PurchaseFile {
   id: string;
@@ -75,7 +75,7 @@ export default function PurchaseCard(props: PurchaseCardProps) {
           <button
             type="button"
             class="purchase-card__toggle"
-            aria-label={isExpanded() ? "Collapse purchase" : "Expand purchase"}
+            aria-label={isExpanded() ? 'Collapse purchase' : 'Expand purchase'}
             aria-expanded={isExpanded()}
           >
             <svg
@@ -100,7 +100,8 @@ export default function PurchaseCard(props: PurchaseCardProps) {
       <Show when={!isExpanded()}>
         <div class="purchase-card__summary">
           <span class="purchase-card__summary-badge">
-            {totalProducts()} {totalProducts() === 1 ? 'product' : 'products'} • {totalFiles()} {totalFiles() === 1 ? 'file' : 'files'}
+            {totalProducts()} {totalProducts() === 1 ? 'product' : 'products'} •{' '}
+            {totalFiles()} {totalFiles() === 1 ? 'file' : 'files'}
           </span>
         </div>
       </Show>
@@ -116,9 +117,7 @@ export default function PurchaseCard(props: PurchaseCardProps) {
                     {item.product?.title || 'Unknown Product'}
                   </h4>
                   <Show when={item.product?.description}>
-                    <p class="purchase-item__description">
-                      {item.product!.description}
-                    </p>
+                    <p class="purchase-item__description">{item.product!.description}</p>
                   </Show>
                 </div>
 
@@ -143,13 +142,20 @@ export default function PurchaseCard(props: PurchaseCardProps) {
                                   <span class="file-item__badge">PDF</span>
                                 </Show>
                               </div>
-                              <Show when={file.source_product_title && file.source_product_title !== item.product?.title}>
+                              <Show
+                                when={
+                                  file.source_product_title &&
+                                  file.source_product_title !== item.product?.title
+                                }
+                              >
                                 <span class="file-item__source">
                                   From: {file.source_product_title}
                                 </span>
                               </Show>
                               <Show when={file.description}>
-                                <span class="file-item__description">{file.description}</span>
+                                <span class="file-item__description">
+                                  {file.description}
+                                </span>
                               </Show>
                               <Show when={!file.is_document && file.file_size_bytes > 0}>
                                 <span class="file-item__size">
@@ -163,7 +169,10 @@ export default function PurchaseCard(props: PurchaseCardProps) {
                                 fallback={
                                   <form method="post" action="/api/download">
                                     <input type="hidden" name="file_id" value={file.id} />
-                                    <button type="submit" class="button button--outline button--sm">
+                                    <button
+                                      type="submit"
+                                      class="button button--outline button--sm"
+                                    >
                                       <span class="button__text">Download</span>
                                     </button>
                                   </form>

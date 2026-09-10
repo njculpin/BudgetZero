@@ -4,9 +4,7 @@ import type { Cart, CartItem } from '../types';
 /**
  * Get or create a cart for a user
  */
-export const getOrCreateCart = async (
-  userId: string
-): Promise<Cart | null> => {
+export const getOrCreateCart = async (userId: string): Promise<Cart | null> => {
   // Try to find existing cart
   const { data: existingCart } = await serverClient
     .from('carts')
@@ -154,13 +152,8 @@ export const updateCartItemQuantity = async (
 /**
  * Remove item from cart
  */
-export const removeFromCart = async (
-  cartItemId: string
-): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('cart_items')
-    .delete()
-    .eq('id', cartItemId);
+export const removeFromCart = async (cartItemId: string): Promise<boolean> => {
+  const { error } = await serverClient.from('cart_items').delete().eq('id', cartItemId);
 
   if (error) {
     console.error('Error removing from cart:', error);
@@ -173,13 +166,8 @@ export const removeFromCart = async (
 /**
  * Clear all items from cart
  */
-export const clearCart = async (
-  cartId: string
-): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('cart_items')
-    .delete()
-    .eq('cart_id', cartId);
+export const clearCart = async (cartId: string): Promise<boolean> => {
+  const { error } = await serverClient.from('cart_items').delete().eq('cart_id', cartId);
 
   if (error) {
     console.error('Error clearing cart:', error);

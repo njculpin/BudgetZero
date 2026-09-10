@@ -99,7 +99,6 @@ const testConfig: { test: ViteUserConfig['test'] } = {
  * Tests still run from the repository root so that one invocation covers every
  * package.
  */
-export default getViteConfig(
-  testConfig as Parameters<typeof getViteConfig>[0],
-  { root: fileURLToPath(new URL('./packages/web', import.meta.url)) }
-);
+export default getViteConfig(testConfig as Parameters<typeof getViteConfig>[0], {
+  root: fileURLToPath(new URL('./packages/web', import.meta.url)),
+});

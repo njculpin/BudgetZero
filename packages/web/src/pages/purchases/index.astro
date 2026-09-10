@@ -1,22 +1,27 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import { setSession } from "@gameloopers/core/auth";
-import { getUserSales, getSaleItems } from "@gameloopers/core/data-access/sales";
-import { getProductById, getProductFiles, getProductComponents, getProductDocuments } from "@gameloopers/core/data-access/products";
-import PageHeader from "@/components/PageHeader.astro";
-import { PurchasesList } from "@/components/purchases";
+import Layout from '@/layouts/Layout.astro';
+import { setSession } from '@gameloopers/core/auth';
+import { getUserSales, getSaleItems } from '@gameloopers/core/data-access/sales';
+import {
+  getProductById,
+  getProductFiles,
+  getProductComponents,
+  getProductDocuments,
+} from '@gameloopers/core/data-access/products';
+import PageHeader from '@/components/PageHeader.astro';
+import { PurchasesList } from '@/components/purchases';
 
 const { url } = Astro;
 const searchParams = url.searchParams;
 
 // Get pagination and filter params from URL
-const currentPage = parseInt(searchParams.get("page") || "1", 10);
-const searchQuery = searchParams.get("search") || "";
-const filterQuery = searchParams.get("filter") || "all";
+const currentPage = parseInt(searchParams.get('page') || '1', 10);
+const searchQuery = searchParams.get('search') || '';
+const filterQuery = searchParams.get('filter') || 'all';
 
 let currentUser = null;
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
+const accessToken = Astro.cookies.get('sb-access-token');
+const refreshToken = Astro.cookies.get('sb-refresh-token');
 
 if (accessToken && refreshToken) {
   try {
@@ -33,12 +38,12 @@ if (accessToken && refreshToken) {
 }
 
 if (!currentUser) {
-  return Astro.redirect("/sign-in");
+  return Astro.redirect('/sign-in');
 }
 
 // Get user's purchases
 const sales = await getUserSales(currentUser.id);
-const completedSales = sales.filter(sale => sale.status === 'paid');
+const completedSales = sales.filter((sale) => sale.status === 'paid');
 
 // Fetch details for each purchase
 const purchasesWithDetails = await Promise.all(
@@ -55,8 +60,8 @@ const purchasesWithDetails = await Promise.all(
         // Get documents from the main product (all will have PDFs generated on purchase)
         const mainProductDocuments = product ? await getProductDocuments(product.id) : [];
         const mainProductDocumentFiles = mainProductDocuments
-          .filter(doc => doc.pdf_url) // Only include documents with PDFs
-          .map(doc => ({
+          .filter((doc) => doc.pdf_url) // Only include documents with PDFs
+          .map((doc) => ({
             id: doc.id,
             document_id: doc.document_id,
             title: doc.document?.title || 'Document',
@@ -77,11 +82,13 @@ const purchasesWithDetails = await Promise.all(
           embeddedProducts.map(async (component) => {
             const childProduct = await getProductById(component.child_product_id);
             const childFiles = childProduct ? await getProductFiles(childProduct.id) : [];
-            const childDocuments = childProduct ? await getProductDocuments(childProduct.id) : [];
+            const childDocuments = childProduct
+              ? await getProductDocuments(childProduct.id)
+              : [];
 
             const childDocumentFiles = childDocuments
-              .filter(doc => doc.pdf_url) // Only include documents with PDFs
-              .map(doc => ({
+              .filter((doc) => doc.pdf_url) // Only include documents with PDFs
+              .map((doc) => ({
                 id: doc.id,
                 document_id: doc.document_id,
                 title: doc.document?.title || 'Document',
@@ -97,7 +104,7 @@ const purchasesWithDetails = await Promise.all(
               }));
 
             return [
-              ...childFiles.map(file => ({
+              ...childFiles.map((file) => ({
                 ...file,
                 source_product_title: childProduct?.title || 'Unknown Product',
                 is_document: false,
@@ -109,7 +116,7 @@ const purchasesWithDetails = await Promise.all(
 
         // Flatten and combine all files and documents
         const allFiles = [
-          ...mainProductFiles.map(file => ({
+          ...mainProductFiles.map((file) => ({
             ...file,
             source_product_title: product?.title || 'Unknown Product',
             is_document: false,

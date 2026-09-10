@@ -7,7 +7,7 @@ import { unauthorized } from '../../responses';
  * earned from each.
  */
 
-import { getEmbeddedUsageForUser } from "@gameloopers/core/data-access/products";
+import { getEmbeddedUsageForUser } from '@gameloopers/core/data-access/products';
 
 export const productsEmbeddedUsage: Controller = async ({ userId }) => {
   // Earnings are private financial data. This previously read the user id straight
@@ -21,15 +21,15 @@ export const productsEmbeddedUsage: Controller = async ({ userId }) => {
   try {
     const parentProducts = await getEmbeddedUsageForUser(userId);
 
-    return new Response(
-      JSON.stringify({ parentProducts }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ parentProducts }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    console.error("Unexpected error in embedded-usage:", error);
-    return new Response(
-      JSON.stringify({ error: "An unexpected error occurred" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    console.error('Unexpected error in embedded-usage:', error);
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };

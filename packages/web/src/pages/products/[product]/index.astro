@@ -1,18 +1,26 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Button from "@/components/Button.astro";
-import { ProductContentViewer, AddToCartButton } from "@/components/products";
-import ProductContributors from "@/components/products/ProductContributors.astro";
-import ProductImageGallery from "@/components/products/ProductImageGallery.astro";
-import { getProductByHandle, getProductTags, getProductImages, getProductFiles, getProductDocuments, getProductContributorsWithRoles, getProductComponentsWithDetails } from "@gameloopers/core/data-access/products";
-import { getUserById } from "@gameloopers/core/data-access/users";
-import { setSession } from "@gameloopers/core/auth";
-import Card from "@/components/card/Card.astro";
-import CardHeader from "@/components/card/CardHeader.astro";
-import CardTitle from "@/components/card/CardTitle.astro";
-import CardDescription from "@/components/card/CardDescription.astro";
-import CardContent from "@/components/card/CardContent.astro";
-import Avatar from "@/components/users/Avatar.astro";
+import Layout from '@/layouts/Layout.astro';
+import Button from '@/components/Button.astro';
+import { ProductContentViewer, AddToCartButton } from '@/components/products';
+import ProductContributors from '@/components/products/ProductContributors.astro';
+import ProductImageGallery from '@/components/products/ProductImageGallery.astro';
+import {
+  getProductByHandle,
+  getProductTags,
+  getProductImages,
+  getProductFiles,
+  getProductDocuments,
+  getProductContributorsWithRoles,
+  getProductComponentsWithDetails,
+} from '@gameloopers/core/data-access/products';
+import { getUserById } from '@gameloopers/core/data-access/users';
+import { setSession } from '@gameloopers/core/auth';
+import Card from '@/components/card/Card.astro';
+import CardHeader from '@/components/card/CardHeader.astro';
+import CardTitle from '@/components/card/CardTitle.astro';
+import CardDescription from '@/components/card/CardDescription.astro';
+import CardContent from '@/components/card/CardContent.astro';
+import Avatar from '@/components/users/Avatar.astro';
 
 const { product } = Astro.params;
 
@@ -27,7 +35,14 @@ if (!productData) {
 }
 
 // Parallelize data fetching for better performance
-const [owner, tags, productImages, productFiles, productDocuments, embeddedProductsWithCreators] = await Promise.all([
+const [
+  owner,
+  tags,
+  productImages,
+  productFiles,
+  productDocuments,
+  embeddedProductsWithCreators,
+] = await Promise.all([
   getUserById(productData.user_id),
   getProductTags(productData.id),
   getProductImages(productData.id),
@@ -42,8 +57,8 @@ if (!owner) {
 }
 
 let currentUser = null;
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
+const accessToken = Astro.cookies.get('sb-access-token');
+const refreshToken = Astro.cookies.get('sb-refresh-token');
 
 if (accessToken && refreshToken) {
   try {
@@ -63,13 +78,15 @@ if (accessToken && refreshToken) {
 const isOwner = currentUser?.id === productData.user_id;
 
 // Get product contributors with role information
-const productContributorsWithRoles = await getProductContributorsWithRoles(productData.id);
+const productContributorsWithRoles = await getProductContributorsWithRoles(
+  productData.id
+);
 
 // Helper: Check if we should show the content viewer (has content)
-const shouldShowContentViewer = productFiles.length > 0 ||
+const shouldShowContentViewer =
+  productFiles.length > 0 ||
   productDocuments.length > 0 ||
   embeddedProductsWithCreators.length > 0;
-
 ---
 
 <Layout title={`${productData.title} - Game Loopers`}>
@@ -81,9 +98,9 @@ const shouldShowContentViewer = productFiles.length > 0 ||
           <!-- Product Images -->
           {productImages.length > 0 && (
             <ProductImageGallery
-              images={productImages.map(img => ({
+              images={productImages.map((img) => ({
                 url: img.file_url,
-                alt: img.title
+                alt: img.title,
               }))}
             />
           )}
@@ -96,7 +113,10 @@ const shouldShowContentViewer = productFiles.length > 0 ||
             <div class="product-page-header__top">
               <h1 class="product-page-header__title">{productData.title}</h1>
               {isOwner && (
-                <a href={`/products/${product}/edit`} class="product-page-header__edit-link">
+                <a
+                  href={`/products/${product}/edit`}
+                  class="product-page-header__edit-link"
+                >
                   <Button variant="outline" size="sm">
                     <span slot="text">Edit</span>
                   </Button>
@@ -108,7 +128,7 @@ const shouldShowContentViewer = productFiles.length > 0 ||
             )}
             {tags.length > 0 && (
               <div class="product-page-header__tags">
-                {tags.map(tag => (
+                {tags.map((tag) => (
                   <a href={`/tags/${tag.value}`} class="product-tag">
                     {tag.value}
                   </a>
@@ -137,7 +157,9 @@ const shouldShowContentViewer = productFiles.length > 0 ||
             <Card>
               <CardHeader>
                 <CardTitle>What's Included</CardTitle>
-                <CardDescription>All files, documents, and embedded products included with purchase</CardDescription>
+                <CardDescription>
+                  All files, documents, and embedded products included with purchase
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ProductContentViewer
@@ -153,41 +175,41 @@ const shouldShowContentViewer = productFiles.length > 0 ||
             </Card>
           )}
 
-        <!-- Creator & Contributors -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Created By</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <a href={`/users/${owner.handle}`} class="creator-profile">
-              <Avatar
-                src={owner.avatar_url}
-                alt={owner.name || owner.handle || 'Creator'}
-                size="lg"
-              />
-              <div class="creator-profile__info">
-                <h3 class="creator-profile__name">{owner.name || owner.handle}</h3>
-                <p class="creator-profile__handle">@{owner.handle}</p>
-                {owner.bio && (
-                  <p class="creator-profile__bio">{owner.bio}</p>
-                )}
-              </div>
-            </a>
-          </CardContent>
-          {productContributorsWithRoles.length > 0 && (
-            <>
-              <CardHeader>
-                <CardTitle>Contributors</CardTitle>
-                <CardDescription>
-                  Creators earning royalties from embedded content
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProductContributors contributorsWithRoles={productContributorsWithRoles} />
-              </CardContent>
-            </>
-          )}
-        </Card>
+          <!-- Creator & Contributors -->
+          <Card>
+            <CardHeader>
+              <CardTitle>Created By</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <a href={`/users/${owner.handle}`} class="creator-profile">
+                <Avatar
+                  src={owner.avatar_url}
+                  alt={owner.name || owner.handle || 'Creator'}
+                  size="lg"
+                />
+                <div class="creator-profile__info">
+                  <h3 class="creator-profile__name">{owner.name || owner.handle}</h3>
+                  <p class="creator-profile__handle">@{owner.handle}</p>
+                  {owner.bio && <p class="creator-profile__bio">{owner.bio}</p>}
+                </div>
+              </a>
+            </CardContent>
+            {productContributorsWithRoles.length > 0 && (
+              <>
+                <CardHeader>
+                  <CardTitle>Contributors</CardTitle>
+                  <CardDescription>
+                    Creators earning royalties from embedded content
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProductContributors
+                    contributorsWithRoles={productContributorsWithRoles}
+                  />
+                </CardContent>
+              </>
+            )}
+          </Card>
         </div>
       </div>
     </div>

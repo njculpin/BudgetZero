@@ -31,12 +31,8 @@ export interface ErrorContext {
  *
  * Never throws: monitoring must not be able to break the request it is observing.
  */
-export function captureError(
-  error: unknown,
-  context: ErrorContext
-): void {
-  const normalized =
-    error instanceof Error ? error : new Error(String(error));
+export function captureError(error: unknown, context: ErrorContext): void {
+  const normalized = error instanceof Error ? error : new Error(String(error));
 
   try {
     captureToProvider('error', normalized, context);

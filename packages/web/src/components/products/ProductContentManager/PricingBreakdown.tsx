@@ -1,4 +1,4 @@
-import { Show } from "solid-js";
+import { Show } from 'solid-js';
 
 export interface PricingBreakdownProps {
   totalPrice: number;
@@ -6,7 +6,7 @@ export interface PricingBreakdownProps {
 
 export default function PricingBreakdown(props: PricingBreakdownProps) {
   const formatPrice = (cents: number): string => {
-    if (cents === 0) return "$0.00";
+    if (cents === 0) return '$0.00';
     return `$${(cents / 100).toFixed(2)}`;
   };
 

@@ -3,7 +3,7 @@ interface Props {
   className?: string;
 }
 
-const { className = "" } = Astro.props;
+const { className = '' } = Astro.props;
 ---
 
 <div class={`form-actions ${className}`}>
@@ -11,22 +11,22 @@ const { className = "" } = Astro.props;
 </div>
 
 <style>
-.form-actions {
-  display: flex;
-  gap: var(--gap-lg);
-  justify-content: flex-end;
-  align-items: center;
-  padding-top: var(--spacing-2xl);
-}
-
-.form-actions > * {
-  text-decoration: none;
-}
-
-@media (max-width: 640px) {
   .form-actions {
-    flex-direction: column-reverse;
-    align-items: stretch;
+    display: flex;
+    gap: var(--gap-lg);
+    justify-content: flex-end;
+    align-items: center;
+    padding-top: var(--spacing-2xl);
   }
-}
+
+  .form-actions > * {
+    text-decoration: none;
+  }
+
+  @media (max-width: 640px) {
+    .form-actions {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
+  }
 </style>

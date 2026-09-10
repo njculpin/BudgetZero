@@ -1,26 +1,26 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import Card from "@/components/card/Card.astro";
-import CardHeader from "@/components/card/CardHeader.astro";
-import CardTitle from "@/components/card/CardTitle.astro";
-import CardContent from "@/components/card/CardContent.astro";
-import Badge from "@/components/Badge.astro";
-import { setSession } from "@gameloopers/core/auth";
-import { getSaleById, getSaleItems } from "@gameloopers/core/data-access/sales";
-import { getProductById, getProductFiles } from "@gameloopers/core/data-access/products";
+import Layout from '@/layouts/Layout.astro';
+import Card from '@/components/card/Card.astro';
+import CardHeader from '@/components/card/CardHeader.astro';
+import CardTitle from '@/components/card/CardTitle.astro';
+import CardContent from '@/components/card/CardContent.astro';
+import Badge from '@/components/Badge.astro';
+import { setSession } from '@gameloopers/core/auth';
+import { getSaleById, getSaleItems } from '@gameloopers/core/data-access/sales';
+import { getProductById, getProductFiles } from '@gameloopers/core/data-access/products';
 
 const { purchase: saleId } = Astro.params;
 
 if (!saleId) {
-  return Astro.redirect("/purchases");
+  return Astro.redirect('/purchases');
 }
 
 // Check authentication
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
+const accessToken = Astro.cookies.get('sb-access-token');
+const refreshToken = Astro.cookies.get('sb-refresh-token');
 
 if (!accessToken || !refreshToken) {
-  return Astro.redirect("/sign-in");
+  return Astro.redirect('/sign-in');
 }
 
 let session;
@@ -30,10 +30,10 @@ try {
     access_token: accessToken.value,
   });
   if (session.error || !session.data.user) {
-    return Astro.redirect("/sign-in");
+    return Astro.redirect('/sign-in');
   }
 } catch {
-  return Astro.redirect("/sign-in");
+  return Astro.redirect('/sign-in');
 }
 
 const userId = session.data.user.id;
@@ -42,12 +42,12 @@ const userId = session.data.user.id;
 const sale = await getSaleById(saleId);
 
 if (!sale) {
-  return Astro.redirect("/purchases");
+  return Astro.redirect('/purchases');
 }
 
 // Verify ownership
 if (sale.user_id !== userId) {
-  return Astro.redirect("/purchases");
+  return Astro.redirect('/purchases');
 }
 
 // Get sale items
@@ -79,9 +79,7 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
         <div class="purchase-header">
           <div class="purchase-header__content">
             <h1 class="purchase-header__title">Purchase Details</h1>
-            <p class="purchase-header__subtitle">
-              Order #{saleId.slice(0, 8)}...
-            </p>
+            <p class="purchase-header__subtitle">Order #{saleId.slice(0, 8)}...</p>
           </div>
           <div class="purchase-header__status">
             <Badge variant={sale.status === 'paid' ? 'success' : 'muted'}>
@@ -104,7 +102,9 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
               {completedDate && (
                 <div class="order-info__row">
                   <span class="order-info__label">Completed:</span>
-                  <span class="order-info__value">{completedDate.toLocaleDateString()}</span>
+                  <span class="order-info__value">
+                    {completedDate.toLocaleDateString()}
+                  </span>
                 </div>
               )}
               <div class="order-info__row">
@@ -131,9 +131,7 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
         {itemsWithDetails.map((item) => (
           <Card>
             <CardHeader>
-              <CardTitle>
-                {item.product?.title || "Unknown Product"}
-              </CardTitle>
+              <CardTitle>{item.product?.title || 'Unknown Product'}</CardTitle>
             </CardHeader>
             <CardContent>
               <div class="purchase-item">
@@ -160,7 +158,17 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
                           target="_blank"
                         >
                           <div class="download-item__icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
                               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                               <polyline points="7 10 12 15 17 10"></polyline>
                               <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -196,199 +204,199 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
 </Layout>
 
 <style>
-/* ===== Purchase Page ===== */
-.purchase-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-3xl);
-  max-width: 48rem;
-  margin: 0 auto;
-}
-
-/* ===== Purchase Header ===== */
-.purchase-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--gap-lg);
-}
-
-.purchase-header__content {
-  flex: 1;
-}
-
-.purchase-header__title {
-  margin: 0 0 var(--spacing-xs) 0;
-  font-size: var(--text-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--foreground);
-}
-
-.purchase-header__subtitle {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-.purchase-header__status {
-  flex-shrink: 0;
-}
-
-/* ===== Order Info ===== */
-.order-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
-}
-
-.order-info__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--border);
-}
-
-.order-info__row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.order-info__label {
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--muted-foreground);
-}
-
-.order-info__value {
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
-
-.order-info__value--mono {
-  font-family: monospace;
-  font-size: var(--text-xs);
-  word-break: break-all;
-}
-
-/* ===== Purchase Item ===== */
-.purchase-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-2xl);
-}
-
-.purchase-item__details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
-}
-
-.purchase-item__description {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-  line-height: var(--leading-relaxed);
-}
-
-.purchase-item__price {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--foreground);
-}
-
-/* ===== Downloads ===== */
-.purchase-downloads {
-  padding-top: var(--spacing-2xl);
-  border-top: 1px solid var(--border);
-}
-
-.purchase-downloads__title {
-  margin: 0 0 var(--spacing-lg) 0;
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
-
-.purchase-downloads__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
-}
-
-.download-item {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-md);
-  padding: var(--spacing-lg);
-  background-color: var(--muted);
-  border: var(--border-width-default) solid var(--border);
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  transition: all var(--duration-normal) var(--ease-in-out);
-}
-
-.download-item:hover {
-  background-color: var(--accent);
-  border-color: var(--primary);
-}
-
-.download-item__icon {
-  width: 20px;
-  height: 20px;
-  color: var(--primary);
-  flex-shrink: 0;
-}
-
-.download-item__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-xs);
-  flex: 1;
-}
-
-.download-item__title {
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--foreground);
-}
-
-.download-item__description {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-/* ===== Purchase Actions ===== */
-.purchase-actions {
-  display: flex;
-  justify-content: center;
-  padding-top: var(--spacing-2xl);
-}
-
-.purchase-actions__link {
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--primary);
-  text-decoration: none;
-  transition: color var(--duration-normal) var(--ease-in-out);
-}
-
-.purchase-actions__link:hover {
-  color: var(--foreground);
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .purchase-header {
+  /* ===== Purchase Page ===== */
+  .purchase-page {
+    display: flex;
     flex-direction: column;
+    gap: var(--gap-3xl);
+    max-width: 48rem;
+    margin: 0 auto;
+  }
+
+  /* ===== Purchase Header ===== */
+  .purchase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--gap-lg);
+  }
+
+  .purchase-header__content {
+    flex: 1;
+  }
+
+  .purchase-header__title {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+  }
+
+  .purchase-header__subtitle {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  .purchase-header__status {
+    flex-shrink: 0;
+  }
+
+  /* ===== Order Info ===== */
+  .order-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
   }
 
   .order-info__row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--gap-xs);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border);
   }
-}
+
+  .order-info__row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .order-info__label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--muted-foreground);
+  }
+
+  .order-info__value {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .order-info__value--mono {
+    font-family: monospace;
+    font-size: var(--text-xs);
+    word-break: break-all;
+  }
+
+  /* ===== Purchase Item ===== */
+  .purchase-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-2xl);
+  }
+
+  .purchase-item__details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .purchase-item__description {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    line-height: var(--leading-relaxed);
+  }
+
+  .purchase-item__price {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--foreground);
+  }
+
+  /* ===== Downloads ===== */
+  .purchase-downloads {
+    padding-top: var(--spacing-2xl);
+    border-top: 1px solid var(--border);
+  }
+
+  .purchase-downloads__title {
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .purchase-downloads__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .download-item {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-md);
+    padding: var(--spacing-lg);
+    background-color: var(--muted);
+    border: var(--border-width-default) solid var(--border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all var(--duration-normal) var(--ease-in-out);
+  }
+
+  .download-item:hover {
+    background-color: var(--accent);
+    border-color: var(--primary);
+  }
+
+  .download-item__icon {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  .download-item__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+    flex: 1;
+  }
+
+  .download-item__title {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+
+  .download-item__description {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+  }
+
+  /* ===== Purchase Actions ===== */
+  .purchase-actions {
+    display: flex;
+    justify-content: center;
+    padding-top: var(--spacing-2xl);
+  }
+
+  .purchase-actions__link {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--primary);
+    text-decoration: none;
+    transition: color var(--duration-normal) var(--ease-in-out);
+  }
+
+  .purchase-actions__link:hover {
+    color: var(--foreground);
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .purchase-header {
+      flex-direction: column;
+    }
+
+    .order-info__row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--gap-xs);
+    }
+  }
 </style>

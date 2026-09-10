@@ -77,11 +77,15 @@ export function makeContext(overrides: ContextOverrides = {}): RequestContext {
     userId,
     accessToken:
       overrides.accessToken === undefined
-        ? (userId === null ? null : 'test-access-token')
+        ? userId === null
+          ? null
+          : 'test-access-token'
         : overrides.accessToken,
     userEmail:
       overrides.userEmail === undefined
-        ? (userId === null ? null : 'user@example.com')
+        ? userId === null
+          ? null
+          : 'user@example.com'
         : overrides.userEmail,
     clientAddress: overrides.clientAddress ?? '203.0.113.1',
     authFailure: userId === null ? 'anonymous' : null,

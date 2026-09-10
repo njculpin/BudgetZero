@@ -17,7 +17,12 @@ export const payoutsExecute: Controller = async ({ request, clientAddress, userI
 
   if (!authResult.authorized) {
     return new Response(JSON.stringify({ error: authResult.error || 'Unauthorized' }), {
-      status: authResult.error === 'Not authenticated' || authResult.error === 'Invalid session' || authResult.error === 'Authentication failed' ? 401 : 403,
+      status:
+        authResult.error === 'Not authenticated' ||
+        authResult.error === 'Invalid session' ||
+        authResult.error === 'Authentication failed'
+          ? 401
+          : 403,
       headers: { 'Content-Type': 'application/json' },
     });
   }
@@ -74,7 +79,10 @@ export const payoutsExecute: Controller = async ({ request, clientAddress, userI
     // the request and the admin clicking Pay — and this route previously checked
     // only that an account id existed. The stored flag is kept current by the
     // account.updated webhook.
-    if (!recipient.stripe_connect_account_id || !recipient.stripe_connect_payouts_enabled) {
+    if (
+      !recipient.stripe_connect_account_id ||
+      !recipient.stripe_connect_payouts_enabled
+    ) {
       const reason = !recipient.stripe_connect_account_id
         ? 'No Connect account configured'
         : 'Stripe Connect payouts are not enabled for this account';
@@ -83,13 +91,10 @@ export const payoutsExecute: Controller = async ({ request, clientAddress, userI
       // to the creator's balance once their account is in good standing.
       await releasePayout(payoutId, reason);
 
-      return new Response(
-        JSON.stringify({ error: reason }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ error: reason }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Claim the payout by moving it pending -> processing conditionally. The status
@@ -131,10 +136,10 @@ export const payoutsExecute: Controller = async ({ request, clientAddress, userI
         backedCents,
       });
 
-      return new Response(
-        JSON.stringify({ error: 'Payout integrity check failed' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Payout integrity check failed' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // The Stripe transfer is the point of no return. Everything before it may be
@@ -159,9 +164,7 @@ export const payoutsExecute: Controller = async ({ request, clientAddress, userI
       );
     } catch (transferError) {
       const errorMessage =
-        transferError instanceof Error
-          ? transferError.message
-          : 'Transfer failed';
+        transferError instanceof Error ? transferError.message : 'Transfer failed';
 
       // No money moved. Return the reserved royalties to the creator's balance.
       // Wrapped so a release failure cannot mask the transfer failure that
@@ -281,8 +284,7 @@ export const payoutsExecute: Controller = async ({ request, clientAddress, userI
     captureError(error, { operation: 'payout.execute', userId: adminUserId });
     return new Response(
       JSON.stringify({
-        error:
-          error instanceof Error ? error.message : 'Failed to execute payout',
+        error: error instanceof Error ? error.message : 'Failed to execute payout',
       }),
       {
         status: 500,

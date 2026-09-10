@@ -1,5 +1,5 @@
-import { createSignal, createResource, Show, onMount } from "solid-js";
-import "./product-value-breakdown.css";
+import { createSignal, createResource, Show, onMount } from 'solid-js';
+import './product-value-breakdown.css';
 
 export interface ProductValueBreakdownProps {
   variantId: string;
@@ -58,8 +58,16 @@ export default function ProductValueBreakdown(props: ProductValueBreakdownProps)
 
           <Show when={savings() > 0}>
             <div class="value-breakdown__savings">
-              <svg class="value-breakdown__savings-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
+              <svg
+                class="value-breakdown__savings-icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="20 6 9 17 4 12" />
               </svg>
               <span class="value-breakdown__savings-text">
                 You save ${(savings() / 100).toFixed(2)} ({percentageSavings()}% off)

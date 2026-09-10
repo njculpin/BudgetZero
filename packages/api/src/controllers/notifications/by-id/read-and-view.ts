@@ -5,25 +5,32 @@ import type { Controller } from '../../../context';
  * Mark a notification as read and redirect to the entity
  */
 
-import { markNotificationAsRead, getNotificationById } from "@gameloopers/core/data-access/notifications";
+import {
+  markNotificationAsRead,
+  getNotificationById,
+} from '@gameloopers/core/data-access/notifications';
 
-export const notificationsIdReadAndView: Controller = async ({ request, params, userId }) => {
+export const notificationsIdReadAndView: Controller = async ({
+  request,
+  params,
+  userId,
+}) => {
   const { id } = params;
 
   if (!id) {
-    return redirect("/notifications");
+    return redirect('/notifications');
   }
 
   // Authenticate user
 
   if (!userId) {
-    return redirect("/sign-in");
+    return redirect('/sign-in');
   }
 
   // Verify notification belongs to user
   const notification = await getNotificationById(id);
   if (!notification || notification.user_id !== userId) {
-    return redirect("/notifications");
+    return redirect('/notifications');
   }
 
   // Mark as read
@@ -31,12 +38,12 @@ export const notificationsIdReadAndView: Controller = async ({ request, params, 
 
   // Get redirect URL from form data
   const formData = await request.formData();
-  const entityUrl = formData.get("entityUrl") as string;
+  const entityUrl = formData.get('entityUrl') as string;
 
   if (entityUrl) {
     return redirect(entityUrl);
   }
 
   // Fallback to notifications page
-  return redirect("/notifications");
+  return redirect('/notifications');
 };

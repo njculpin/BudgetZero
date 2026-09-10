@@ -189,9 +189,7 @@ describe('POST /api/webhooks/stripe', () => {
 
       // Re-creating it would double the customer's entitlement and the royalties.
       expect(sales.createSaleItem).not.toHaveBeenCalled();
-      expect(
-        royalties.createRoyaltyTransactionsForProduct
-      ).not.toHaveBeenCalled();
+      expect(royalties.createRoyaltyTransactionsForProduct).not.toHaveBeenCalled();
     });
 
     it('does not send a second receipt on a fully resumed run', async () => {
@@ -220,9 +218,7 @@ describe('POST /api/webhooks/stripe', () => {
       // Stripe does not retry 4xx, so this event is terminal — it must alert and
       // resolve the claim rather than leaving it orphaned as unprocessed work.
       expect(monitoring.captureError).toHaveBeenCalled();
-      expect(webhookEvents.markWebhookEventProcessed).toHaveBeenCalledWith(
-        EVENT_ID
-      );
+      expect(webhookEvents.markWebhookEventProcessed).toHaveBeenCalledWith(EVENT_ID);
     });
 
     it('alerts when the cart is empty at fulfilment time', async () => {
@@ -268,9 +264,7 @@ describe('POST /api/webhooks/stripe', () => {
 
       await post();
 
-      expect(
-        royalties.createRoyaltyTransactionsForProduct
-      ).toHaveBeenCalledWith(
+      expect(royalties.createRoyaltyTransactionsForProduct).toHaveBeenCalledWith(
         expect.objectContaining({
           productId: 'child-1',
           saleItemPriceCents: 1200,
@@ -304,9 +298,7 @@ describe('POST /api/webhooks/stripe', () => {
     });
 
     it('keeps the royalty on a partial refund', async () => {
-      vi.mocked(payments.verifyWebhookSignature).mockReturnValue(
-        refundEvent(100)
-      );
+      vi.mocked(payments.verifyWebhookSignature).mockReturnValue(refundEvent(100));
 
       const response = await post();
       const body = await response.json();
@@ -323,9 +315,7 @@ describe('POST /api/webhooks/stripe', () => {
     });
 
     it('refunds royalties on a full refund', async () => {
-      vi.mocked(payments.verifyWebhookSignature).mockReturnValue(
-        refundEvent(5000)
-      );
+      vi.mocked(payments.verifyWebhookSignature).mockReturnValue(refundEvent(5000));
 
       await post();
 
@@ -339,21 +329,17 @@ describe('POST /api/webhooks/stripe', () => {
     });
 
     it('releases a pending payout BEFORE refunding its royalties', async () => {
-      vi.mocked(payments.verifyWebhookSignature).mockReturnValue(
-        refundEvent(5000)
-      );
+      vi.mocked(payments.verifyWebhookSignature).mockReturnValue(refundEvent(5000));
 
       const order: string[] = [];
       vi.mocked(payouts.releasePayoutsForSale).mockImplementation(async () => {
         order.push('release');
         return [{ payoutId: 'p1', releasedCount: 2 }];
       });
-      vi.mocked(royalties.markSaleRoyaltiesAsRefunded).mockImplementation(
-        async () => {
-          order.push('refund');
-          return 2;
-        }
-      );
+      vi.mocked(royalties.markSaleRoyaltiesAsRefunded).mockImplementation(async () => {
+        order.push('refund');
+        return 2;
+      });
 
       await post();
 
@@ -363,9 +349,7 @@ describe('POST /api/webhooks/stripe', () => {
     });
 
     it('reports a refund for a charge with no matching sale', async () => {
-      vi.mocked(payments.verifyWebhookSignature).mockReturnValue(
-        refundEvent(5000)
-      );
+      vi.mocked(payments.verifyWebhookSignature).mockReturnValue(refundEvent(5000));
       vi.mocked(sales.getSaleByStripeChargeId).mockResolvedValue(null);
 
       const response = await post();
@@ -395,10 +379,7 @@ describe('POST /api/webhooks/stripe', () => {
 
       expect(response.status).toBe(200);
       expect(body.royaltiesRestored).toBe(2);
-      expect(payouts.reversePayout).toHaveBeenCalledWith(
-        'tr_1',
-        expect.any(String)
-      );
+      expect(payouts.reversePayout).toHaveBeenCalledWith('tr_1', expect.any(String));
     });
 
     it('escalates a reversal with no matching payout', async () => {

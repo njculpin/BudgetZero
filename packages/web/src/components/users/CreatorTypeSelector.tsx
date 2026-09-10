@@ -1,4 +1,4 @@
-import { createSignal, For } from "solid-js";
+import { createSignal, For } from 'solid-js';
 
 interface CreatorTypeSelectorProps {
   initialTags?: string[];
@@ -7,20 +7,20 @@ interface CreatorTypeSelectorProps {
 }
 
 const CREATOR_TYPES = [
-  "Game Designer",
-  "Illustrator",
-  "3D Modeler",
-  "Painter",
-  "2D Printer",
-  "3D Printer",
-  "Writer",
-  "Designer",
+  'Game Designer',
+  'Illustrator',
+  '3D Modeler',
+  'Painter',
+  '2D Printer',
+  '3D Printer',
+  'Writer',
+  'Designer',
 ];
 
 export default function CreatorTypeSelector(props: CreatorTypeSelectorProps) {
   const [selectedTags, setSelectedTags] = createSignal<string[]>(props.initialTags || []);
   const [isSaving, setIsSaving] = createSignal(false);
-  const [saveStatus, setSaveStatus] = createSignal("");
+  const [saveStatus, setSaveStatus] = createSignal('');
 
   const toggleTag = async (tag: string) => {
     const current = selectedTags();
@@ -43,32 +43,32 @@ export default function CreatorTypeSelector(props: CreatorTypeSelectorProps) {
 
   const saveTags = async (tags: string[]) => {
     setIsSaving(true);
-    setSaveStatus("Saving...");
+    setSaveStatus('Saving...');
 
     try {
       const formData = new FormData();
-      formData.append("tags", JSON.stringify(tags));
+      formData.append('tags', JSON.stringify(tags));
 
-      const response = await fetch("/api/users/update-tags", {
-        method: "POST",
+      const response = await fetch('/api/users/update-tags', {
+        method: 'POST',
         body: formData,
-        credentials: "include",
+        credentials: 'include',
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setSaveStatus("Error: " + (data.error || "Failed to save"));
-        setTimeout(() => setSaveStatus(""), 3000);
+        setSaveStatus('Error: ' + (data.error || 'Failed to save'));
+        setTimeout(() => setSaveStatus(''), 3000);
         setIsSaving(false);
         return;
       }
 
-      setSaveStatus("Saved");
-      setTimeout(() => setSaveStatus(""), 2000);
+      setSaveStatus('Saved');
+      setTimeout(() => setSaveStatus(''), 2000);
       setIsSaving(false);
     } catch {
-      setSaveStatus("Error: Failed to save");
-      setTimeout(() => setSaveStatus(""), 3000);
+      setSaveStatus('Error: Failed to save');
+      setTimeout(() => setSaveStatus(''), 3000);
       setIsSaving(false);
     }
   };
@@ -81,7 +81,9 @@ export default function CreatorTypeSelector(props: CreatorTypeSelectorProps) {
           Select all that apply. This helps others find you in the creator directory.
         </p>
         {saveStatus() && (
-          <div class={`creator-type-selector__status creator-type-selector__status--${saveStatus().startsWith('Error') ? 'error' : 'success'}`}>
+          <div
+            class={`creator-type-selector__status creator-type-selector__status--${saveStatus().startsWith('Error') ? 'error' : 'success'}`}
+          >
             {saveStatus()}
           </div>
         )}
@@ -94,8 +96,8 @@ export default function CreatorTypeSelector(props: CreatorTypeSelectorProps) {
               type="button"
               class={`creator-type-selector__option ${
                 selectedTags().includes(type)
-                  ? "creator-type-selector__option--active"
-                  : ""
+                  ? 'creator-type-selector__option--active'
+                  : ''
               }`}
               onClick={() => toggleTag(type)}
               disabled={isSaving()}

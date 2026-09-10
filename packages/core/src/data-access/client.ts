@@ -1,6 +1,6 @@
 // src/lib/data-access/client.ts
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
 // Public client for unauthenticated/client-side operations
 // Uses anon key with RLS policies enforced
@@ -9,9 +9,9 @@ export const dataClient = createClient(
   import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
   {
     auth: {
-      flowType: "pkce",
+      flowType: 'pkce',
     },
-  },
+  }
 );
 
 // Server-side client with service role key (bypasses RLS)
@@ -25,5 +25,5 @@ export const serverClient = createClient(
       autoRefreshToken: false,
       persistSession: false,
     },
-  },
+  }
 );

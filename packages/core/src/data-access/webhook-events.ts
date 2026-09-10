@@ -24,14 +24,12 @@ export async function claimWebhookEvent(
   eventType: string,
   payload: Record<string, unknown>
 ): Promise<boolean> {
-  const { error } = await serverClient
-    .from('stripe_webhook_events')
-    .insert({
-      stripe_event_id: stripeEventId,
-      event_type: eventType,
-      payload,
-      processed: false,
-    });
+  const { error } = await serverClient.from('stripe_webhook_events').insert({
+    stripe_event_id: stripeEventId,
+    event_type: eventType,
+    payload,
+    processed: false,
+  });
 
   if (!error) {
     return true;
@@ -44,17 +42,13 @@ export async function claimWebhookEvent(
 
   // Any other failure is a real error. Rethrow so the handler returns non-2xx and
   // Stripe retries, rather than silently dropping a paid order.
-  throw new Error(
-    `Failed to claim webhook event ${stripeEventId}: ${error.message}`
-  );
+  throw new Error(`Failed to claim webhook event ${stripeEventId}: ${error.message}`);
 }
 
 /**
  * Mark a claimed event as fully processed.
  */
-export async function markWebhookEventProcessed(
-  stripeEventId: string
-): Promise<void> {
+export async function markWebhookEventProcessed(stripeEventId: string): Promise<void> {
   const { error } = await serverClient
     .from('stripe_webhook_events')
     .update({
@@ -65,10 +59,7 @@ export async function markWebhookEventProcessed(
     .eq('stripe_event_id', stripeEventId);
 
   if (error) {
-    console.error(
-      `Failed to mark webhook event ${stripeEventId} processed:`,
-      error
-    );
+    console.error(`Failed to mark webhook event ${stripeEventId} processed:`, error);
   }
 }
 
@@ -78,9 +69,7 @@ export async function markWebhookEventProcessed(
  * Called when processing throws partway through. Deleting the claim rather than
  * leaving it `processed: false` keeps the claim check a single unambiguous test.
  */
-export async function releaseWebhookEvent(
-  stripeEventId: string
-): Promise<void> {
+export async function releaseWebhookEvent(stripeEventId: string): Promise<void> {
   const { error } = await serverClient
     .from('stripe_webhook_events')
     .delete()
@@ -88,10 +77,7 @@ export async function releaseWebhookEvent(
     .eq('processed', false);
 
   if (error) {
-    console.error(
-      `Failed to release webhook event ${stripeEventId}:`,
-      error
-    );
+    console.error(`Failed to release webhook event ${stripeEventId}:`, error);
   }
 }
 

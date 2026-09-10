@@ -1,4 +1,4 @@
-import { serverClient } from "./client";
+import { serverClient } from './client';
 
 export interface TagWithCount {
   value: string;
@@ -15,10 +15,12 @@ export const getAllTags = async (): Promise<TagWithCount[]> => {
   // Fetch product tags - only from public products
   const { data: productTagsData, error: productError } = await serverClient
     .from('product_tags')
-    .select(`
+    .select(
+      `
       value,
       products!inner(status)
-    `)
+    `
+    )
     .eq('deleted', false)
     .eq('products.deleted', false)
     .eq('products.status', 'public');

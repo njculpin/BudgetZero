@@ -1,12 +1,12 @@
-import { Show, createEffect, onCleanup } from "solid-js";
-import { type JSX, type ParentComponent } from "solid-js";
-import "./modal.css";
+import { Show, createEffect, onCleanup } from 'solid-js';
+import { type JSX, type ParentComponent } from 'solid-js';
+import './modal.css';
 
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
   showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
   closeOnEscape?: boolean;
@@ -27,7 +27,7 @@ export default function Modal(props: ModalProps) {
   let modalRef: HTMLDivElement | undefined;
   let previouslyFocusedElement: HTMLElement | null = null;
 
-  const size = props.size || "md";
+  const size = props.size || 'md';
   const showCloseButton = props.showCloseButton !== false; // default true
   const closeOnOverlayClick = props.closeOnOverlayClick !== false; // default true
   const closeOnEscape = props.closeOnEscape !== false; // default true
@@ -36,21 +36,21 @@ export default function Modal(props: ModalProps) {
   createEffect(() => {
     if (props.isOpen && closeOnEscape) {
       const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === "Escape") {
+        if (e.key === 'Escape') {
           props.onClose();
         }
       };
-      window.addEventListener("keydown", handleEscape);
-      return () => window.removeEventListener("keydown", handleEscape);
+      window.addEventListener('keydown', handleEscape);
+      return () => window.removeEventListener('keydown', handleEscape);
     }
   });
 
   // Prevent body scroll when modal is open
   createEffect(() => {
     if (props.isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
   });
 
@@ -61,7 +61,8 @@ export default function Modal(props: ModalProps) {
       previouslyFocusedElement = document.activeElement as HTMLElement;
 
       // Find all focusable elements in modal
-      const focusableElements = modalRef.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS);
+      const focusableElements =
+        modalRef.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS);
       const firstFocusable = focusableElements[0];
       const lastFocusable = focusableElements[focusableElements.length - 1];
 
@@ -76,7 +77,9 @@ export default function Modal(props: ModalProps) {
 
         // Get currently focused element
         const focusedElement = document.activeElement;
-        const focusedIndex = Array.from(focusableElements).indexOf(focusedElement as HTMLElement);
+        const focusedIndex = Array.from(focusableElements).indexOf(
+          focusedElement as HTMLElement
+        );
 
         if (e.shiftKey) {
           // Shift + Tab - move backwards
@@ -100,7 +103,10 @@ export default function Modal(props: ModalProps) {
         window.removeEventListener('keydown', handleTabKey);
 
         // Restore focus to previously focused element
-        if (previouslyFocusedElement && typeof previouslyFocusedElement.focus === 'function') {
+        if (
+          previouslyFocusedElement &&
+          typeof previouslyFocusedElement.focus === 'function'
+        ) {
           previouslyFocusedElement.focus();
         }
       });
@@ -122,7 +128,7 @@ export default function Modal(props: ModalProps) {
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
-          aria-labelledby={props.title ? "modal-title" : undefined}
+          aria-labelledby={props.title ? 'modal-title' : undefined}
         >
           <Show when={props.title || showCloseButton}>
             <div class="modal__header">
@@ -170,7 +176,7 @@ export const ModalHeader: ParentComponent<ModalHeaderProps> = (props) => {
   return (
     <div
       class="modal__custom-header"
-      classList={{ "modal__custom-header--centered": props.centered }}
+      classList={{ 'modal__custom-header--centered': props.centered }}
     >
       <Show when={props.icon}>
         <div class="modal__icon-wrapper">{props.icon}</div>
@@ -182,16 +188,12 @@ export const ModalHeader: ParentComponent<ModalHeaderProps> = (props) => {
 
 export interface ModalFooterProps {
   children: JSX.Element;
-  justify?: "start" | "end" | "center" | "between";
+  justify?: 'start' | 'end' | 'center' | 'between';
 }
 
 export const ModalFooter: ParentComponent<ModalFooterProps> = (props) => {
-  const justify = props.justify || "end";
-  return (
-    <div class={`modal__footer modal__footer--${justify}`}>
-      {props.children}
-    </div>
-  );
+  const justify = props.justify || 'end';
+  return <div class={`modal__footer modal__footer--${justify}`}>{props.children}</div>;
 };
 
 // Confirm Dialog Variant
@@ -204,21 +206,16 @@ export interface ConfirmModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: "danger" | "warning" | "info";
+  variant?: 'danger' | 'warning' | 'info';
 }
 
 export function ConfirmModal(props: ConfirmModalProps) {
-  const confirmText = props.confirmText || "Confirm";
-  const cancelText = props.cancelText || "Cancel";
-  const variant = props.variant || "info";
+  const confirmText = props.confirmText || 'Confirm';
+  const cancelText = props.cancelText || 'Cancel';
+  const variant = props.variant || 'info';
 
   return (
-    <Modal
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      title={props.title}
-      size="sm"
-    >
+    <Modal isOpen={props.isOpen} onClose={props.onClose} title={props.title} size="sm">
       <div class="modal__message">{props.message}</div>
       <ModalFooter>
         <button
@@ -230,7 +227,7 @@ export function ConfirmModal(props: ConfirmModalProps) {
         </button>
         <button
           type="button"
-          class={`button button--${variant === "danger" ? "destructive" : "primary"} button--md`}
+          class={`button button--${variant === 'danger' ? 'destructive' : 'primary'} button--md`}
           onClick={props.onConfirm}
         >
           <span class="button__text">{confirmText}</span>

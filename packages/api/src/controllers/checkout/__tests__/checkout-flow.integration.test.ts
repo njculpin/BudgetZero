@@ -14,7 +14,12 @@
 
 import { describe, it, expect, beforeEach, afterEach, beforeAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
-import { getOrCreateCart, addToCart, getCartItems, clearCart } from '@gameloopers/core/data-access/cart';
+import {
+  getOrCreateCart,
+  addToCart,
+  getCartItems,
+  clearCart,
+} from '@gameloopers/core/data-access/cart';
 import { createCheckoutSession } from '@gameloopers/core/payments/checkout';
 import { verifyWebhookSignature } from '@gameloopers/core/payments/checkout';
 import { getSaleByStripeChargeId } from '@gameloopers/core/data-access/sales';
@@ -40,7 +45,6 @@ let testContributorUserId: string;
 let testProductId: string;
 let testEmbeddedProductId: string;
 let testProductWithEmbedId: string;
-
 
 // Test royalty IDs
 let embeddedProductRoyaltyId: string;
@@ -277,7 +281,11 @@ describe('Checkout Flow Integration Tests', () => {
         },
       });
 
-      const event = verifyWebhookSignature(webhookPayload, 'mock_signature', 'mock_secret');
+      const event = verifyWebhookSignature(
+        webhookPayload,
+        'mock_signature',
+        'mock_secret'
+      );
       expect(event).toBeDefined();
       expect(event.type).toBe('checkout.session.completed');
 
@@ -391,7 +399,11 @@ describe('Checkout Flow Integration Tests', () => {
         },
       });
 
-      const event = verifyWebhookSignature(webhookPayload, 'mock_signature', 'mock_secret');
+      const event = verifyWebhookSignature(
+        webhookPayload,
+        'mock_signature',
+        'mock_secret'
+      );
       const session = event.data.object as any;
 
       // Create sale
@@ -465,7 +477,9 @@ describe('Checkout Flow Integration Tests', () => {
         .select('*')
         .eq('sale_id', sale!.id);
       expect(royalties!.length).toBeGreaterThan(0);
-      expect(royalties!.some(r => r.recipient_user_id === testContributorUserId)).toBe(true);
+      expect(royalties!.some((r) => r.recipient_user_id === testContributorUserId)).toBe(
+        true
+      );
     });
 
     it('should handle multiple products in cart', async () => {
@@ -525,7 +539,11 @@ describe('Checkout Flow Integration Tests', () => {
         },
       });
 
-      const event = verifyWebhookSignature(webhookPayload, 'mock_signature', 'mock_secret');
+      const event = verifyWebhookSignature(
+        webhookPayload,
+        'mock_signature',
+        'mock_secret'
+      );
       const session = event.data.object as any;
 
       // Create sale
@@ -649,18 +667,16 @@ describe('Checkout Flow Integration Tests', () => {
       expect(sale1).toBeDefined();
 
       // Attempt to create duplicate sale with same charge_id
-      const { error: duplicateError } = await supabase
-        .from('sales')
-        .insert({
-          user_id: testBuyerUserId,
-          user_email: testBuyerEmail,
-          price_cents: 1000,
-          tax_cents: 0,
-          currency: 'usd',
-          stripe_charge_id: chargeId, // Same charge ID
-          status: 'paid',
-          payment_method: 'stripe',
-        });
+      const { error: duplicateError } = await supabase.from('sales').insert({
+        user_id: testBuyerUserId,
+        user_email: testBuyerEmail,
+        price_cents: 1000,
+        tax_cents: 0,
+        currency: 'usd',
+        stripe_charge_id: chargeId, // Same charge ID
+        status: 'paid',
+        payment_method: 'stripe',
+      });
 
       // Should fail with unique constraint violation
       expect(duplicateError).toBeDefined();
@@ -683,7 +699,11 @@ describe('Checkout Flow Integration Tests', () => {
         },
       });
 
-      const event = verifyWebhookSignature(webhookPayload, 'mock_signature', 'mock_secret');
+      const event = verifyWebhookSignature(
+        webhookPayload,
+        'mock_signature',
+        'mock_secret'
+      );
       const session = event.data.object as any;
 
       // Verify metadata is missing
@@ -769,7 +789,11 @@ describe('Checkout Flow Integration Tests', () => {
         },
       });
 
-      const event = verifyWebhookSignature(webhookPayload, 'mock_signature', 'mock_secret');
+      const event = verifyWebhookSignature(
+        webhookPayload,
+        'mock_signature',
+        'mock_secret'
+      );
       expect(event.type).toBe('charge.refunded');
 
       // Mark sale as refunded
@@ -858,10 +882,7 @@ describe('Checkout Flow Integration Tests', () => {
         .single();
 
       // Mark sale as refunded
-      await supabase
-        .from('sales')
-        .update({ status: 'refunded' })
-        .eq('id', sale!.id);
+      await supabase.from('sales').update({ status: 'refunded' }).eq('id', sale!.id);
 
       // Only mark READY_TO_PAY royalties as refunded (not paid ones)
       await supabase
@@ -880,5 +901,4 @@ describe('Checkout Flow Integration Tests', () => {
       expect(unchangedRoyalty!.status).toBe('paid'); // Should still be 'paid'
     });
   });
-
 });

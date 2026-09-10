@@ -52,9 +52,7 @@ describe('checkRateLimit', () => {
   });
 
   it('allows the request when the store errors (fails open)', async () => {
-    vi.mocked(serverClient.rpc).mockResolvedValue(
-      mockRpcError('connection refused')
-    );
+    vi.mocked(serverClient.rpc).mockResolvedValue(mockRpcError('connection refused'));
 
     const result = await checkRateLimit(rule, 'ip:1.2.3.4');
 
@@ -86,9 +84,7 @@ describe('rateLimitIdentity', () => {
   const bareRequest = () => new Request('http://localhost/api/auth/sign-in');
 
   it('prefers the user id, which survives IP rotation', () => {
-    expect(rateLimitIdentity(bareRequest(), '1.2.3.4', 'user-1')).toBe(
-      'user:user-1'
-    );
+    expect(rateLimitIdentity(bareRequest(), '1.2.3.4', 'user-1')).toBe('user:user-1');
   });
 
   it('falls back to the client address for anonymous callers', () => {

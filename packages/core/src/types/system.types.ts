@@ -1,4 +1,4 @@
-import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
+import type { BaseEntity, BaseEntityWithoutDelete } from './common.types';
 
 export type NotificationEntityType = 'user' | 'document' | 'product' | 'sale';
 export type NotificationDeliveryType = 'push' | 'email' | 'inapp';
@@ -11,7 +11,8 @@ export type NotificationActionType =
   | 'general';
 
 export type ActivityEntityType = 'user' | 'document' | 'product' | 'sale';
-export type ActivityActionType = 'created' | 'updated' | 'deleted' | 'public' | 'purchased' | 'reviewed';
+export type ActivityActionType =
+  'created' | 'updated' | 'deleted' | 'public' | 'purchased' | 'reviewed';
 export type VerificationTokenType = 'email_verification' | 'password_reset';
 
 export interface License extends BaseEntity {

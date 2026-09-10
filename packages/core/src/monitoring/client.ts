@@ -18,8 +18,7 @@ type SentryModule = {
   ) => void;
 };
 
-const dsn =
-  import.meta.env.PUBLIC_SENTRY_DSN || process.env.PUBLIC_SENTRY_DSN;
+const dsn = import.meta.env.PUBLIC_SENTRY_DSN || process.env.PUBLIC_SENTRY_DSN;
 
 /**
  * Resolved once and cached. `null` means "no provider configured"; the promise is

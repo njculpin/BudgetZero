@@ -1,5 +1,5 @@
-import { defineMiddleware } from "astro:middleware";
-import { resolvePageAuth } from "@/lib/page-auth";
+import { defineMiddleware } from 'astro:middleware';
+import { resolvePageAuth } from '@/lib/page-auth';
 
 /**
  * Page routes that require a session.
@@ -9,7 +9,7 @@ import { resolvePageAuth } from "@/lib/page-auth";
  * their own ownership and role checks; this only establishes that someone is
  * signed in.
  */
-const PROTECTED_ROUTES = ["/payouts", "/connect/dashboard", "/admin"];
+const PROTECTED_ROUTES = ['/payouts', '/connect/dashboard', '/admin'];
 
 /**
  * `/api` is deliberately absent.
@@ -48,10 +48,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // A missing signing key is a deployment fault, not a signed-out user.
       // Sending someone to sign-in would hide the real problem behind a
       // redirect loop they can never escape.
-      if (failure === "unconfigured") {
-        console.error("Auth is not configured: no signing key available.");
+      if (failure === 'unconfigured') {
+        console.error('Auth is not configured: no signing key available.');
       }
-      return redirect("/sign-in");
+      return redirect('/sign-in');
     }
 
     // Kept for pages that read it. `resolvePageAuth` has already refreshed the
@@ -60,7 +60,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     return next();
   } catch (error) {
-    console.error("Auth middleware error:", error);
-    return redirect("/sign-in");
+    console.error('Auth middleware error:', error);
+    return redirect('/sign-in');
   }
 });

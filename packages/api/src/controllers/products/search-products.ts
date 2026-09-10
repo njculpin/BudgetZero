@@ -1,5 +1,5 @@
 import type { Controller } from '../../context';
-import { searchProducts } from "@gameloopers/core/data-access/products";
+import { searchProducts } from '@gameloopers/core/data-access/products';
 
 /**
  * Search the caller's own products.
@@ -14,19 +14,19 @@ import { searchProducts } from "@gameloopers/core/data-access/products";
  * scoped to a single user's products.
  */
 export const productsSearchProducts: Controller = async ({ userId, url }) => {
-  const query = url.searchParams.get("q");
+  const query = url.searchParams.get('q');
 
   if (!userId) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
   if (!query) {
-    return new Response(JSON.stringify({ error: "Query parameter required" }), {
+    return new Response(JSON.stringify({ error: 'Query parameter required' }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -44,17 +44,14 @@ export const productsSearchProducts: Controller = async ({ userId, url }) => {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error("Error searching products:", error);
-    return new Response(
-      JSON.stringify({ error: "An unexpected error occurred" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    console.error('Error searching products:', error);
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };

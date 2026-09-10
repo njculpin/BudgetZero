@@ -1,5 +1,5 @@
-import { serverClient } from "./client";
-import type { User } from "../types";
+import { serverClient } from './client';
+import type { User } from '../types';
 
 /** A `users -> user_tags` join row, as PostgREST returns it. */
 interface CreatorRow {
@@ -22,8 +22,8 @@ export interface UpdateUserProfileParams {
  */
 export const getUsersByDateJoined = async (): Promise<User[] | []> => {
   const { data, error } = await serverClient
-    .from("users")
-    .select("id, handle, avatar_url")
+    .from('users')
+    .select('id, handle, avatar_url')
     .limit(30);
 
   if (error) {
@@ -39,10 +39,10 @@ export const getUsersByDateJoined = async (): Promise<User[] | []> => {
  */
 export const getUserById = async (userId: string): Promise<User | null> => {
   const { data, error } = await serverClient
-    .from("users")
-    .select("*")
-    .eq("id", userId)
-    .eq("deleted", false)
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .eq('deleted', false)
     .single();
 
   if (error) {
@@ -58,10 +58,10 @@ export const getUserById = async (userId: string): Promise<User | null> => {
  */
 export const getUserByHandle = async (handle: string): Promise<User | null> => {
   const { data, error } = await serverClient
-    .from("users")
-    .select("*")
-    .ilike("handle", handle)
-    .eq("deleted", false)
+    .from('users')
+    .select('*')
+    .ilike('handle', handle)
+    .eq('deleted', false)
     .single();
 
   if (error) {
@@ -83,17 +83,17 @@ export const updateUserProfile = async (
   if (updates.handle) {
     const isAvailable = await checkHandleAvailability(updates.handle, userId);
     if (!isAvailable) {
-      throw new Error("Handle is already taken");
+      throw new Error('Handle is already taken');
     }
   }
 
   const { error } = await serverClient
-    .from("users")
+    .from('users')
     .update({
       ...updates,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", userId);
+    .eq('id', userId);
 
   if (error) {
     throw error;
@@ -106,16 +106,14 @@ export const updateUserProfile = async (
 /**
  * Mark user's onboarding as completed
  */
-export const completeOnboarding = async (
-  userId: string
-): Promise<User | null> => {
+export const completeOnboarding = async (userId: string): Promise<User | null> => {
   const { error } = await serverClient
-    .from("users")
+    .from('users')
     .update({
       onboarding_completed: true,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", userId);
+    .eq('id', userId);
 
   if (error) {
     throw error;
@@ -147,7 +145,7 @@ export const syncConnectAccountStatus = async (
   status: ConnectAccountStatusUpdate
 ): Promise<boolean> => {
   const { data, error } = await serverClient
-    .from("users")
+    .from('users')
     .update({
       stripe_connect_details_submitted: status.detailsSubmitted,
       stripe_connect_charges_enabled: status.chargesEnabled,
@@ -155,11 +153,11 @@ export const syncConnectAccountStatus = async (
       stripe_connect_onboarded: status.detailsSubmitted,
       updated_at: new Date().toISOString(),
     })
-    .eq("stripe_connect_account_id", stripeConnectAccountId)
-    .select("id");
+    .eq('stripe_connect_account_id', stripeConnectAccountId)
+    .select('id');
 
   if (error) {
-    console.error("Error syncing Connect account status:", error);
+    console.error('Error syncing Connect account status:', error);
     return false;
   }
 
@@ -176,14 +174,14 @@ export const checkHandleAvailability = async (
   currentUserId?: string
 ): Promise<boolean> => {
   let query = serverClient
-    .from("users")
-    .select("id")
-    .ilike("handle", handle)
-    .eq("deleted", false);
+    .from('users')
+    .select('id')
+    .ilike('handle', handle)
+    .eq('deleted', false);
 
   // If checking for current user, exclude their own record
   if (currentUserId) {
-    query = query.neq("id", currentUserId);
+    query = query.neq('id', currentUserId);
   }
 
   const { data, error } = await query;
@@ -208,14 +206,14 @@ export const searchUsers = async (query: string): Promise<User[]> => {
   const searchTerm = `%${query.trim()}%`;
 
   const { data, error } = await serverClient
-    .from("users")
-    .select("*")
-    .eq("deleted", false)
+    .from('users')
+    .select('*')
+    .eq('deleted', false)
     .or(`handle.ilike.${searchTerm},name.ilike.${searchTerm}`)
     .limit(10);
 
   if (error) {
-    console.error("Error searching users:", error);
+    console.error('Error searching users:', error);
     return [];
   }
 
@@ -235,27 +233,31 @@ export const getCreators = async (params?: {
 
   // Build the query
   let query = serverClient
-    .from("users")
-    .select(`
+    .from('users')
+    .select(
+      `
       *,
       user_tags (
         value
       )
-    `)
-    .eq("deleted", false)
-    .order("created_at", { ascending: false })
+    `
+    )
+    .eq('deleted', false)
+    .order('created_at', { ascending: false })
     .limit(limit);
 
   // Add search filter
   if (search && search.trim().length > 0) {
     const searchTerm = `%${search.trim()}%`;
-    query = query.or(`handle.ilike.${searchTerm},name.ilike.${searchTerm},bio.ilike.${searchTerm}`);
+    query = query.or(
+      `handle.ilike.${searchTerm},name.ilike.${searchTerm},bio.ilike.${searchTerm}`
+    );
   }
 
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error fetching creators:", error);
+    console.error('Error fetching creators:', error);
     return [];
   }
 
@@ -290,9 +292,7 @@ export const getCreators = async (params?: {
 
   // Filter by tags if specified
   if (tags && tags.length > 0) {
-    return creators.filter((creator) =>
-      tags.some((tag) => creator.tags.includes(tag))
-    );
+    return creators.filter((creator) => tags.some((tag) => creator.tags.includes(tag)));
   }
 
   return creators;
@@ -303,13 +303,13 @@ export const getCreators = async (params?: {
  */
 export const getUserTags = async (userId: string): Promise<string[]> => {
   const { data, error } = await serverClient
-    .from("user_tags")
-    .select("value")
-    .eq("user_id", userId)
-    .eq("deleted", false);
+    .from('user_tags')
+    .select('value')
+    .eq('user_id', userId)
+    .eq('deleted', false);
 
   if (error) {
-    console.error("Error fetching user tags:", error);
+    console.error('Error fetching user tags:', error);
     return [];
   }
 
@@ -319,17 +319,14 @@ export const getUserTags = async (userId: string): Promise<string[]> => {
 /**
  * Add a tag to a user
  */
-export const addUserTag = async (
-  userId: string,
-  tag: string
-): Promise<boolean> => {
-  const { error } = await serverClient.from("user_tags").insert({
+export const addUserTag = async (userId: string, tag: string): Promise<boolean> => {
+  const { error } = await serverClient.from('user_tags').insert({
     user_id: userId,
     value: tag,
   });
 
   if (error) {
-    console.error("Error adding user tag:", error);
+    console.error('Error adding user tag:', error);
     return false;
   }
 
@@ -339,18 +336,15 @@ export const addUserTag = async (
 /**
  * Remove a tag from a user
  */
-export const removeUserTag = async (
-  userId: string,
-  tag: string
-): Promise<boolean> => {
+export const removeUserTag = async (userId: string, tag: string): Promise<boolean> => {
   const { error } = await serverClient
-    .from("user_tags")
+    .from('user_tags')
     .update({ deleted: true, deleted_at: new Date().toISOString() })
-    .eq("user_id", userId)
-    .eq("value", tag);
+    .eq('user_id', userId)
+    .eq('value', tag);
 
   if (error) {
-    console.error("Error removing user tag:", error);
+    console.error('Error removing user tag:', error);
     return false;
   }
 

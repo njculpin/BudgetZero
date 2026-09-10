@@ -1,13 +1,13 @@
 import type { Controller } from '../../../context';
-import { getProductDocuments } from "@gameloopers/core/data-access/products";
+import { getProductDocuments } from '@gameloopers/core/data-access/products';
 
 export const productsProductIdDocuments: Controller = async ({ params }) => {
   const { productId } = params;
 
   if (!productId) {
-    return new Response(JSON.stringify({ error: "Product ID is required" }), {
+    return new Response(JSON.stringify({ error: 'Product ID is required' }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -15,7 +15,7 @@ export const productsProductIdDocuments: Controller = async ({ params }) => {
     const documents = await getProductDocuments(productId);
 
     // Map to simpler format for price breakdown
-    const documentPricing = documents.map(doc => ({
+    const documentPricing = documents.map((doc) => ({
       id: doc.id,
       title: doc.document.title,
       price_cents: doc.price_cents,
@@ -23,16 +23,13 @@ export const productsProductIdDocuments: Controller = async ({ params }) => {
 
     return new Response(JSON.stringify({ documents: documentPricing }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error("Error fetching product documents:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to fetch product documents" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    console.error('Error fetching product documents:', error);
+    return new Response(JSON.stringify({ error: 'Failed to fetch product documents' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };

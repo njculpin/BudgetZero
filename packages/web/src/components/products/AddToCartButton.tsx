@@ -1,12 +1,12 @@
-import { createSignal, Show } from "solid-js";
-import type { Product } from "@gameloopers/core/types";
-import "./add-to-cart-button.css";
+import { createSignal, Show } from 'solid-js';
+import type { Product } from '@gameloopers/core/types';
+import './add-to-cart-button.css';
 
 interface AddToCartButtonProps {
   productId: string;
   productTitle: string;
   priceCents: number | null | undefined;
-  status: Product["status"];
+  status: Product['status'];
   isOwner: boolean;
   isAuthenticated: boolean;
 }
@@ -24,7 +24,7 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
     return (
       !props.isOwner &&
       props.isAuthenticated &&
-      (props.status === "public" || props.status === "private") &&
+      (props.status === 'public' || props.status === 'private') &&
       props.priceCents != null
     );
   };
@@ -36,10 +36,10 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
     setError(null);
 
     try {
-      const response = await fetch("/api/cart/add-to-cart", {
-        method: "POST",
+      const response = await fetch('/api/cart/add-to-cart', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           productId: props.productId,
@@ -49,17 +49,17 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to add to cart");
+        throw new Error(data.error || 'Failed to add to cart');
       }
 
       setSuccess(true);
 
       // Redirect to cart after brief success message
       setTimeout(() => {
-        window.location.href = "/cart";
+        window.location.href = '/cart';
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add to cart");
+      setError(err instanceof Error ? err.message : 'Failed to add to cart');
       setIsLoading(false);
     }
   };
@@ -70,9 +70,7 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
       <Show when={props.priceCents != null}>
         <div class="add-to-cart__price-section">
           <span class="add-to-cart__price-label">Price</span>
-          <span class="add-to-cart__price">
-            {formatPrice(props.priceCents!)}
-          </span>
+          <span class="add-to-cart__price">{formatPrice(props.priceCents!)}</span>
         </div>
       </Show>
 
@@ -98,8 +96,8 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
         when={
           props.isAuthenticated &&
           !props.isOwner &&
-          props.status !== "public" &&
-          props.status !== "private"
+          props.status !== 'public' &&
+          props.status !== 'private'
         }
       >
         <div class="add-to-cart__message add-to-cart__message--warning">
@@ -125,7 +123,7 @@ export default function AddToCartButton(props: AddToCartButtonProps) {
             <span class="add-to-cart__button-icon">✓</span>
           </Show>
           <span class="add-to-cart__button-text">
-            {success() ? "Added to Cart!" : "Add to Cart"}
+            {success() ? 'Added to Cart!' : 'Add to Cart'}
           </span>
         </button>
       </Show>

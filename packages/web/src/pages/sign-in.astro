@@ -1,13 +1,13 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-import LoginForm from "@/components/auth/LoginForm";
-import { setSession } from "@gameloopers/core/auth";
+import Layout from '@/layouts/Layout.astro';
+import LoginForm from '@/components/auth/LoginForm';
+import { setSession } from '@gameloopers/core/auth';
 
 const { cookies, redirect } = Astro;
 
 // Check if already authenticated
-const accessToken = cookies.get("sb-access-token");
-const refreshToken = cookies.get("sb-refresh-token");
+const accessToken = cookies.get('sb-access-token');
+const refreshToken = cookies.get('sb-refresh-token');
 
 if (accessToken && refreshToken) {
   try {
@@ -16,7 +16,7 @@ if (accessToken && refreshToken) {
       access_token: accessToken.value,
     });
     if (!session.error && session.data.user) {
-      return redirect("/products");
+      return redirect('/products');
     }
   } catch {
     // Session invalid, continue to sign-in

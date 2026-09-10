@@ -30,9 +30,15 @@ export default function NavigationMobile(props: NavigationMobileProps) {
         aria-label="Toggle menu"
         aria-expanded={isOpen()}
       >
-        <span class={`navigation__hamburger-line ${isOpen() ? 'navigation__hamburger-line--open-1' : ''}`}></span>
-        <span class={`navigation__hamburger-line ${isOpen() ? 'navigation__hamburger-line--open-2' : ''}`}></span>
-        <span class={`navigation__hamburger-line ${isOpen() ? 'navigation__hamburger-line--open-3' : ''}`}></span>
+        <span
+          class={`navigation__hamburger-line ${isOpen() ? 'navigation__hamburger-line--open-1' : ''}`}
+        ></span>
+        <span
+          class={`navigation__hamburger-line ${isOpen() ? 'navigation__hamburger-line--open-2' : ''}`}
+        ></span>
+        <span
+          class={`navigation__hamburger-line ${isOpen() ? 'navigation__hamburger-line--open-3' : ''}`}
+        ></span>
       </button>
 
       {/* Backdrop */}
@@ -55,16 +61,27 @@ export default function NavigationMobile(props: NavigationMobileProps) {
         <div class="navigation__drawer-actions">
           {props.isAuthenticated ? (
             <form action="/api/auth/sign-out" method="post">
-              <button type="submit" class="navigation__drawer-button navigation__drawer-button--secondary">
+              <button
+                type="submit"
+                class="navigation__drawer-button navigation__drawer-button--secondary"
+              >
                 Sign out
               </button>
             </form>
           ) : (
             <>
-              <a href="/sign-in" class="navigation__drawer-button navigation__drawer-button--secondary" onClick={closeMenu}>
+              <a
+                href="/sign-in"
+                class="navigation__drawer-button navigation__drawer-button--secondary"
+                onClick={closeMenu}
+              >
                 Sign in
               </a>
-              <a href="/sign-up" class="navigation__drawer-button navigation__drawer-button--primary" onClick={closeMenu}>
+              <a
+                href="/sign-up"
+                class="navigation__drawer-button navigation__drawer-button--primary"
+                onClick={closeMenu}
+              >
                 Start Creating
               </a>
             </>
