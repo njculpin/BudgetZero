@@ -29,6 +29,7 @@ import {
   getPayoutById,
   getPayoutItems,
   getAvailablePayoutBalance,
+  getClearingBalance,
 } from '../payouts';
 
 const supabase = createClient(
@@ -138,12 +139,43 @@ describe('Payout lifecycle', () => {
         royalty_value: amountCents,
         calculated_cents: amountCents,
         status: 'ready_to_pay',
+        // Matured past the hold period: this suite tests payout mechanics, not the
+        // hold. Without it a royalty is held 14 days and never reads as available.
+        available_at: new Date(Date.now() - 86_400_000).toISOString(),
       })
       .select('id')
       .single();
 
     if (error || !data) {
       throw new Error(`Failed to seed royalty: ${error?.message}`);
+    }
+
+    return data.id as string;
+  }
+
+  /**
+   * Seed a royalty WITHOUT pre-maturing it, so the hold period applies. The
+   * seedRoyalty helper above back-dates available_at because most of these tests
+   * are about payout mechanics rather than the hold.
+   */
+  async function seedHeldRoyalty(amountCents: number): Promise<string> {
+    const { data, error } = await supabase
+      .from('sale_royalty_transactions')
+      .insert({
+        sale_id: saleId,
+        sale_item_id: saleItemId,
+        product_royalty_id: royaltyId,
+        recipient_user_id: creatorId,
+        royalty_type: 'fixed',
+        royalty_value: amountCents,
+        calculated_cents: amountCents,
+        status: 'ready_to_pay',
+      })
+      .select('id')
+      .single();
+
+    if (error || !data) {
+      throw new Error(`Failed to seed held royalty: ${error?.message}`);
     }
 
     return data.id as string;
@@ -447,6 +479,88 @@ describe('Payout lifecycle', () => {
 
       expect(released.length).toBe(0);
       expect((await getPayoutById(payoutId))?.status).toBe('paid');
+    });
+  });
+
+  describe('the hold period', () => {
+    it('keeps a fresh royalty out of the available balance', async () => {
+      await clearBalance();
+      await seedHeldRoyalty(5000);
+
+      // Payable the instant a sale completes meant a buyer could purchase Monday,
+      // the creator be paid Tuesday, and the buyer refund Wednesday — with no way
+      // to recover the money.
+      const balance = await getAvailablePayoutBalance(creatorId);
+      expect(balance.totalCents).toBe(0);
+    });
+
+    it('shows it as clearing rather than making it vanish', async () => {
+      await clearBalance();
+      await seedHeldRoyalty(5000);
+
+      // A creator who made a sale and sees a zero balance with no explanation
+      // reasonably concludes they were not credited.
+      const clearing = await getClearingBalance(creatorId);
+      expect(clearing.totalCents).toBe(5000);
+      expect(clearing.transactionCount).toBe(1);
+      expect(clearing.nextAvailableAt).toBeTruthy();
+      expect(new Date(clearing.nextAvailableAt!).getTime()).toBeGreaterThan(
+        Date.now()
+      );
+    });
+
+    it('refuses a payout funded only by held royalties', async () => {
+      await clearBalance();
+      await seedHeldRoyalty(5000);
+
+      await expect(
+        requestPayout({ userId: creatorId, amountCents: 5000 })
+      ).rejects.toThrow(/Insufficient available balance/);
+    });
+
+    it('releases it once matured', async () => {
+      await clearBalance();
+      const heldId = await seedHeldRoyalty(5000);
+
+      // Fast-forward past the hold rather than waiting 14 days.
+      await supabase
+        .from('sale_royalty_transactions')
+        .update({
+          available_at: new Date(Date.now() - 86_400_000).toISOString(),
+        })
+        .eq('id', heldId);
+
+      expect((await getAvailablePayoutBalance(creatorId)).totalCents).toBe(5000);
+      expect((await getClearingBalance(creatorId)).totalCents).toBe(0);
+
+      const result = await requestPayout({
+        userId: creatorId,
+        amountCents: 5000,
+      });
+      expect(result.reservedCents).toBe(5000);
+    });
+
+    it('does not re-hold royalties returned by a reversal', async () => {
+      await clearBalance();
+      const id = await seedHeldRoyalty(3000);
+      await supabase
+        .from('sale_royalty_transactions')
+        .update({
+          available_at: new Date(Date.now() - 86_400_000).toISOString(),
+        })
+        .eq('id', id);
+
+      const { payoutId } = await requestPayout({
+        userId: creatorId,
+        amountCents: 3000,
+      });
+      await settlePayout(payoutId, `tr_hold_${suffix}`);
+      await reversePayout(`tr_hold_${suffix}`, 'reversed');
+
+      // The sale is long settled and the money already moved once. Re-holding
+      // would punish the creator for a reversal that is usually not their doing.
+      expect((await getAvailablePayoutBalance(creatorId)).totalCents).toBe(3000);
+      expect((await getClearingBalance(creatorId)).totalCents).toBe(0);
     });
   });
 

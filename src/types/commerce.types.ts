@@ -78,6 +78,8 @@ export interface SaleRoyaltyTransaction extends BaseEntity {
   royalty_value: number;
   calculated_cents: number;
   status: RoyaltyTransactionStatus;
+  /** When this royalty matures out of the hold period and becomes payable. */
+  available_at: string;
   stripe_transfer_id: string;
   paid_at: string | null;
 }

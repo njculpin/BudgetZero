@@ -106,6 +106,9 @@ describe('Payout System', () => {
         royalty_value: amountCents,
         calculated_cents: amountCents,
         status: 'ready_to_pay',
+        // Matured past the hold period: this suite tests payout mechanics, not the
+        // hold. Without it a royalty is held 14 days and never reads as available.
+        available_at: new Date(Date.now() - 86_400_000).toISOString(),
       })
       .select('id')
       .single();
@@ -235,6 +238,9 @@ describe('Payout System', () => {
         royalty_value: 5000,
         calculated_cents: 5000, // $50.00
         status: 'ready_to_pay',
+        // Matured past the hold period: this suite tests payout mechanics, not the
+        // hold. Without it a royalty is held 14 days and never reads as available.
+        available_at: new Date(Date.now() - 86_400_000).toISOString(),
       })
       .select()
       .single();
@@ -250,6 +256,9 @@ describe('Payout System', () => {
         royalty_value: 3000,
         calculated_cents: 3000, // $30.00
         status: 'ready_to_pay',
+        // Matured past the hold period: this suite tests payout mechanics, not the
+        // hold. Without it a royalty is held 14 days and never reads as available.
+        available_at: new Date(Date.now() - 86_400_000).toISOString(),
       })
       .select()
       .single();
@@ -273,6 +282,9 @@ describe('Payout System', () => {
         royalty_value: 2000,
         calculated_cents: 2000, // $20.00
         status: 'ready_to_pay',
+        // Matured past the hold period: this suite tests payout mechanics, not the
+        // hold. Without it a royalty is held 14 days and never reads as available.
+        available_at: new Date(Date.now() - 86_400_000).toISOString(),
       });
   });
 
@@ -357,7 +369,10 @@ describe('Payout System', () => {
           royalty_type: 'fixed',
           royalty_value: 1000,
           calculated_cents: 1000,
-          status: 'pending', // Not ready_to_pay
+          status: 'pending',
+          // Matured past the hold period: this suite tests payout mechanics, not the
+          // hold. Without it a royalty is held 14 days and never reads as available.
+          available_at: new Date(Date.now() - 86_400_000).toISOString(), // Not ready_to_pay
         });
 
       const balance = await getAvailablePayoutBalance(testContributorId);
