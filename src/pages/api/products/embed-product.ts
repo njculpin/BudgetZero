@@ -1,185 +1,80 @@
-import type { APIRoute } from "astro";
-import { setSession } from "@/lib/auth";
-import { serverClient } from "@/lib/data-access/client";
-import { z } from "zod";
+/**
+ * POST /api/products/embed-product
+ *
+ * Embed one product as a component of another. The embedded product's creator
+ * earns a royalty on every sale of the parent.
+ */
 
+import type { APIRoute } from "astro";
+import { z } from "zod";
+import { requireUserId, unauthorizedResponse } from "@/lib/auth/require-user";
+import { embedProduct } from "@/lib/data-access/products";
+import { captureError } from "@/lib/monitoring";
+
+/**
+ * `inheritedPriceCents` is deliberately NOT accepted. It used to be, which meant
+ * the party doing the embedding set the price of someone else's work — and the
+ * schema's `min(0)` let them set it to zero. The price now comes from the child
+ * creator's own configured rate, server-side.
+ */
 const embedSchema = z.object({
   parentProductId: z.string().uuid(),
   childProductId: z.string().uuid(),
-  inheritedPriceCents: z.number().int().min(0),
 });
 
+/** Postgres SQLSTATEs raised by embed_product, mapped to HTTP. */
+const ERROR_STATUS: Record<string, number> = {
+  P0001: 400, // invalid request: self-embed, cycle, duplicate, not embeddable
+  P0002: 404, // product not found
+  P0003: 403, // not permitted
+};
+
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const accessToken = cookies.get("sb-access-token");
-  const refreshToken = cookies.get("sb-refresh-token");
+  const userId = await requireUserId(cookies);
 
-  if (!accessToken || !refreshToken) {
-    return new Response(JSON.stringify({ error: "Not authenticated" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  if (!userId) {
+    return unauthorizedResponse();
   }
-
-  let session;
-  try {
-    session = await setSession({
-      refresh_token: refreshToken.value,
-      access_token: accessToken.value,
-    });
-
-    if (session.error || !session.data.user) {
-      return new Response(JSON.stringify({ error: "Invalid session" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-  } catch (error) {
-    return new Response(JSON.stringify({ error: "Authentication failed" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const userId = session.data.user.id;
 
   try {
     const body = await request.json();
-    const validatedData = embedSchema.parse(body);
+    const { parentProductId, childProductId } = embedSchema.parse(body);
 
-    // Check that parent product belongs to user
-    const { data: parentProduct, error: parentError } = await serverClient
-      .from("products")
-      .select("id, user_id")
-      .eq("id", validatedData.parentProductId)
-      .eq("deleted", false)
-      .single();
-
-    if (parentError || !parentProduct) {
-      return new Response(JSON.stringify({ error: "Parent product not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (parentProduct.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Check that child product exists and is accessible
-    const { data: childProduct, error: childError } = await serverClient
-      .from("products")
-      .select("id, status, user_id, is_embeddable")
-      .eq("id", validatedData.childProductId)
-      .eq("deleted", false)
-      .single();
-
-    if (childError || !childProduct) {
-      return new Response(JSON.stringify({ error: "Child product not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Check if product is marked as embeddable
-    if (!childProduct.is_embeddable) {
-      return new Response(
-        JSON.stringify({ error: "This product is not available for embedding" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Verify user has access to embed this product
-    // Can embed if: product is public OR user owns it
-    if (childProduct.status !== "public" && childProduct.user_id !== userId) {
-      return new Response(
-        JSON.stringify({ error: "You don't have access to embed this product" }),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Prevent embedding a product into itself
-    if (validatedData.parentProductId === validatedData.childProductId) {
-      return new Response(
-        JSON.stringify({ error: "Cannot embed a product into itself" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Check if already embedded
-    // TODO: Move to data access layer
-    const { data: existing } = await serverClient
-      .from("product_components")
-      .select("id")
-      .eq("parent_product_id", validatedData.parentProductId)
-      .eq("child_product_id", validatedData.childProductId)
-      .eq("deleted", false)
-      .maybeSingle();
-
-    if (existing) {
-      return new Response(
-        JSON.stringify({ error: "This product is already embedded" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Create product_component record
-    const { data: component, error: componentError } = await serverClient
-      .from("product_components")
-      .insert({
-        parent_product_id: validatedData.parentProductId,
-        child_product_id: validatedData.childProductId,
-        inherited_price_cents: validatedData.inheritedPriceCents,
-      })
-      .select()
-      .single();
-
-    if (componentError || !component) {
-      console.error("Error creating product component:", componentError);
-      return new Response(
-        JSON.stringify({ error: "Failed to embed product" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
+    const result = await embedProduct(parentProductId, childProductId, userId);
 
     return new Response(
-      JSON.stringify({ success: true, component }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
+      JSON.stringify({
+        success: true,
+        component: {
+          id: result.componentId,
+          parent_product_id: parentProductId,
+          child_product_id: childProductId,
+          inherited_price_cents: result.inheritedPriceCents,
+        },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return new Response(
-        JSON.stringify({ error: "Validation failed", details: error.errors }),
+        JSON.stringify({ error: "Invalid request", details: error.errors }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    console.error("Embed product error:", error);
-    return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to embed product",
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    // embed_product raises with a specific SQLSTATE and a message written for the
+    // person embedding, so surface it rather than replacing it with a generic one.
+    const message = error instanceof Error ? error.message : "Failed to embed product";
+    const code = (error as { code?: string })?.code;
+    const status: number = (code ? ERROR_STATUS[code] : undefined) ?? 400;
+
+    if (status >= 500) {
+      captureError(error, { operation: "products.embed", userId });
+    }
+
+    return new Response(JSON.stringify({ error: message }), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };

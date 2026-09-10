@@ -1423,3 +1423,50 @@ export const getEmbeddedUsageForUser = async (
 
   return Array.from(byParentId.values());
 };
+
+export interface EmbedProductResult {
+  componentId: string;
+  inheritedPriceCents: number;
+}
+
+/**
+ * Embed a product as a component of another.
+ *
+ * Price comes from the CHILD creator's configured `embedding_royalty_cents`, not
+ * from the caller. It used to be taken from the request body, which let the party
+ * doing the embedding set the price of someone else's work — and set it to zero.
+ *
+ * All validation lives in the Postgres function so it shares one transaction with
+ * the insert: ownership, embeddability, visibility, self-embedding, duplicates,
+ * and the A-embeds-B-embeds-A cycle the API never checked for.
+ */
+export const embedProduct = async (
+  parentProductId: string,
+  childProductId: string,
+  actorUserId: string
+): Promise<EmbedProductResult> => {
+  const { data, error } = await serverClient.rpc('embed_product', {
+    p_parent_product_id: parentProductId,
+    p_child_product_id: childProductId,
+    p_actor_user_id: actorUserId,
+  });
+
+  if (error) {
+    // Keep the SQLSTATE: embed_product distinguishes "invalid" from "not found"
+    // from "not permitted", and the route maps those to different statuses.
+    const wrapped = new Error(error.message) as Error & { code?: string };
+    wrapped.code = error.code;
+    throw wrapped;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if (!row) {
+    throw new Error('Embed returned no result');
+  }
+
+  return {
+    componentId: row.component_id as string,
+    inheritedPriceCents: row.inherited_price_cents as number,
+  };
+};

@@ -235,15 +235,18 @@ export default function AddContentModal(props: AddContentModalProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          productId: props.productId,
+          parentProductId: props.productId,
           childProductId,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to embed product");
-
       const data = await response.json();
-      props.onProductEmbedded(data.embeddedProduct);
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to embed product");
+      }
+
+      props.onProductEmbedded(data.component);
       setSuccess("Product embedded successfully");
 
       setTimeout(() => {
@@ -556,7 +559,7 @@ export default function AddContentModal(props: AddContentModalProps) {
                           by {product.creator_name}
                         </span>
                         <span class="add-content-modal__search-result-price">
-                          ${(product.total_price / 100).toFixed(2)}
+                          ${(product.total_price_cents / 100).toFixed(2)}
                         </span>
                       </div>
                       <LoadingButton
