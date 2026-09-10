@@ -89,8 +89,13 @@ export async function releasePayout(
   });
 
   if (error) {
-    console.error(`Failed to release payout ${payoutId}:`, error);
-    return 0;
+    // Throws rather than returning 0. Swallowing hid the difference between
+    // "released nothing" and "refused, because this payout is already paid" —
+    // and the second is a guard violation someone needs to know about.
+    //
+    // Call sites on an error path must wrap this so it cannot mask the original
+    // failure. See payouts/execute.ts.
+    throw new Error(`Failed to release payout ${payoutId}: ${error.message}`);
   }
 
   return (data as number) ?? 0;
