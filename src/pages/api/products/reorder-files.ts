@@ -66,10 +66,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    const success = await reorderProductFiles(
-      validatedData.productId,
-      validatedData.fileOrders
-    );
+    const success = await reorderProductFiles(validatedData.fileOrders);
 
     if (!success) {
       return new Response(

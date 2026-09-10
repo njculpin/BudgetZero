@@ -2,8 +2,14 @@ import type { APIRoute } from "astro";
 import { setSession } from "@/lib/auth";
 import { getProductById, createProductFile } from "@/lib/data-access/products";
 import { uploadFile, generateFilePath } from "@/lib/storage";
+import {
+  checkRateLimit,
+  rateLimitIdentity,
+  rateLimitedResponse,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, clientAddress, cookies }) => {
   const accessToken = cookies.get("sb-access-token");
   const refreshToken = cookies.get("sb-refresh-token");
 
@@ -35,6 +41,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   const userId = session.data.user.id;
+
+  // Uploads are the most expensive authenticated action, so the quota is keyed to
+  // the user rather than the address — it should follow the account across
+  // networks, and the caller is already authenticated by this point.
+  const rateLimit = await checkRateLimit(
+    RATE_LIMITS.upload,
+    rateLimitIdentity(request, clientAddress, userId)
+  );
+
+  if (!rateLimit.allowed) {
+    return rateLimitedResponse(rateLimit);
+  }
 
   try {
     const formData = await request.formData();
@@ -89,7 +107,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       // Upload to storage
       const uploadResult = await uploadFile({
-        bucket: "asset-files",
+        bucket: "product-files",
         path: filePath,
         file,
         accessToken: accessToken.value,

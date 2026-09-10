@@ -27,10 +27,17 @@ export const POST: APIRoute = async ({ cookies, request }) => {
       );
     }
 
-    const session = data;
+    const sessionUser = data.user;
+
+    if (!sessionUser) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     // Mark user's onboarding as completed
-    const updatedUser = await completeOnboarding(session.user.id);
+    const updatedUser = await completeOnboarding(sessionUser.id);
 
     if (!updatedUser) {
       return new Response(

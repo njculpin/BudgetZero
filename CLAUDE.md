@@ -7,30 +7,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Game Loopers is a social commerce platform for tabletop game creators (designers, 3D modelers, illustrators) to collaborate, publish digital downloads, manage licensing, and distribute royalties. Think of it as a marketplace where contributors can assemble game products with embedded components, manage royalty splits, and customers purchase complete game packages.
 
 **Key Documentation:**
-- `/ROADMAP.md` - Product roadmap, phasing strategy, and success metrics
+- `/PLAN.md` - Outstanding work to reach launch. Tracks only what is *not* done;
+  completed items are deleted rather than checked off.
 - `/.claude/skills/persona-journey/PERSONAS.md` - Detailed user personas (current + future)
 - `/.claude/skills/audit-style/DESIGN_SYSTEM.md` - UI/UX patterns and BEM conventions
 - `/CLAUDE.md` - This file (development guidelines)
 
-**Current Status:** ~90-95% complete toward MVP launch (see ROADMAP.md for details)
+**Current Status:** Feature-complete in surface area. The purchase → download →
+royalty → payout path has been repaired but is **not yet verified against a live
+database**, and the legal documents are still stubs. See `/PLAN.md` before
+assuming anything is launch-ready.
 
 ## Development Commands
 
 ```bash
-npm run dev       # Start dev server (localhost:4321)
-npm run build     # Production build
-npm run preview   # Preview production build locally
+npm run dev            # Start dev server (localhost:4321)
+npm run build          # Production build
+npm run preview        # Preview production build locally
+
+npm run supabase:start # Local Supabase (requires Docker)
+npm run supabase:reset # Reapply all migrations from scratch
+
+npx astro check        # Typecheck, including .astro files. Must report 0 errors.
+npm run test:run       # Unit + integration tests (integration needs Supabase up)
+npm run test:e2e       # Playwright
 ```
+
+CI runs `npm ci && astro check && npm run test:run && npm run build` on every push
+and pull request (`.github/workflows/ci.yml`). Vercel auto-deploys `main`.
 
 ## Tech Stack
 
-- **Framework**: Astro 5.15.1 (server mode with Vercel adapter)
+- **Framework**: Astro 7 (server mode with Vercel adapter)
 - **Interactivity**: SolidJS islands with Signals
 - **Backend**: Supabase (Auth, Postgres, Storage)
 - **Hosting**: Vercel
 - **Styling**: BEM CSS (Block Element Modifier) - NO Tailwind
 - **Validation**: Zod
 - **Type Safety**: TypeScript (strict mode)
+- **Testing**: Vitest (unit + integration), Playwright (e2e)
+- **Runtime**: Node 22 (matches the Vercel serverless runtime; see `.nvmrc`)
 
 ## Critical Architecture Rules
 
@@ -56,10 +72,23 @@ npm run preview   # Preview production build locally
 - `products.ts` - Product-specific storage functions
 - ❌ Never import `@supabase/supabase-js` outside this directory
 
-**Payments Layer** (`/src/lib/payments/`) - Not yet created
-- Future Stripe SDK isolation
-- Export functions like `createCharge()`, `processRefund()`
-- ❌ Never import Stripe SDK outside this directory
+**Payments Layer** (`/src/lib/payments/`)
+- `client.ts` - Stripe client. `mock-mode.ts` - the single `USE_MOCK_STRIPE` flag
+- `checkout.ts`, `connect.ts` - checkout sessions, Connect accounts, transfers
+- ❌ Never import the Stripe SDK outside this directory
+
+**Email Layer** (`/src/lib/email/`)
+- `client.ts` - Resend client. `index.ts` - `sendEmail()`
+- ❌ Never import the Resend SDK outside this directory
+
+**Monitoring Layer** (`/src/lib/monitoring/`)
+- `client.ts` - provider config. `index.ts` - `captureError()`, `captureMessage()`
+- Sentry loads lazily and only when `PUBLIC_SENTRY_DSN` is set
+- ❌ Never import a monitoring SDK outside this directory
+
+**Rate Limiting** (`/src/lib/rate-limit/`)
+- Postgres-backed fixed-window counters; Vercel invocations share no memory
+- `checkRateLimit()`, `rateLimitIdentity()`, `rateLimitedResponse()`
 
 ### Why SDK Isolation?
 
@@ -69,12 +98,26 @@ This enables switching providers without refactoring the entire app. If we migra
 
 Required environment variables (must have `PUBLIC_` prefix for client access in Astro):
 
+See `.env.example` for the full list. The essentials:
+
 ```env
-PUBLIC_SUPABASE_URL=your-supabase-url
-PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+PUBLIC_SUPABASE_URL=          # Supabase project URL
+PUBLIC_SUPABASE_ANON_KEY=     # Anon key (client-safe, RLS enforced)
+SUPABASE_SERVICE_ROLE_KEY=    # Server-only. Bypasses RLS - never expose
+PUBLIC_SITE_URL=              # Public origin; used for links in outbound email
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+RESEND_API_KEY=
+PUBLIC_SENTRY_DSN=            # Optional; falls back to console logging
+MOCK_STRIPE=                  # 'true' for local/test ONLY - see below
 ```
 
 TypeScript definitions in `src/env.d.ts` must match.
+
+⚠️ **`MOCK_STRIPE=true` bypasses Stripe webhook signature verification**, which
+turns `/api/webhooks/stripe` into an unauthenticated way to mint sales and royalty
+obligations. It is an explicit opt-in and hard-fails at boot in a production
+build. Never set it in a deployed environment.
 
 ## TypeScript Types
 
@@ -137,13 +180,13 @@ src/components/
 │   ├── FormField.tsx, LoadingButton.tsx, TagInput.tsx, etc.
 │   └── index.ts
 ├── products/                        # /products/*.astro
-│   ├── ProductEditForm.tsx, ProductVariantManager.tsx, etc.
+│   ├── ProductEditForm.tsx, ProductContentManager/, etc.
 │   └── index.ts
 ├── documents/                       # /documents/*.astro
 ├── users/                           # /users/*.astro
 ├── cart/                            # /cart.astro
 ├── checkout/                        # /checkout/*.astro
-├── dashboard/                       # /dashboard.astro
+├── admin/                           # /admin/*.astro (admin-only tooling)
 ├── settings/                        # /settings/*.astro
 ├── home/                            # /index.astro (landing page)
 ├── auth/                            # /sign-in.astro, /sign-up.astro
@@ -159,7 +202,7 @@ import { FormField, Input } from '@/components/base';
 import { LoadingButton, TagInput } from '@/components/interactive';
 
 // Page-specific components
-import { ProductEditForm, ProductVariantManager } from '@/components/products';
+import { ProductEditForm, ProductContentViewer } from '@/components/products';
 import { NotificationCenter } from '@/components/notifications';
 ```
 
@@ -173,27 +216,36 @@ import { NotificationCenter } from '@/components/notifications';
 
 Astro file-based routing in `/src/pages/`:
 
-**Public Routes:**
+Note the dynamic segments are `[user]` / `[product]` / `[document]` / `[tag]`,
+not `[handle]`.
+
+**Public:**
 - `/` - Landing page
-- `/feed` - Global activity feed
-- `/users` - User directory
-- `/users/[handle]` - User profile (owner sees edit view, others see public)
-- `/products` - Product marketplace
-- `/products/[handle]` - Product detail
-- `/documents/[handle]` - Document editor (private, collaborators only)
-- `/tags/[tag]` - Products by tag
-- `/cart` - Shopping cart
+- `/about`, `/privacy`, `/terms`, `/licenses/standard` - static pages
+- `/users`, `/users/[user]` - directory and profile (owner sees the edit view)
+- `/products`, `/products/[product]` - marketplace and product detail
+- `/tags`, `/tags/[tag]` - tag directory and products by tag
+- `/sign-in`, `/sign-up`
 
-**Auth Routes:**
-- `/sign-in` - Login page
-- `/sign-up` - Registration page
-- `/dashboard` - User dashboard (protected)
+**Authenticated:**
+- `/cart`, `/checkout/success`, `/checkout/failed`
+- `/create` - product creation
+- `/products/[product]/edit`
+- `/documents`, `/documents/[document]` - collaborative editor, collaborators only
+- `/purchases`, `/purchases/[purchase]` - order history and downloads
+- `/payouts` - creator earnings and payout requests
+- `/notifications`, `/settings`
 
-**API Routes** (`/src/pages/api/`):
-- `/api/auth/sign-in` - POST for email/password and OAuth
-- `/api/auth/sign-up` - POST for registration
-- `/api/auth/callback` - GET for OAuth callback
-- `/api/auth/sign-out` - Sign out
+**Admin** (`users.role = 'admin'`):
+- `/admin/payouts` - payout queue; executes Stripe transfers
+
+There is no `/dashboard` or `/feed` route.
+
+**API Routes** (`/src/pages/api/`)
+
+`src/middleware.ts` protects `/api` by default — a new route is authenticated
+unless it is explicitly added to `PUBLIC_API_ROUTES`. Routes still perform their
+own ownership checks; the middleware only establishes that someone is signed in.
 
 ## Data Model Overview
 
@@ -279,7 +331,7 @@ export default function SignInForm() {
 - **Printers:** Provide 3D printing services to turn STL files into physical miniatures (DEFERRED until Month 7+)
 - **Painters:** Provide miniature painting services for printed models (DEFERRED until Month 7+)
 
-**Note:** Physical service personas are documented but implementation is deferred until after digital marketplace achieves product-market fit. See `/ROADMAP.md` for phasing strategy.
+**Note:** Physical service personas are documented but implementation is deferred until after digital marketplace achieves product-market fit.
 
 ## Session Management
 
@@ -288,7 +340,22 @@ Auth uses Supabase PKCE flow with cookies:
 - `sb-refresh-token` - Refresh token (cookie)
 - Protected pages check cookies via `setSession()` from `/src/lib/auth`
 
-See `/src/pages/dashboard.astro` for reference implementation.
+**For API routes, use `requireUserId(cookies)` from `/src/lib/auth/require-user`**
+rather than hand-rolling the cookie exchange. Every hand-rolled copy is a chance
+to get it wrong: the notifications routes called `getSession(accessToken,
+refreshToken)`, but `getSession` takes no arguments, so every one of those
+endpoints answered 401 to every caller until it was fixed.
+
+```ts
+const userId = await requireUserId(cookies);
+if (!userId) return unauthorizedResponse();
+```
+
+For admin-only routes use `verifyAdmin(cookies)` from `/src/lib/auth/admin`, and
+record the action with `logAdminAction()`.
+
+See `/src/pages/api/notifications/index.ts` (API) or `/src/pages/payouts/index.astro`
+(page) for reference implementations.
 
 ## Recent Architectural Changes
 
@@ -308,5 +375,30 @@ This codebase migrated from another framework to Astro in 2024. The migration in
 - Establishing SDK isolation layers
 - Creating comprehensive TypeScript types
 - Documenting BEM CSS pattern
+
+### September 2026 — money path repair and Astro 7
+
+The December consolidation dropped the `sale_item_assets` table and the asset
+storage buckets, but the webhook, royalties layer and download route were never
+migrated with it. A real purchase created a sale and then bailed out before
+creating any royalties, and downloads pointed at a bucket no migration creates.
+Fixing that meant:
+
+- **Entitlement is derived, not stored.** Download access comes from `sale_items`
+  plus `product_components` (`getPurchasedProductIds`), so buying a bundle grants
+  access to the components embedded within it. There is no join table.
+- **Webhooks are idempotent.** `stripe_webhook_events.stripe_event_id` carries a
+  UNIQUE constraint, and the insert *is* the claim. Stripe retries on any non-2xx,
+  so without this a retry duplicated the sale and its royalties.
+- **Payouts reserve before paying.** `request_payout()` selects whole royalty
+  transactions and marks them `reserved` in one atomic function; `settle_payout()`
+  and `release_payout()` finish or undo it. Royalties previously stayed
+  `ready_to_pay` forever, so the same earnings could be withdrawn repeatedly.
+- **Credits checkout was cut from v1.** Credits could only be earned, never
+  bought, and carried a second divergent implementation of the revenue split. The
+  `users.credits_balance` column remains for a possible future.
+
+Anything touching money should stay atomic in SQL. Read-modify-write from JS is
+how most of the above went wrong in the first place.
 
 Reference component examples in `/src/components/` for BEM patterns before creating new components.

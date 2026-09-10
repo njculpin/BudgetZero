@@ -6,9 +6,7 @@ import CardTitle from "@/components/CardTitle.astro";
 import CardContent from "@/components/CardContent.astro";
 import Button from "@/components/Button.astro";
 import CartItemRow from "@/components/cart/CartItemRow";
-import PaymentMethodSelector from "@/components/cart/PaymentMethodSelector";
 import CheckoutButton from "@/components/checkout/CheckoutButton";
-import CreditsCheckout from "@/components/checkout/CreditsCheckout";
 import { setSession } from "@/lib/auth";
 import EmptyState from "@/components/EmptyState.astro";
 import { getOrCreateCart, getCartItems } from "@/lib/data-access/cart";
@@ -76,18 +74,8 @@ const subtotal = cartItemsWithDetails.reduce((total, item) => {
   return total + (itemPrice * item.quantity);
 }, 0);
 
-// Check if cart contains service products (for shipping address requirement)
-const hasServiceProducts = cartItemsWithDetails.some(
-  item => item.product?.product_type === 'print_service' || item.product?.product_type === 'paint_service'
-);
-
-// Get user's credits balance
-const user = await getUserById(userId);
-const userCredits = user?.credits_balance || 0;
-
 const showAddedMessage = Astro.url.searchParams.get('added') === 'true';
 const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
-const useCredits = Astro.url.searchParams.get('use_credits') === 'true';
 ---
 
 <Layout title="Shopping Cart - Game Loopers">
@@ -142,23 +130,8 @@ const useCredits = Astro.url.searchParams.get('use_credits') === 'true';
                     <span class="cart-summary__value">USD {(subtotal / 100).toFixed(2)}</span>
                   </div>
 
-                  <PaymentMethodSelector
-                    client:load
-                    userCredits={userCredits}
-                    initialMethod={useCredits ? "credits" : "stripe"}
-                  />
-
                   <div class="cart-summary__checkout">
-                    {useCredits ? (
-                      <CreditsCheckout
-                        client:load
-                        userCredits={userCredits}
-                        totalCents={subtotal}
-                        hasServiceProducts={hasServiceProducts}
-                      />
-                    ) : (
-                      <CheckoutButton client:load variant="primary" size="lg" />
-                    )}
+                    <CheckoutButton client:load variant="primary" size="lg" />
                   </div>
                 </div>
               </CardContent>

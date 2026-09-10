@@ -5,6 +5,7 @@
  * Mocks authentication and database layers
  */
 
+import type { Mock } from 'vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Notification, NotificationSettings } from '@/types';
 
@@ -31,11 +32,13 @@ vi.mock('@/lib/data-access/notifications', () => ({
 }));
 
 describe('Notification API Endpoints', () => {
-  let mockGetSession: ReturnType<typeof vi.fn>;
+  // Vitest 5 resolves a bare `ReturnType<typeof vi.fn>` to a union that is not
+  // callable, so these mocks carry their call signatures explicitly.
+  let mockGetSession: Mock<(...args: unknown[]) => unknown>;
   let mockCookies: {
-    get: ReturnType<typeof vi.fn>;
-    set: ReturnType<typeof vi.fn>;
-    delete: ReturnType<typeof vi.fn>;
+    get: Mock<(name: string) => { value: string } | undefined>;
+    set: Mock<(...args: unknown[]) => void>;
+    delete: Mock<(...args: unknown[]) => void>;
   };
 
   beforeEach(async () => {
@@ -435,19 +438,15 @@ describe('Notification API Endpoints', () => {
       const updatedSettings: NotificationSettings = {
         id: 'settings-1',
         user_id: 'user-1',
-        email_asset_changes: false,
         email_product_conflicts: true,
         email_sales: true,
         email_royalty_payments: true,
         email_document_shares: true,
-        email_jam_updates: true,
         email_marketing: false,
-        inapp_asset_changes: true,
         inapp_product_conflicts: true,
         inapp_sales: true,
         inapp_royalty_payments: true,
         inapp_document_shares: true,
-        inapp_jam_updates: true,
         push_enabled: false,
         push_sales: false,
         push_royalty_payments: false,
@@ -458,13 +457,9 @@ describe('Notification API Endpoints', () => {
       vi.mocked(updateNotificationSettings).mockResolvedValue(updatedSettings);
 
       const result = await updateNotificationSettings('user-1', {
-        email_asset_changes: false,
-        email_jam_updates: true,
       });
 
       expect(updateNotificationSettings).toHaveBeenCalledWith('user-1', {
-        email_asset_changes: false,
-        email_jam_updates: true,
       });
       expect(result).toEqual(updatedSettings);
     });
@@ -484,11 +479,9 @@ describe('Notification API Endpoints', () => {
     it('should validate settings payload', async () => {
       // Test would verify Zod schema validation if implemented
       const invalidSettings = {
-        email_asset_changes: 'invalid', // Should be boolean
       };
 
       // Endpoint should validate and reject invalid data
-      expect(typeof invalidSettings.email_asset_changes).not.toBe('boolean');
     });
   });
 
@@ -575,7 +568,9 @@ describe('Notification API Endpoints', () => {
         expires_at: 0,
       } as never);
 
-      const session = await mockGetSession('expired', 'token');
+      const session = (await mockGetSession('expired', 'token')) as {
+        user: unknown;
+      } | null;
       expect(session?.user).toBeFalsy();
     });
 

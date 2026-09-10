@@ -84,7 +84,7 @@ const completedDate = sale.completed_at ? new Date(sale.completed_at) : null;
             </p>
           </div>
           <div class="purchase-header__status">
-            <Badge variant={sale.status === 'paid' ? 'success' : 'default'}>
+            <Badge variant={sale.status === 'paid' ? 'success' : 'muted'}>
               {sale.status.toUpperCase()}
             </Badge>
           </div>

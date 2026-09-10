@@ -1,5 +1,5 @@
 import { serverClient } from './client';
-import type { Sale, SaleItem, SaleStatus, SaleItemAsset, PaymentMethod, ShippingAddress } from '@/types';
+import type { Sale, SaleItem, SaleStatus, PaymentMethod, ShippingAddress } from '@/types';
 
 export interface CreateSaleParams {
   userId: string;
@@ -187,23 +187,33 @@ export const updateSaleStatus = async (
 };
 
 /**
- * Mark sale as refunded
+ * Record a refund against a sale.
+ *
+ * `refundedCents` is Stripe's running total, not the amount of this particular
+ * refund, so this is safe to apply repeatedly as partial refunds accumulate.
+ *
+ * A partial refund leaves the sale `partially_refunded` and does NOT revoke
+ * entitlement — the customer keeps what they bought. Revoking downloads over a
+ * goodwill refund would punish someone the platform chose to compensate.
  */
-export const refundSale = async (
+export const recordSaleRefund = async (
   saleId: string,
-  refundReason: string
+  refundedCents: number,
+  refundReason: string,
+  isFullRefund: boolean
 ): Promise<boolean> => {
   const { error } = await serverClient
     .from('sales')
     .update({
-      status: 'refunded',
+      status: isFullRefund ? 'refunded' : 'partially_refunded',
+      refunded_cents: refundedCents,
       refund_reason: refundReason,
       updated_at: new Date().toISOString(),
     })
     .eq('id', saleId);
 
   if (error) {
-    console.error('Error refunding sale:', error);
+    console.error('Error recording sale refund:', error);
     return false;
   }
 
@@ -211,91 +221,33 @@ export const refundSale = async (
 };
 
 /**
- * Get sale item assets for a sale item
- */
-export const getSaleItemAssets = async (saleItemId: string): Promise<SaleItemAsset[]> => {
-  const { data, error } = await serverClient
-    .from('sale_item_assets')
-    .select('*')
-    .eq('sale_item_id', saleItemId)
-    .eq('deleted', false);
-
-  if (error) {
-    return [];
-  }
-
-  return data as SaleItemAsset[];
-};
-
-/**
- * Create a sale item asset (link asset to sale item)
- */
-export const createSaleItemAsset = async (
-  saleItemId: string,
-  assetId: string
-): Promise<SaleItemAsset | null> => {
-  const { data, error } = await serverClient
-    .from('sale_item_assets')
-    .insert({
-      sale_item_id: saleItemId,
-      asset_id: assetId,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating sale item asset:', error);
-    return null;
-  }
-
-  return data as SaleItemAsset;
-};
-
-/**
- * Check if user has purchased a specific product
+ * Check if user has purchased a specific product.
+ *
+ * Access is granted two ways:
+ *   1. Directly — the product appears as a line item on one of the user's paid sales.
+ *   2. By embedding — the product is a component of a product they bought. Buying a
+ *      bundle grants access to every child product embedded within it, which is the
+ *      whole point of the product-in-product model.
+ *
+ * Embedded access is resolved through `product_components` rather than a join table,
+ * so it stays correct even though components are never their own line items.
  */
 export const hasUserPurchasedProduct = async (
   userId: string,
   productId: string
 ): Promise<boolean> => {
-  // Get user's paid sales
-  const { data: sales, error: salesError } = await serverClient
-    .from('sales')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('status', 'paid')
-    .eq('deleted', false);
-
-  if (salesError || !sales || sales.length === 0) {
-    return false;
-  }
-
-  const saleIds = sales.map(s => s.id);
-
-  // Check if any sale item has this product
-  const { data: saleItems, error: itemsError } = await serverClient
-    .from('sale_items')
-    .select('id')
-    .in('sale_id', saleIds)
-    .eq('product_id', productId)
-    .eq('deleted', false)
-    .limit(1);
-
-  if (itemsError) {
-    return false;
-  }
-
-  return saleItems && saleItems.length > 0;
+  const purchasedProductIds = await getPurchasedProductIds(userId);
+  return purchasedProductIds.has(productId);
 };
 
 /**
- * @deprecated Use hasUserPurchasedProduct instead - asset system has been removed
- * Check if user has purchased a specific asset
+ * Resolve every product ID a user has access to, expanding purchased products into
+ * the components they embed. Returned as a Set so callers checking several products
+ * (a download page, a purchase detail view) pay the query cost once.
  */
-export const hasUserPurchasedAsset = async (
-  userId: string,
-  assetId: string
-): Promise<boolean> => {
+export const getPurchasedProductIds = async (
+  userId: string
+): Promise<Set<string>> => {
   // Get user's paid sales
   const { data: sales, error: salesError } = await serverClient
     .from('sales')
@@ -305,36 +257,42 @@ export const hasUserPurchasedAsset = async (
     .eq('deleted', false);
 
   if (salesError || !sales || sales.length === 0) {
-    return false;
+    return new Set();
   }
 
   const saleIds = sales.map(s => s.id);
 
-  // Get sale items for these sales
+  // Products bought directly as line items
   const { data: saleItems, error: itemsError } = await serverClient
     .from('sale_items')
-    .select('id')
+    .select('product_id')
     .in('sale_id', saleIds)
     .eq('deleted', false);
 
   if (itemsError || !saleItems || saleItems.length === 0) {
-    return false;
+    return new Set();
   }
 
-  const saleItemIds = saleItems.map(si => si.id);
+  const accessibleIds = new Set<string>(
+    saleItems.map(item => item.product_id as string)
+  );
 
-  // Check if any sale item has this asset
-  const { data: saleItemAssets, error: assetsError } = await serverClient
-    .from('sale_item_assets')
-    .select('id')
-    .in('sale_item_id', saleItemIds)
-    .eq('asset_id', assetId)
-    .eq('deleted', false)
-    .limit(1);
+  // Expand into embedded components. One level of expansion matches how pricing and
+  // royalties are calculated at checkout; nested embedding is not currently priced.
+  const { data: components, error: componentsError } = await serverClient
+    .from('product_components')
+    .select('child_product_id')
+    .in('parent_product_id', Array.from(accessibleIds))
+    .eq('deleted', false);
 
-  if (assetsError) {
-    return false;
+  if (componentsError) {
+    console.error('Error resolving embedded product access:', componentsError);
+    return accessibleIds;
   }
 
-  return saleItemAssets && saleItemAssets.length > 0;
+  for (const component of components || []) {
+    accessibleIds.add(component.child_product_id as string);
+  }
+
+  return accessibleIds;
 };

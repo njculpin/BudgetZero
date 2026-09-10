@@ -9,8 +9,7 @@
 
 import Stripe from 'stripe';
 
-// Mock mode flag - automatically enabled in development, or set MOCK_STRIPE=true
-const USE_MOCK_STRIPE = import.meta.env.MODE === 'development' || import.meta.env.MOCK_STRIPE === 'true';
+import { USE_MOCK_STRIPE } from './mock-mode';
 
 const stripeSecretKey = import.meta.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
 

@@ -481,11 +481,12 @@ export const getProductsByTag = async (tag: string): Promise<Product[]> => {
 
   if (!data) return [];
 
-  // Extract unique products from the joined results
+  // Extract unique products from the joined results. PostgREST types an embedded
+  // relation as an array even when the foreign key yields a single row.
   const productMap = new Map<string, Product>();
-  for (const item of data as Array<{ products: Product }>) {
-    const product = item.products;
-    if (!productMap.has(product.id)) {
+  for (const item of data as unknown as Array<{ products: Product | Product[] | null }>) {
+    const product = Array.isArray(item.products) ? item.products[0] : item.products;
+    if (product && !productMap.has(product.id)) {
       productMap.set(product.id, product);
     }
   }
@@ -963,145 +964,11 @@ export const getEmbeddableProducts = async (userId: string): Promise<Product[]> 
   return data as Product[];
 };
 
-// ===== Product Royalties =====
+// Product royalty read/write helpers live in ./royalties.ts.
+// A duplicate set previously lived here with a DIFFERENT createProductRoyalty
+// signature and no production callers, so whoever implements the royalty write
+// path had a coin-flip chance of calling the wrong one. Removed deliberately.
 
-/**
- * Get all royalties for a product
- */
-export const getProductRoyalties = async (productId: string): Promise<ProductRoyalty[]> => {
-  const { data, error } = await serverClient
-    .from('product_royalties')
-    .select('*')
-    .eq('product_id', productId)
-    .eq('deleted', false)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching product royalties:', error);
-    return [];
-  }
-
-  return data as ProductRoyalty[];
-};
-
-/**
- * Create a new royalty for a product
- */
-export const createProductRoyalty = async (
-  productId: string,
-  userId: string,
-  royaltyType: 'fixed' | 'percentage',
-  royaltyValue: number
-): Promise<ProductRoyalty | null> => {
-  const { data, error } = await serverClient
-    .from('product_royalties')
-    .insert({
-      product_id: productId,
-      user_id: userId,
-      royalty_type: royaltyType,
-      royalty_value: royaltyValue,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating product royalty:', error);
-    return null;
-  }
-
-  return data as ProductRoyalty;
-};
-
-/**
- * Update an existing royalty
- */
-export const updateProductRoyalty = async (
-  royaltyId: string,
-  royaltyValue: number
-): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('product_royalties')
-    .update({
-      royalty_value: royaltyValue,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', royaltyId);
-
-  if (error) {
-    console.error('Error updating product royalty:', error);
-    return false;
-  }
-
-  return true;
-};
-
-/**
- * Delete a royalty (soft delete)
- */
-export const deleteProductRoyalty = async (royaltyId: string): Promise<boolean> => {
-  const { error } = await serverClient
-    .from('product_royalties')
-    .update({
-      deleted: true,
-      deleted_at: new Date().toISOString(),
-    })
-    .eq('id', royaltyId);
-
-  if (error) {
-    console.error('Error deleting product royalty:', error);
-    return false;
-  }
-
-  return true;
-};
-
-/**
- * Calculate total royalty cost for a product
- * Returns the sum of all fixed royalties (in cents)
- */
-export const calculateProductRoyaltyTotal = async (productId: string): Promise<number> => {
-  const royalties = await getProductRoyalties(productId);
-  return royalties
-    .filter(r => r.royalty_type === 'fixed')
-    .reduce((total, royalty) => total + royalty.royalty_value, 0);
-};
-
-/**
- * Calculate total product price (file prices + embedded product prices)
- * Returns total price in cents
- */
-export const calculateProductTotalPrice = async (productId: string): Promise<number> => {
-  // Get file prices
-  const { data: files } = await serverClient
-    .from('product_files')
-    .select('price_cents')
-    .eq('product_id', productId)
-    .eq('deleted', false);
-
-  const filePriceTotal = (files || []).reduce(
-    (sum, file) => sum + (file.price_cents || 0),
-    0
-  );
-
-  // Get embedded product prices
-  const { data: components } = await serverClient
-    .from('product_components')
-    .select('inherited_price_cents')
-    .eq('parent_product_id', productId)
-    .eq('deleted', false);
-
-  const embeddedPriceTotal = (components || []).reduce(
-    (sum, comp) => sum + (comp.inherited_price_cents || 0),
-    0
-  );
-
-  return filePriceTotal + embeddedPriceTotal;
-};
-
-/**
- * Get product price breakdown
- * Returns detailed breakdown of file prices and embedded product prices
- */
 /**
  * Get embedded products (product components) for a product
  */
@@ -1398,4 +1265,208 @@ export const updateProductDocumentPrice = async (
   }
 
   return true;
+};
+
+export interface EmbeddedUsageEntry {
+  /** The parent product that embeds one of this user's components. */
+  id: string;
+  title: string;
+  handle: string;
+  cover_image_url: string | null;
+  owner_name: string;
+  owner_handle: string;
+  /** Price inherited by the parent when the component was embedded, in cents. */
+  inherited_price_cents: number;
+  /** Royalties this user has earned from sales of that parent product, in cents. */
+  total_earnings_cents: number;
+  /** Number of royalty transactions contributing to `total_earnings_cents`. */
+  sales_count: number;
+}
+
+/**
+ * Find every product that embeds one of this user's components, along with what the
+ * user has earned from each.
+ *
+ * Earnings are attributed by walking royalty transactions back to the sale item that
+ * produced them: `sale_items.product_id` is the parent product the customer actually
+ * bought, which is the product a creator wants to see their component credited
+ * against.
+ */
+export const getEmbeddedUsageForUser = async (
+  userId: string
+): Promise<EmbeddedUsageEntry[]> => {
+  // The user's own embeddable products
+  const { data: userProducts, error: userProductsError } = await serverClient
+    .from('products')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('is_embeddable', true)
+    .eq('deleted', false);
+
+  if (userProductsError) {
+    console.error('Error fetching user products:', userProductsError);
+    return [];
+  }
+
+  if (!userProducts || userProducts.length === 0) {
+    return [];
+  }
+
+  const userProductIds = userProducts.map((p: { id: string }) => p.id);
+
+  // Parent products embedding any of them
+  const { data: components, error: componentsError } = await serverClient
+    .from('product_components')
+    .select(`
+      parent_product_id,
+      child_product_id,
+      inherited_price_cents,
+      products!product_components_parent_product_id_fkey (
+        id,
+        title,
+        handle,
+        cover_image_url,
+        user_id,
+        users!products_user_id_fkey (
+          name,
+          handle
+        )
+      )
+    `)
+    .in('child_product_id', userProductIds)
+    .eq('deleted', false);
+
+  if (componentsError) {
+    console.error('Error fetching embedded usage:', componentsError);
+    return [];
+  }
+
+  if (!components || components.length === 0) {
+    return [];
+  }
+
+  // PostgREST types embedded relations as arrays even for many-to-one, so narrow to
+  // the single related row each foreign key actually yields.
+  type JoinedUser = { name: string; handle: string };
+  type JoinedProduct = {
+    id: string;
+    title: string;
+    handle: string;
+    cover_image_url: string | null;
+    user_id: string;
+    users: JoinedUser | JoinedUser[] | null;
+  };
+
+  const firstOf = <T>(value: T | T[] | null): T | null =>
+    Array.isArray(value) ? value[0] ?? null : value;
+
+  const byParentId = new Map<string, EmbeddedUsageEntry>();
+
+  for (const component of components) {
+    const product = firstOf(
+      component.products as unknown as JoinedProduct | JoinedProduct[] | null
+    );
+    const owner = product ? firstOf(product.users) : null;
+
+    if (!product || !owner) continue;
+
+    const parentId = component.parent_product_id as string;
+
+    if (!byParentId.has(parentId)) {
+      byParentId.set(parentId, {
+        id: product.id,
+        title: product.title,
+        handle: product.handle,
+        cover_image_url: product.cover_image_url,
+        owner_name: owner.name,
+        owner_handle: owner.handle,
+        inherited_price_cents: component.inherited_price_cents as number,
+        total_earnings_cents: 0,
+        sales_count: 0,
+      });
+    }
+  }
+
+  const parentIds = Array.from(byParentId.keys());
+
+  if (parentIds.length === 0) {
+    return [];
+  }
+
+  // Attribute this user's royalties to the parent product that was sold.
+  const { data: royalties, error: royaltiesError } = await serverClient
+    .from('sale_royalty_transactions')
+    .select('calculated_cents, sale_items!inner(product_id)')
+    .eq('recipient_user_id', userId)
+    .eq('deleted', false)
+    .in('status', ['ready_to_pay', 'reserved', 'paid']);
+
+  if (royaltiesError) {
+    console.error('Error fetching royalties for embedded usage:', royaltiesError);
+    return Array.from(byParentId.values());
+  }
+
+  for (const royalty of royalties || []) {
+    const saleItem = firstOf(
+      royalty.sale_items as unknown as { product_id: string } | { product_id: string }[] | null
+    );
+
+    if (!saleItem) continue;
+
+    const entry = byParentId.get(saleItem.product_id);
+
+    if (entry) {
+      entry.total_earnings_cents += royalty.calculated_cents as number;
+      entry.sales_count += 1;
+    }
+  }
+
+  return Array.from(byParentId.values());
+};
+
+export interface EmbedProductResult {
+  componentId: string;
+  inheritedPriceCents: number;
+}
+
+/**
+ * Embed a product as a component of another.
+ *
+ * Price comes from the CHILD creator's configured `embedding_royalty_cents`, not
+ * from the caller. It used to be taken from the request body, which let the party
+ * doing the embedding set the price of someone else's work — and set it to zero.
+ *
+ * All validation lives in the Postgres function so it shares one transaction with
+ * the insert: ownership, embeddability, visibility, self-embedding, duplicates,
+ * and the A-embeds-B-embeds-A cycle the API never checked for.
+ */
+export const embedProduct = async (
+  parentProductId: string,
+  childProductId: string,
+  actorUserId: string
+): Promise<EmbedProductResult> => {
+  const { data, error } = await serverClient.rpc('embed_product', {
+    p_parent_product_id: parentProductId,
+    p_child_product_id: childProductId,
+    p_actor_user_id: actorUserId,
+  });
+
+  if (error) {
+    // Keep the SQLSTATE: embed_product distinguishes "invalid" from "not found"
+    // from "not permitted", and the route maps those to different statuses.
+    const wrapped = new Error(error.message) as Error & { code?: string };
+    wrapped.code = error.code;
+    throw wrapped;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if (!row) {
+    throw new Error('Embed returned no result');
+  }
+
+  return {
+    componentId: row.component_id as string,
+    inheritedPriceCents: row.inherited_price_cents as number,
+  };
 };

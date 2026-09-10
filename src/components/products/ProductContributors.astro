@@ -28,12 +28,12 @@ const items = contributorsWithRoles || contributors?.map(c => ({ user: c, role: 
       >
         <Avatar
           src={user.avatar_url}
-          alt={user.display_name || user.handle}
+          alt={user.name || user.handle}
           size="md"
         />
         <div class="product-contributors__info">
           <div class="product-contributors__name">
-            {user.display_name || user.handle}
+            {user.name || user.handle}
           </div>
           <div class="product-contributors__role">{role}</div>
           {contributedVia && (

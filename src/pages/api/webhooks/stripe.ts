@@ -1,13 +1,20 @@
 import type { APIRoute } from "astro";
 import { verifyWebhookSignature, type Stripe } from "@/lib/payments";
-import { createSale, createSaleItem, getSaleByStripeChargeId, refundSale, createSaleItemAsset } from "@/lib/data-access/sales";
+import { createSale, createSaleItem, getSaleByStripeChargeId, getSaleItems, recordSaleRefund } from "@/lib/data-access/sales";
+import { releasePayoutsForSale, reversePayout } from "@/lib/data-access/payouts";
+import { syncConnectAccountStatus } from "@/lib/data-access/users";
 import { getCartItems, clearCart } from "@/lib/data-access/cart";
-import { getProductById, getProductPriceBreakdown, getProductFiles, getProductComponents } from "@/lib/data-access/products";
+import { getProductById, getProductPriceBreakdown, getProductComponents } from "@/lib/data-access/products";
 import { sendPurchaseConfirmation } from "@/lib/email/purchase-confirmation";
 import { markSaleRoyaltiesAsRefunded, createRoyaltyTransactionsForProduct } from "@/lib/data-access/royalties";
+import {
+  claimWebhookEvent,
+  markWebhookEventProcessed,
+  releaseWebhookEvent,
+} from "@/lib/data-access/webhook-events";
 
-// Mock mode flag - automatically enabled in development, or set MOCK_STRIPE=true
-const USE_MOCK_STRIPE = import.meta.env.MODE === 'development' || import.meta.env.MOCK_STRIPE === 'true';
+import { USE_MOCK_STRIPE } from '@/lib/payments/mock-mode';
+import { captureError, captureMessage } from "@/lib/monitoring";
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -44,6 +51,36 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
+  // Claim the event before doing any work. Stripe retries on every non-2xx response,
+  // and `checkout.session.completed` is not naturally idempotent — reprocessing it
+  // creates a duplicate sale and a duplicate set of royalty obligations for a single
+  // payment. The claim is won or lost in the database via a UNIQUE constraint, so
+  // concurrent deliveries of the same event cannot both proceed.
+  let claimed: boolean;
+  try {
+    claimed = await claimWebhookEvent(
+      event.id,
+      event.type,
+      event.data.object as unknown as Record<string, unknown>
+    );
+  } catch (error) {
+    captureError(error, {
+      operation: 'webhook.claim_event',
+      stripeEventId: event.id,
+      eventType: event.type,
+    });
+    // Return 500 so Stripe retries rather than dropping a paid order.
+    return new Response('Failed to record webhook event', { status: 500 });
+  }
+
+  if (!claimed) {
+    // Already processed (or in flight). Acknowledge so Stripe stops retrying.
+    return new Response(
+      JSON.stringify({ received: true, duplicate: true }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   // Handle the event
   try {
     switch (event.type) {
@@ -55,44 +92,74 @@ export const POST: APIRoute = async ({ request }) => {
         const cartId = session.metadata?.cartId;
         const userEmail = session.customer_email;
 
+        // A malformed session cannot be fixed by retrying, and Stripe does not
+        // retry 4xx anyway. Each of these means a customer paid and we cannot
+        // fulfil — so alert, and mark the event processed so it does not sit in
+        // the claim table forever looking like work still to do.
+        const failValidation = async (reason: string) => {
+          captureError(new Error(reason), {
+            operation: 'webhook.checkout_validation',
+            stripeEventId: event.id,
+            sessionId: session.id,
+            paymentIntent: String(session.payment_intent ?? ''),
+            amountTotal: session.amount_total ?? 0,
+          });
+          await markWebhookEventProcessed(event.id);
+          return new Response(reason, { status: 400 });
+        };
+
         if (!userId || !cartId) {
-          console.error('Missing userId or cartId in session metadata');
-          return new Response('Missing metadata', { status: 400 });
+          return await failValidation('Missing userId or cartId in session metadata');
         }
 
         if (!userEmail) {
-          console.error('Missing customer email');
-          return new Response('Missing customer email', { status: 400 });
+          return await failValidation('Missing customer email');
         }
 
         if (!session.amount_total) {
-          console.error('Missing amount total');
-          return new Response('Missing amount total', { status: 400 });
+          return await failValidation('Missing amount total');
         }
 
         // Get cart items
         const cartItems = await getCartItems(cartId);
 
         if (cartItems.length === 0) {
-          console.error('Cart is empty');
-          return new Response('Cart is empty', { status: 400 });
+          return await failValidation('Cart is empty at fulfilment time');
         }
 
+        const stripeChargeId = (session.payment_intent as string) || session.id;
+
         try {
-          // 1. Create Sale record
-          const sale = await createSale({
-            userId,
-            userEmail,
-            priceCents: session.amount_total,
-            taxCents: 0,
-            currency: session.currency || 'usd',
-            stripeChargeId: session.payment_intent as string || session.id,
-            status: 'paid',
-          });
+          // 1. Find or create the Sale record.
+          //
+          // This must be find-OR-create, not create. `sales.stripe_charge_id` is
+          // UNIQUE, so if a previous attempt created the sale and then failed
+          // partway through fulfilment, a plain insert here returns null, throws,
+          // releases the claim, and the next retry does exactly the same thing —
+          // forever. Resuming from the existing sale lets a retry finish the job.
+          let sale = await getSaleByStripeChargeId(stripeChargeId);
+
+          if (!sale) {
+            sale = await createSale({
+              userId,
+              userEmail,
+              priceCents: session.amount_total,
+              taxCents: 0,
+              currency: session.currency || 'usd',
+              stripeChargeId,
+              status: 'paid',
+            });
+          }
 
           if (!sale) {
             throw new Error('Failed to create sale record');
           }
+
+          // Line items already fulfilled by a previous attempt, so a resumed run
+          // does not duplicate them.
+          const alreadyFulfilled = new Set(
+            (await getSaleItems(sale.id)).map((item) => item.product_id)
+          );
 
           // Collect items for email
           const emailItems: Array<{
@@ -104,10 +171,22 @@ export const POST: APIRoute = async ({ request }) => {
           // 2. Create SaleItems and link files for each cart item
           for (const cartItem of cartItems) {
             // Get product details and pricing
+            // Resumed run: this line item was already fulfilled.
+            if (alreadyFulfilled.has(cartItem.product_id)) {
+              continue;
+            }
+
             const product = await getProductById(cartItem.product_id);
 
             if (!product) {
-              console.error(`Product not found: ${cartItem.product_id}`);
+              // The customer paid for something we can no longer resolve. Dropping
+              // it silently ships an incomplete order with a cheerful receipt.
+              captureError(new Error('Product not found during fulfilment'), {
+                operation: 'webhook.fulfil_item',
+                saleId: sale.id,
+                productId: cartItem.product_id,
+                stripeEventId: event.id,
+              });
               continue;
             }
 
@@ -115,7 +194,12 @@ export const POST: APIRoute = async ({ request }) => {
             const priceBreakdown = await getProductPriceBreakdown(product.id);
 
             if (priceBreakdown.totalPrice === 0) {
-              console.error(`Product has no price: ${product.id}`);
+              captureMessage('Product had no price at fulfilment time', {
+                operation: 'webhook.fulfil_item',
+                saleId: sale.id,
+                productId: product.id,
+                stripeEventId: event.id,
+              });
               continue;
             }
 
@@ -136,8 +220,12 @@ export const POST: APIRoute = async ({ request }) => {
             });
 
             if (!saleItem) {
-              console.error(`Failed to create sale item for cart item: ${cartItem.id}`);
-              continue;
+              // Do not continue past this: without a sale item the buyer has no
+              // entitlement to the product they paid for. Throwing routes through
+              // the outer catch, which releases the claim so a retry can resume.
+              throw new Error(
+                `Failed to create sale item for product ${product.id} on sale ${sale.id}`
+              );
             }
 
             // Add to email items
@@ -147,45 +235,30 @@ export const POST: APIRoute = async ({ request }) => {
               priceCents: priceBreakdown.totalPrice * cartItem.quantity,
             });
 
-            // 3. Grant download access by creating sale_item_asset record
-            // This treats the product as an asset for backward compatibility with download system
-            const saleItemAsset = await createSaleItemAsset(saleItem.id, product.id);
-
-            if (!saleItemAsset) {
-              console.error(`Failed to create download access for product: ${product.id}`);
-              continue;
-            }
-
-            // 4. Create royalty transactions for product-level royalties
-            const productRoyalties = await createRoyaltyTransactionsForProduct({
+            // 3. Create royalty transactions for product-level royalties.
+            //
+            // Download access needs no record of its own: it is derived from the
+            // sale item above, and from `product_components` for anything embedded
+            // within the product (see `getPurchasedProductIds`). The previous
+            // `sale_item_assets` join table was dropped in the December schema
+            // consolidation.
+            await createRoyaltyTransactionsForProduct({
               saleId: sale.id,
               saleItemId: saleItem.id,
-              saleItemAssetId: saleItemAsset.id,
               productId: product.id,
               saleItemPriceCents: priceBreakdown.totalPrice,
-              currency: 'usd',
             });
 
-            // 5. Create royalty transactions for embedded products
+            // 4. Create royalty transactions for each embedded component, priced at
+            // the amount inherited when the component was embedded.
             const components = await getProductComponents(product.id);
 
             for (const component of components) {
-              // Create sale_item_asset for embedded product
-              const embeddedSaleItemAsset = await createSaleItemAsset(saleItem.id, component.child_product_id);
-
-              if (!embeddedSaleItemAsset) {
-                console.error(`Failed to create download access for embedded product: ${component.child_product_id}`);
-                continue;
-              }
-
-              // Create royalty transactions for the embedded product
-              const embeddedRoyalties = await createRoyaltyTransactionsForProduct({
+              await createRoyaltyTransactionsForProduct({
                 saleId: sale.id,
                 saleItemId: saleItem.id,
-                saleItemAssetId: embeddedSaleItemAsset.id,
                 productId: component.child_product_id,
                 saleItemPriceCents: component.inherited_price_cents,
-                currency: 'usd',
               });
             }
           }
@@ -193,27 +266,39 @@ export const POST: APIRoute = async ({ request }) => {
           // 6. Clear the cart
           await clearCart(cartId);
 
-          // 7. Send purchase confirmation email
-          const origin = process.env.VERCEL_URL
-            ? `https://${process.env.VERCEL_URL}`
-            : 'http://localhost:4321';
+          // 7. Send purchase confirmation email.
+          //
+          // VERCEL_URL is the per-deployment hostname, so a receipt built from it
+          // points at an immutable preview URL that will not stay meaningful. Use the
+          // configured site URL and fall back only for local development.
+          const origin =
+            import.meta.env.PUBLIC_SITE_URL ||
+            process.env.PUBLIC_SITE_URL ||
+            'http://localhost:4321';
 
-          await sendPurchaseConfirmation({
-            to: userEmail,
-            saleId: sale.id,
-            totalCents: session.amount_total,
-            currency: session.currency || 'usd',
-            items: emailItems,
-            purchaseUrl: `${origin}/purchases/${sale.id}`,
-          });
+          // On a resumed run every line item was already fulfilled, so emailItems
+          // is empty and the receipt went out on the earlier attempt. Sending again
+          // would deliver a second confirmation listing nothing.
+          if (emailItems.length > 0) {
+            await sendPurchaseConfirmation({
+              to: userEmail,
+              saleId: sale.id,
+              totalCents: session.amount_total,
+              currency: session.currency || 'usd',
+              items: emailItems,
+              purchaseUrl: `${origin}/purchases/${sale.id}`,
+            });
+          }
+
+          await markWebhookEventProcessed(event.id);
 
           return new Response(
             JSON.stringify({ received: true, saleId: sale.id }),
             { status: 200, headers: { 'Content-Type': 'application/json' } }
           );
         } catch (error) {
-          console.error('Error processing checkout:', error);
-          // Return 500 so Stripe retries
+          // Rethrow so the outer handler reports it, releases the event claim,
+          // and returns 500 to trigger a Stripe retry.
           throw error;
         }
       }
@@ -245,26 +330,165 @@ export const POST: APIRoute = async ({ request }) => {
         const sale = await getSaleByStripeChargeId(paymentIntentId);
 
         if (!sale) {
-          // This might be a charge we don't track - not an error
+          // A refund for a charge we have no record of. Not an error, but worth
+          // surfacing: it usually means a sale failed to record at purchase time.
+          captureMessage('Refund received for an unknown charge', {
+            operation: 'webhook.refund_unmatched',
+            stripeEventId: event.id,
+            paymentIntentId,
+          });
+          await markWebhookEventProcessed(event.id);
           return new Response(
             JSON.stringify({ received: true, message: 'No matching sale found' }),
             { status: 200, headers: { 'Content-Type': 'application/json' } }
           );
         }
 
-        // Determine refund reason
-        const refundReason = charge.refunds?.data?.[0]?.reason || 'Customer requested refund';
+        const refundReason =
+          charge.refunds?.data?.[0]?.reason || 'Customer requested refund';
 
-        // Mark the sale as refunded
-        await refundSale(sale.id, refundReason);
+        // charge.amount_refunded is the RUNNING TOTAL refunded, and this event
+        // fires for partial refunds too. Treating every refund as total meant a
+        // $1 goodwill refund on a $50 order voided the creator's whole royalty.
+        const refundedCents = charge.amount_refunded ?? 0;
+        const isFullRefund = refundedCents >= sale.price_cents;
 
-        // Mark all pending royalty transactions as refunded
+        await recordSaleRefund(sale.id, refundedCents, refundReason, isFullRefund);
+
+        if (!isFullRefund) {
+          // Partial refund: the sale still stands and the creator keeps their
+          // royalty. Recorded and surfaced rather than silently absorbed, because
+          // repeated partials on one seller are worth an operator noticing.
+          captureMessage('Partial refund recorded', {
+            operation: 'webhook.partial_refund',
+            stripeEventId: event.id,
+            saleId: sale.id,
+            refundedCents,
+            salePriceCents: sale.price_cents,
+          });
+
+          await markWebhookEventProcessed(event.id);
+
+          return new Response(
+            JSON.stringify({
+              received: true,
+              saleId: sale.id,
+              partialRefund: true,
+              refundedCents,
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Full refund. Release any pending payout funded by this sale FIRST —
+        // otherwise it holds royalties it can no longer justify and would transfer
+        // the original un-reduced amount, and releasePayout could not recover them
+        // afterwards because it only restores rows still in 'reserved'.
+        const releasedPayouts = await releasePayoutsForSale(sale.id);
+
         const refundedCount = await markSaleRoyaltiesAsRefunded(sale.id);
 
+        if (releasedPayouts.length > 0) {
+          captureMessage('Refund released a pending payout', {
+            operation: 'webhook.refund_released_payout',
+            stripeEventId: event.id,
+            saleId: sale.id,
+            payoutIds: releasedPayouts.map((p) => p.payoutId).join(','),
+          });
+        }
+
+        await markWebhookEventProcessed(event.id);
+
         return new Response(
-          JSON.stringify({ received: true, saleId: sale.id, royaltiesRefunded: refundedCount }),
+          JSON.stringify({
+            received: true,
+            saleId: sale.id,
+            royaltiesRefunded: refundedCount,
+            payoutsReleased: releasedPayouts.length,
+          }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
         );
+      }
+
+      case 'transfer.reversed': {
+        const transfer = event.data.object as Stripe.Transfer;
+
+        // Money that had reached a creator has come back to the platform. Without
+        // handling this the payout stayed 'paid', the royalties stayed 'paid', and
+        // the creator's balance was permanently wrong in our favour, silently.
+        const reversal = await reversePayout(
+          transfer.id,
+          'Transfer reversed by Stripe'
+        );
+
+        if (!reversal) {
+          // A reversal for a transfer we have no payout for. Money moved that this
+          // system cannot account for — the loudest thing in the file.
+          captureError(
+            new Error('Transfer reversed with no matching payout'),
+            {
+              operation: 'webhook.transfer_reversed_orphan',
+              stripeEventId: event.id,
+              transferId: transfer.id,
+              amountCents: transfer.amount,
+            }
+          );
+
+          await markWebhookEventProcessed(event.id);
+
+          return new Response(
+            JSON.stringify({ received: true, orphanedReversal: true }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Those royalties are claimable again immediately. If the reversal was
+        // caused by a problem with the creator's Connect account it will simply
+        // recur, so this needs a human, not just a log line.
+        captureMessage('Payout reversed; royalties returned to balance', {
+          operation: 'webhook.transfer_reversed',
+          stripeEventId: event.id,
+          transferId: transfer.id,
+          payoutId: reversal.payoutId,
+          amountCents: reversal.amountCents,
+          royaltiesRestored: reversal.restoredCount,
+        });
+
+        await markWebhookEventProcessed(event.id);
+
+        return new Response(
+          JSON.stringify({
+            received: true,
+            payoutId: reversal.payoutId,
+            royaltiesRestored: reversal.restoredCount,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'account.updated': {
+        const account = event.data.object as Stripe.Account;
+
+        // Connect capabilities change without us asking — an account gets
+        // restricted, deauthorized, or has transfers revoked. Without this the
+        // stored flags only refreshed when a creator happened to visit their
+        // payout settings, so a stale `payouts_enabled = true` would let the admin
+        // queue keep offering a transfer that fails every time.
+        const updated = await syncConnectAccountStatus(account.id, {
+          detailsSubmitted: account.details_submitted ?? false,
+          chargesEnabled: account.charges_enabled ?? false,
+          payoutsEnabled: account.payouts_enabled ?? false,
+        });
+
+        if (!updated) {
+          captureMessage('account.updated for an unknown Connect account', {
+            operation: 'webhook.account_updated_unknown',
+            stripeEventId: event.id,
+            accountId: account.id,
+          });
+        }
+
+        break;
       }
 
       default:
@@ -272,12 +496,26 @@ export const POST: APIRoute = async ({ request }) => {
         break;
     }
 
+    await markWebhookEventProcessed(event.id);
+
     return new Response(
       JSON.stringify({ received: true }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Webhook processing error:', error);
+    // A failure here means a customer has paid and fulfilment did not complete.
+    // This is the single most important thing in the app to be alerted about.
+    captureError(error, {
+      operation: 'webhook.process',
+      stripeEventId: event.id,
+      eventType: event.type,
+    });
+
+    // Release the claim so Stripe's retry is able to process this event again.
+    // Leaving it claimed would make the retry look like a duplicate and silently
+    // abandon a paid order partway through fulfilment.
+    await releaseWebhookEvent(event.id);
+
     return new Response(
       `Webhook Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       { status: 500 }

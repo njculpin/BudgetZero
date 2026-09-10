@@ -20,6 +20,20 @@ import * as email from '@/lib/email';
 
 // Mock auth and email modules
 vi.mock('@/lib/auth');
+
+// The rate limiter has its own tests in src/lib/rate-limit/__tests__. These tests
+// exercise auth logic, and the suite makes far more sign-in attempts than a real
+// client would — without this the shared quota is exhausted partway through and
+// every later test gets a 429 before reaching the code under test.
+vi.mock('@/lib/rate-limit', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/rate-limit')>()),
+  checkRateLimit: vi.fn().mockResolvedValue({
+    allowed: true,
+    remaining: 99,
+    retryAfterSeconds: 0,
+  }),
+}));
+
 vi.mock('@/lib/email');
 
 describe('POST /api/auth/sign-up', () => {
@@ -45,7 +59,7 @@ describe('POST /api/auth/sign-up', () => {
     });
 
     // Mock successful email sending by default
-    vi.mocked(email.sendEmail).mockResolvedValue(undefined);
+    vi.mocked(email.sendEmail).mockResolvedValue({ success: true });
   });
 
   afterEach(() => {

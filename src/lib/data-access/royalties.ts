@@ -1,5 +1,5 @@
 import { serverClient } from './client';
-import type { ProductRoyalty, SaleRoyaltyTransaction, RoyaltyType } from '@/types';
+import type { ProductRoyalty, SaleRoyaltyTransaction } from '@/types';
 
 export interface CreateRoyaltyParams {
   productId: string;
@@ -25,12 +25,6 @@ export const getProductRoyalties = async (productId: string): Promise<ProductRoy
 
   return data as ProductRoyalty[];
 };
-
-/**
- * Backward compatibility: Get all royalties for an asset (now treated as product)
- * @deprecated Use getProductRoyalties instead
- */
-export const getAssetRoyalties = getProductRoyalties;
 
 /**
  * Get a specific royalty by ID
@@ -76,12 +70,6 @@ export const createProductRoyalty = async (
 };
 
 /**
- * Backward compatibility: Create a new royalty for an asset (now treated as product)
- * @deprecated Use createProductRoyalty instead
- */
-export const createAssetRoyalty = createProductRoyalty;
-
-/**
  * Update an existing royalty
  */
 export const updateProductRoyalty = async (
@@ -103,12 +91,6 @@ export const updateProductRoyalty = async (
 
   return true;
 };
-
-/**
- * Backward compatibility: Update an existing asset royalty (now treated as product)
- * @deprecated Use updateProductRoyalty instead
- */
-export const updateAssetRoyalty = updateProductRoyalty;
 
 /**
  * Delete a royalty (soft delete)
@@ -133,12 +115,6 @@ export const deleteProductRoyalty = async (
 };
 
 /**
- * Backward compatibility: Delete an asset royalty (now treated as product)
- * @deprecated Use deleteProductRoyalty instead
- */
-export const deleteAssetRoyalty = deleteProductRoyalty;
-
-/**
  * Calculate total flat rate cost for a product
  * Returns the sum of all royalty flat rates in cents
  */
@@ -148,12 +124,6 @@ export const calculateTotalProductCost = async (
   const royalties = await getProductRoyalties(productId);
   return royalties.reduce((total, royalty) => total + royalty.royalty_value, 0);
 };
-
-/**
- * Backward compatibility: Calculate total flat rate cost for an asset (now treated as product)
- * @deprecated Use calculateTotalProductCost instead
- */
-export const calculateTotalAssetCost = calculateTotalProductCost;
 
 /**
  * Get all royalty transactions for a user (earnings)
@@ -214,225 +184,6 @@ export async function getUserEarningsSummary(userId: string): Promise<{
     lastMonthEarnings,
     transactionCount: transactions.length,
   };
-}
-
-/**
- * Get earnings breakdown by asset
- */
-export async function getAssetEarningsBreakdown(userId: string): Promise<
-  Array<{
-    assetId: string;
-    assetTitle: string;
-    totalEarnings: number;
-    transactionCount: number;
-  }>
-> {
-  const { data, error } = await serverClient
-    .from("sale_royalty_transactions")
-    .select(
-      `
-      *,
-      sale_item_assets!inner(
-        asset_id,
-        assets!inner(
-          title
-        )
-      )
-    `
-    )
-    .eq("recipient_user_id", userId);
-
-  if (error) {
-    console.error("Error fetching asset earnings breakdown:", error);
-    return [];
-  }
-
-  if (!data) return [];
-
-  // Group by asset
-  const assetMap = new Map<
-    string,
-    { assetId: string; assetTitle: string; totalEarnings: number; count: number }
-  >();
-
-  for (const transaction of data) {
-    const saleItemAsset = transaction.sale_item_assets as {
-      asset_id: string;
-      assets: { title: string };
-    };
-
-    if (!saleItemAsset) continue;
-
-    const assetId = saleItemAsset.asset_id;
-    const assetTitle = saleItemAsset.assets.title;
-
-    const existing = assetMap.get(assetId);
-    if (existing) {
-      existing.totalEarnings += transaction.calculated_cents;
-      existing.count += 1;
-    } else {
-      assetMap.set(assetId, {
-        assetId,
-        assetTitle,
-        totalEarnings: transaction.calculated_cents,
-        count: 1,
-      });
-    }
-  }
-
-  return Array.from(assetMap.values()).map((item) => ({
-    assetId: item.assetId,
-    assetTitle: item.assetTitle,
-    totalEarnings: item.totalEarnings,
-    transactionCount: item.count,
-  }));
-}
-
-/**
- * Get detailed transaction history with sale and product information
- */
-export async function getRoyaltyTransactionHistory(
-  userId: string
-): Promise<
-  Array<{
-    id: string;
-    createdAt: string;
-    calculatedCents: number;
-    status: string;
-    productTitle: string;
-    variantTitle: string;
-    assetTitle: string;
-    saleId: string;
-  }>
-> {
-  const { data, error } = await serverClient
-    .from("sale_royalty_transactions")
-    .select(
-      `
-      id,
-      created_at,
-      calculated_cents,
-      status,
-      sale_id,
-      sale_items!inner(
-        snapshot
-      ),
-      sale_item_assets!inner(
-        assets!inner(
-          title
-        )
-      )
-    `
-    )
-    .eq("recipient_user_id", userId)
-    .order("created_at", { ascending: false})
-    .limit(50);
-
-  if (error) {
-    console.error("Error fetching transaction history:", error);
-    return [];
-  }
-
-  if (!data) return [];
-
-  return data.map((transaction) => {
-    const saleItem = transaction.sale_items as { snapshot: Record<string, unknown> };
-    const saleItemAsset = transaction.sale_item_assets as {
-      assets: { title: string };
-    };
-
-    const snapshot = saleItem.snapshot;
-    const productTitle = (snapshot.product_title as string) || "Unknown Product";
-    const variantTitle = (snapshot.variant_title as string) || "Unknown Variant";
-    const assetTitle = saleItemAsset?.assets?.title || "Unknown Asset";
-
-    return {
-      id: transaction.id,
-      createdAt: transaction.created_at,
-      calculatedCents: transaction.calculated_cents,
-      status: transaction.status,
-      productTitle,
-      variantTitle,
-      assetTitle,
-      saleId: transaction.sale_id,
-    };
-  });
-}
-
-/**
- * Create royalty transactions for a sale item asset
- * Calculates royalties based on asset royalty configuration and sale price
- */
-export async function createRoyaltyTransactionsForSaleItemAsset(params: {
-  saleId: string;
-  saleItemId: string;
-  saleItemAssetId: string;
-  assetId: string;
-  saleItemPriceCents: number;
-  currency: string;
-}): Promise<SaleRoyaltyTransaction[]> {
-  const { saleId, saleItemId, saleItemAssetId, assetId, saleItemPriceCents, currency } = params;
-
-  // Get all royalties for this asset
-  const assetRoyalties = await getAssetRoyalties(assetId);
-
-  if (assetRoyalties.length === 0) {
-    return [];
-  }
-
-  const createdTransactions: SaleRoyaltyTransaction[] = [];
-
-  for (const royalty of assetRoyalties) {
-    // Calculate the royalty amount based on type
-    let calculatedCents: number;
-
-    if (royalty.royalty_type === 'fixed') {
-      // Fixed amount in cents
-      calculatedCents = royalty.royalty_value;
-    } else if (royalty.royalty_type === 'percentage') {
-      // Percentage of sale price
-      calculatedCents = Math.round((saleItemPriceCents * royalty.royalty_value) / 100);
-    } else {
-      console.warn(`Unknown royalty type: ${royalty.royalty_type}`);
-      continue;
-    }
-
-    // Skip if calculated amount is 0 or negative
-    if (calculatedCents <= 0) {
-      console.warn(`Calculated royalty is ${calculatedCents} for royalty ${royalty.id}, skipping`);
-      continue;
-    }
-
-    // Create the royalty transaction
-    const { data, error } = await serverClient
-      .from('sale_royalty_transactions')
-      .insert({
-        sale_id: saleId,
-        sale_item_id: saleItemId,
-        sale_item_asset_id: saleItemAssetId,
-        asset_royalty_id: royalty.id,
-        recipient_user_id: royalty.user_id,
-        royalty_type: royalty.royalty_type,
-        royalty_value: royalty.royalty_value,
-        calculated_cents: calculatedCents,
-        status: 'ready_to_pay',
-        stripe_transfer_id: '',
-        paid_at: null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error creating royalty transaction for royalty ${royalty.id}:`, error);
-      continue;
-    }
-
-    if (data) {
-      createdTransactions.push(data as SaleRoyaltyTransaction);
-    }
-  }
-
-  return createdTransactions;
 }
 
 /**
@@ -508,8 +259,20 @@ export async function createRoyaltyTransactionsForProduct(params: {
 }
 
 /**
- * Mark all royalty transactions for a sale as refunded
- * This prevents payouts for refunded transactions
+ * Mark a refunded sale's royalty transactions as refunded, so they are never paid.
+ *
+ * Covers both `ready_to_pay` and `reserved`. A creator may already have requested
+ * a payout by the time the buyer refunds, which moves those rows to `reserved` —
+ * matching only `ready_to_pay` would silently skip them and the platform would go
+ * on to pay royalties on a sale it had refunded.
+ *
+ * `paid` is deliberately excluded: that money has already left via Stripe and
+ * cannot be reversed by a status change. Those need a clawback, which is a
+ * separate decision.
+ *
+ * @returns the number of transactions refunded. If a pending payout referenced any
+ * of them, its amount no longer matches its items and it needs releasing — see the
+ * caller in the charge.refunded webhook branch.
  */
 export async function markSaleRoyaltiesAsRefunded(
   saleId: string
@@ -521,7 +284,7 @@ export async function markSaleRoyaltiesAsRefunded(
       updated_at: new Date().toISOString(),
     })
     .eq('sale_id', saleId)
-    .eq('status', 'ready_to_pay')
+    .in('status', ['ready_to_pay', 'reserved'])
     .select('id');
 
   if (error) {

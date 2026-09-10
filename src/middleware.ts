@@ -2,28 +2,44 @@ import { defineMiddleware } from "astro:middleware";
 import { setSession } from "@/lib/auth";
 
 /**
- * Routes that require authentication
+ * Routes that require authentication.
+ *
+ * Prefixes here are the outer gate; individual routes still perform their own
+ * ownership checks. Anything under /api that is not listed in PUBLIC_API_ROUTES
+ * below is covered by the catch-all "/api" entry, so a newly added route is
+ * protected by default rather than exposed by omission.
  */
 const PROTECTED_ROUTES = [
   "/payouts",
   "/connect/dashboard",
-  "/api/assets",
-  "/api/products",
-  "/api/payouts",
-  "/api/connect",
-  "/api/cart",
-  "/api/webhooks", // Protected but verified differently (Stripe signature)
+  // Admin pages verify the admin role themselves; this gate only ensures an
+  // anonymous visitor is sent to sign-in rather than reaching the page at all.
+  "/admin",
+  "/api",
 ];
 
 /**
- * API routes that are public (no auth required)
+ * API routes that are public (no auth required).
+ *
+ * `/api/webhooks/stripe` is authenticated by Stripe signature rather than by
+ * session. The search endpoints back anonymous browsing.
+ *
+ * Note that public pages render product data server-side through the data-access
+ * layer rather than by calling /api/products, so no anonymous browsing depends on
+ * those routes. If a public island ever needs one, add it here explicitly.
  */
 const PUBLIC_API_ROUTES = [
   "/api/auth/sign-in",
   "/api/auth/sign-up",
   "/api/auth/sign-out",
   "/api/auth/callback",
+  "/api/auth/reset-password",
+  "/api/auth/update-password",
   "/api/webhooks/stripe",
+  "/api/subscribe",
+  "/api/tags/suggestions",
+  "/api/users/search-users",
+  "/api/products/search-products",
 ];
 
 /**
@@ -101,9 +117,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
       return redirect("/sign-in");
     }
 
-    // Attach user info to locals for use in routes
-    locals.user = session.data.user;
-    locals.session = session.data.session;
+    // Attach user info to locals for use in routes. Supabase's User/Session carry
+    // index signatures that do not structurally match App.Locals, so narrow to the
+    // fields routes actually read.
+    locals.user = { ...session.data.user, id: session.data.user.id };
+    locals.session = session.data.session
+      ? { ...session.data.session, access_token: session.data.session.access_token }
+      : undefined;
 
     return next();
   } catch (error) {

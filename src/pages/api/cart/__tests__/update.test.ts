@@ -143,11 +143,7 @@ describe('POST /api/cart/update', () => {
       expect(data.success).toBe(true);
       expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(
         VALID_CART_ITEM_ID,
-        3,
-        {
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
-        }
+        3
       );
     });
 
@@ -167,8 +163,7 @@ describe('POST /api/cart/update', () => {
       expect(data.success).toBe(true);
       expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(
         VALID_CART_ITEM_ID,
-        0,
-        expect.any(Object)
+        0
       );
     });
 
@@ -201,8 +196,7 @@ describe('POST /api/cart/update', () => {
       expect(response.status).toBe(200);
       expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(
         VALID_CART_ITEM_ID,
-        100,
-        expect.any(Object)
+        100
       );
     });
 
@@ -297,8 +291,13 @@ describe('POST /api/cart/update', () => {
     });
   });
 
-  describe('Token Passing', () => {
-    it('should pass access and refresh tokens to updateCartItemQuantity', async () => {
+  describe('Data Layer Call', () => {
+    // This previously asserted that the route forwarded the caller's access and
+    // refresh tokens to updateCartItemQuantity. It never did, and the function has
+    // no such parameter — the route authenticates from cookies and the data layer
+    // runs with the service role. The assertion documented an interface that did
+    // not exist, so it now pins the real one.
+    it('should call updateCartItemQuantity with the item id and quantity only', async () => {
       vi.mocked(cart.updateCartItemQuantity).mockResolvedValue(true);
 
       mockRequest = new Request('http://localhost/api/cart/update', {
@@ -311,11 +310,7 @@ describe('POST /api/cart/update', () => {
 
       expect(cart.updateCartItemQuantity).toHaveBeenCalledWith(
         VALID_CART_ITEM_ID,
-        2,
-        {
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
-        }
+        2
       );
     });
   });

@@ -1,6 +1,7 @@
 ---
 interface Props {
-  type?: string;
+  /** Mirrors the HTML input type attribute accepted by astro-jsx. */
+  type?: astroHTML.JSX.InputHTMLAttributes["type"];
   name: string;
   id?: string;
   value?: string;

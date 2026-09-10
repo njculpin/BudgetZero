@@ -183,7 +183,7 @@ test.describe('Complete Purchase Flow', () => {
 
     // STEP 2: Browse to product
     await page.goto('/products');
-    await expect(page.locator('.browse-card')).toHaveCount.greaterThan(0);
+    expect(await page.locator('.browse-card').count()).toBeGreaterThan(0);
 
     // Find and click our test product
     const productCard = page.locator('.browse-card', { hasText: 'Test Game for Purchase Flow' });
@@ -233,7 +233,7 @@ test.describe('Complete Purchase Flow', () => {
     // Instead, we'll verify the checkout API returns a session URL
 
     const checkoutResponse = await page.evaluate(async () => {
-      const response = await fetch('/api/checkout', {
+      const response = await fetch('/api/checkout/create-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -434,7 +434,7 @@ test.describe('Complete Purchase Flow', () => {
 
     // Try to checkout with empty cart
     const checkoutResponse = await page.evaluate(async () => {
-      const response = await fetch('/api/checkout', {
+      const response = await fetch('/api/checkout/create-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -452,7 +452,7 @@ test.describe('Complete Purchase Flow', () => {
     await page.goto('/cart');
 
     const checkoutResponse = await page.evaluate(async () => {
-      const response = await fetch('/api/checkout', {
+      const response = await fetch('/api/checkout/create-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });

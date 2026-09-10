@@ -1,8 +1,25 @@
 import type { APIRoute } from 'astro';
 import { authClient } from '@/lib/auth/client';
 import { sendEmail } from '@/lib/email';
+import {
+  checkRateLimit,
+  rateLimitIdentity,
+  rateLimitedResponse,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress }) => {
+  // Password reset sends email, so unbounded requests cost money and sender
+  // reputation. Limited by client address.
+  const rateLimit = await checkRateLimit(
+    RATE_LIMITS.passwordReset,
+    rateLimitIdentity(request, clientAddress)
+  );
+
+  if (!rateLimit.allowed) {
+    return rateLimitedResponse(rateLimit);
+  }
+
   const formData = await request.formData();
   const email = formData.get('email')?.toString();
 

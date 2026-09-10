@@ -21,14 +21,14 @@ export const GET: APIRoute = async ({ params }) => {
       royalties.map(async (royalty) => {
         const { data: user } = await serverClient
           .from("users")
-          .select("handle, full_name")
+          .select("handle, name")
           .eq("id", royalty.user_id)
           .single();
 
         return {
           ...royalty,
           user_handle: user?.handle || "unknown",
-          user_name: user?.full_name || user?.handle || "Unknown",
+          user_name: user?.name || user?.handle || "Unknown",
         };
       })
     );

@@ -1,9 +1,29 @@
 import type { BaseEntity, BaseEntityWithoutDelete } from "./common.types";
 import type { RoyaltyType } from "./products.types";
 
-export type SaleStatus = 'pending' | 'paid' | 'failed' | 'refunded';
-export type PaymentMethod = 'stripe' | 'credits';
-export type RoyaltyTransactionStatus = 'pending' | 'ready_to_pay' | 'paid' | 'failed' | 'refunded';
+export type SaleStatus =
+  | 'pending'
+  | 'paid'
+  | 'failed'
+  | 'refunded'
+  /** A partial refund. Entitlement is retained — the customer keeps what they bought. */
+  | 'partially_refunded';
+// Credits checkout is deferred past v1; Stripe is the only payment method.
+export type PaymentMethod = 'stripe';
+/**
+ * Lifecycle of a royalty owed to a contributor.
+ *
+ * `reserved` means the transaction is attached to a pending payout: it has left the
+ * creator's available balance but the transfer has not completed. It is what stops
+ * the same earnings being withdrawn twice.
+ */
+export type RoyaltyTransactionStatus =
+  | 'pending'
+  | 'ready_to_pay'
+  | 'reserved'
+  | 'paid'
+  | 'failed'
+  | 'refunded';
 
 export interface ShippingAddress {
   name: string;
@@ -58,6 +78,8 @@ export interface SaleRoyaltyTransaction extends BaseEntity {
   royalty_value: number;
   calculated_cents: number;
   status: RoyaltyTransactionStatus;
+  /** When this royalty matures out of the hold period and becomes payable. */
+  available_at: string;
   stripe_transfer_id: string;
   paid_at: string | null;
 }

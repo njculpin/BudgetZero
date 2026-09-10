@@ -25,5 +25,5 @@
 
 .checkout-button__mock-notice svg {
   flex-shrink: 0;
-  color: var(--warning);
+  color: var(--warning-fg);
 }
