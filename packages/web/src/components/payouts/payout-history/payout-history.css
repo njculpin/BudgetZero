@@ -1,0 +1,47 @@
+.payout-history {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.payout-history__item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-lg);
+  padding: var(--spacing-xl) 0;
+  border-bottom: var(--border-width-default) solid var(--border);
+}
+
+.payout-history__item:last-child {
+  border-bottom: none;
+}
+
+.payout-history__amount {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.payout-history__date {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.payout-history__pending,
+.payout-history__empty {
+  margin: 0;
+  padding: var(--spacing-4xl);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 40rem) {
+  .payout-history__item {
+    flex-wrap: wrap;
+    gap: var(--gap-sm);
+  }
+}

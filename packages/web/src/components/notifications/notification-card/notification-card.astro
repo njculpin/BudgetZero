@@ -1,7 +1,7 @@
 ---
 import Card from '@/components/card/card.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
-import type { Notification } from '@gameloopers/core/types';
+import type { Notification, NotificationActionType } from '@gameloopers/core/types';
 import {
   AlertCircleIcon,
   AwardIcon,
@@ -41,17 +41,20 @@ const { notification } = Astro.props;
 /**
  * Action type -> [icon, tone]. One table, rather than the two parallel switch
  * statements the page used to carry.
+ *
+ * Typed as a full Record so adding an action type is a compile error here
+ * rather than a silent fallback to a bell. The switches this replaced still
+ * had cases for `asset_price_changed`, `asset_files_changed`,
+ * `asset_royalties_changed` and `jam_submission_approved`, none of which have
+ * been possible since the December 2024 asset removal.
  */
-const APPEARANCE: Record<string, [keyof typeof ICONS, string]> = {
+const APPEARANCE: Record<NotificationActionType, [keyof typeof ICONS, string]> = {
   sale_completed: ['shopping-cart', 'success'],
   royalty_payment_received: ['dollar-sign', 'success'],
-  asset_price_changed: ['file', 'info'],
-  asset_files_changed: ['file', 'info'],
-  asset_royalties_changed: ['file', 'info'],
   product_needs_review: ['alert-circle', 'warning'],
   product_price_conflict: ['alert-circle', 'warning'],
   document_shared: ['file-text', 'default'],
-  jam_submission_approved: ['award', 'default'],
+  general: ['bell', 'default'],
 };
 
 const [iconName, tone] = APPEARANCE[notification.action_type] ?? ['bell', 'default'];
@@ -59,13 +62,13 @@ const Icon = ICONS[iconName];
 
 /**
  * Where the notification points. Only entity types with a page of their own get
- * a link; a sale has no page, so it goes to the purchases list.
+ * a link: a sale has none, so it goes to the purchases list, and a `user`
+ * notification is about you and goes nowhere.
  */
 function entityUrl(): string | null {
   const snapshot = notification.snapshot as Record<string, unknown> | null;
   const handle = snapshot?.handle as string | undefined;
 
-  if (!notification.entity_type) return null;
   if (notification.entity_type === 'sale') return '/purchases';
   if (!handle) return null;
 

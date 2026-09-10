@@ -9,7 +9,8 @@ import CardDescription from '@/components/card/card-description/card-description
 import CardContent from '@/components/card/card-content/card-content.astro';
 import PageHeader from '@/components/page-header/page-header.astro';
 import CardGrid from '@/components/card-grid/card-grid.astro';
-import PayoutDashboard from '@/components/payouts/payout-dashboard/payout-dashboard';
+import PayoutBalance from '@/components/payouts/payout-balance/payout-balance';
+import PayoutHistory from '@/components/payouts/payout-history/payout-history';
 import PayoutShortcuts from '@/components/payouts/payout-shortcuts/payout-shortcuts.astro';
 import { getUserById } from '@gameloopers/core/data-access/users';
 
@@ -40,9 +41,7 @@ if (!user) {
           <CardDescription>Earnings ready to be paid out</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Balance, history and the request dialog are one island: they read
-              the same endpoint, and a successful request changes both. */}
-          <PayoutDashboard client:load />
+          <PayoutBalance client:load />
         </CardContent>
       </Card>
 
@@ -56,5 +55,17 @@ if (!user) {
         </CardContent>
       </Card>
     </CardGrid>
+
+    <Card>
+      <CardHeader>
+        <CardTitle>Payout History</CardTitle>
+        <CardDescription>Your recent payout requests</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Shares one fetch with the balance card, so a successful request
+            refreshes both. See components/payouts/payouts-store. */}
+        <PayoutHistory client:load />
+      </CardContent>
+    </Card>
   </Page>
 </Layout>

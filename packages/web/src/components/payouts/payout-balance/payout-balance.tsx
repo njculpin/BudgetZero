@@ -1,42 +1,27 @@
-import { createSignal, createResource, Show, For } from 'solid-js';
+import { createResource, createSignal, Show } from 'solid-js';
 import Modal, { ModalFooter } from '@/components/modal/modal';
 import LoadingButton from '@/components/interactive/loading-button/loading-button';
 import { formatMoney } from '@gameloopers/core/utils/money';
-import type { Payout } from '@gameloopers/core/types';
-import './payout-dashboard.css';
+import {
+  MINIMUM_PAYOUT_CENTS,
+  announcePayoutChange,
+  fetchBalance,
+  isBrowser,
+  requestPayout,
+} from '@/components/payouts/payouts-store';
+import './payout-balance.css';
 
 /**
- * Balance, payout history and the request dialog.
+ * What is available to withdraw, and the dialog that withdraws it.
  *
- * This was a page-level `<script>` that fetched the balance and then wrote the
- * result with `innerHTML`, template-stringing class names that lived in a page
- * stylesheet. The dialog it opened was a `<div>` toggled with
- * `style.display`: no focus trap, no Escape key, no scroll lock, and the
- * success path called `alert()`.
+ * This was a page-level `<script>` that fetched the balance and wrote the
+ * result with `innerHTML`. The dialog it opened was a `<div>` toggled with
+ * `style.display`: no focus trap, no Escape key, no scroll lock. Its Retry
+ * button was `onclick="loadData()"`, which cannot resolve a function in module
+ * scope, so retrying never worked.
  */
-
-/** Stripe will not send a transfer below this, so neither will we. */
-const MINIMUM_PAYOUT_CENTS = 1000;
-
-interface BalanceResponse {
-  availableBalance: number;
-  transactionCount: number;
-  payouts: Payout[];
-}
-
-async function fetchBalance(): Promise<BalanceResponse> {
-  const response = await fetch('/api/payouts/get-balance');
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || 'Failed to load balance');
-  }
-
-  return data as BalanceResponse;
-}
-
-export default function PayoutDashboard() {
-  const [balance, { refetch }] = createResource(fetchBalance);
+export default function PayoutBalance() {
+  const [balance, { refetch }] = createResource(isBrowser, fetchBalance);
 
   const [isDialogOpen, setDialogOpen] = createSignal(false);
   const [amount, setAmount] = createSignal('');
@@ -46,13 +31,15 @@ export default function PayoutDashboard() {
   const [confirmation, setConfirmation] = createSignal<string | null>(null);
 
   const availableCents = () => balance()?.availableBalance ?? 0;
+  const transactionCount = () => balance()?.transactionCount ?? 0;
   const canRequest = () => availableCents() >= MINIMUM_PAYOUT_CENTS;
 
   function openDialog() {
-    // The whole balance is the usual request, so it is the starting value.
+    // Withdrawing the whole balance is the usual case, so it is the default.
     setAmount((availableCents() / 100).toFixed(2));
     setNotes('');
     setFormError(null);
+    setConfirmation(null);
     setDialogOpen(true);
   }
 
@@ -67,22 +54,11 @@ export default function PayoutDashboard() {
     setSubmitting(true);
 
     try {
-      const amountCents = Math.round(parseFloat(amount()) * 100);
-
-      const response = await fetch('/api/payouts/request-payout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amountCents, notes: notes() || undefined }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to request payout');
-      }
-
+      await requestPayout(Math.round(parseFloat(amount()) * 100), notes());
       closeDialog();
       await refetch();
+      // The history card reads the same endpoint and has to catch up.
+      announcePayoutChange();
       setConfirmation(
         'Payout requested. You will be notified when it has been processed.'
       );
@@ -96,16 +72,16 @@ export default function PayoutDashboard() {
   return (
     <>
       <Show when={confirmation()}>
-        <p class="payout-dashboard__confirmation" role="status">
+        <p class="payout-balance__confirmation" role="status">
           {confirmation()}
         </p>
       </Show>
 
-      <div class="payout-dashboard__balance">
+      <div class="payout-balance">
         <Show
           when={!balance.loading}
           fallback={
-            <p class="payout-dashboard__loading" role="status">
+            <p class="payout-balance__pending" role="status">
               Loading balance...
             </p>
           }
@@ -113,7 +89,7 @@ export default function PayoutDashboard() {
           <Show
             when={!balance.error}
             fallback={
-              <div class="payout-dashboard__error">
+              <div class="payout-balance__failed">
                 <p role="alert">Failed to load balance</p>
                 <button
                   type="button"
@@ -125,15 +101,15 @@ export default function PayoutDashboard() {
               </div>
             }
           >
-            <p class="payout-dashboard__amount">{formatMoney(availableCents())}</p>
-            <p class="payout-dashboard__source">
-              From {balance()?.transactionCount ?? 0}{' '}
-              {balance()?.transactionCount === 1 ? 'transaction' : 'transactions'}
+            <p class="payout-balance__amount">{formatMoney(availableCents())}</p>
+            <p class="payout-balance__source">
+              From {transactionCount()}{' '}
+              {transactionCount() === 1 ? 'transaction' : 'transactions'}
             </p>
             <Show
               when={canRequest()}
               fallback={
-                <p class="payout-dashboard__minimum">
+                <p class="payout-balance__minimum">
                   Minimum payout amount is {formatMoney(MINIMUM_PAYOUT_CENTS)}
                 </p>
               }
@@ -150,48 +126,13 @@ export default function PayoutDashboard() {
         </Show>
       </div>
 
-      <section class="payout-dashboard__history">
-        <h2 class="payout-dashboard__history-title">Payout History</h2>
-        <Show
-          when={!balance.loading}
-          fallback={
-            <p class="payout-dashboard__loading" role="status">
-              Loading history...
-            </p>
-          }
-        >
-          <Show
-            when={(balance()?.payouts.length ?? 0) > 0}
-            fallback={<p class="payout-dashboard__empty">No payout requests yet</p>}
-          >
-            <ul class="payout-dashboard__list">
-              <For each={balance()?.payouts}>
-                {(payout) => (
-                  <li class="payout-dashboard__payout">
-                    <span class="payout-dashboard__payout-amount">
-                      {formatMoney(payout.amount_cents)}
-                    </span>
-                    <span class="payout-dashboard__payout-date">
-                      {new Date(payout.requested_at).toLocaleDateString()}
-                    </span>
-                    <span class={`status-badge status-badge--${payout.status}`}>
-                      {payout.status}
-                    </span>
-                  </li>
-                )}
-              </For>
-            </ul>
-          </Show>
-        </Show>
-      </section>
-
       <Modal
         isOpen={isDialogOpen()}
         onClose={closeDialog}
         title="Request Payout"
         size="sm"
       >
-        <form onSubmit={submit} class="payout-dashboard__form">
+        <form onSubmit={submit} class="payout-balance__form">
           <div class="form-field">
             <label for="payout-amount" class="form-field__label">
               Amount

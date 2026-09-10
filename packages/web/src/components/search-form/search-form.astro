@@ -1,0 +1,21 @@
+---
+import './search-form.css';
+
+/**
+ * A GET form that filters the page it is on: the field, and whatever else the
+ * caller puts beside it — usually a link that clears the current filters.
+ *
+ * The wrapper used to be a bare `<form class="browse-search">` on the browse
+ * page, styled from global.css. When `SearchField` was extracted the rule went
+ * with it and the form was left unstyled.
+ */
+interface Props {
+  action: string;
+}
+
+const { action } = Astro.props;
+---
+
+<form method="get" action={action} class="search-form">
+  <slot />
+</form>

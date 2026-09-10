@@ -9,7 +9,12 @@ import Section from './section.astro';
 
 describe('Section', () => {
   async function render(
-    props: { title?: string; align?: 'left' | 'center'; titleHidden?: boolean } = {},
+    props: {
+      title?: string;
+      description?: string;
+      align?: 'left' | 'center';
+      titleHidden?: boolean;
+    } = {},
     slots: Record<string, string> = {}
   ) {
     const container = await AstroContainer.create();
@@ -80,6 +85,28 @@ describe('Section', () => {
     expect(html).toContain('sr-only');
     expect(html).toContain('section__actions');
     expect(html).not.toContain('section__title');
+  });
+
+  it('renders a description under the heading', async () => {
+    const html = await render({ title: 'Your Downloads', description: 'Click below.' });
+
+    expect(html).toContain('section__description');
+    expect(html.indexOf('Your Downloads')).toBeLessThan(html.indexOf('Click below.'));
+  });
+
+  it('renders a description with no title without pulling it out of the block', async () => {
+    // The description used to carry a negative top margin that assumed a
+    // header above it.
+    const html = await render({ description: 'Click below.' });
+
+    expect(html).toContain('Click below.');
+    expect(html).not.toContain('section__header');
+  });
+
+  it('omits the description paragraph when there is none', async () => {
+    const html = await render({ title: 'Your Downloads' });
+
+    expect(html).not.toContain('section__description');
   });
 
   it('omits the actions wrapper when nothing fills the slot', async () => {

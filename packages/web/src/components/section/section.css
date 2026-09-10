@@ -26,9 +26,16 @@
 }
 
 .section__description {
-  margin: calc(-1 * var(--spacing-2xl)) 0 var(--spacing-2xl);
+  margin: 0 0 var(--spacing-2xl);
   font-size: var(--text-sm);
   color: var(--muted-foreground);
+}
+
+/* With a description the header stops short and the description carries the
+   gap. A negative margin here used to do the same job and pulled the
+   description out of the section when there was no header above it. */
+.section__header:has(+ .section__description) {
+  margin-bottom: var(--spacing-2xl);
 }
 
 .section__actions {

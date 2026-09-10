@@ -8,6 +8,7 @@ import PageHeader from '@/components/page-header/page-header.astro';
 import Section from '@/components/section/section.astro';
 import CardGrid from '@/components/card-grid/card-grid.astro';
 import SearchField from '@/components/search-field/search-field.astro';
+import SearchForm from '@/components/search-form/search-form.astro';
 import TagFilter from '@/components/tag-filter/tag-filter.astro';
 import Tag from '@/components/tag/tag.astro';
 import Toolbar from '@/components/toolbar/toolbar.astro';
@@ -95,7 +96,7 @@ const productTags = allTags.filter((tag) => tag.productCount > 0).slice(0, 10);
       )}
     </PageHeader>
 
-    <form method="get" action="/products" class="browse-search">
+    <SearchForm action="/products">
       <SearchField
         name="search"
         label="Search products"
@@ -108,7 +109,7 @@ const productTags = allTags.filter((tag) => tag.productCount > 0).slice(0, 10);
           <span slot="text">Clear filters</span>
         </Button>
       )}
-    </form>
+    </SearchForm>
 
     <Toolbar>
       <FormField label="Sort by:" name="sort-select" inline>
