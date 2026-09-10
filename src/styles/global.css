@@ -65,13 +65,25 @@
 
   /* ===== Status Background/Foreground/Border Aliases ===== */
   --success-bg: oklch(from var(--color-success) l c h / 0.1);
-  --success-fg: var(--color-success);
+  /* Darkened for text. --color-success is a FILL colour at 4.07:1 on white,
+     below the 4.5:1 AA floor; this variant measures 5.08:1 on white and 4.51:1
+     on the 10% tint that Badge and AlertMessage put it on. Never use
+     --color-success as a `color:` value. */
+  --success-fg: oklch(0.524 0.15 145);
   --success-border: oklch(from var(--color-success) l c h / 0.3);
   --warning-bg: oklch(from var(--color-warning) l c h / 0.1);
-  --warning-fg: var(--color-warning);
+  /* --color-warning is 1.72:1 on white — effectively invisible as text, and it
+     was being used for the warning badge, alert copy, and the checkout button's
+     warning icon. This variant measures 5.09:1 on white, 4.50:1 on the tint.
+     Amber cannot clear AA above roughly L=0.55, so this is a large shift. */
+  --warning-fg: oklch(0.540 0.189 84.429);
   --warning-border: oklch(from var(--color-warning) l c h / 0.3);
   --info-bg: oklch(from var(--color-info) l c h / 0.1);
-  --info-fg: var(--color-info);
+  /* 3.66:1 as a fill; 5.11:1 on white and 4.51:1 on the tint as text. */
+  --info-fg: oklch(0.514 0.118 184.704);
+  /* --accent is 4.21:1 on white — fine as a fill, short of AA as text.
+     5.09:1 darkened. */
+  --accent-fg: oklch(0.502 0.17 162.48);
   --info-border: oklch(from var(--color-info) l c h / 0.3);
   --error-bg: oklch(from var(--destructive) l c h / 0.1);
   --error-fg: var(--destructive);
@@ -1325,4 +1337,24 @@ blockquote {
   overflow: visible;
   clip: auto;
   white-space: normal;
+}
+
+/* ===== Reduced Motion =====
+ *
+ * DESIGN_SYSTEM.md mandates this and the codebase had no such query at all,
+ * despite .scale-pop, skeleton-shimmer, button-spin, dialog-scale-in and a range
+ * of transform transitions. WCAG 2.3.3.
+ *
+ * Animations are reduced to a near-instant duration rather than removed, so
+ * anything that relies on transitionend or animationend still fires.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

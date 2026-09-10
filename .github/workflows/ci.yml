@@ -5,15 +5,18 @@ on:
     branches: [main]
   pull_request:
 
-# Vercel deploys main automatically, so these checks are the only thing standing
-# between a broken commit and production.
-jobs:
-  verify:
-    runs-on: ubuntu-latest
+# A superseded PR run tells you nothing. Never cancel on main — those runs gate
+# the Vercel deploy and their result has to be recorded.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+jobs:
+  static:
+    name: Typecheck & build
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           # Match the Vercel serverless runtime.
@@ -21,29 +24,24 @@ jobs:
           cache: npm
 
       # `npm ci` installs strictly from the lockfile, so a dependency declared in
-      # package.json but never installed fails here instead of at build time.
-      - name: Install dependencies
-        run: npm ci
+      # package.json but never installed fails here rather than at build time.
+      - run: npm ci
+
+      # `astro build` loads .env / .env.production by mode and never reads
+      # .env.test, so its vars have to be injected. These are the Supabase CLI's
+      # fixed local demo keys — public constants, identical on every machine, and
+      # already committed. No repo secrets required.
+      - name: Load test env
+        run: cat .env.test >> "$GITHUB_ENV"
 
       - name: Typecheck
         run: npx astro check --minimal
 
-      - name: Unit tests
-        run: npm run test:run
-        env:
-          PUBLIC_SUPABASE_URL: http://127.0.0.1:55321
-          PUBLIC_SUPABASE_ANON_KEY: ${{ vars.TEST_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ vars.TEST_SUPABASE_SERVICE_ROLE_KEY }}
-          MOCK_STRIPE: 'true'
-
       - name: Build
         run: npm run build
-        env:
-          PUBLIC_SUPABASE_URL: http://127.0.0.1:55321
-          PUBLIC_SUPABASE_ANON_KEY: ${{ vars.TEST_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ vars.TEST_SUPABASE_SERVICE_ROLE_KEY }}
 
-  audit:
+  unit:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,8 +50,59 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Advisory for now. Tighten to --audit-level=high once the Astro 7 upgrade
-      # has cleared the current backlog of criticals.
+
+      # No database. vitest.config.ts loads .env.test itself via dotenv, and the
+      # unit project excludes every *.integration.test.ts file.
+      - name: Unit tests
+        run: npm run test:unit
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Reads supabase/config.toml (API on 55321) and applies every migration.
+      # The excluded services are not touched by any test; dropping them saves
+      # roughly a minute of image pulls. If the CLI rejects a name after an
+      # upgrade, drop the -x flag entirely — it is an optimisation, not a
+      # requirement.
+      - name: Start Supabase
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          supabase status || true
+          docker ps -a
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Advisory only. The 3 remaining highs are one transitive ReDoS in
+      # path-to-regexp via @vercel/routing-utils, with no adapter release that
+      # fixes it — see .npmrc. Tighten to --audit-level=high once that clears.
       - name: Audit dependencies
         run: npm audit --audit-level=critical
         continue-on-error: true
