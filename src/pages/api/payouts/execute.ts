@@ -164,7 +164,17 @@ export const POST: APIRoute = async ({ request, cookies, clientAddress }) => {
           : 'Transfer failed';
 
       // No money moved. Return the reserved royalties to the creator's balance.
-      await releasePayout(payoutId, errorMessage);
+      // Wrapped so a release failure cannot mask the transfer failure that
+      // actually matters here.
+      try {
+        await releasePayout(payoutId, errorMessage);
+      } catch (releaseError) {
+        captureError(releaseError, {
+          operation: 'payout.release_after_failed_transfer',
+          payoutId,
+          recipientUserId: payout.user_id,
+        });
+      }
 
       captureError(transferError, {
         operation: 'payout.transfer',
