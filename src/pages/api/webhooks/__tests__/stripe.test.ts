@@ -348,6 +348,9 @@ describe('Stripe Webhook Handler (Product-Centric Model)', () => {
           royalty_value: 500,
           calculated_cents: 500, // Fixed $5.00
           status: 'ready_to_pay',
+          // Matured past the hold period: this suite tests payout mechanics, not the
+          // hold. Without it a royalty is held 14 days and never reads as available.
+          available_at: new Date(Date.now() - 86_400_000).toISOString(),
         })
         .select()
         .single();
@@ -415,6 +418,9 @@ describe('Stripe Webhook Handler (Product-Centric Model)', () => {
           royalty_value: 20,
           calculated_cents: calculatedCents,
           status: 'ready_to_pay',
+          // Matured past the hold period: this suite tests payout mechanics, not the
+          // hold. Without it a royalty is held 14 days and never reads as available.
+          available_at: new Date(Date.now() - 86_400_000).toISOString(),
         })
         .select()
         .single();
@@ -684,6 +690,9 @@ describe('Stripe Webhook Handler (Product-Centric Model)', () => {
           royalty_value: 500,
           calculated_cents: 500,
           status: 'ready_to_pay',
+          // Matured past the hold period: this suite tests payout mechanics, not the
+          // hold. Without it a royalty is held 14 days and never reads as available.
+          available_at: new Date(Date.now() - 86_400_000).toISOString(),
         })
         .select()
         .single();
@@ -751,7 +760,10 @@ describe('Stripe Webhook Handler (Product-Centric Model)', () => {
           royalty_type: 'fixed',
           royalty_value: 500,
           calculated_cents: 500,
-          status: 'paid', // Already paid out
+          status: 'paid',
+          // Matured past the hold period: this suite tests payout mechanics, not the
+          // hold. Without it a royalty is held 14 days and never reads as available.
+          available_at: new Date(Date.now() - 86_400_000).toISOString(), // Already paid out
         })
         .select()
         .single();

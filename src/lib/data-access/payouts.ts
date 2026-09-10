@@ -190,10 +190,15 @@ export async function claimPayoutForProcessing(
 // each of which keeps the payout row and its reservations consistent.
 
 /**
- * Calculate available balance for payout.
+ * Calculate the balance a creator can withdraw right now.
  *
- * Only `ready_to_pay` counts. Transactions already attached to a pending payout are
- * `reserved` and transferred ones are `paid`, so neither can be withdrawn twice.
+ * Only `ready_to_pay` counts, and only once it has matured. Transactions attached
+ * to a pending payout are `reserved` and transferred ones are `paid`, so neither
+ * can be withdrawn twice; and anything still inside the hold period is excluded so
+ * a refund arriving in that window is caught before the money leaves.
+ *
+ * See `getClearingBalance` for what is still maturing — a creator seeing only this
+ * figure after a sale would reasonably think they had not been credited.
  */
 export async function getAvailablePayoutBalance(userId: string): Promise<{
   totalCents: number;
@@ -204,7 +209,8 @@ export async function getAvailablePayoutBalance(userId: string): Promise<{
     .select('id, calculated_cents')
     .eq('recipient_user_id', userId)
     .eq('deleted', false)
-    .eq('status', 'ready_to_pay');
+    .eq('status', 'ready_to_pay')
+    .lte('available_at', new Date().toISOString());
 
   if (error) {
     console.error('Error fetching available balance:', error);
@@ -347,4 +353,48 @@ export async function releasePayoutsForSale(
   return ((data as Array<{ out_payout_id: string; out_released_count: number }>) || []).map(
     (row) => ({ payoutId: row.out_payout_id, releasedCount: row.out_released_count })
   );
+}
+
+export interface ClearingBalance {
+  totalCents: number;
+  transactionCount: number;
+  /** When the earliest-maturing royalty becomes payable, if any are clearing. */
+  nextAvailableAt: string | null;
+}
+
+/**
+ * Earnings credited but still inside the hold period.
+ *
+ * This exists so the creator-facing view can say "$40 available, $15 clearing
+ * until 3 March" rather than showing a balance that silently omits a sale they
+ * know happened. Money that appears to vanish is worse than money that is visibly
+ * pending.
+ */
+export async function getClearingBalance(
+  userId: string
+): Promise<ClearingBalance> {
+  const { data, error } = await serverClient
+    .from('sale_royalty_transactions')
+    .select('calculated_cents, available_at')
+    .eq('recipient_user_id', userId)
+    .eq('deleted', false)
+    .eq('status', 'ready_to_pay')
+    .gt('available_at', new Date().toISOString())
+    .order('available_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching clearing balance:', error);
+    return { totalCents: 0, transactionCount: 0, nextAvailableAt: null };
+  }
+
+  const rows = data ?? [];
+
+  return {
+    totalCents: rows.reduce(
+      (sum, row) => sum + (row.calculated_cents as number),
+      0
+    ),
+    transactionCount: rows.length,
+    nextAvailableAt: rows.length > 0 ? (rows[0].available_at as string) : null,
+  };
 }
