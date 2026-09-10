@@ -63,8 +63,8 @@ function checkoutEvent(overrides: Record<string, unknown> = {}): Stripe.Event {
   } as unknown as Stripe.Event;
 }
 
-function post(): Promise<Response> {
-  return POST({
+async function post(): Promise<Response> {
+  return await POST({
     request: new Request('http://localhost/api/webhooks/stripe', {
       method: 'POST',
       headers: { 'stripe-signature': 'sig' },
