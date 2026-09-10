@@ -8,6 +8,12 @@ import type { CartItem, Product } from '@gameloopers/core/types';
 interface CartItemRowProps {
   item: CartItem & {
     product: Product | null;
+    /**
+     * The line's price, from `getProductPriceBreakdown`. Computed by cart.astro
+     * because a product has no price of its own — it is the sum of its files,
+     * documents and embedded components.
+     */
+    price_cents: number;
   };
   onUpdate?: () => void;
   onRemove?: () => void;
@@ -117,8 +123,10 @@ export default function CartItemRow(props: CartItemRowProps) {
   };
 
   const unitPrice = () => {
-    // Use price_cents from product
-    return props.item.product?.price_cents || 0;
+    // The line's own price, not `product.price_cents` — the products table has
+    // no such column, so that read was always undefined and every row rendered
+    // as "FREE" while the order summary beside it showed a real total.
+    return props.item.price_cents;
   };
 
   const totalPrice = () => {

@@ -19,7 +19,6 @@ export interface Product extends BaseEntity {
   attention_since: string | null;
   is_embeddable: boolean;
   cover_image_url?: string | null;
-  price_cents?: number | null;
   embedding_royalty_cents?: number | null;
   file_count?: number;
 }

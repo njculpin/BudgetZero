@@ -12,6 +12,7 @@ import {
   getProductDocuments,
   getProductContributorsWithRoles,
   getProductComponentsWithDetails,
+  getProductPriceBreakdown,
 } from '@gameloopers/core/data-access/products';
 import { getUserById } from '@gameloopers/core/data-access/users';
 import { setSession } from '@gameloopers/core/auth';
@@ -42,6 +43,7 @@ const [
   productFiles,
   productDocuments,
   embeddedProductsWithCreators,
+  priceBreakdown,
 ] = await Promise.all([
   getUserById(productData.user_id),
   getProductTags(productData.id),
@@ -49,6 +51,10 @@ const [
   getProductFiles(productData.id),
   getProductDocuments(productData.id),
   getProductComponentsWithDetails(productData.id),
+  // A product has no price column: its price is the sum of its files,
+  // documents and embedded components, plus the platform fee. This is the same
+  // figure checkout charges, so the button and the invoice agree.
+  getProductPriceBreakdown(productData.id),
 ]);
 
 // Null guard: redirect if owner not found
@@ -144,7 +150,7 @@ const shouldShowContentViewer =
                 client:load
                 productId={productData.id}
                 productTitle={productData.title}
-                priceCents={productData.price_cents}
+                priceCents={priceBreakdown.totalPrice}
                 status={productData.status}
                 isOwner={isOwner}
                 isAuthenticated={!!currentUser}
