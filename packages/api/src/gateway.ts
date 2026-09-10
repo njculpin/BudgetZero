@@ -3,20 +3,6 @@ import { refreshSession } from '@gameloopers/core/auth/session';
 import { readEnv } from '@gameloopers/core/env';
 import type { AuthFailure, CookieJar, CookieOptions } from './context';
 
-/**
- * Resolving who is calling, once per request.
- *
- * The old arrangement did this twice: `middleware.ts` exchanged the session
- * cookies for a user and stored the result on `locals`, then each route
- * performed the identical exchange again — and nothing ever read `locals`. Since
- * the exchange reached the auth provider over the network, an authenticated
- * request paid two round trips before running any of its own logic.
- *
- * Here it happens once, and the common case costs no network at all: an access
- * token is a signed JWT, so a valid one is confirmed by checking its signature
- * locally. Only an expired token needs the provider, and only to be renewed.
- */
-
 export const ACCESS_TOKEN_COOKIE = 'sb-access-token';
 export const REFRESH_TOKEN_COOKIE = 'sb-refresh-token';
 
@@ -31,24 +17,6 @@ export const REFRESH_TOKEN_COOKIE = 'sb-refresh-token';
 const ACCESS_MAX_AGE = 60 * 60 * 24 * 7;
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 
-/**
- * One definition of how a session cookie is written.
- *
- * The routes disagreed about this. `sign-up` set `httpOnly: true` and
- * `secure` in production; `sign-in` and the OAuth `callback` set both to false,
- * leaving the access token readable by any script on the page. Which door a user
- * came in through decided whether their session could be stolen by an XSS bug.
- *
- * `httpOnly` is safe to apply: every read of these cookies is server-side.
- */
-/**
- * Whether this is a production deployment, for the `secure` cookie flag.
- *
- * Vite and Astro set `import.meta.env.PROD` as a *boolean*; a plain Node or Bun
- * runtime has no such thing and reports `NODE_ENV` instead. Comparing the
- * boolean against the string 'true' silently yielded false, which would have
- * shipped session cookies without the Secure flag to production.
- */
 function isProduction(): boolean {
   // NODE_ENV first: it is the explicit, runtime-settable signal, present on
   // Vercel and on any Node or Bun host, and the only one a test can change.
