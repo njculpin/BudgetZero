@@ -1,0 +1,30 @@
+.creator-tile {
+  display: block;
+  text-decoration: none;
+  transition: transform var(--duration-fast) var(--ease-in-out);
+}
+
+.creator-tile:hover {
+  transform: translateY(-2px);
+}
+
+.creator-tile:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
+.creator-tile__avatar {
+  width: 100%;
+  aspect-ratio: 1;
+  display: block;
+  object-fit: cover;
+  border-radius: var(--radius-full);
+  background-color: var(--muted);
+  border: 2px solid var(--border);
+  transition: border-color var(--duration-fast) var(--ease-in-out);
+}
+
+.creator-tile:hover .creator-tile__avatar {
+  border-color: var(--primary);
+}

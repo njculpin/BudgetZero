@@ -6,15 +6,23 @@
  * fifty-one of the two hundred and eighty raw `<div>`s in the pages directory.
  * A page should say what it contains, not restate the frame it sits in.
  *
- * Sign-in and sign-up use a narrower container that centres a card, so that is
- * a variant rather than a second shell.
+ * Sign-in and sign-up use a narrower container that centres a card, and the
+ * checkout outcome pages want a middle width, so those are variants rather
+ * than three shells.
  */
 interface Props {
-  variant?: 'default' | 'auth';
+  variant?: 'default' | 'auth' | 'narrow';
 }
 
+const CONTAINERS = {
+  default: 'page__container',
+  auth: 'auth-page__container',
+  narrow: 'page__container page__container--narrow',
+};
+
 const { variant = 'default' } = Astro.props;
-const containerClass = variant === 'auth' ? 'auth-page__container' : 'page__container';
+const containerClass = CONTAINERS[variant];
+import './page.css';
 ---
 
 <div class="page">

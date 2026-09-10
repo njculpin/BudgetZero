@@ -1,0 +1,48 @@
+.profile-summary__handle {
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+}
+
+.profile-summary__bio {
+  margin: 0 0 var(--spacing-lg);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--foreground);
+}
+
+.profile-summary__tags {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--spacing-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+.profile-summary__stats {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-2xl);
+}
+
+.profile-summary__stat-value {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.profile-summary__stat-label {
+  margin: 0 var(--spacing-2xl) 0 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 40rem) {
+  .profile-summary__stats {
+    justify-content: center;
+  }
+}

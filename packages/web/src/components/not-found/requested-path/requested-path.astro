@@ -1,0 +1,14 @@
+---
+import './requested-path.css';
+
+/** The URL that was not found, echoed back so the reader can spot the typo. */
+interface Props {
+  path: string;
+}
+
+const { path } = Astro.props;
+---
+
+<p class="requested-path">
+  <strong>Requested path:</strong> <code>{path}</code>
+</p>

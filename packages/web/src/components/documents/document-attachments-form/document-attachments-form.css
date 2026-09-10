@@ -31,7 +31,7 @@
 }
 
 .document-attachments-form__add-button:hover {
-  background: oklch(from var(--primary) calc(l * 0.9) c h);
+  background: var(--primary-hover);
 }
 
 .document-attachments-form__file-input {
@@ -130,7 +130,7 @@
 }
 
 .selected-files__upload-button:hover:not(:disabled) {
-  background: oklch(from var(--primary) calc(l * 0.9) c h);
+  background: var(--primary-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -245,5 +245,5 @@
 }
 
 .attachments-list__delete-button:hover {
-  background: var(--destructive-background, oklch(0.95 0.05 25));
+  background: var(--destructive-bg);
 }

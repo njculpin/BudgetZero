@@ -1,0 +1,17 @@
+---
+/**
+ * A row of small facts under a heading: an author, a date, a status, a count.
+ *
+ * Four pages built this by hand and each one wrote its own separator — the
+ * document page interleaved `<span class="page-header__divider">•</span>`
+ * between items, which puts a bullet in the accessibility tree and breaks if an
+ * item is conditionally hidden (two dividers in a row, or a leading one). Here
+ * the separator is drawn by CSS between rendered children, so a hidden item
+ * takes its separator with it.
+ */
+import './meta-row.css';
+---
+
+<div class="meta-row">
+  <slot />
+</div>

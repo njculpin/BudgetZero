@@ -1,0 +1,6 @@
+.card__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xxs);
+  padding: var(--spacing-3xl);
+}

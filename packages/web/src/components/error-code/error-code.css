@@ -1,0 +1,18 @@
+.error-code {
+  margin: 0;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--muted);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+}
+
+.error-code code {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--surface-active);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-mono);
+  font-size: var(--text-xs);
+  color: var(--foreground);
+}

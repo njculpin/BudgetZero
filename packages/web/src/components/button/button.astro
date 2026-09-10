@@ -1,68 +1,79 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
+import { SpinnerIcon } from '@/assets/svgs';
 
-// Extending Astro's button attributes rather than declaring an index signature:
-// the remaining props are forwarded to a real <button>, so they should be typed
-// as button attributes. `rest.disabled` below is read directly, which an
-// index signature of `unknown` cannot support and one of `any` only pretended to.
-interface Props extends HTMLAttributes<'button'> {
-  variant?:
-    | 'primary'
-    | 'secondary'
-    | 'destructive'
-    | 'outline'
-    | 'ghost'
-    | 'ghost-secondary'
-    | 'accent'
-    | 'link';
-  size?: 'sm' | 'md' | 'lg' | 'icon';
-  loading?: boolean;
-}
+/**
+ * A button, or a link that looks like one.
+ *
+ * Twenty-four call sites wrote `<a href="..."><Button>…</Button></a>`, which is
+ * invalid HTML — a <button> is interactive content and may not sit inside an
+ * <a> — and gives keyboard users two tab stops for one action. Passing `href`
+ * renders a single <a class="button"> instead, so the call site stays one
+ * element and the markup stays valid.
+ *
+ * Anchor attributes are picked rather than intersected: `HTMLAttributes<'a'>`
+ * and `HTMLAttributes<'button'>` both declare `type` with incompatible values.
+ */
+export type Props = HTMLAttributes<'button'> &
+  Pick<HTMLAttributes<'a'>, 'href' | 'target' | 'rel' | 'download'> & {
+    variant?:
+      | 'primary'
+      | 'secondary'
+      | 'destructive'
+      | 'outline'
+      | 'ghost'
+      | 'ghost-secondary'
+      | 'accent'
+      | 'link';
+    size?: 'sm' | 'md' | 'lg' | 'icon';
+    loading?: boolean;
+  };
 
 const {
   variant = 'primary',
   size = 'md',
   loading = false,
+  href,
+  disabled,
   class: className,
   ...rest
 } = Astro.props;
+
+// `disabled` is pulled out of the rest spread deliberately: an <a> has no such
+// attribute, and leaving it in the spread would put a meaningless one there.
+const Tag = href ? 'a' : 'button';
+const isDisabled = Boolean(loading || disabled);
+
+// An <a> cannot be disabled. A disabled link is a link that should not have
+// been rendered, so drop the href and mark it for assistive technology rather
+// than leaving a dead control that still navigates.
+const tagProps = href
+  ? isDisabled
+    ? ({ role: 'link', 'aria-disabled': 'true' } as const)
+    : { href }
+  : { disabled: isDisabled };
+
 const classNames = [
   `button`,
   `button--${variant}`,
   `button--${size}`,
   loading && `button--loading`,
+  isDisabled && href && `button--disabled`,
   className,
 ]
   .filter(Boolean)
   .join(' ');
+import './button.css';
 ---
 
-<button class={classNames} disabled={loading || rest.disabled} {...rest}>
+<Tag class={classNames} {...tagProps} {...rest}>
   {loading && (
     <span class="button__spinner" aria-hidden="true">
-      <svg class="button__spinner-icon" viewBox="0 0 24 24" fill="none">
-        <circle
-          class="button__spinner-circle"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          stroke-width="4"
-        />
-        <path
-          class="button__spinner-path"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
+      <SpinnerIcon class="button__spinner-icon" />
     </span>
   )}
   <span class={loading ? 'button__content button__content--hidden' : 'button__content'}>
     <slot name="icon" class="button__icon" />
     <slot name="text" class="button__text" />
   </span>
-</button>
-
-<style>
-  @import './button.css';
-</style>
+</Tag>

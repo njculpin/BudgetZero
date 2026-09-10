@@ -1,24 +1,8 @@
 /* ===== Base Form Field Styles ===== */
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-xs);
-}
-
-.form-field__label {
-  display: inline-block;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  line-height: 1;
-  color: var(--foreground);
-  margin-bottom: var(--spacing-xs);
-  cursor: pointer;
-}
-
-.form-field__required {
-  color: var(--destructive);
-  margin-left: var(--spacing-xxs);
-}
+/* The block itself, its label and its required marker live with the Astro
+   FormField component (components/base/form-field). The Solid fields render the
+   same class names deliberately; what they add is the input styling below,
+   which the Astro side gets from the Input/TextArea/Select components instead. */
 
 .form-field__input,
 .form-field__textarea,
@@ -73,17 +57,6 @@
 .form-field__textarea {
   resize: vertical;
   min-height: 6rem;
-}
-
-.form-field__error {
-  font-size: var(--text-sm);
-  color: var(--destructive);
-  font-weight: var(--font-weight-medium);
-}
-
-.form-field__help {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
 }
 
 .form-field__help-text {
@@ -296,15 +269,6 @@
   color: var(--muted-foreground);
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 @keyframes dash {
   0% {
     stroke-dasharray: 1, 150;
@@ -321,30 +285,11 @@
 }
 
 /* ===== Loading Button ===== */
-.button--loading {
-  position: relative;
-}
-
-.button__spinner {
-  width: 1rem;
-  height: 1rem;
-  animation: spin 1s linear infinite;
-  margin-right: var(--gap-xs);
-}
-
-.button__spinner-track {
-  opacity: var(--opacity-25);
-}
-
-.button__spinner-path {
-  opacity: var(--opacity-75);
-}
-
 /* ===== Confirm Dialog ===== */
 .confirm-dialog-overlay {
   position: fixed;
   inset: 0;
-  background-color: var(--modal-overlay);
+  background-color: var(--modal-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -421,26 +366,6 @@
   gap: var(--gap-md);
   padding: var(--spacing-lg);
   border-top: var(--border-width-default) solid var(--border);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(1rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ===== File Upload Field ===== */

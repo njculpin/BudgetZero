@@ -1,0 +1,21 @@
+---
+import Tag from '@/components/tag/tag.astro';
+import './product-tags.css';
+
+/** The tags on a product, each linking to the tag's page. */
+interface Props {
+  tags: string[];
+}
+
+const { tags } = Astro.props;
+---
+
+<ul class="product-tags">
+  {tags.map((tag) => (
+    <li>
+      <Tag href={`/tags/${encodeURIComponent(tag)}`} size="sm">
+        {tag}
+      </Tag>
+    </li>
+  ))}
+</ul>

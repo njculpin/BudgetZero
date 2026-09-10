@@ -1,0 +1,23 @@
+---
+import GalleryGrid, {
+  type GalleryImage,
+} from '@/components/gallery-grid/gallery-grid.astro';
+import './document-contributors.css';
+
+/**
+ * Who can see and edit a document. A document with one collaborator is a
+ * private draft, and saying so is more use than an avatar on its own.
+ */
+interface Props {
+  collaborators: GalleryImage[];
+  isOwner: boolean;
+}
+
+const { collaborators, isOwner } = Astro.props;
+const isPrivate = isOwner && collaborators.length === 1;
+---
+
+<GalleryGrid images={collaborators} cols={5} borderRadius="circle" />
+{isPrivate && (
+  <p class="document-contributors__hint">Only you can see and edit this document</p>
+)}

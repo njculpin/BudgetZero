@@ -1,0 +1,20 @@
+---
+import CartItemRow from '@/components/cart/cart-item-row/cart-item-row';
+import './cart-item-list.css';
+
+/** The lines in the cart. The row itself is an island: it can change quantity. */
+interface Props {
+  // The row component owns this shape; the list only passes it through.
+  items: Parameters<typeof CartItemRow>[0]['item'][];
+}
+
+const { items } = Astro.props;
+---
+
+<ul class="cart-item-list">
+  {items.map((item) => (
+    <li class="cart-item-list__item">
+      <CartItemRow client:load item={item} />
+    </li>
+  ))}
+</ul>

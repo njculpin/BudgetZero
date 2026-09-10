@@ -1,80 +1,63 @@
 ---
-interface Props {
-  variant?: 'default' | 'primary' | 'removable';
-  size?: 'sm' | 'md';
-  onRemove?: string;
-}
+import type { HTMLAttributes } from 'astro/types';
 
-const { variant = 'default', size = 'md', onRemove } = Astro.props;
+/**
+ * A tag pill.
+ *
+ * Three pages carried their own: `.product-tag` on the product page,
+ * `.browse-tags__tag` on the browse and creators pages, and this component,
+ * which nothing used. They differed in element too — a link on two pages, a
+ * button on the third — which is why this picks its element from the props
+ * rather than being a `<span>` a caller has to wrap.
+ */
+type Props = HTMLAttributes<'span'> &
+  Pick<HTMLAttributes<'a'>, 'href'> & {
+    variant?: 'default' | 'primary' | 'removable';
+    size?: 'sm' | 'md';
+    /** Renders a <button>; the filter lists are click handlers, not links. */
+    button?: boolean;
+    /** The currently applied filter. */
+    active?: boolean;
+    /** Shown after the label, e.g. how many products carry the tag. */
+    count?: number;
+    onRemove?: string;
+  };
+
+const {
+  variant = 'default',
+  size = 'md',
+  href,
+  button = false,
+  active = false,
+  count,
+  onRemove,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const Tag = href ? 'a' : button ? 'button' : 'span';
+const tagProps = href ? { href } : button ? { type: 'button' as const } : {};
+import './tag.css';
 ---
 
-<span class={`tag tag--${variant} tag--${size}`}>
+<Tag
+  class:list={[
+    'tag',
+    `tag--${variant}`,
+    `tag--${size}`,
+    active && 'tag--active',
+    (href || button) && 'tag--interactive',
+    className,
+  ]}
+  aria-current={href && active ? 'true' : undefined}
+  {...tagProps}
+  {...rest}
+>
   <slot />
+  {count !== undefined && <span class="tag__count">({count})</span>}
   {onRemove && variant === 'removable' && (
     <button type="button" class="tag__remove" onclick={onRemove}>
       ×
     </button>
   )}
-</span>
-
-<style>
-  /* ===== Base ===== */
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--gap-xs);
-    border-radius: var(--radius-full);
-    font-weight: var(--font-weight-medium);
-    white-space: nowrap;
-  }
-
-  .tag__remove {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: var(--text-lg);
-    line-height: 1;
-    padding: 0;
-    width: var(--spacing-2xl);
-    height: var(--spacing-2xl);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: inherit;
-    transition: opacity var(--duration-fast) var(--ease-in-out);
-  }
-
-  .tag__remove:hover {
-    opacity: 0.8;
-  }
-
-  /* ===== Variants ===== */
-  .tag--default {
-    padding: var(--spacing-xxs) var(--spacing-lg);
-    background-color: var(--muted);
-    border: 1px solid var(--border);
-    color: var(--foreground);
-  }
-
-  .tag--primary {
-    padding: var(--spacing-xxs) var(--spacing-lg);
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-  }
-
-  .tag--removable {
-    padding: var(--spacing-xxs) var(--spacing-lg);
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-  }
-
-  /* ===== Sizes ===== */
-  .tag--sm {
-    padding: var(--spacing-xxs) var(--spacing-xs);
-    font-size: var(--text-xs);
-  }
-
-  .tag--md {
-    font-size: var(--text-sm);
-  }
-</style>
+</Tag>

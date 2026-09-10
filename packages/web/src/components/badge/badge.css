@@ -1,0 +1,82 @@
+.badge {
+  display: inline-block;
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  line-height: var(--leading-tight);
+}
+
+.badge--sm {
+  font-size: var(--text-xs);
+  padding: var(--spacing-xxs) var(--spacing-md);
+}
+
+.badge--md {
+  font-size: var(--text-xs);
+}
+
+.badge--lg {
+  font-size: var(--text-sm);
+  padding: var(--spacing-xs) var(--spacing-xl);
+}
+
+/* Status Variants. Colours come from the --status-* tokens so a state cannot
+   be one colour here and another in global.css's .status-badge - draft was
+   amber here and grey there, and private was purple here and blue there. */
+.badge--draft {
+  background-color: var(--status-draft-bg);
+  color: var(--status-draft-fg);
+}
+
+.badge--private {
+  background-color: var(--status-private-bg);
+  color: var(--status-private-fg);
+}
+
+.badge--public {
+  background-color: var(--status-public-bg);
+  color: var(--status-public-fg);
+}
+
+.badge--archived {
+  background-color: var(--status-archived-bg);
+  color: var(--status-archived-fg);
+}
+
+/* Semantic Variants */
+.badge--success {
+  background-color: var(--success-bg);
+  color: var(--success-fg);
+}
+
+.badge--warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-fg);
+}
+
+.badge--info {
+  background-color: var(--info-bg);
+  color: var(--info-fg);
+}
+
+.badge--error {
+  background-color: var(--destructive-bg);
+  color: var(--destructive-fg);
+}
+
+/* Theme Variants */
+.badge--primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.badge--secondary {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.badge--muted {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}

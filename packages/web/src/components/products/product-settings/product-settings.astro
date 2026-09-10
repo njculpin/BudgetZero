@@ -1,0 +1,25 @@
+---
+import ProductStatusEditor from '@/components/products/product-status-editor/product-status-editor';
+import ProductDeleteButton from '@/components/products/product-delete-button/product-delete-button';
+import type { Product } from '@gameloopers/core/types';
+import './product-settings.css';
+
+/** Visibility and lifecycle: the two controls that change what a product is. */
+interface Props {
+  productId: string;
+  productTitle: string;
+  status: Product['status'];
+}
+
+const { productId, productTitle, status } = Astro.props;
+---
+
+<section class="product-settings__section">
+  <h4 class="product-settings__title">Publish Status</h4>
+  <ProductStatusEditor client:load productId={productId} currentStatus={status} />
+</section>
+
+<section class="product-settings__section product-settings__section--danger">
+  <h4 class="product-settings__title">Danger Zone</h4>
+  <ProductDeleteButton client:load productId={productId} productTitle={productTitle} />
+</section>

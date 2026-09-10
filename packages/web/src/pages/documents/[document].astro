@@ -6,7 +6,7 @@ import CardContent from '@/components/card/card-content/card-content.astro';
 import CardHeader from '@/components/card/card-header/card-header.astro';
 import CardTitle from '@/components/card/card-title/card-title.astro';
 import CardDescription from '@/components/card/card-description/card-description.astro';
-import GalleryGrid from '@/components/gallery-grid/gallery-grid.astro';
+import DocumentContributors from '@/components/documents/document-contributors/document-contributors.astro';
 import {
   getDocumentByHandle,
   canUserViewDocument,
@@ -19,10 +19,15 @@ import { getUserById } from '@gameloopers/core/data-access/users';
 import DocumentEditor from '@/components/documents/document-editor/document-editor';
 import DocumentDeleteButton from '@/components/documents/document-delete-button/document-delete-button';
 import { DocumentAttachmentsForm } from '@/components/documents';
-import Badge from '@/components/badge/badge.astro';
+import PageHeader from '@/components/page-header/page-header.astro';
+import PageColumns from '@/components/page-columns/page-columns.astro';
+import DocumentByline from '@/components/documents/document-byline/document-byline.astro';
+import ButtonGroup from '@/components/button-group/button-group.astro';
+import DetailList from '@/components/detail-list/detail-list.astro';
+import DetailRow from '@/components/detail-list/detail-row/detail-row.astro';
 import { getPageUser } from '@/lib/page-auth';
 
-const { params, cookies } = Astro;
+const { params } = Astro;
 const documentHandle = params.document;
 
 if (!documentHandle) {
@@ -86,43 +91,18 @@ const formatDate = (dateStr: string) => {
 
 <Layout title={`${document.title} - Game Loopers`}>
   <Page>
-    <!-- Page Header -->
-    <header class="page-header">
-      <div class="page-header__content">
-        <h1 class="page-header__title">{document.title}</h1>
-        <div class="page-header__meta">
-          {owner && (
-            <span class="page-header__author">
-              by{' '}
-              <a href={`/users/${owner.handle}`} class="page-header__author-link">
-                {owner.name || owner.handle}
-              </a>
-            </span>
-          )}
-          <span class="page-header__divider">•</span>
-          <Badge variant="draft" size="sm">
-            DRAFT
-          </Badge>
-          {canEdit && (
-            <>
-              <span class="page-header__divider">•</span>
-              <Badge variant="primary" size="sm">
-                {isOwner
-                  ? 'Owner • Changes auto-save'
-                  : 'Collaborator • Changes auto-save'}
-              </Badge>
-            </>
-          )}
-        </div>
-        {document.description && (
-          <p class="page-header__description">{document.description}</p>
-        )}
-      </div>
-    </header>
+    <PageHeader title={document.title} description={document.description ?? undefined}>
+      <DocumentByline
+        slot="meta"
+        ownerHandle={owner?.handle}
+        ownerName={owner?.name || owner?.handle}
+        canEdit={canEdit}
+        isOwner={isOwner}
+      />
+    </PageHeader>
 
-    <div class="page-columns">
-      <!-- Main Content Column -->
-      <div class="page-columns__column">
+    <PageColumns>
+      <Fragment slot="main">
         <Card>
           <CardHeader>
             <CardTitle>Editor</CardTitle>
@@ -144,20 +124,16 @@ const formatDate = (dateStr: string) => {
             />
           </CardContent>
         </Card>
-      </div>
+      </Fragment>
 
-      <!-- Sidebar Column -->
-      <div class="page-columns__column">
+      <Fragment slot="aside">
         <!-- Contributors -->
         <Card>
           <CardHeader>
             <CardTitle>Contributors</CardTitle>
           </CardHeader>
           <CardContent>
-            <GalleryGrid images={collaboratorImages} cols={5} borderRadius="circle" />
-            {isOwner && collaborators.length === 1 && (
-              <p class="contributors-hint">Only you can see and edit this document</p>
-            )}
+            <DocumentContributors collaborators={collaboratorImages} isOwner={isOwner} />
           </CardContent>
         </Card>
 
@@ -181,26 +157,16 @@ const formatDate = (dateStr: string) => {
             <CardTitle>Document Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl class="document-meta">
-              <div class="document-meta__item">
-                <dt class="document-meta__label">Created</dt>
-                <dd class="document-meta__value">{formatDate(document.created_at)}</dd>
-              </div>
-              <div class="document-meta__item">
-                <dt class="document-meta__label">Last Updated</dt>
-                <dd class="document-meta__value">{formatDate(document.updated_at)}</dd>
-              </div>
-              <div class="document-meta__item">
-                <dt class="document-meta__label">Owner</dt>
-                <dd class="document-meta__value">
-                  {owner?.name || owner?.handle || 'Unknown'}
-                </dd>
-              </div>
-              <div class="document-meta__item">
-                <dt class="document-meta__label">Contributors</dt>
-                <dd class="document-meta__value">{collaborators.length}</dd>
-              </div>
-            </dl>
+            <DetailList>
+              <DetailRow label="Created">{formatDate(document.created_at)}</DetailRow>
+              <DetailRow label="Last Updated">
+                {formatDate(document.updated_at)}
+              </DetailRow>
+              <DetailRow label="Owner">
+                {owner?.name || owner?.handle || 'Unknown'}
+              </DetailRow>
+              <DetailRow label="Contributors">{collaborators.length}</DetailRow>
+            </DetailList>
           </CardContent>
         </Card>
 
@@ -211,211 +177,17 @@ const formatDate = (dateStr: string) => {
               <CardTitle>Actions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div class="document-actions">
+              <ButtonGroup>
                 <DocumentDeleteButton
                   client:load
                   documentId={document.id}
                   documentTitle={document.title}
                 />
-              </div>
+              </ButtonGroup>
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
+      </Fragment>
+    </PageColumns>
   </Page>
 </Layout>
-
-<style>
-  /* ===== Breadcrumb Navigation ===== */
-  .breadcrumb {
-    margin-bottom: var(--spacing-2xl);
-  }
-
-  .breadcrumb__list {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-sm);
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    flex-wrap: wrap;
-  }
-
-  .breadcrumb__item {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-sm);
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-  }
-
-  .breadcrumb__item:not(:last-child)::after {
-    content: '/';
-    color: var(--border);
-    margin-left: var(--gap-sm);
-  }
-
-  .breadcrumb__link {
-    color: var(--muted-foreground);
-    text-decoration: none;
-    transition: color var(--duration-fast) var(--ease-in-out);
-  }
-
-  .breadcrumb__link:hover {
-    color: var(--foreground);
-    text-decoration: underline;
-  }
-
-  .breadcrumb__link:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-
-  .breadcrumb__current {
-    color: var(--foreground);
-    font-weight: var(--font-weight-medium);
-  }
-
-  /* ===== Page Header (Compact) ===== */
-  .page-header {
-    padding: var(--spacing-2xl) 0;
-    border-bottom: var(--border-width-default) solid var(--border);
-    margin-bottom: var(--spacing-3xl);
-  }
-
-  .page-header__content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-md);
-  }
-
-  .page-header__title {
-    margin: 0;
-    font-size: var(--text-3xl);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--leading-tight);
-    color: var(--foreground);
-  }
-
-  .page-header__meta {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-md);
-    flex-wrap: wrap;
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-  }
-
-  .page-header__author {
-    color: var(--muted-foreground);
-  }
-
-  .page-header__author-link {
-    color: var(--foreground);
-    text-decoration: none;
-    font-weight: var(--font-weight-medium);
-    transition: color var(--duration-fast) var(--ease-in-out);
-  }
-
-  .page-header__author-link:hover {
-    color: var(--primary);
-    text-decoration: underline;
-  }
-
-  .page-header__author-link:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-
-  .page-header__divider {
-    color: var(--muted-foreground);
-  }
-
-  .page-header__description {
-    margin: var(--spacing-sm) 0 0;
-    font-size: var(--text-base);
-    color: var(--muted-foreground);
-    line-height: var(--leading-relaxed);
-    max-width: 600px;
-  }
-
-  /* ===== Document Meta Information ===== */
-  .document-meta {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-lg);
-  }
-
-  .document-meta__item {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding-bottom: var(--spacing-lg);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .document-meta__item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .document-meta__label {
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--muted-foreground);
-    margin: 0;
-  }
-
-  .document-meta__value {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-semibold);
-    color: var(--foreground);
-    margin: 0;
-  }
-
-  /* ===== Contributors Hint ===== */
-  .contributors-hint {
-    margin: var(--spacing-lg) 0 0;
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-    font-style: italic;
-  }
-
-  /* ===== Document Actions ===== */
-  .document-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-lg);
-  }
-
-  .document-actions__divider {
-    height: 1px;
-    background-color: var(--border);
-    margin: var(--spacing-sm) 0;
-  }
-
-  /* ===== Responsive ===== */
-  @media (max-width: 768px) {
-    .page-header {
-      padding: var(--spacing-xl) 0;
-      margin-bottom: var(--spacing-2xl);
-    }
-
-    .page-header__title {
-      font-size: var(--text-2xl);
-    }
-
-    .page-header__meta {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--gap-sm);
-    }
-
-    .page-columns {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>

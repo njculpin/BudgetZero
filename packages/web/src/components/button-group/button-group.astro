@@ -1,0 +1,19 @@
+---
+/**
+ * A row of buttons that is not attached to anything else.
+ *
+ * Where a row of actions belongs to a block — a page header, a section, a
+ * status panel, a call to action — that block owns its own `__actions`
+ * element. This is for the rest: a page that ends in a set of choices.
+ */
+interface Props {
+  align?: 'start' | 'center' | 'end';
+}
+
+const { align = 'start' } = Astro.props;
+import './button-group.css';
+---
+
+<div class:list={['button-group', `button-group--${align}`]}>
+  <slot />
+</div>

@@ -1,0 +1,44 @@
+.creator-profile {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background-color var(--duration-fast) var(--ease-in-out);
+}
+
+.creator-profile:hover {
+  background-color: var(--muted);
+}
+
+.creator-profile:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.creator-profile__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.creator-profile__name {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--foreground);
+}
+
+.creator-profile__handle {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.creator-profile__bio {
+  margin-top: var(--spacing-sm);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}

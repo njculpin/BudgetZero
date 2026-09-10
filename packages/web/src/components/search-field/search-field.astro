@@ -1,0 +1,41 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+import { SearchIcon } from '@/assets/svgs';
+
+/**
+ * A search box, optionally with a submit button.
+ *
+ * The browse page and the creators page each wrote their own
+ * `.browse-search__wrapper` with the same input styling. The creators page
+ * filters on the client and has no button; the browse page submits a GET form
+ * and does. That is the only difference, so it is a prop.
+ */
+type Props = HTMLAttributes<'input'> & {
+  name: string;
+  /** Accessible name; the visible placeholder is not one. */
+  label: string;
+  /** Text on the submit button. Omit for a field with no button. */
+  submitLabel?: string;
+};
+
+const { name, id, label, submitLabel, class: className, ...rest } = Astro.props;
+import './search-field.css';
+---
+
+<div class="search-field">
+  <input
+    type="search"
+    name={name}
+    id={id || name}
+    class:list={['search-field__input', className]}
+    aria-label={label}
+    {...rest}
+  />
+  {submitLabel && (
+    <button type="submit" class="search-field__button">
+      <SearchIcon width={18} height={18} aria-hidden="true" />
+      <span>{submitLabel}</span>
+    </button>
+  )}
+</div>

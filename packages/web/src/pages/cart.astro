@@ -1,12 +1,19 @@
 ---
 import Layout from '@/layouts/layout.astro';
 import Page from '@/components/page/page.astro';
+import PageHeader from '@/components/page-header/page-header.astro';
+import PageColumns from '@/components/page-columns/page-columns.astro';
+import CartItemList from '@/components/cart/cart-item-list/cart-item-list.astro';
+import Alert from '@/components/alert/alert.astro';
+import DetailList from '@/components/detail-list/detail-list.astro';
+import DetailRow from '@/components/detail-list/detail-row/detail-row.astro';
+import ButtonGroup from '@/components/button-group/button-group.astro';
+import { formatMoney } from '@gameloopers/core/utils/money';
 import Card from '@/components/card/card.astro';
 import CardHeader from '@/components/card/card-header/card-header.astro';
 import CardTitle from '@/components/card/card-title/card-title.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
 import Button from '@/components/button/button.astro';
-import CartItemRow from '@/components/cart/cart-item-row/cart-item-row';
 import CheckoutButton from '@/components/checkout/checkout-button/checkout-button';
 import EmptyState from '@/components/empty-state/empty-state.astro';
 import { getOrCreateCart, getCartItems } from '@gameloopers/core/data-access/cart';
@@ -73,74 +80,51 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
 
 <Layout title="Shopping Cart - Game Loopers">
   <Page>
-    <div class="page__header">
-      <h1 class="page__title">Shopping Cart</h1>
-    </div>
+    <PageHeader title="Shopping Cart" />
 
-    {showAddedMessage && (
-      <div class="cart-alert cart-alert--success">Item added to cart!</div>
-    )}
+    {showAddedMessage && <Alert tone="success">Item added to cart!</Alert>}
 
     {showCancelledMessage && (
-      <div class="cart-alert cart-alert--error">
+      <Alert tone="error">
         Checkout was cancelled. Your items are still in your cart.
-      </div>
+      </Alert>
     )}
 
     {cartItemsWithDetails.length > 0 ? (
-      <div class="cart-layout">
-        <div class="cart-items">
-          <Card>
-            <CardContent>
-              <div class="cart-items__list">
-                {cartItemsWithDetails.map((item) => (
-                  <CartItemRow client:load item={item} />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <PageColumns>
+        <Card slot="main">
+          <CardContent>
+            <CartItemList items={cartItemsWithDetails} />
+          </CardContent>
+        </Card>
 
-        <div class="cart-summary">
+        <Fragment slot="aside">
           <Card>
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <div class="cart-summary__content">
-                <div class="cart-summary__row">
-                  <span class="cart-summary__label">Subtotal</span>
-                  <span class="cart-summary__value">
-                    USD {(subtotal / 100).toFixed(2)}
-                  </span>
-                </div>
-                <div class="cart-summary__row">
-                  <span class="cart-summary__label">Platform fee (10%)</span>
-                  <span class="cart-summary__value">
-                    USD {(platformFee / 100).toFixed(2)}
-                  </span>
-                </div>
-                <div class="cart-summary__row cart-summary__row--total">
-                  <span class="cart-summary__label">Total</span>
-                  <span class="cart-summary__value">USD {(total / 100).toFixed(2)}</span>
-                </div>
+              <DetailList>
+                <DetailRow label="Subtotal">{formatMoney(subtotal)}</DetailRow>
+                <DetailRow label="Platform fee (10%)">
+                  {formatMoney(platformFee)}
+                </DetailRow>
+                <DetailRow label="Total">{formatMoney(total)}</DetailRow>
+              </DetailList>
 
-                <div class="cart-summary__checkout">
-                  <CheckoutButton client:load variant="primary" size="lg" />
-                </div>
-              </div>
+              <ButtonGroup align="center">
+                <CheckoutButton client:load variant="primary" size="lg" />
+              </ButtonGroup>
             </CardContent>
           </Card>
 
-          <div class="cart-summary__continue">
-            <a href="/products">
-              <Button variant="outline" size="md">
-                <span slot="text">Continue Shopping</span>
-              </Button>
-            </a>
-          </div>
-        </div>
-      </div>
+          <ButtonGroup align="center">
+            <Button href="/products" variant="outline" size="md">
+              <span slot="text">Continue Shopping</span>
+            </Button>
+          </ButtonGroup>
+        </Fragment>
+      </PageColumns>
     ) : (
       <Card>
         <CardContent>
@@ -156,118 +140,3 @@ const showCancelledMessage = Astro.url.searchParams.get('cancelled') === 'true';
     )}
   </Page>
 </Layout>
-
-<style>
-  .cart-alert {
-    padding: var(--spacing-2xl);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-2xl);
-  }
-
-  .cart-alert--success {
-    background-color: var(--success-bg);
-    color: var(--success-fg);
-    border: var(--border-width-default) solid var(--success);
-  }
-
-  .cart-alert--error {
-    background-color: var(--destructive-bg);
-    color: var(--destructive-fg);
-    border: var(--border-width-default) solid var(--destructive);
-  }
-
-  .cart-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--gap-2xl);
-  }
-
-  @media (min-width: 1024px) {
-    .cart-layout {
-      grid-template-columns: 2fr 1fr;
-    }
-  }
-
-  .cart-items__list {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .cart-summary__content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-lg);
-  }
-
-  .cart-summary__row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md) 0;
-  }
-
-  .cart-summary__row--total {
-    border-top: var(--border-width-thick) solid var(--border);
-    padding-top: var(--spacing-2xl);
-    margin-top: var(--spacing-md);
-  }
-
-  .cart-summary__label {
-    font-size: var(--text-base);
-    color: var(--muted-foreground);
-  }
-
-  .cart-summary__row--total .cart-summary__label {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-semibold);
-    color: var(--foreground);
-  }
-
-  .cart-summary__value {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-semibold);
-    color: var(--foreground);
-  }
-
-  .cart-summary__row--total .cart-summary__value {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--primary);
-  }
-
-  .cart-summary__checkout {
-    width: 100%;
-  }
-
-  .cart-summary__continue {
-    margin-top: var(--spacing-2xl);
-  }
-
-  .cart-summary__continue a {
-    display: block;
-    text-decoration: none;
-  }
-
-  .cart-summary__continue button {
-    width: 100%;
-  }
-
-  .cart-empty {
-    text-align: center;
-    padding: var(--spacing-5xl) var(--spacing-3xl);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--gap-2xl);
-  }
-
-  .cart-empty__text {
-    margin: 0;
-    font-size: var(--text-lg);
-    color: var(--muted-foreground);
-  }
-
-  .cart-empty a {
-    text-decoration: none;
-  }
-</style>

@@ -1,0 +1,17 @@
+---
+interface Props {
+  label: string;
+  /** For identifiers — a charge id, a hash — where character shape matters. */
+  mono?: boolean;
+}
+
+const { label, mono = false } = Astro.props;
+import './detail-row.css';
+---
+
+<div class="detail-list__row">
+  <dt class="detail-list__label">{label}</dt>
+  <dd class:list={['detail-list__value', mono && 'detail-list__value--mono']}>
+    <slot />
+  </dd>
+</div>

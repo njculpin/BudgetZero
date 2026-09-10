@@ -1,0 +1,47 @@
+---
+import { CheckCircleIcon, XCircleIcon } from '@/assets/svgs';
+
+/**
+ * The centred panel a page shows when the page *is* the outcome: order
+ * confirmed, payment failed, page not found.
+ *
+ * Three pages built this independently — `.success-*`, `.payment-failed__*`
+ * and `.not-found__*` — with the same icon-over-heading-over-message-over-
+ * buttons shape and three different sets of spacing. Each also pasted its own
+ * 64px SVG, so the tick and the cross were drawn at different stroke widths.
+ */
+interface Props {
+  title: string;
+  description?: string;
+  tone?: 'neutral' | 'success' | 'error';
+}
+
+const { title, description, tone = 'neutral' } = Astro.props;
+const hasActions = Astro.slots.has('actions');
+const hasIcon = Astro.slots.has('icon') || tone !== 'neutral';
+const ToneIcon = tone === 'success' ? CheckCircleIcon : XCircleIcon;
+import './status-panel.css';
+---
+
+<div class:list={['status-panel', `status-panel--${tone}`]}>
+  {hasIcon && (
+    <div class="status-panel__icon" aria-hidden="true">
+      <slot name="icon">
+        <ToneIcon width={64} height={64} />
+      </slot>
+    </div>
+  )}
+  <h1 class="status-panel__title">{title}</h1>
+  {description && <p class="status-panel__description">{description}</p>}
+  {hasActions && (
+    <div class="status-panel__actions">
+      <slot name="actions" />
+    </div>
+  )}
+  <slot />
+  {Astro.slots.has('note') && (
+    <p class="status-panel__note">
+      <slot name="note" />
+    </p>
+  )}
+</div>

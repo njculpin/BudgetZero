@@ -1,0 +1,26 @@
+---
+/**
+ * A numbered step in an explanatory sequence.
+ *
+ * The number is decorative — the surrounding list already conveys order to a
+ * screen reader — so it is hidden from the accessibility tree rather than read
+ * out as a stray digit before every heading.
+ */
+interface Props {
+  step: number;
+  title: string;
+}
+
+const { step, title } = Astro.props;
+import './workflow-step.css';
+---
+
+<div class="workflow-step">
+  <div class="workflow-step__number" aria-hidden="true">
+    {step}
+  </div>
+  <h3 class="workflow-step__title">{title}</h3>
+  <p class="workflow-step__description">
+    <slot />
+  </p>
+</div>

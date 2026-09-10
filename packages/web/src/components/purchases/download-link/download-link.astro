@@ -1,0 +1,42 @@
+---
+import { DownloadIcon } from '@/assets/svgs';
+import { formatFileSize } from '@gameloopers/core/utils/file-size';
+import './download-link.css';
+
+/**
+ * A downloadable file.
+ *
+ * The checkout page called this `.download-file` and the purchase page called
+ * it `.download-item`; they were the same row with different padding and only
+ * one of them showed the file size.
+ */
+interface Props {
+  href: string;
+  title: string;
+  description?: string | null;
+  /** Where the file came from, when it is not the product you are looking at. */
+  source?: string | null;
+  /** A generated PDF has no size on disk until it is requested. */
+  sizeBytes?: number | null;
+  badge?: string;
+}
+
+const { href, title, description, source, sizeBytes, badge } = Astro.props;
+---
+
+<a href={href} download target="_blank" rel="noopener noreferrer" class="download-link">
+  <span class="download-link__icon" aria-hidden="true">
+    <DownloadIcon width={20} height={20} />
+  </span>
+  <span class="download-link__details">
+    <span class="download-link__title">
+      {title}
+      {badge && <span class="download-link__badge">{badge}</span>}
+    </span>
+    {description && <span class="download-link__description">{description}</span>}
+    {source && <span class="download-link__source">From: {source}</span>}
+  </span>
+  {sizeBytes != null && sizeBytes > 0 && (
+    <span class="download-link__size">{formatFileSize(sizeBytes)}</span>
+  )}
+</a>

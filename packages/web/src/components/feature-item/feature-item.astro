@@ -1,0 +1,25 @@
+---
+/**
+ * One item in a "why use this" grid: an icon, a heading and a sentence.
+ *
+ * Five copies of this markup sat in create.astro, differing only in their
+ * content.
+ */
+interface Props {
+  icon: string;
+  title: string;
+}
+
+const { icon, title } = Astro.props;
+import './feature-item.css';
+---
+
+<div class="feature-item">
+  <div class="feature-item__icon" aria-hidden="true">
+    {icon}
+  </div>
+  <h3 class="feature-item__title">{title}</h3>
+  <p class="feature-item__description">
+    <slot />
+  </p>
+</div>

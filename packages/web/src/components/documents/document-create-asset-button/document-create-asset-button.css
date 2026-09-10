@@ -23,7 +23,7 @@
 }
 
 .document-create-asset__btn:hover:not(:disabled) {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  background-color: var(--primary-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
@@ -74,8 +74,8 @@
 .document-create-asset__success {
   margin: 0;
   padding: var(--spacing-md) var(--spacing-lg);
-  background-color: oklch(from var(--success, #22c55e) l c h / 0.1);
-  border: 1px solid var(--success, #22c55e);
+  background-color: var(--success-bg);
+  border: 1px solid var(--success);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   /* --success is a fill colour, 4.07:1 as text. */

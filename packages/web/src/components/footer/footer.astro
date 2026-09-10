@@ -1,75 +1,45 @@
 ---
-import Button from '../button/button.astro';
+import Button from '@/components/button/button.astro';
 
-const currentDate = new Date();
-const year = currentDate.getFullYear();
+/**
+ * The site footer.
+ *
+ * There were two of these: this one and `users/profile-footer`, a copy that
+ * differed in its links, one word of copy and one padding value. The links are
+ * now a slot and the padding a modifier, so the public profile layout uses this
+ * component rather than a second copy of it.
+ */
+interface Props {
+  /** Rendered as "{label} @ {year}". */
+  label?: string;
+  /** The profile layout sits on a shorter page and wants less footer. */
+  compact?: boolean;
+}
+
+const { label = 'Game Loopers', compact = false } = Astro.props;
+const year = new Date().getFullYear();
+import './footer.css';
 ---
 
-<div class="footer__container">
+<footer class:list={['footer', compact && 'footer--compact']} role="contentinfo">
   <div class="footer__content">
-    <a href="/" class="copyright">
-      <p class="copyright__label">Game Loopers @ {year}</p>
+    <a href="/" class="footer__copyright">
+      <p class="footer__copyright-label">
+        {label} @ {year}
+      </p>
     </a>
     <div class="footer__links">
-      <a href="/privacy">
-        <Button variant="ghost-secondary" size="sm">
+      <slot>
+        <Button href="/privacy" variant="ghost-secondary" size="sm">
           <span slot="text">Privacy Policy</span>
         </Button>
-      </a>
-      <a href="/terms">
-        <Button variant="ghost-secondary" size="sm">
+        <Button href="/terms" variant="ghost-secondary" size="sm">
           <span slot="text">Terms of Service</span>
         </Button>
-      </a>
-      <a href="/about">
-        <Button variant="ghost-secondary" size="sm">
+        <Button href="/about" variant="ghost-secondary" size="sm">
           <span slot="text">About</span>
         </Button>
-      </a>
+      </slot>
     </div>
   </div>
-</div>
-
-<style>
-  .footer__container {
-    background: var(--primary);
-    padding: var(--spacing-5xl);
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-  }
-  .footer__content {
-    max-width: var(--container-7xl);
-    margin: 0 auto;
-    display: flex;
-    justify-content: start;
-    align-items: center;
-    gap: var(--spacing-3xl);
-    flex-wrap: wrap;
-  }
-  .copyright__label {
-    display: inline-block;
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-white);
-    cursor: pointer;
-  }
-  .footer__links {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2xl);
-  }
-
-  /* Responsive: Stack on mobile, reduce padding */
-  @media (max-width: 768px) {
-    .footer__container {
-      padding: var(--spacing-3xl) var(--spacing-2xl);
-    }
-
-    .footer__content {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--spacing-2xl);
-    }
-  }
-</style>
+</footer>

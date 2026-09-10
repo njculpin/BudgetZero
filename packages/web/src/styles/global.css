@@ -7,129 +7,199 @@
 
 :root {
   /* ===== Font Family ===== */
-  --font-family-sans: 'Inter', Impact, sans-serif;
+  --font-family-sans:
+    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Referenced by the payment error code, the document editor's code blocks and
+     DetailList's mono values; it was never defined, so all three fell back to
+     the sans stack and identifiers ran together. */
+  --font-family-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 
-  /* ===== Colors ===== */
+  /* ===== Colors =====
+   *
+   * Every colour is oklch, so a family is one hue and chroma at several
+   * lightnesses, and a tint of it can be derived with `oklch(from ... / a)`.
+   *
+   * A semantic family has five roles, and each role has a contrast contract.
+   * Using the wrong one is the mistake this file keeps having to correct, so
+   * the roles are named for where they go, not for how bright they are:
+   *
+   *   --x            FILL. A solid background. Never a `color:`.
+   *   --x-foreground TEXT ON THAT FILL. >= 4.5:1 against --x.
+   *   --x-fg         TEXT ON A LIGHT SURFACE. >= 4.5:1 on --background and on
+   *                  --x-bg. This is the one you want for status copy.
+   *   --x-bg         10% tint of the fill. A surface; pairs with --x-fg.
+   *   --x-border     30% tint. Decorative outline for an --x-bg surface.
+   *
+   * Ratios in the comments are measured against --background in this theme.
+   * A fill is also >= 3:1 against --background so it can carry an icon or a
+   * boundary (WCAG 1.4.11) - with one documented exception, --warning.
+   */
+
+  /* --- Surfaces, and the text on them --- */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --foreground: oklch(0.145 0 0); /* 19.8:1 */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.45 0 0); /* 7.4:1 on --background, 6.8:1 on --muted */
+  /* The quiet neutral a row, nav link or menu item goes when you point at it,
+     and the slightly stronger one for the row that is currently chosen. This
+     is the role that twenty-six rules were asking for when they wrote
+     var(--accent) - see the warning on --accent below. Text on either stays
+     --foreground, which is 16:1 on both. */
+  --surface-hover: oklch(0.95 0 0);
+  --surface-active: oklch(0.92 0 0);
+  --color-white: #fff;
+
+  /* --- Primary: the near-black of buttons and links --- */
   --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.985 0 0); /* 17.2:1 on --primary */
+  /* Hover is a literal, not `calc(l * 0.9)` of --primary. Primary sits at
+     L=0.205, so scaling it produced L=0.185 - a 0.02 shift nobody can see, and
+     ten stylesheets each recomputed that same invisible hover. A near-black
+     control lifts on hover rather than darkening. 1.31:1 against --primary. */
+  --primary-hover: oklch(0.3 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.55 0.17 162.48);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.5 0.245 27.325);
+  --secondary-hover: oklch(0.92 0 0);
+
+  /* --- Lines and focus ---
+   *
+   * --border and --input held the same value, which erased a distinction WCAG
+   * makes: --border draws decorative rules and card edges and carries no
+   * contrast requirement, while --input is the *only* thing that tells you
+   * where a text field is, so it needs 3:1 (1.4.11). At oklch(0.922) it
+   * measured 1.26:1. Inputs are visibly greyer than card edges now; that is
+   * the fix, not a regression. */
   --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.45 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --color-black: #000;
-  --color-white: #fff;
-  --destructive-foreground: var(--color-white);
+  --border-hover: oklch(0.78 0 0); /* the emphasised --border, for a hovered card */
+  --input: oklch(0.66 0 0); /* 3.11:1 on --background */
+  --ring: oklch(0.45 0 0); /* 7.4:1; the ring is drawn offset, on --background */
 
-  /* ===== Status Colors (Semantic) ===== */
-  --color-success: oklch(0.577 0.15 145);
-  --color-success-foreground: oklch(0.985 0 0);
-  --color-warning: oklch(0.828 0.189 84.429);
-  --color-warning-foreground: oklch(0.145 0 0);
-  --color-info: oklch(0.6 0.118 184.704);
-  --color-info-foreground: oklch(0.985 0 0);
-  --color-error: var(--destructive);
+  /* --- Accent: the brand emerald ---
+   *
+   * The fill was L=0.55, which put --accent-foreground at 4.03:1 - below AA on
+   * the accent button, the product-created modal and two purchase-card rows.
+   * L=0.52 is visually the same green and clears it.
+   *
+   * BEWARE the name, and do not reach for this token for a hover state. In
+   * shadcn, which the neutral tokens above were lifted from, `accent` is the
+   * subtle grey a row goes on hover; here it is the brand green. Twenty-six
+   * rules were written against the other meaning, so every nav link, dropdown
+   * item, pagination link and modal row turned emerald when you pointed at it,
+   * and an error code rendered on a green chip. Two more asked for names that
+   * do not exist - `var(--accent, #f3f4f6)` and --accent-background - and got
+   * an emerald suggestion row and a transparent one.
+   *
+   * For a hover or selected surface use --surface-hover / --surface-active.
+   * This token is the brand green, and it belongs only where green is the
+   * point. */
+  --accent: oklch(0.52 0.17 162.48); /* 4.74:1 as a fill */
+  --accent-foreground: oklch(0.985 0 0); /* 4.54:1 on --accent */
+  --accent-fg: oklch(0.46 0.17 162.48); /* 6.04:1; 4.93:1 on the 15% tint 404 uses */
+  --accent-bg: oklch(from var(--accent) l c h / 0.1);
+  --accent-border: oklch(from var(--accent) l c h / 0.3);
+  --accent-hover: oklch(0.46 0.17 162.48);
 
-  /* Aliases for consistency */
-  --success: var(--color-success);
-  --warning: var(--color-warning);
-  --info: var(--color-info);
-  --success-foreground: var(--color-success-foreground);
-  --warning-foreground: var(--color-warning-foreground);
-  --info-foreground: var(--color-info-foreground);
+  /* --- Success --- */
+  --success: oklch(0.54 0.15 145); /* 4.75:1 as a fill */
+  --success-foreground: oklch(0.985 0 0); /* 4.55:1 on --success; was 3.9:1 at L=0.577 */
+  --success-fg: oklch(0.5 0.15 145); /* 5.63:1; 4.94:1 on --success-bg */
+  --success-bg: oklch(from var(--success) l c h / 0.1);
+  --success-border: oklch(from var(--success) l c h / 0.3);
 
-  /* ===== Status Background/Foreground/Border Aliases ===== */
-  --success-bg: oklch(from var(--color-success) l c h / 0.1);
-  /* Darkened for text. --color-success is a FILL colour at 4.07:1 on white,
-     below the 4.5:1 AA floor; this variant measures 5.08:1 on white and 4.51:1
-     on the 10% tint that Badge and AlertMessage put it on. Never use
-     --color-success as a `color:` value. */
-  --success-fg: oklch(0.524 0.15 145);
-  --success-border: oklch(from var(--color-success) l c h / 0.3);
-  --warning-bg: oklch(from var(--color-warning) l c h / 0.1);
-  /* --color-warning is 1.72:1 on white — effectively invisible as text, and it
-     was being used for the warning badge, alert copy, and the checkout button's
-     warning icon. This variant measures 5.09:1 on white, 4.50:1 on the tint.
-     Amber cannot clear AA above roughly L=0.55, so this is a large shift. */
-  --warning-fg: oklch(0.54 0.189 84.429);
-  --warning-border: oklch(from var(--color-warning) l c h / 0.3);
-  --info-bg: oklch(from var(--color-info) l c h / 0.1);
-  /* 3.66:1 as a fill; 5.11:1 on white and 4.51:1 on the tint as text. */
-  --info-fg: oklch(0.514 0.118 184.704);
-  /* --accent is 4.26:1 on white — fine as a fill, short of AA as text.
-     0.502 cleared AA on white (5.10:1) but not on the 15% accent tint that
-     404.astro puts it on, where it measured 4.20:1. 0.480 holds on both:
-     5.59:1 on white, 4.61:1 on the tint.
-     This is a token for text on a LIGHT background. On a dark surface it is
-     the wrong direction — use --accent-on-dark. */
-  --accent-fg: oklch(0.48 0.17 162.48);
-  /* --accent-fg inverted for text on --primary and other near-black surfaces,
-     where darkening reduces contrast instead of increasing it. 8.72:1 on
-     --primary (#171717). */
-  --accent-on-dark: oklch(0.75 0.17 162.48);
-  --info-border: oklch(from var(--color-info) l c h / 0.3);
-  --error-bg: oklch(from var(--destructive) l c h / 0.1);
-  --error-fg: var(--destructive);
-  --error-border: oklch(from var(--destructive) l c h / 0.3);
+  /* --- Warning ---
+   *
+   * The exception to the 3:1 fill rule. Amber cannot clear 3:1 against white at
+   * any lightness that still reads as amber - this fill is 1.72:1 - so it takes
+   * DARK text, and it must never be the only boundary identifying a control.
+   * Where a border has to carry the meaning, use --warning-fg. */
+  --warning: oklch(0.828 0.189 84.429);
+  --warning-foreground: oklch(0.145 0 0); /* 11.5:1 on --warning */
+  --warning-fg: oklch(0.54 0.189 84.429); /* 5.09:1; 4.81:1 on --warning-bg */
+  --warning-bg: oklch(from var(--warning) l c h / 0.1);
+  --warning-border: oklch(from var(--warning) l c h / 0.3);
+
+  /* --- Info --- */
+  --info: oklch(0.53 0.118 184.704); /* 4.79:1 as a fill */
+  --info-foreground: oklch(0.985 0 0); /* 4.59:1 on --info; was 3.5:1 at L=0.6 */
+  --info-fg: oklch(0.5 0.118 184.704); /* 5.40:1; 4.72:1 on --info-bg */
+  --info-bg: oklch(from var(--info) l c h / 0.1);
+  --info-border: oklch(from var(--info) l c h / 0.3);
+
+  /* --- Destructive ---
+   *
+   * Spelled `destructive`, never `error`. There used to be both: --color-error,
+   * --error-bg, --error-fg and --error-border alongside --destructive-bg and
+   * --destructive-fg, holding identical values under two names, so a red could
+   * be changed in one family and not in the other. */
+  --destructive: oklch(0.5 0.245 27.325); /* 5.96:1 as a fill */
+  --destructive-foreground: var(--color-white); /* 5.96:1 on --destructive */
+  --destructive-fg: oklch(0.5 0.245 27.325); /* 5.96:1; 4.95:1 on --destructive-bg */
   --destructive-bg: oklch(from var(--destructive) l c h / 0.1);
-  --destructive-fg: var(--destructive);
+  --destructive-border: oklch(from var(--destructive) l c h / 0.3);
+  --destructive-hover: oklch(0.45 0.245 27.325);
 
-  /* ===== Status Badge Colors ===== */
+  /* --- One more hue, for a state that is neither good nor bad ---
+   *
+   * `private` has to be distinguishable from published without implying
+   * something went wrong, and no semantic family means "not visible yet". It
+   * follows the same five-role contract, so the status badges below are one
+   * formula rather than a dozen hand-picked oklch triples. */
+  --neutral-blue: oklch(0.52 0.14 255); /* 5.55:1 as a fill */
+  --neutral-blue-foreground: oklch(0.985 0 0); /* 5.32:1 */
+  --neutral-blue-fg: oklch(0.52 0.14 255); /* 5.55:1; 4.84:1 on the tint */
+  --neutral-blue-bg: oklch(from var(--neutral-blue) l c h / 0.1);
+  --neutral-blue-border: oklch(from var(--neutral-blue) l c h / 0.3);
+
+  /* ===== Status Badges =====
+   *
+   * Each state names a family instead of restating a colour, so a state can
+   * only ever be one colour. `draft` was grey in .status-badge and amber in the
+   * Badge component, and `private` was blue in one and purple in the other. */
   --status-draft-bg: var(--muted);
   --status-draft-fg: var(--muted-foreground);
   --status-draft-border: var(--border);
-  --status-private-bg: oklch(0.95 0.02 240);
-  --status-private-fg: oklch(0.35 0.08 240);
-  --status-private-border: oklch(0.85 0.04 240);
-  --status-public-bg: oklch(0.95 0.1 145);
-  --status-public-fg: oklch(0.35 0.15 145);
-  --status-public-border: oklch(0.8 0.12 145);
-  --status-archived-bg: oklch(0.95 0.02 0);
-  --status-archived-fg: oklch(0.4 0 0);
-  --status-archived-border: oklch(0.85 0 0);
+  --status-private-bg: var(--neutral-blue-bg);
+  --status-private-fg: var(--neutral-blue-fg);
+  --status-private-border: var(--neutral-blue-border);
+  --status-public-bg: var(--success-bg);
+  --status-public-fg: var(--success-fg);
+  --status-public-border: var(--success-border);
+  --status-archived-bg: var(--muted);
+  --status-archived-fg: var(--muted-foreground);
+  --status-archived-border: var(--border);
 
-  /* ===== Interactive Colors ===== */
-  --primary-hover: oklch(from var(--primary) calc(l * 0.9) c h);
+  /* ===== Links =====
+   *
+   * Hover and visited were `calc(l * 0.85)` and `calc(l * 0.75)` of --primary,
+   * which at L=0.205 is a 0.03 and a 0.05 shift - so there was no visible hover
+   * state, and a visited link was identical to an unvisited one. Hover moves to
+   * the accent instead, a change in hue as well as lightness. Nothing styled
+   * :visited, so that token is gone rather than defined and unread. */
   --color-link: var(--primary);
-  --color-link-hover: oklch(from var(--primary) calc(l * 0.85) c h);
-  --color-link-visited: oklch(from var(--primary) calc(l * 0.75) c h);
+  --color-link-hover: var(--accent-fg);
 
-  /* ===== Notification Colors ===== */
-  --unread-bg: oklch(96% 0.01 240 / 1);
-  --conflict-bg: oklch(98% 0.02 60 / 1);
-  --conflict-border: oklch(80% 0.08 60 / 1);
-  --conflict-border-emphasis: oklch(60% 0.15 60 / 1);
-  --conflict-fg: oklch(40% 0.12 60 / 1);
+  /* ===== Notifications ===== */
+  --unread-bg: var(--neutral-blue-bg);
 
-  /* ===== Overlay Colors ===== */
-  --overlay-light: oklch(0 0 0 / 0.1);
-  --overlay-medium: oklch(0 0 0 / 0.3);
-  --overlay-dark: oklch(0 0 0 / 0.7);
-
+  /* ===== Overlays =====
+   *
+   * Deliberately not theme-inverted: a backdrop is darkness, and it stays dark
+   * in both themes.
+   *
+   * Named for the job rather than the opacity, because the opacity was the
+   * problem. Nothing referenced --overlay-light/medium/dark, and instead nine
+   * stylesheets wrote their own scrim: modal backdrops at 0.5, 0.6 and 0.7,
+   * panel shadows at 0.3 and 0.4. Every modal now draws the same backdrop -
+   * 0.6, the value most of them had already chosen. */
+  --overlay-subtle: oklch(0 0 0 / 0.1); /* a hairline shadow under a raised edge */
+  --overlay-soft: oklch(0 0 0 / 0.3); /* the drop shadow of a floating panel */
+  --overlay-backdrop: oklch(0 0 0 / 0.6); /* behind a modal, dialog or drawer */
+  --overlay-scrim: oklch(0 0 0 / 0.8); /* over imagery, so text on top is legible */
   /* ===== Breakpoints ===== */
   --breakpoint-sm: 40rem;
   --breakpoint-md: 48rem;
@@ -395,8 +465,7 @@
   --badge-font-weight: var(--font-weight-semibold);
 
   /* ===== Component Tokens: Modals/Overlays ===== */
-  --modal-backdrop: var(--overlay-dark);
-  --modal-overlay: var(--overlay-dark);
+  --modal-backdrop: var(--overlay-backdrop);
   --modal-max-width: var(--container-2xl);
   --modal-width-sm: var(--container-md);
   --modal-width-md: var(--container-lg);
@@ -421,54 +490,100 @@
   /* ===== Component Tokens: File Type Badges ===== */
   --file-type-badge-width: 3rem;
 
-  /* ===== Component Tokens: Browse Grid ===== */
-  --grid-card-min-width: 18.75rem;
-  --grid-card-min-width-md: 15.625rem;
+  /* ===== Component Tokens: Card Grid ===== */
+  /* Column widths; see components/card-grid. */
+  --card-grid-min-xs: 9.375rem; /* 150px — a row of avatars */
+  --card-grid-min-sm: 15.625rem; /* 250px */
+  --card-grid-min-md: 18.75rem; /* 300px */
+  --card-grid-min-lg: 21.875rem; /* 350px */
 }
 
+/* ===== Dark Theme =====
+ *
+ * NOTHING APPLIES THIS CLASS YET. There is no theme toggle and no
+ * prefers-color-scheme query anywhere in the app, so every page renders the
+ * light theme. It is kept, and kept correct, because the cost of leaving it
+ * half-defined is a silent one: this block used to override only the base
+ * tokens and none of the derived ones, so --success-fg, --warning-fg,
+ * --info-fg and --accent-fg stayed at their light-theme lightness and would
+ * have landed at 3.6-3.9:1 on the dark background the moment the class was
+ * switched on - the four tokens most likely to be carrying a payout status.
+ *
+ * The rule for this block: every token whose value depends on surface
+ * lightness is overridden here. A token derived with `oklch(from ...)` follows
+ * its base automatically and is not repeated.
+ *
+ * Ratios below are against --background, oklch(0.145 0 0).
+ */
 .dark {
+  /* --- Surfaces --- */
   --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --foreground: oklch(0.985 0 0); /* 19.0:1 */
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.269 0 0);
   --popover-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.75 0 0); /* 8.9:1; 6.8:1 on --muted */
+  --surface-hover: oklch(0.269 0 0);
+  --surface-active: oklch(0.32 0 0);
+
+  /* --- Primary inverts to near-white, so hover darkens rather than lifts --- */
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
+  --primary-hover: oklch(0.84 0 0); /* 1.30:1 against --primary */
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.75 0 0);
-  --accent: oklch(0.75 0.17 162.48);
-  --accent-foreground: oklch(0.145 0 0);
-  --destructive: oklch(0.75 0.191 22.216);
-  --destructive-foreground: oklch(0.145 0 0);
+  --secondary-hover: oklch(0.32 0 0);
+
+  /* --- Lines and focus ---
+   * --border stays a translucent white so it picks up whatever surface it sits
+   * on. --input cannot: a 15% white edge on a card is under 1.5:1, and a text
+   * field's boundary needs 3:1, so it is opaque here too. */
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border-hover: oklch(1 0 0 / 25%);
+  --input: oklch(0.52 0 0); /* 3.25:1 on --card, the darkest surface it appears on */
   --ring: oklch(0.75 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.439 0 0);
 
-  /* ===== Dark Mode Adjustments ===== */
-  --color-success: oklch(0.65 0.15 145);
-  --color-success-foreground: oklch(0.145 0 0);
-  --color-warning: oklch(0.75 0.16 84.429);
-  --color-warning-foreground: oklch(0.145 0 0);
-  --color-info: oklch(0.65 0.12 184.704);
-  --color-info-foreground: oklch(0.145 0 0);
+  /* --- Semantic families ---
+   * Fills move up in lightness and take DARK text; the -fg text roles move up
+   * further, to L=0.80, which clears 4.5:1 on --background, on --card and on
+   * the 15% tints these sit on. --destructive keeps the hue it has always had
+   * in this theme (22.216), which is why its -fg is spelled out rather than
+   * sharing the light theme's. */
+  --accent: oklch(0.75 0.17 162.48); /* 9.6:1 as a fill */
+  --accent-foreground: oklch(0.145 0 0); /* 9.6:1 on --accent */
+  --accent-fg: oklch(0.8 0.17 162.48); /* 11.4:1; 10.0:1 on --accent-bg */
+  --accent-hover: oklch(0.82 0.17 162.48);
 
-  /* Card shadows less visible in dark mode */
+  --success: oklch(0.7 0.15 145); /* 7.9:1 as a fill */
+  --success-foreground: oklch(0.145 0 0); /* 7.9:1 on --success */
+  --success-fg: oklch(0.8 0.15 145); /* 11.2:1; 9.9:1 on --success-bg */
+
+  --warning: oklch(0.78 0.189 84.429); /* 9.8:1 as a fill */
+  --warning-foreground: oklch(0.145 0 0); /* 9.8:1 on --warning */
+  --warning-fg: oklch(0.8 0.189 84.429); /* 10.5:1; 9.2:1 on --warning-bg */
+
+  --info: oklch(0.7 0.118 184.704); /* 7.8:1 as a fill */
+  --info-foreground: oklch(0.145 0 0); /* 7.8:1 on --info */
+  --info-fg: oklch(0.8 0.118 184.704); /* 11.1:1; 9.9:1 on --info-bg */
+
+  --destructive: oklch(0.75 0.191 22.216); /* 7.5:1 as a fill */
+  --destructive-foreground: oklch(0.145 0 0); /* 7.5:1 on --destructive */
+  --destructive-fg: oklch(0.8 0.191 22.216); /* 8.4:1; 7.5:1 on --destructive-bg */
+  --destructive-hover: oklch(0.68 0.191 22.216);
+
+  --neutral-blue: oklch(0.7 0.14 255); /* 7.4:1 as a fill */
+  --neutral-blue-foreground: oklch(0.145 0 0);
+  --neutral-blue-fg: oklch(0.8 0.14 255); /* 10.3:1; 9.2:1 on the tint */
+
+  /* --- Links ---
+   * --primary is near-white here, so a link already reads as body text; hover
+   * still has to be a hue change, and --accent-fg is the light one now. */
+  --color-link: var(--primary);
+  --color-link-hover: var(--accent-fg);
+
+  /* Elevation is carried by surface lightness in this theme, not by shadow. */
   --card-shadow: none;
 }
 
@@ -559,7 +674,7 @@ a:focus-visible {
 
 /* Code */
 code {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-family: var(--font-family-mono);
   font-size: var(--text-sm);
   padding: var(--spacing-xxs) var(--spacing-xs);
   background-color: var(--muted);
@@ -567,7 +682,7 @@ code {
 }
 
 pre {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-family: var(--font-family-mono);
   font-size: var(--text-sm);
   padding: var(--spacing-2xl);
   background-color: var(--muted);
@@ -619,52 +734,6 @@ blockquote {
   }
 }
 
-.page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: var(--spacing-2xl);
-}
-
-.page__container {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.page-columns {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--spacing-3xl);
-}
-.page-columns__column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3xl);
-}
-
-/* Responsive: Reduce gaps on mobile */
-@media (max-width: 48rem) {
-  .page {
-    padding: var(--spacing-xl);
-  }
-
-  .page__container {
-    gap: var(--spacing-4xl);
-  }
-
-  /* Stack columns on mobile */
-  .page-columns {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-2xl);
-  }
-
-  .page-columns__column {
-    gap: var(--spacing-2xl);
-  }
-}
-
 /* ===== Status Badge Component ===== */
 .status-badge {
   display: inline-flex;
@@ -691,12 +760,6 @@ blockquote {
   border: var(--border-width-default) solid var(--status-private-border);
 }
 
-.status-badge--unlisted {
-  background: oklch(0.95 0.02 280);
-  color: oklch(0.4 0.08 280);
-  border: var(--border-width-default) solid oklch(0.85 0.04 280);
-}
-
 .status-badge--public {
   background: var(--status-public-bg);
   color: var(--status-public-fg);
@@ -709,324 +772,102 @@ blockquote {
   border: var(--border-width-default) solid var(--status-archived-border);
 }
 
+/* Payout states. These lived in payouts/index.css, where they also redefined
+   the base `.status-badge` — dropping its flex layout — and used raw hex that
+   the contrast pass had already replaced everywhere else. */
+.status-badge--pending {
+  background: var(--warning-bg);
+  color: var(--warning-fg);
+  border: var(--border-width-default) solid var(--warning-border);
+}
+
+.status-badge--processing {
+  background: var(--info-bg);
+  color: var(--info-fg);
+  border: var(--border-width-default) solid var(--info-border);
+}
+
+.status-badge--paid {
+  background: var(--success-bg);
+  color: var(--success-fg);
+  border: var(--border-width-default) solid var(--success-border);
+}
+
+.status-badge--failed {
+  background: var(--destructive-bg);
+  color: var(--destructive-fg);
+  border: var(--border-width-default) solid var(--destructive-border);
+}
+
+.status-badge--cancelled {
+  background: var(--status-archived-bg);
+  color: var(--status-archived-fg);
+  border: var(--border-width-default) solid var(--status-archived-border);
+}
+
+/* Stripe sent the transfer back and the royalties are owed again - closer to
+   failed than to cancelled. */
+.status-badge--reversed {
+  background: var(--destructive-bg);
+  color: var(--destructive-fg);
+  border: var(--border-width-default) solid var(--destructive-border);
+}
+
 .status-badge--large {
   padding: var(--spacing-sm) var(--spacing-lg);
   font-size: var(--text-sm);
 }
 
-/* ===== Shared Browse Page Components ===== */
-
-/* Page Header with Action */
-
-/* Browse Search Form */
-.browse-search {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
-  margin-bottom: var(--spacing-3xl);
-}
-
-.browse-search__wrapper {
-  display: flex;
-  gap: var(--gap-md);
-}
-
-.browse-search__input {
-  flex: 1;
-  padding: var(--spacing-lg) var(--spacing-2xl);
-  border: var(--border-width-default) solid var(--border);
-  border-radius: var(--radius-md);
-  background-color: var(--background);
-  color: var(--foreground);
-  font-size: var(--text-base);
-  font-family: inherit;
-  transition: border-color var(--duration-fast) var(--ease-in-out);
-}
-
-.browse-search__input:focus {
-  outline: none;
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
-}
-
-.browse-search__input::placeholder {
-  color: var(--muted-foreground);
-}
-
-.browse-search__btn {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-sm);
-  padding: var(--spacing-lg) var(--spacing-3xl);
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-in-out);
-}
-
-.browse-search__btn:hover {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
-}
-
-.browse-search__btn:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.browse-search__clear {
-  align-self: flex-start;
-  color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  text-decoration: none;
-  transition: color var(--duration-fast) var(--ease-in-out);
-}
-
-.browse-search__clear:hover {
-  color: var(--foreground);
-  text-decoration: underline;
-}
-
-.browse-search__clear:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-/* Browse Controls Container */
-.browse-controls {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-lg);
-  margin-bottom: var(--spacing-3xl);
-}
-
-/* Browse Sort Controls */
-.browse-sort {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-md);
-}
-
-.browse-sort__label {
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--muted-foreground);
-}
-
-.browse-sort__select {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: var(--border-width-default) solid var(--border);
-  border-radius: var(--radius-md);
-  background-color: var(--background);
-  color: var(--foreground);
-  font-size: var(--text-sm);
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-in-out);
-}
-
-.browse-sort__select:focus {
-  outline: none;
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.2);
-}
-
-.browse-sort__select:hover {
-  border-color: oklch(from var(--border) calc(l * 0.9) c h);
-}
-
-/* Browse Tag Filters */
-.browse-tags {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--gap-md);
-  margin-bottom: var(--spacing-3xl);
-}
-
-.browse-tags__label {
-  flex-shrink: 0;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--muted-foreground);
-  padding-top: var(--spacing-xs);
-}
-
-.browse-tags__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gap-sm);
-}
-
-.browse-tags__tag {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--gap-xs);
-  padding: var(--spacing-xs) var(--spacing-lg);
-  background-color: var(--muted);
-  color: var(--foreground);
-  border: var(--border-width-default) solid transparent;
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  text-decoration: none;
-  transition: all var(--duration-fast) var(--ease-in-out);
-}
-
-.browse-tags__tag:hover {
-  background-color: oklch(from var(--muted) calc(l * 0.95) c h);
-  border-color: var(--border);
-}
-
-.browse-tags__tag:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.browse-tags__tag--active {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-}
-
-.browse-tags__tag--active:hover {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
-  border-color: transparent;
-}
-
-.browse-tags__count {
-  font-size: var(--text-xs);
-  opacity: 0.7;
-}
-
-/* Product Card Grid - Unified Card Style (Kickstarter-inspired) */
-.browse-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--grid-card-min-width), 1fr));
-  gap: var(--spacing-3xl);
-  margin-bottom: var(--spacing-6xl);
-}
-
-/* Wrapper around the product grid. Every sibling in this block was styled and
-   this one never was, so the section rendered with no spacing of its own. */
-.browse-section {
-  display: block;
-  margin-bottom: var(--spacing-6xl);
-}
-
-/* Product Card Files Section (for assets) */
-
-/* Responsive adjustments */
-@media (max-width: 64rem) {
-  .browse-grid {
-    grid-template-columns: repeat(auto-fill, minmax(var(--grid-card-min-width-md), 1fr));
-    gap: var(--spacing-2xl);
+/* Animation names are global whichever file declares them, so they are
+   declared once, here. `fadeIn` was the reason: two stylesheets defined it as a
+   pure opacity fade and a third as a fade with a slide, and the winner depended
+   on stylesheet order. The odd one out is now `user-edit-form-fade-in`. */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
-@media (max-width: 40rem) {
-  .browse-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-xl);
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Browse Empty State */
-.browse-empty {
-  text-align: center;
-  padding: var(--spacing-5xl) var(--spacing-4xl);
-}
-
-.browse-empty__text {
-  margin: 0 0 var(--spacing-2xl);
-  font-size: var(--text-base);
-  color: var(--muted-foreground);
-}
-
-.browse-empty__link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-}
-
-.browse-empty__link:hover {
-  text-decoration: underline;
-}
-
-.browse-empty__link:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-/* Browse Pagination */
-.browse-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--gap-xl);
-  padding: var(--spacing-3xl) 0;
-}
-
-.browse-pagination__link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-sm) var(--spacing-2xl);
-  border-radius: var(--radius-md);
-  transition: background-color var(--duration-normal) var(--ease-in-out);
-}
-
-.browse-pagination__link:hover {
-  background-color: var(--muted);
-}
-
-.browse-pagination__link:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.browse-pagination__current {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-/* Browse Responsive */
-@media (max-width: 48rem) {
-  .page-header-with-action {
-    flex-direction: column;
-    gap: var(--gap-md);
+@keyframes modal-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-
-  .browse-search__wrapper {
-    flex-direction: column;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
 
-  .browse-search__btn {
-    width: 100%;
-    justify-content: center;
+@keyframes icon-bounce {
+  0%,
+  100% {
+    transform: scale(1);
   }
-
-  .browse-sort {
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
+  50% {
+    transform: scale(1.1);
   }
+}
 
-  .browse-sort__select {
-    width: 100%;
-  }
-
-  .browse-tags {
-    flex-direction: column;
-    gap: var(--gap-sm);
-  }
-
-  .browse-tags__label {
-    padding-top: 0;
-  }
-
-  .browse-grid {
-    grid-template-columns: 1fr;
+/* Six stylesheets defined this identically — one per spinner. Under the old
+   scoped styles each copy was needed; they are all global now, so one is. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -1110,8 +951,6 @@ blockquote {
   /* Ensure minimum 44px touch targets on touch devices */
   .button,
   .navigation__link,
-  .filter-tag,
-  .browse-tags__tag,
   input[type='checkbox'],
   input[type='radio'],
   .dialog__close {

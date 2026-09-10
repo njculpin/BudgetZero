@@ -1,0 +1,24 @@
+---
+import Avatar from '@/components/users/avatar/avatar.astro';
+import './creator-profile.css';
+
+/** A creator, as a link to their profile: avatar, name, handle and bio. */
+interface Props {
+  handle: string;
+  name?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
+}
+
+const { handle, name, bio, avatarUrl } = Astro.props;
+const displayName = name || handle;
+---
+
+<a href={`/users/${handle}`} class="creator-profile">
+  <Avatar src={avatarUrl} alt={displayName} size="lg" />
+  <span class="creator-profile__info">
+    <span class="creator-profile__name">{displayName}</span>
+    <span class="creator-profile__handle">@{handle}</span>
+    {bio && <span class="creator-profile__bio">{bio}</span>}
+  </span>
+</a>

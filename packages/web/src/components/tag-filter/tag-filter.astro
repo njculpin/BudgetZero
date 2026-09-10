@@ -1,0 +1,21 @@
+---
+/**
+ * A labelled row of tag filters.
+ *
+ * The chips themselves are the Tag component; this is only the label and the
+ * wrapping list, which the browse and creators pages each wrote out by hand.
+ */
+interface Props {
+  label: string;
+}
+
+const { label } = Astro.props;
+import './tag-filter.css';
+---
+
+<div class="tag-filter">
+  <span class="tag-filter__label">{label}</span>
+  <div class="tag-filter__list">
+    <slot />
+  </div>
+</div>

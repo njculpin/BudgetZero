@@ -1,0 +1,99 @@
+/* ===== Base ===== */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.tag__remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-lg);
+  line-height: 1;
+  padding: 0;
+  width: var(--spacing-2xl);
+  height: var(--spacing-2xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  transition: opacity var(--duration-fast) var(--ease-in-out);
+}
+
+.tag__remove:hover {
+  opacity: 0.8;
+}
+
+/* ===== Variants ===== */
+.tag--default {
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.tag--primary {
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.tag--removable {
+  padding: var(--spacing-xxs) var(--spacing-lg);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* ===== Sizes ===== */
+.tag--sm {
+  padding: var(--spacing-xxs) var(--spacing-xs);
+  font-size: var(--text-xs);
+}
+
+.tag--md {
+  font-size: var(--text-sm);
+}
+
+/* ===== States ===== */
+/* A tag that navigates or filters. The plain variant is a label. */
+.tag--interactive {
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+
+.tag--interactive:hover {
+  background-color: oklch(from var(--muted) calc(l * 0.95) c h);
+  border-color: var(--border);
+}
+
+.tag--interactive:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.tag--active {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-color: transparent;
+}
+
+.tag--active:hover {
+  background-color: var(--primary-hover);
+  border-color: transparent;
+}
+
+.tag__count {
+  font-size: var(--text-xs);
+  opacity: 0.7;
+}
+
+@media (pointer: coarse) {
+  .tag--interactive {
+    min-height: 44px;
+  }
+}

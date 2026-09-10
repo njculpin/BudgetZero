@@ -1,0 +1,6 @@
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  margin: 0;
+}

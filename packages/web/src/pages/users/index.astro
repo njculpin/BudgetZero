@@ -2,6 +2,14 @@
 import Layout from '@/layouts/layout.astro';
 import Page from '@/components/page/page.astro';
 import PageHeader from '@/components/page-header/page-header.astro';
+import Toolbar from '@/components/toolbar/toolbar.astro';
+import SearchField from '@/components/search-field/search-field.astro';
+import TagFilter from '@/components/tag-filter/tag-filter.astro';
+import Tag from '@/components/tag/tag.astro';
+import CardGrid from '@/components/card-grid/card-grid.astro';
+import CreatorTile from '@/components/users/creator-tile/creator-tile.astro';
+import ResultCount from '@/components/result-count/result-count.astro';
+import EmptyState from '@/components/empty-state/empty-state.astro';
 import { getCreators } from '@gameloopers/core/data-access/users';
 
 // Get all creators with their tags
@@ -17,91 +25,66 @@ const tagsList = Array.from(allTags).sort();
 
 <Layout title="Creator Directory - Game Loopers">
   <Page>
-    <div class="creators-page">
-      <PageHeader
-        title="Creator Directory"
-        description="Discover talented game designers, illustrators, 3D modelers, and other creators."
+    <PageHeader
+      title="Creator Directory"
+      description="Discover talented game designers, illustrators, 3D modelers, and other creators."
+    />
+
+    <Toolbar>
+      <SearchField
+        name="creator-search"
+        label="Search creators"
+        placeholder="Search creators..."
       />
 
-      <!-- Search -->
-      <div class="browse-search">
-        <div class="browse-search__wrapper">
-          <input
-            type="text"
-            id="creator-search"
-            class="browse-search__input"
-            placeholder="Search creators..."
-          />
-        </div>
-      </div>
-
-      <!-- Tag Filters -->
       {tagsList.length > 0 && (
-        <div class="browse-tags">
-          <span class="browse-tags__label">Filter by tag:</span>
-          <div class="browse-tags__list">
-            <button
-              type="button"
-              class="browse-tags__tag browse-tags__tag--active"
-              data-tag="all"
-            >
-              All
-            </button>
-            {tagsList.map((tag) => (
-              <button type="button" class="browse-tags__tag" data-tag={tag}>
-                {tag}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div class="creators-page__count">
-        <span id="creators-count">
-          {creators.length} {creators.length === 1 ? 'Creator' : 'Creators'}
-        </span>
-      </div>
-
-      {creators.length === 0 ? (
-        <div class="creators-page__empty">
-          <p>No creators found.</p>
-        </div>
-      ) : (
-        <div id="creators-grid" class="creators-grid">
-          {creators.map(({ user, tags }) => (
-            <a
-              href={`/users/${user.handle}`}
-              class="creator-card"
-              data-search={`${user.name} ${user.handle} ${user.bio || ''}`}
-              data-tags={tags.join(',')}
-            >
-              <div class="creator-card__avatar">
-                <img
-                  src={
-                    user.avatar_url ||
-                    `https://placehold.co/200x200?text=${encodeURIComponent(user.name)}`
-                  }
-                  alt={user.name}
-                  class="creator-card__avatar-img"
-                />
-              </div>
-              {/* <div class="creator-card__info">
-              <h3 class="creator-card__name">{user.name}</h3>
-              <p class="creator-card__handle">@{user.handle}</p>
-            </div> */}
-            </a>
+        <TagFilter label="Filter by tag:">
+          <Tag button active data-tag="all">
+            All
+          </Tag>
+          {tagsList.map((tag) => (
+            <Tag button data-tag={tag}>
+              {tag}
+            </Tag>
           ))}
-        </div>
+        </TagFilter>
       )}
-    </div>
+    </Toolbar>
+
+    <ResultCount
+      id="creators-count"
+      count={creators.length}
+      singular="Creator"
+      plural="Creators"
+    />
+
+    {creators.length === 0 ? (
+      <EmptyState
+        icon="products"
+        title="No creators found"
+        description="Nobody has published a profile yet."
+      />
+    ) : (
+      <CardGrid size="xs" id="creators-grid">
+        {creators.map(({ user, tags }) => (
+          <CreatorTile
+            handle={user.handle}
+            name={user.name}
+            bio={user.bio}
+            avatarUrl={user.avatar_url}
+            tags={tags}
+          />
+        ))}
+      </CardGrid>
+    )}
   </Page>
 </Layout>
 
 <script>
   // Client-side filtering
   const searchInput = document.getElementById('creator-search') as HTMLInputElement;
-  const filterTags = document.querySelectorAll('.browse-tags__tag');
-  const creatorCards = document.querySelectorAll('.creator-card');
+  const filterTags = document.querySelectorAll('.tag-filter .tag');
+  const creatorCards = document.querySelectorAll('.creator-tile');
   const countElement = document.getElementById('creators-count');
 
   let currentSearch = '';
@@ -119,12 +102,10 @@ const tagsList = Array.from(allTags).sort();
         !currentSearch || cardSearch.toLowerCase().includes(currentSearch.toLowerCase());
       const matchesTag = currentTag === 'all' || cardTags.includes(currentTag);
 
-      if (matchesSearch && matchesTag) {
-        element.style.display = 'flex';
-        visibleCount++;
-      } else {
-        element.style.display = 'none';
-      }
+      // Clearing the property lets the stylesheet decide how the card lays
+      // out; hard-coding 'flex' here broke when the card became a block.
+      element.style.display = matchesSearch && matchesTag ? '' : 'none';
+      if (matchesSearch && matchesTag) visibleCount++;
     });
 
     if (countElement) {
@@ -139,118 +120,10 @@ const tagsList = Array.from(allTags).sort();
 
   filterTags.forEach((tag) => {
     tag.addEventListener('click', () => {
-      filterTags.forEach((t) => t.classList.remove('browse-tags__tag--active'));
-      tag.classList.add('browse-tags__tag--active');
+      filterTags.forEach((t) => t.classList.remove('tag--active'));
+      tag.classList.add('tag--active');
       currentTag = tag.getAttribute('data-tag') || 'all';
       filterCreators();
     });
   });
 </script>
-
-<style>
-  .creators-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-4xl);
-  }
-
-  .creators-page__count {
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--muted-foreground);
-  }
-
-  .creators-page__empty {
-    padding: var(--spacing-4xl);
-    text-align: center;
-    color: var(--muted-foreground);
-  }
-
-  /* ===== Creators Grid ===== */
-  .creators-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: var(--gap-xl);
-  }
-
-  .creator-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--gap-sm);
-    text-decoration: none;
-    transition: transform var(--duration-fast) var(--ease-in-out);
-    height: 100%;
-  }
-
-  .creator-card:hover {
-    transform: translateY(-2px);
-  }
-
-  .creator-card__avatar {
-    width: 100%;
-    aspect-ratio: 1;
-    overflow: hidden;
-    border-radius: var(--radius-full);
-    background-color: var(--muted);
-    border: 2px solid var(--border);
-    transition: border-color var(--duration-fast) var(--ease-in-out);
-  }
-
-  .creator-card:hover .creator-card__avatar {
-    border-color: var(--primary);
-  }
-
-  .creator-card__avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .creator-card__info {
-    text-align: center;
-    width: 100%;
-    min-height: 3rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .creator-card__name {
-    margin: 0;
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--foreground);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .creator-card__handle {
-    margin: 0;
-    font-size: var(--text-xs);
-    color: var(--muted-foreground);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  @media (max-width: 1024px) {
-    .creators-grid {
-      grid-template-columns: repeat(5, 1fr);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .creators-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-
-  @media (max-width: 480px) {
-    .creators-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-</style>

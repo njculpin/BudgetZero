@@ -1,0 +1,6 @@
+.document-contributors__hint {
+  margin: var(--spacing-lg) 0 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  font-style: italic;
+}

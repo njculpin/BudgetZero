@@ -1,0 +1,39 @@
+---
+import RouteSuggestion from '@/components/not-found/route-suggestion/route-suggestion.astro';
+import './route-suggestions.css';
+
+interface FuzzyRoute {
+  path: string;
+  label: string;
+  description: string;
+  similarity: number;
+}
+
+interface Props {
+  /** An exact segment match, if the path looked like a detail-page URL. */
+  patternMatch: string | null;
+  fuzzyMatches: FuzzyRoute[];
+}
+
+const { patternMatch, fuzzyMatches } = Astro.props;
+---
+
+<ul class="route-suggestions">
+  {patternMatch && (
+    <RouteSuggestion
+      kind="pattern"
+      path={patternMatch}
+      confidence="Exact Segment Match"
+      description="Looks like you're trying to access a specific item. Try the listing page instead."
+    />
+  )}
+  {fuzzyMatches.map((route) => (
+    <RouteSuggestion
+      kind="fuzzy"
+      path={route.path}
+      confidence={`${Math.round(route.similarity)}% similar`}
+      label={route.label}
+      description={route.description}
+    />
+  ))}
+</ul>

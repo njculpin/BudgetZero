@@ -4,6 +4,7 @@ interface Props {
 }
 
 const { message } = Astro.props;
+import './browse-cta.css';
 ---
 
 <div class="browse-cta">
@@ -17,39 +18,3 @@ const { message } = Astro.props;
     </a>
   </div>
 </div>
-
-<style>
-  .browse-cta {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--gap-xl);
-    padding: var(--spacing-4xl) var(--spacing-2xl);
-    text-align: center;
-  }
-
-  .browse-cta__text {
-    font-size: var(--text-lg);
-    color: var(--muted-foreground);
-    margin: 0;
-  }
-
-  .browse-cta__actions {
-    display: flex;
-    gap: var(--gap-lg);
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  /* Responsive */
-  @media (max-width: 480px) {
-    .browse-cta__actions {
-      flex-direction: column;
-      width: 100%;
-    }
-
-    .browse-cta__actions .button {
-      width: 100%;
-    }
-  }
-</style>

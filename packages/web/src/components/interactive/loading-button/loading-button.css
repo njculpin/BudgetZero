@@ -1,29 +1,23 @@
-/* ===== LoadingButton Component ===== */
-/* Note: Base button styles are in Button.astro */
-/* This file contains only loading-specific overrides */
+/* ===== LoadingButton ===== */
+/* Layout and variants come from the Button component's .button block; only the
+   spinner is different, and it carries its own name so the two do not fight
+   over .button__spinner on a page that loads both. */
 
 .button--loading {
-  position: relative;
   pointer-events: none;
 }
 
-.button__spinner {
+.loading-button__spinner {
   width: 1em;
   height: 1em;
   margin-right: var(--gap-xs);
   animation: spin 1s linear infinite;
 }
 
-.button__spinner-track {
+.loading-button__spinner-track {
   opacity: var(--opacity-25);
 }
 
-.button__spinner-path {
+.loading-button__spinner-path {
   opacity: var(--opacity-75);
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

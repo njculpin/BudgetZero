@@ -1,0 +1,45 @@
+---
+import Tag from '@/components/tag/tag.astro';
+import './profile-summary.css';
+
+/** Handle, bio, tags and stats: what sits under a creator's name. */
+interface Props {
+  handle: string;
+  bio?: string | null;
+  tags: string[];
+  productCount: number;
+  memberSince: string;
+}
+
+const { handle, bio, tags, productCount, memberSince } = Astro.props;
+
+const joined = new Date(memberSince).toLocaleDateString('en-US', {
+  month: 'short',
+  year: 'numeric',
+});
+---
+
+<p class="profile-summary__handle">@{handle}</p>
+{bio && <p class="profile-summary__bio">{bio}</p>}
+
+{tags.length > 0 && (
+  <ul class="profile-summary__tags">
+    {tags.map((tag) => (
+      <li>
+        <Tag size="sm">{tag}</Tag>
+      </li>
+    ))}
+  </ul>
+)}
+
+{/* A <dl> pairs each figure with its label for assistive technology. The
+    figure is rendered first so it reads before the label, and the CSS puts
+    them side by side rather than reordering them. */}
+<dl class="profile-summary__stats">
+  <dd class="profile-summary__stat-value">{productCount}</dd>
+  <dt class="profile-summary__stat-label">
+    {productCount === 1 ? 'Product' : 'Products'}
+  </dt>
+  <dd class="profile-summary__stat-value">{joined}</dd>
+  <dt class="profile-summary__stat-label">Member since</dt>
+</dl>

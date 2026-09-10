@@ -14,6 +14,9 @@
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-in-out);
   white-space: nowrap;
+  /* The class is also worn by <a href> (see button.astro), which would
+     otherwise arrive underlined. `.button--link` puts the underline back. */
+  text-decoration: none;
 }
 
 .button:focus-visible {
@@ -21,7 +24,9 @@
   outline-offset: 2px;
 }
 
-.button:disabled {
+.button:disabled,
+/* :disabled never matches an <a>, so a disabled link carries the modifier. */
+.button--disabled {
   opacity: var(--opacity-50);
   pointer-events: none;
   cursor: not-allowed;
@@ -47,12 +52,13 @@
   animation: button-spin 1s linear infinite;
 }
 
-.button__spinner-circle {
-  opacity: 0.25;
+/* Both parts are inside assets/svgs/spinner.svg. */
+.button__spinner-icon .spinner__track {
+  opacity: var(--opacity-25);
 }
 
-.button__spinner-path {
-  opacity: 0.75;
+.button__spinner-icon .spinner__path {
+  opacity: var(--opacity-75);
 }
 
 @keyframes button-spin {
@@ -91,7 +97,7 @@
   color: var(--primary-foreground);
 }
 .button--primary:hover:not(:disabled) {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  background-color: var(--primary-hover);
 }
 .button--primary:active:not(:disabled) {
   transform: scale(0.98);
@@ -102,7 +108,7 @@
   color: var(--secondary-foreground);
 }
 .button--secondary:hover:not(:disabled) {
-  background-color: oklch(from var(--secondary) calc(l * 0.9) c h);
+  background-color: var(--secondary-hover);
 }
 .button--secondary:active:not(:disabled) {
   transform: scale(0.98);
@@ -113,7 +119,7 @@
   color: var(--destructive-foreground);
 }
 .button--destructive:hover:not(:disabled) {
-  background-color: oklch(from var(--destructive) calc(l * 0.9) c h);
+  background-color: var(--destructive-hover);
 }
 .button--destructive:active:not(:disabled) {
   transform: scale(0.98);
@@ -160,7 +166,7 @@
   color: var(--accent-foreground);
 }
 .button--accent:hover:not(:disabled) {
-  background-color: oklch(from var(--accent) calc(l * 0.9) c h);
+  background-color: var(--accent-hover);
 }
 .button--accent:active:not(:disabled) {
   transform: scale(0.98);

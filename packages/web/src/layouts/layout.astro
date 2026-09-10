@@ -32,6 +32,7 @@ if (accessToken && refreshToken) {
     console.error('Error checking onboarding status:', error);
   }
 }
+import './layout.css';
 ---
 
 <!doctype html>
@@ -52,39 +53,7 @@ if (accessToken && refreshToken) {
     <main id="main-content" role="main">
       <slot />
     </main>
-    <footer role="contentinfo">
-      <Footer />
-    </footer>
+    <Footer />
     {showOnboarding && <OnboardingModal client:load />}
   </body>
 </html>
-
-<style>
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* Skip link for accessibility - visible only on keyboard focus */
-  .skip-link {
-    position: absolute;
-    top: -100px;
-    left: 0;
-    z-index: 100;
-    padding: var(--spacing-md) var(--spacing-lg);
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-    text-decoration: none;
-    font-weight: var(--font-weight-semibold);
-    border-radius: 0 0 var(--radius-md) 0;
-    transition: top 0.2s ease;
-  }
-
-  .skip-link:focus {
-    top: 0;
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-  }
-</style>

@@ -63,7 +63,7 @@
 .content-list__sort-select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 0, 112, 243), 0.1);
+  box-shadow: var(--focus-shadow);
 }
 
 .content-list__items {
@@ -127,7 +127,7 @@
 }
 
 .content-list__add-button:hover {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  background-color: var(--primary-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -235,8 +235,8 @@
 }
 
 .content-item__price--editable:hover {
-  background-color: var(--accent);
-  color: var(--accent-foreground);
+  background-color: var(--surface-active);
+  color: var(--foreground);
 }
 
 .content-item__tooltip {
@@ -468,12 +468,6 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .revenue-preview__empty {
   margin: 0;
   padding: var(--spacing-lg);
@@ -621,8 +615,8 @@
 
 .add-content-modal__success {
   padding: var(--spacing-md);
-  background-color: var(--success, #22c55e);
-  color: white;
+  background-color: var(--success);
+  color: var(--success-foreground);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
 }
@@ -702,7 +696,7 @@
 
 .add-content-modal__upload-prompt:hover {
   border-color: var(--primary);
-  background-color: var(--accent);
+  background-color: var(--surface-hover);
 }
 
 .add-content-modal__upload-icon {
@@ -833,7 +827,7 @@
 .add-content-modal__search-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 0, 112, 243), 0.1);
+  box-shadow: var(--focus-shadow);
 }
 
 .add-content-modal__document-list {
@@ -855,12 +849,12 @@
 
 .add-content-modal__document-item:hover {
   border-color: var(--primary);
-  background-color: var(--accent);
+  background-color: var(--surface-hover);
 }
 
 .add-content-modal__document-item--selected {
   border-color: var(--primary);
-  background-color: var(--accent);
+  background-color: var(--surface-active);
 }
 
 .add-content-modal__document-info {

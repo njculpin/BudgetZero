@@ -1,3 +1,4 @@
+import { formatFileSize } from '@gameloopers/core/utils/file-size';
 import { createSignal, Show, For, createResource } from 'solid-js';
 import Modal from '@/components/modal/modal';
 import { LoadingButton } from '@/components/interactive';
@@ -401,7 +402,7 @@ export default function AddContentModal(props: AddContentModalProps) {
                             {pf.file.name}
                           </span>
                           <span class="add-content-modal__pending-file-size">
-                            {(pf.file.size / 1024 / 1024).toFixed(2)} MB
+                            {formatFileSize(pf.file.size)}
                           </span>
                         </div>
                         <div class="add-content-modal__pending-file-price">

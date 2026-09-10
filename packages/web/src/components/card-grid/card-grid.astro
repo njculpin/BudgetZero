@@ -1,0 +1,24 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+/**
+ * A responsive grid of cards.
+ *
+ * Eight pages hand-rolled this: `.product-grid`, `.browse-grid`,
+ * `.tags-grid`, `.documents-grid`, `.payouts-grid` and three more, each with
+ * its own minimum column width and its own set of breakpoints. They were all
+ * the same block — a grid of equally sized cards that collapses to one column
+ * on a phone — so the only thing worth varying is how wide a card wants to be.
+ */
+type Props = HTMLAttributes<'div'> & {
+  /** Minimum card width before the grid drops a column. */
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+};
+
+const { size = 'md', class: className, ...rest } = Astro.props;
+import './card-grid.css';
+---
+
+<div class:list={['card-grid', `card-grid--${size}`, className]} {...rest}>
+  <slot />
+</div>

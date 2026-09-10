@@ -5,13 +5,24 @@ interface Props {
   required?: boolean;
   error?: string;
   helpText?: string;
-  className?: string;
+  /** Label beside the control rather than above it, for toolbar controls. */
+  inline?: boolean;
+  class?: string;
 }
 
-const { label, name, required = false, error, helpText, className = '' } = Astro.props;
+const {
+  label,
+  name,
+  required = false,
+  error,
+  helpText,
+  inline = false,
+  class: className,
+} = Astro.props;
+import './form-field.css';
 ---
 
-<div class={`form-field ${className}`}>
+<div class:list={['form-field', inline && 'form-field--inline', className]}>
   <label for={name} class="form-field__label">
     {label}
     {required && <span class="form-field__required">*</span>}
@@ -24,50 +35,3 @@ const { label, name, required = false, error, helpText, className = '' } = Astro
   )}
   {!error && helpText && <p class="form-field__help">{helpText}</p>}
 </div>
-
-<style>
-  .form-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-xs);
-  }
-
-  .form-field__label {
-    display: inline-block;
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-medium);
-    line-height: 1;
-    color: var(--foreground);
-    cursor: pointer;
-  }
-
-  .form-field__required {
-    color: var(--destructive);
-    margin-left: var(--spacing-xxs);
-  }
-
-  .form-field__error {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--destructive);
-    font-weight: var(--font-weight-medium);
-    animation: error-slide-in var(--duration-fast) var(--ease-out);
-  }
-
-  @keyframes error-slide-in {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .form-field__help {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-  }
-</style>

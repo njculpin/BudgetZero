@@ -39,7 +39,7 @@
 /* Error state - WCAG AA compliant */
 .save-status--error {
   color: oklch(0.35 0.245 27.325); /* Darker red for 4.5:1 contrast */
-  background-color: var(--error-bg);
+  background-color: var(--destructive-bg);
 }
 
 /* Spinner animation for saving state */

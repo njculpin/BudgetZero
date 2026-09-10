@@ -1,0 +1,28 @@
+.meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-md);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+/* Drawn, not marked up: a separator is presentation, and an <span>•</span> is
+   announced by a screen reader. */
+.meta-row > * + *::before {
+  content: '•';
+  margin-right: var(--gap-md);
+  color: var(--border);
+}
+
+@media (max-width: 48rem) {
+  .meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-sm);
+  }
+
+  .meta-row > * + *::before {
+    content: none;
+  }
+}

@@ -1,0 +1,20 @@
+---
+import { ShoppingCartIcon } from '@/assets/svgs';
+import './profile-tile.css';
+
+/** A product on a creator's profile: a square image that links to it. */
+interface Props {
+  handle: string;
+  title: string;
+  imageUrl: string;
+}
+
+const { handle, title, imageUrl } = Astro.props;
+---
+
+<a href={`/products/${handle}`} class="profile-tile" title={title}>
+  <img src={imageUrl} alt={title} class="profile-tile__image" loading="lazy" />
+  <span class="profile-tile__badge" aria-hidden="true">
+    <ShoppingCartIcon width={20} height={20} />
+  </span>
+</a>

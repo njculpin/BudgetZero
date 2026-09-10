@@ -1,0 +1,34 @@
+---
+import './creator-tile.css';
+
+/**
+ * A creator in the directory grid: an avatar that links to the profile.
+ *
+ * The data attributes are read by the page's filter script, which is why the
+ * name and tags travel with the element rather than only being rendered.
+ */
+interface Props {
+  handle: string;
+  name: string;
+  bio?: string | null;
+  avatarUrl?: string | null;
+  tags: string[];
+}
+
+const { handle, name, bio, avatarUrl, tags } = Astro.props;
+const placeholder = `https://placehold.co/200x200?text=${encodeURIComponent(name)}`;
+---
+
+<a
+  href={`/users/${handle}`}
+  class="creator-tile"
+  data-search={`${name} ${handle} ${bio || ''}`}
+  data-tags={tags.join(',')}
+>
+  <img
+    src={avatarUrl || placeholder}
+    alt={name}
+    class="creator-tile__avatar"
+    loading="lazy"
+  />
+</a>

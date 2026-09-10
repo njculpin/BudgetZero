@@ -1,0 +1,16 @@
+---
+/**
+ * A list of label/value rows: an order summary, a document's metadata, a
+ * receipt.
+ *
+ * Three pages built this from scratch under three names — `.order-info` on the
+ * purchase page, `.success-detail` on the checkout page, `.document-meta` on
+ * the document page — and only one of them used a <dl>, so the same content
+ * was a definition list on one page and a stack of anonymous divs on the next.
+ */
+import './detail-list.css';
+---
+
+<dl class="detail-list">
+  <slot />
+</dl>

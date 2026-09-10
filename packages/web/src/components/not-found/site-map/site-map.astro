@@ -1,0 +1,27 @@
+---
+import './site-map.css';
+
+/**
+ * The routes this site has, listed for a reader — or a crawler — that arrived
+ * at a URL that does not exist.
+ */
+const SECTIONS = [
+  ['/products', 'Browse game products and digital downloads'],
+  ['/documents', 'Collaborative document editor (authenticated users)'],
+  ['/users', 'Creator directory'],
+  ['/tags', 'Browse by topic'],
+  ['/cart', 'Shopping cart'],
+  ['/purchases', 'Purchase history (authenticated)'],
+  ['/about', 'About Game Loopers'],
+  ['/sign-in', 'User authentication'],
+] as const;
+---
+
+<h3 class="site-map__title">Available sections</h3>
+<ul class="site-map">
+  {SECTIONS.map(([path, description]) => (
+    <li>
+      <strong>{path}</strong> - {description}
+    </li>
+  ))}
+</ul>

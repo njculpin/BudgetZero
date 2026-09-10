@@ -2,6 +2,10 @@
 import Layout from '@/layouts/layout.astro';
 import { getPageUser } from '@/lib/page-auth';
 import Page from '@/components/page/page.astro';
+import PageHeader from '@/components/page-header/page-header.astro';
+import PageColumns from '@/components/page-columns/page-columns.astro';
+import ProductTags from '@/components/products/product-tags/product-tags.astro';
+import CreatorProfile from '@/components/users/creator-profile/creator-profile.astro';
 import Button from '@/components/button/button.astro';
 import { ProductContentViewer, AddToCartButton } from '@/components/products';
 import ProductContributors from '@/components/products/product-contributors/product-contributors.astro';
@@ -22,7 +26,6 @@ import CardHeader from '@/components/card/card-header/card-header.astro';
 import CardTitle from '@/components/card/card-title/card-title.astro';
 import CardDescription from '@/components/card/card-description/card-description.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
-import Avatar from '@/components/users/avatar/avatar.astro';
 
 const { product } = Astro.params;
 
@@ -80,9 +83,8 @@ const shouldShowContentViewer =
 
 <Layout title={`${productData.title} - Game Loopers`}>
   <Page>
-    <div class="page-columns">
-      <!-- Main Content Column -->
-      <div class="page-columns__column">
+    <PageColumns>
+      <Fragment slot="main">
         <!-- Product Images -->
         {productImages.length > 0 && (
           <ProductImageGallery
@@ -92,38 +94,27 @@ const shouldShowContentViewer =
             }))}
           />
         )}
-      </div>
+      </Fragment>
 
-      <!-- Sidebar Column -->
-      <div class="page-columns__column">
-        <!-- Product Header -->
-        <div class="product-page-header">
-          <div class="product-page-header__top">
-            <h1 class="product-page-header__title">{productData.title}</h1>
-            {isOwner && (
-              <a
-                href={`/products/${product}/edit`}
-                class="product-page-header__edit-link"
-              >
-                <Button variant="outline" size="sm">
-                  <span slot="text">Edit</span>
-                </Button>
-              </a>
-            )}
-          </div>
-          {productData.description && (
-            <p class="product-page-header__description">{productData.description}</p>
+      <Fragment slot="aside">
+        <PageHeader
+          title={productData.title}
+          description={productData.description ?? undefined}
+        >
+          {isOwner && (
+            <Button
+              slot="actions"
+              href={`/products/${product}/edit`}
+              variant="outline"
+              size="sm"
+            >
+              <span slot="text">Edit</span>
+            </Button>
           )}
           {tags.length > 0 && (
-            <div class="product-page-header__tags">
-              {tags.map((tag) => (
-                <a href={`/tags/${tag.value}`} class="product-tag">
-                  {tag.value}
-                </a>
-              ))}
-            </div>
+            <ProductTags slot="meta" tags={tags.map((tag) => tag.value)} />
           )}
-        </div>
+        </PageHeader>
 
         <!-- Add to Cart Button -->
         <Card>
@@ -171,18 +162,12 @@ const shouldShowContentViewer =
             <CardTitle>Created By</CardTitle>
           </CardHeader>
           <CardContent>
-            <a href={`/users/${owner.handle}`} class="creator-profile">
-              <Avatar
-                src={owner.avatar_url}
-                alt={owner.name || owner.handle || 'Creator'}
-                size="lg"
-              />
-              <div class="creator-profile__info">
-                <h3 class="creator-profile__name">{owner.name || owner.handle}</h3>
-                <p class="creator-profile__handle">@{owner.handle}</p>
-                {owner.bio && <p class="creator-profile__bio">{owner.bio}</p>}
-              </div>
-            </a>
+            <CreatorProfile
+              handle={owner.handle}
+              name={owner.name}
+              bio={owner.bio}
+              avatarUrl={owner.avatar_url}
+            />
           </CardContent>
           {productContributorsWithRoles.length > 0 && (
             <>
@@ -200,122 +185,7 @@ const shouldShowContentViewer =
             </>
           )}
         </Card>
-      </div>
-    </div>
+      </Fragment>
+    </PageColumns>
   </Page>
 </Layout>
-
-<style>
-  /* ===== Product Page Header (View Mode) ===== */
-  .product-page-header {
-    margin-bottom: var(--spacing-3xl);
-  }
-
-  .product-page-header__top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--gap-md);
-    margin-bottom: var(--spacing-md);
-  }
-
-  .product-page-header__title {
-    margin: 0;
-    font-size: var(--text-4xl);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--leading-tight);
-    color: var(--foreground);
-    flex: 1;
-  }
-
-  .product-page-header__edit-link {
-    flex-shrink: 0;
-    text-decoration: none;
-  }
-
-  .product-page-header__description {
-    margin: 0 0 var(--spacing-lg);
-    font-size: var(--text-lg);
-    color: var(--muted-foreground);
-    line-height: var(--leading-relaxed);
-    max-width: 65ch;
-  }
-
-  .product-page-header__tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--gap-sm);
-  }
-
-  .product-tag {
-    display: inline-flex;
-    align-items: center;
-    padding: var(--spacing-xs) var(--spacing-md);
-    background-color: var(--muted);
-    border: var(--border-width-default) solid var(--border);
-    border-radius: var(--radius-full);
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--muted-foreground);
-    text-decoration: none;
-    transition: all var(--duration-fast) var(--ease-in-out);
-  }
-
-  .product-tag:hover {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-    border-color: var(--primary);
-  }
-
-  @media (max-width: 48rem) {
-    .product-page-header__title {
-      font-size: var(--text-3xl);
-    }
-
-    .product-page-header__description {
-      font-size: var(--text-base);
-    }
-  }
-
-  /* ===== Creator Profile ===== */
-  .creator-profile {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--gap-md);
-    text-decoration: none;
-    padding: var(--spacing-md);
-    border-radius: var(--radius-md);
-    transition: background-color var(--duration-fast) var(--ease-in-out);
-  }
-
-  .creator-profile:hover {
-    background-color: var(--muted);
-  }
-
-  .creator-profile__info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-xs);
-  }
-
-  .creator-profile__name {
-    margin: 0;
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-semibold);
-    color: var(--foreground);
-  }
-
-  .creator-profile__handle {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-  }
-
-  .creator-profile__bio {
-    margin: var(--spacing-sm) 0 0;
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-    line-height: var(--leading-relaxed);
-  }
-</style>

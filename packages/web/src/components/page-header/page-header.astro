@@ -14,15 +14,30 @@
 interface Props {
   title: string;
   description?: string;
+  /**
+   * Keep the h1 in the document outline but out of the design. The landing
+   * page is a set of product grids with no visible page title, and without
+   * this it had no h1 at all — the outline started at h2.
+   */
+  titleHidden?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, titleHidden = false } = Astro.props;
 const hasActions = Astro.slots.has('actions');
+// A leading image: the avatar on a public profile, which had its own copy of
+// this whole block because the component had nowhere to put one.
+const hasMedia = Astro.slots.has('media');
+import './page-header.css';
 ---
 
 <div class="page-header">
+  {hasMedia && (
+    <div class="page-header__media">
+      <slot name="media" />
+    </div>
+  )}
   <div class="page-header__content">
-    <h1 class="page-header__title">{title}</h1>
+    <h1 class:list={[titleHidden ? 'sr-only' : 'page-header__title']}>{title}</h1>
     {description && <p class="page-header__description">{description}</p>}
     <slot name="meta" />
   </div>
@@ -32,40 +47,3 @@ const hasActions = Astro.slots.has('actions');
     </div>
   )}
 </div>
-
-<style>
-  .page-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--gap-lg);
-    flex-wrap: wrap;
-    margin-bottom: var(--spacing-2xl);
-  }
-
-  .page-header__content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .page-header__title {
-    margin: 0 0 var(--spacing-sm);
-    font-size: var(--text-4xl);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--leading-tight);
-  }
-
-  .page-header__description {
-    margin: 0;
-    font-size: var(--text-lg);
-    color: var(--muted-foreground);
-    line-height: var(--leading-relaxed);
-  }
-
-  .page-header__actions {
-    display: flex;
-    gap: var(--gap-md);
-    flex-wrap: wrap;
-    flex-shrink: 0;
-  }
-</style>

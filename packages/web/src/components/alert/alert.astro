@@ -1,0 +1,35 @@
+---
+/**
+ * A short status banner: an action succeeded, a checkout was cancelled, a bank
+ * account is connected.
+ *
+ * The design system has carried `--success-bg` / `--warning-bg` / `--info-bg`
+ * tokens for this since the contrast pass, but there was no component to spend
+ * them: the cart page had `.cart-alert--success` and `.cart-alert--error`, and
+ * the settings page had `.payout-status__success`, all hand-rolled.
+ */
+interface Props {
+  tone: 'success' | 'error' | 'warning' | 'info';
+  title?: string;
+}
+
+const { tone, title } = Astro.props;
+const hasIcon = Astro.slots.has('icon');
+
+// An error interrupts; a confirmation should not. `alert` preempts whatever a
+// screen reader is saying, which is wrong for "Item added to cart!".
+const role = tone === 'error' ? 'alert' : 'status';
+import './alert.css';
+---
+
+<div class:list={['alert', `alert--${tone}`]} role={role}>
+  {hasIcon && (
+    <span class="alert__icon" aria-hidden="true">
+      <slot name="icon" />
+    </span>
+  )}
+  <div class="alert__body">
+    {title && <p class="alert__title">{title}</p>}
+    <slot />
+  </div>
+</div>

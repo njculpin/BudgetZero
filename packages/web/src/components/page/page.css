@@ -1,0 +1,41 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+}
+
+.page__container {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* A single outcome or receipt reads badly at full width. */
+.page__container--narrow {
+  max-width: 37.5rem;
+  margin: var(--spacing-6xl) auto;
+}
+
+@media (max-width: 48rem) {
+  .page__container--narrow {
+    margin: var(--spacing-3xl) auto;
+  }
+}
+
+/* Sign-in and sign-up: a narrow column that centres a single card. */
+.auth-page__container {
+  width: 100%;
+  max-width: var(--container-sm);
+}
+
+@media (max-width: 48rem) {
+  .page {
+    padding: var(--spacing-xl);
+  }
+
+  .page__container {
+    gap: var(--spacing-4xl);
+  }
+}

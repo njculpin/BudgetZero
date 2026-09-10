@@ -1,0 +1,27 @@
+---
+/**
+ * The closing call to action on a marketing page.
+ *
+ * There were two of these under different names — `.cta-section` on the home
+ * page and `.cta-content` on the create page — with near-identical copy ("Join
+ * thousands of creators...") and different presentation, so the same moment in
+ * the funnel looked like two different things depending on how you arrived.
+ */
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+import './cta-banner.css';
+---
+
+<section class="cta-banner">
+  <div class="cta-banner__content">
+    <h2 class="cta-banner__title">{title}</h2>
+    <p class="cta-banner__description">{description}</p>
+    <div class="cta-banner__actions">
+      <slot />
+    </div>
+  </div>
+</section>

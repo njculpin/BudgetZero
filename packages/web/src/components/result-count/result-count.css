@@ -1,0 +1,6 @@
+.result-count {
+  margin: 0 0 var(--spacing-2xl);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+}

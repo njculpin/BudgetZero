@@ -1,0 +1,48 @@
+---
+import Card from '@/components/card/card.astro';
+import CardHeader from '@/components/card/card-header/card-header.astro';
+import CardTitle from '@/components/card/card-title/card-title.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
+import Section from '@/components/section/section.astro';
+import DownloadList from '@/components/purchases/download-list/download-list.astro';
+import { formatMoney } from '@gameloopers/core/utils/money';
+import './purchase-line.css';
+
+/** One product on an order: what it was, what it cost, and what you can download. */
+interface PurchasedFile {
+  title: string;
+  file_url: string;
+  description?: string | null;
+  file_size_bytes?: number | null;
+}
+
+interface Props {
+  title: string;
+  description?: string | null;
+  priceCents: number;
+  currency: string;
+  quantity: number;
+  files: PurchasedFile[];
+}
+
+const { title, description, priceCents, currency, quantity, files } = Astro.props;
+---
+
+<Card>
+  <CardHeader>
+    <CardTitle>{title}</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {description && <p class="purchase-line__description">{description}</p>}
+    <p class="purchase-line__price">
+      {formatMoney(priceCents, { currency })}
+      {quantity > 1 && ` × ${quantity}`}
+    </p>
+
+    {files.length > 0 && (
+      <Section title="Downloads">
+        <DownloadList files={files} />
+      </Section>
+    )}
+  </CardContent>
+</Card>

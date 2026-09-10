@@ -79,7 +79,7 @@
 }
 
 .payout-queue__status--error {
-  color: var(--error-fg);
+  color: var(--destructive-fg);
 }
 
 .payout-queue__note {

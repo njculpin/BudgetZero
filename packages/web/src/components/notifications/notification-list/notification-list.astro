@@ -1,0 +1,19 @@
+---
+import NotificationCard from '@/components/notifications/notification-card/notification-card.astro';
+import type { Notification } from '@gameloopers/core/types';
+import './notification-list.css';
+
+interface Props {
+  notifications: Notification[];
+}
+
+const { notifications } = Astro.props;
+---
+
+<ul class="notification-list">
+  {notifications.map((notification) => (
+    <li>
+      <NotificationCard notification={notification} />
+    </li>
+  ))}
+</ul>

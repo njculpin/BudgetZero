@@ -1,0 +1,29 @@
+---
+/**
+ * A link presented as a row: icon, title, and a line saying where it goes.
+ *
+ * The `.action-link__title` was a `<div>`, so the link's accessible name was
+ * the title and the description run together with no separation.
+ */
+interface Props {
+  href: string;
+  title: string;
+  description?: string;
+}
+
+const { href, title, description } = Astro.props;
+const hasIcon = Astro.slots.has('icon');
+import './action-link.css';
+---
+
+<a href={href} class="action-link">
+  {hasIcon && (
+    <span class="action-link__icon" aria-hidden="true">
+      <slot name="icon" />
+    </span>
+  )}
+  <span class="action-link__content">
+    <span class="action-link__title">{title}</span>
+    {description && <span class="action-link__description">{description}</span>}
+  </span>
+</a>

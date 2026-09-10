@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js';
 import { LoadingButton } from '@/components/interactive';
-import './login-form.css';
+import '../auth-form.css';
 
 export default function LoginForm() {
   const [email, setEmail] = createSignal<string>('');

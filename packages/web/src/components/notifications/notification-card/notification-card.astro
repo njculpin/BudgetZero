@@ -1,0 +1,162 @@
+---
+import Card from '@/components/card/card.astro';
+import CardContent from '@/components/card/card-content/card-content.astro';
+import type { Notification } from '@gameloopers/core/types';
+import {
+  AlertCircleIcon,
+  AwardIcon,
+  BellIcon,
+  CheckIcon,
+  DollarSignIcon,
+  FileIcon,
+  FileTextIcon,
+  ShoppingCartIcon,
+} from '@/assets/svgs';
+import './notification-card.css';
+
+const ICONS = {
+  'shopping-cart': ShoppingCartIcon,
+  'dollar-sign': DollarSignIcon,
+  file: FileIcon,
+  'file-text': FileTextIcon,
+  'alert-circle': AlertCircleIcon,
+  award: AwardIcon,
+  bell: BellIcon,
+};
+
+/**
+ * One notification in the list.
+ *
+ * The page used to inline this: a seven-branch chain of `{icon === 'bell' && …}`
+ * repeating the same `<svg>` attributes, plus the two forms, plus the mark-read
+ * button — about 180 lines of markup for one list item, and 200 lines of CSS in
+ * a page stylesheet.
+ */
+interface Props {
+  notification: Notification;
+}
+
+const { notification } = Astro.props;
+
+/**
+ * Action type -> [icon, tone]. One table, rather than the two parallel switch
+ * statements the page used to carry.
+ */
+const APPEARANCE: Record<string, [keyof typeof ICONS, string]> = {
+  sale_completed: ['shopping-cart', 'success'],
+  royalty_payment_received: ['dollar-sign', 'success'],
+  asset_price_changed: ['file', 'info'],
+  asset_files_changed: ['file', 'info'],
+  asset_royalties_changed: ['file', 'info'],
+  product_needs_review: ['alert-circle', 'warning'],
+  product_price_conflict: ['alert-circle', 'warning'],
+  document_shared: ['file-text', 'default'],
+  jam_submission_approved: ['award', 'default'],
+};
+
+const [iconName, tone] = APPEARANCE[notification.action_type] ?? ['bell', 'default'];
+const Icon = ICONS[iconName];
+
+/**
+ * Where the notification points. Only entity types with a page of their own get
+ * a link; a sale has no page, so it goes to the purchases list.
+ */
+function entityUrl(): string | null {
+  const snapshot = notification.snapshot as Record<string, unknown> | null;
+  const handle = snapshot?.handle as string | undefined;
+
+  if (!notification.entity_type) return null;
+  if (notification.entity_type === 'sale') return '/purchases';
+  if (!handle) return null;
+
+  switch (notification.entity_type) {
+    case 'product':
+      return `/products/${handle}`;
+    case 'document':
+      return `/documents/${handle}`;
+    default:
+      return null;
+  }
+}
+
+/** Coarse buckets; anything older than a year is not worth a precise figure. */
+function relativeTime(dateString: string): string {
+  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
+
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
+const url = entityUrl();
+---
+
+<Card
+  class:list={['notification-card', !notification.read && 'notification-card--unread']}
+>
+  <CardContent>
+    <article class:list={['notification', `notification--${tone}`]}>
+      <span class="notification__icon" aria-hidden="true">
+        <Icon width={20} height={20} />
+      </span>
+
+      <div class="notification__content">
+        <div class="notification__header">
+          <h3 class="notification__title">{notification.title}</h3>
+          <span class="notification__time">{relativeTime(notification.created_at)}</span>
+        </div>
+        <p class="notification__message">{notification.message}</p>
+
+        {url && (
+          <div class="notification__actions">
+            {notification.read ? (
+              <a href={url} class="notification__link">
+                View {notification.entity_type} →
+              </a>
+            ) : (
+              // Following the link marks it read in the same request, so the
+              // list does not still show it as unread when you come back.
+              <form
+                action={`/api/notifications/${notification.id}/read-and-view`}
+                method="post"
+                class="notification__form"
+              >
+                <input type="hidden" name="entityUrl" value={url} />
+                <button type="submit" class="notification__link">
+                  View {notification.entity_type} →
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+      </div>
+
+      {!notification.read && (
+        <>
+          <form
+            action={`/api/notifications/${notification.id}/read`}
+            method="post"
+            class="notification__form"
+          >
+            <button
+              type="submit"
+              class="notification__mark-read"
+              title="Mark as read"
+              aria-label="Mark as read"
+            >
+              <CheckIcon width={16} height={16} aria-hidden="true" />
+            </button>
+          </form>
+          <span class="notification__unread" title="Unread"></span>
+        </>
+      )}
+    </article>
+  </CardContent>
+</Card>

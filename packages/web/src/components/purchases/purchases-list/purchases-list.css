@@ -171,7 +171,7 @@
 }
 
 .purchases-list__pagination-button:hover:not(:disabled) {
-  background-color: var(--accent);
+  background-color: var(--surface-hover);
   border-color: var(--border-hover);
 }
 
@@ -208,7 +208,7 @@
 }
 
 .purchases-list__pagination-number:hover {
-  background-color: var(--accent);
+  background-color: var(--surface-hover);
   border-color: var(--border-hover);
 }
 

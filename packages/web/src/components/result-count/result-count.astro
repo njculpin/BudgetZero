@@ -1,0 +1,20 @@
+---
+import './result-count.css';
+
+/**
+ * "12 Creators". Given an `id`, a filter script can rewrite the number without
+ * the page owning a stray `<span>` for it to target.
+ */
+interface Props {
+  count: number;
+  singular: string;
+  plural: string;
+  id?: string;
+}
+
+const { count, singular, plural, id } = Astro.props;
+---
+
+<p class="result-count" id={id}>
+  {count} {count === 1 ? singular : plural}
+</p>

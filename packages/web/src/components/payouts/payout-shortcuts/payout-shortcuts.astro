@@ -1,0 +1,21 @@
+---
+import ActionLink from '@/components/action-link/action-link.astro';
+import { ArrowLeftIcon, UserIcon } from '@/assets/svgs';
+import './payout-shortcuts.css';
+
+/** The two places you go from the payouts page. */
+---
+
+<nav class="payout-shortcuts" aria-label="Payout shortcuts">
+  <ActionLink
+    href="/connect/dashboard"
+    title="Payout Settings"
+    description="Manage your bank account"
+  >
+    <UserIcon slot="icon" width={20} height={20} />
+  </ActionLink>
+
+  <ActionLink href="/products" title="Back to Products" description="Browse marketplace">
+    <ArrowLeftIcon slot="icon" width={20} height={20} />
+  </ActionLink>
+</nav>

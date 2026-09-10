@@ -1,0 +1,30 @@
+.tag-filter {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-md);
+}
+
+.tag-filter__label {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--muted-foreground);
+  padding-top: var(--spacing-xs);
+}
+
+.tag-filter__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+@media (max-width: 48rem) {
+  .tag-filter {
+    flex-direction: column;
+    gap: var(--gap-sm);
+  }
+
+  .tag-filter__label {
+    padding-top: 0;
+  }
+}

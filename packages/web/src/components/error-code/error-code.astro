@@ -1,0 +1,17 @@
+---
+import './error-code.css';
+
+/**
+ * The machine-readable half of a failure, kept next to the human-readable
+ * half so a support request can quote it.
+ */
+interface Props {
+  code: string;
+}
+
+const { code } = Astro.props;
+---
+
+<p class="error-code">
+  Error Code: <code>{code}</code>
+</p>

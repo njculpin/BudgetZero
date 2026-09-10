@@ -133,7 +133,7 @@
 }
 
 .editable-breadcrumb__save-btn:hover:not(:disabled) {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  background-color: var(--primary-hover);
 }
 
 .editable-breadcrumb__cancel-btn {

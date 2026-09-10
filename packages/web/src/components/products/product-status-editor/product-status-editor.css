@@ -28,10 +28,10 @@
 }
 
 .status-editor__option:hover:not(:disabled) {
-  background-color: var(--accent);
-  border-color: var(--accent-foreground);
+  background-color: var(--surface-hover);
+  border-color: var(--border-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px oklch(0 0 0 / 0.1);
+  box-shadow: 0 4px 12px var(--overlay-subtle);
 }
 
 .status-editor__option:disabled {
@@ -106,7 +106,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: oklch(0 0 0 / 0.6);
+  background-color: var(--overlay-backdrop);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -122,36 +122,15 @@
   border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-xl);
   padding: var(--spacing-3xl);
-  box-shadow: 0 20px 40px oklch(0 0 0 / 0.3);
+  box-shadow: 0 20px 40px var(--overlay-soft);
   animation: modal-slide-up 0.3s var(--ease-out);
   text-align: center;
-}
-
-@keyframes modal-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .status-editor__modal-icon {
   font-size: 64px;
   margin-bottom: var(--spacing-lg);
   animation: icon-bounce 0.6s var(--ease-out);
-}
-
-@keyframes icon-bounce {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
 }
 
 .status-editor__modal-title {

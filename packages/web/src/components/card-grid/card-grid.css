@@ -1,0 +1,45 @@
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-grid-column), 1fr));
+  gap: var(--spacing-3xl);
+}
+
+.card-grid--xs {
+  --card-grid-column: var(--card-grid-min-xs);
+}
+
+.card-grid--sm {
+  --card-grid-column: var(--card-grid-min-sm);
+}
+
+.card-grid--md {
+  --card-grid-column: var(--card-grid-min-md);
+}
+
+.card-grid--lg {
+  --card-grid-column: var(--card-grid-min-lg);
+}
+
+@media (max-width: 64rem) {
+  .card-grid {
+    gap: var(--spacing-2xl);
+  }
+
+  .card-grid--md,
+  .card-grid--lg {
+    --card-grid-column: var(--card-grid-min-sm);
+  }
+}
+
+@media (max-width: 40rem) {
+  .card-grid {
+    gap: var(--spacing-xl);
+  }
+
+  /* The narrow grid is a row of avatars, not cards: one per row is wrong. */
+  .card-grid--sm,
+  .card-grid--md,
+  .card-grid--lg {
+    grid-template-columns: 1fr;
+  }
+}

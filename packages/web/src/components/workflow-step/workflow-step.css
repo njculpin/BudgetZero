@@ -1,0 +1,32 @@
+.workflow-step {
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.workflow-step__number {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto var(--spacing-xl);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.workflow-step__title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--foreground);
+}
+
+.workflow-step__description {
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}

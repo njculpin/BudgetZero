@@ -83,7 +83,7 @@
 .image-grid__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, transparent, oklch(0 0 0 / 0.7));
+  background: linear-gradient(to bottom, transparent, var(--overlay-scrim));
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -124,7 +124,7 @@
 .image-grid__progress {
   position: absolute;
   inset: 0;
-  background: oklch(0 0 0 / 0.8);
+  background: var(--overlay-scrim);
   display: flex;
   flex-direction: column;
   align-items: center;

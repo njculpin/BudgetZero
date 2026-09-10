@@ -92,7 +92,7 @@
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);
   text-align: center;
-  animation: fadeIn 0.2s ease-in-out;
+  animation: user-edit-form-fade-in 0.2s ease-in-out;
 }
 
 .edit-profile-form__status--success {
@@ -105,7 +105,7 @@
   color: var(--warning-fg);
 }
 
-@keyframes fadeIn {
+@keyframes user-edit-form-fade-in {
   from {
     opacity: 0;
     transform: translateY(-4px);

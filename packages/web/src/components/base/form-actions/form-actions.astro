@@ -1,32 +1,13 @@
 ---
-interface Props {
-  className?: string;
-}
+import type { HTMLAttributes } from 'astro/types';
 
-const { className = '' } = Astro.props;
+// Props are the element's own attributes, spelled `class` like everywhere else.
+type Props = HTMLAttributes<'div'>;
+
+const { class: className, ...rest } = Astro.props;
+import './form-actions.css';
 ---
 
-<div class={`form-actions ${className}`}>
+<div class:list={['form-actions', className]} {...rest}>
   <slot />
 </div>
-
-<style>
-  .form-actions {
-    display: flex;
-    gap: var(--gap-lg);
-    justify-content: flex-end;
-    align-items: center;
-    padding-top: var(--spacing-2xl);
-  }
-
-  .form-actions > * {
-    text-decoration: none;
-  }
-
-  @media (max-width: 640px) {
-    .form-actions {
-      flex-direction: column-reverse;
-      align-items: stretch;
-    }
-  }
-</style>

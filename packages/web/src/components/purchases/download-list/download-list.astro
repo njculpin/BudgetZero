@@ -1,0 +1,30 @@
+---
+import DownloadLink from '@/components/purchases/download-link/download-link.astro';
+import './download-list.css';
+
+interface DownloadableFile {
+  title: string;
+  file_url: string;
+  description?: string | null;
+  file_size_bytes?: number | null;
+}
+
+interface Props {
+  files: DownloadableFile[];
+}
+
+const { files } = Astro.props;
+---
+
+<ul class="download-list">
+  {files.map((file) => (
+    <li>
+      <DownloadLink
+        href={file.file_url}
+        title={file.title}
+        description={file.description}
+        sizeBytes={file.file_size_bytes}
+      />
+    </li>
+  ))}
+</ul>

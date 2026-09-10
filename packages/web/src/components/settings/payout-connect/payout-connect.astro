@@ -1,0 +1,59 @@
+---
+import Alert from '@/components/alert/alert.astro';
+import Button from '@/components/button/button.astro';
+import { CheckCircleIcon, ClockIcon, DollarSignIcon, ShieldIcon } from '@/assets/svgs';
+import './payout-connect.css';
+
+/**
+ * The bank-account block on the settings page: either a confirmation that
+ * Stripe Connect is set up, or the pitch and the button that starts it.
+ */
+interface Props {
+  /** Both must be true: an account can exist while Stripe still withholds payouts. */
+  isOnboarded: boolean;
+  payoutsEnabled: boolean;
+}
+
+const { isOnboarded, payoutsEnabled } = Astro.props;
+const isConnected = isOnboarded && payoutsEnabled;
+
+const FEATURES = [
+  { Icon: ShieldIcon, text: 'Secure & powered by Stripe' },
+  { Icon: ClockIcon, text: 'Setup takes just a few minutes' },
+  { Icon: DollarSignIcon, text: 'Request payouts anytime' },
+];
+---
+
+{isConnected ? (
+  <Alert tone="success" title="Bank Account Connected">
+    <CheckCircleIcon slot="icon" width={24} height={24} />
+    <p>Your bank account is connected and ready to receive payouts.</p>
+  </Alert>
+) : (
+  <div class="payout-connect">
+    <p class="payout-connect__description">
+      To receive royalty payments, connect your bank account through Stripe. This secure
+      process takes just a few minutes.
+    </p>
+
+    <ul class="payout-connect__features">
+      {FEATURES.map(({ Icon, text }) => (
+        <li class="payout-connect__feature">
+          <Icon class="payout-connect__icon" width={20} height={20} aria-hidden="true" />
+          <span>{text}</span>
+        </li>
+      ))}
+    </ul>
+
+    <form method="post" action="/api/connect/create-account">
+      <Button type="submit" variant="primary" size="lg">
+        <span slot="text">Connect Bank Account</span>
+      </Button>
+    </form>
+
+    <p class="payout-connect__note">
+      You'll be redirected to Stripe to securely connect your bank account. Your
+      information is never stored on our servers.
+    </p>
+  </div>
+)}

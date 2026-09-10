@@ -3,6 +3,9 @@ import Layout from '@/layouts/layout.astro';
 import { getPageUser } from '@/lib/page-auth';
 import Page from '@/components/page/page.astro';
 import Button from '@/components/button/button.astro';
+import PageHeader from '@/components/page-header/page-header.astro';
+import PageColumns from '@/components/page-columns/page-columns.astro';
+import ProductSettings from '@/components/products/product-settings/product-settings.astro';
 import {
   ProductBasicInfoForm,
   ProductStatusEditor,
@@ -79,26 +82,17 @@ const productContributorsWithRoles = await getProductContributorsWithRoles(
 
 <Layout title={`Edit ${productData.title} - Game Loopers`}>
   <Page>
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="page-header__content">
-        <h1 class="page-header__title">Edit Product</h1>
-        <p class="page-header__description">
-          Manage your product content, pricing, and settings
-        </p>
-      </div>
-      <div class="page-header__actions">
-        <a href={`/products/${product}`}>
-          <Button variant="outline" size="md">
-            <span slot="text">View Product</span>
-          </Button>
-        </a>
-      </div>
-    </div>
+    <PageHeader
+      title="Edit Product"
+      description="Manage your product content, pricing, and settings"
+    >
+      <Button slot="actions" href={`/products/${product}`} variant="outline" size="md">
+        <span slot="text">View Product</span>
+      </Button>
+    </PageHeader>
 
-    <div class="page-columns">
-      <!-- Main Content Column -->
-      <div class="page-columns__column">
+    <PageColumns>
+      <Fragment slot="main">
         <!-- Product Images Form -->
         <Card>
           <CardHeader>
@@ -141,10 +135,9 @@ const productContributorsWithRoles = await getProductContributorsWithRoles(
             />
           </CardContent>
         </Card>
-      </div>
+      </Fragment>
 
-      <!-- Sidebar Column -->
-      <div class="page-columns__column">
+      <Fragment slot="aside">
         <!-- Basic Info Form -->
         <Card>
           <CardContent>
@@ -215,98 +208,106 @@ const productContributorsWithRoles = await getProductContributorsWithRoles(
             <CardDescription>Manage visibility and lifecycle</CardDescription>
           </CardHeader>
           <CardContent>
-            <div class="product-settings">
-              <div class="product-settings__section">
-                <h4 class="product-settings__section-title">Publish Status</h4>
-                <ProductStatusEditor
-                  client:load
-                  productId={productData.id}
-                  currentStatus={productData.status}
-                />
-              </div>
-
-              <div class="product-settings__section product-settings__section--danger">
-                <h4 class="product-settings__section-title">Danger Zone</h4>
-                <ProductDeleteButton
-                  client:load
-                  productId={productData.id}
-                  productTitle={productData.title}
-                />
-              </div>
-            </div>
+            <ProductSettings
+              productId={productData.id}
+              productTitle={productData.title}
+              status={productData.status}
+            />
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Fragment>
+
+      <Fragment slot="aside">
+        <!-- Basic Info Form -->
+        <Card>
+          <CardContent>
+            <ProductBasicInfoForm
+              client:load
+              productId={productData.id}
+              initialData={{
+                title: productData.title,
+                description: productData.description,
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Tags Form -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Tags</CardTitle>
+            <CardDescription>Help users discover your product</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductTagsForm
+              client:load
+              productId={productData.id}
+              initialTags={tags.map((t) => t.value)}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Contributors -->
+        {productContributorsWithRoles.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Contributors</CardTitle>
+              <CardDescription>
+                Creators earning royalties from embedded content
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProductContributors contributorsWithRoles={productContributorsWithRoles} />
+            </CardContent>
+          </Card>
+        )}
+
+        <!-- Embeddable Toggle -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Embeddable</CardTitle>
+            <CardDescription>
+              Allow other creators to embed this product in their work
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProductEmbeddableToggle
+              client:load
+              productId={productData.id}
+              isEmbeddable={productData.is_embeddable}
+              productStatus={productData.status}
+              embeddingRoyaltyCents={productData.embedding_royalty_cents}
+            />
+          </CardContent>
+        </Card>
+
+        <!-- Product Settings -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Settings</CardTitle>
+            <CardDescription>Manage visibility and lifecycle</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <section class="product-settings__section">
+              <h4 class="product-settings__section-title">Publish Status</h4>
+              <ProductStatusEditor
+                client:load
+                productId={productData.id}
+                currentStatus={productData.status}
+              />
+            </section>
+
+            <section class="product-settings__section product-settings__section--danger">
+              <h4 class="product-settings__section-title">Danger Zone</h4>
+              <ProductDeleteButton
+                client:load
+                productId={productData.id}
+                productTitle={productData.title}
+              />
+            </section>
+          </CardContent>
+        </Card>
+      </Fragment>
+    </PageColumns>
   </Page>
 </Layout>
-
-<style>
-  /* ===== Page Header ===== */
-  .page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--gap-xl);
-    margin-bottom: var(--spacing-4xl);
-  }
-
-  .page-header__content {
-    flex: 1;
-  }
-
-  .page-header__title {
-    margin: 0 0 var(--spacing-sm);
-    font-size: var(--text-3xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--foreground);
-  }
-
-  .page-header__description {
-    margin: 0;
-    font-size: var(--text-base);
-    color: var(--muted-foreground);
-  }
-
-  .page-header__actions {
-    flex-shrink: 0;
-  }
-
-  /* ===== Product Settings ===== */
-  .product-settings {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-2xl);
-  }
-
-  .product-settings__section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-md);
-  }
-
-  .product-settings__section--danger {
-    padding-top: var(--spacing-xl);
-    border-top: var(--border-width-default) solid var(--destructive);
-  }
-
-  .product-settings__section-title {
-    margin: 0;
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--muted-foreground);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .product-settings__section--danger .product-settings__section-title {
-    color: var(--destructive);
-  }
-
-  @media (max-width: 48rem) {
-    .page-header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  }
-</style>

@@ -1,0 +1,18 @@
+---
+/**
+ * A placeholder shown while a client script fetches the content that replaces
+ * it. The payouts page had two of these, each with its own spinner keyframes.
+ */
+interface Props {
+  /** Announced to a screen reader while the region is empty. */
+  label: string;
+}
+
+const { label } = Astro.props;
+import './loading-block.css';
+---
+
+<div class="loading-block" role="status">
+  <span class="loading-block__spinner" aria-hidden="true"></span>
+  <p class="loading-block__text">{label}</p>
+</div>

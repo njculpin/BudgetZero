@@ -156,15 +156,15 @@
 }
 
 .document-editor__presence-avatar:nth-child(2) {
-  background-color: var(--accent, #10b981);
+  background-color: var(--accent);
 }
 
 .document-editor__presence-avatar:nth-child(3) {
-  background-color: var(--warning, #f59e0b);
+  background-color: var(--warning);
 }
 
 .document-editor__presence-avatar:nth-child(4) {
-  background-color: var(--destructive, #ef4444);
+  background-color: var(--destructive);
 }
 
 .document-editor__presence-count {
@@ -257,7 +257,7 @@
   background-color: var(--muted);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-family-mono);
   font-size: 0.9em;
 }
 
@@ -318,15 +318,6 @@
 }
 
 /* Spinner Animation */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .document-editor__spinner {
   animation: spin 1s linear infinite;
 }

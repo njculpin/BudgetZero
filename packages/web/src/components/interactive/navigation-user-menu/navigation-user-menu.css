@@ -24,7 +24,7 @@
 }
 
 .nav-user-menu__trigger:hover {
-  background-color: var(--accent);
+  background-color: var(--surface-hover);
   border-color: var(--border);
 }
 
@@ -116,7 +116,7 @@
 }
 
 .nav-user-menu__item:hover {
-  background-color: var(--accent);
+  background-color: var(--surface-hover);
 }
 
 .nav-user-menu__item:focus-visible {
@@ -230,7 +230,7 @@
 }
 
 .nav-user-menu__project-item:hover {
-  background-color: var(--accent);
+  background-color: var(--surface-hover);
 }
 
 .nav-user-menu__project-item:focus-visible {
@@ -334,7 +334,7 @@
 }
 
 .nav-user-menu__view-all:hover {
-  background-color: var(--accent);
+  background-color: var(--surface-hover);
 }
 
 .nav-user-menu__view-all:focus-visible {

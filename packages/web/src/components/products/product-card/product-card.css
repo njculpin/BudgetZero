@@ -1,0 +1,94 @@
+/* Consolidated from three places: a scoped block on the home page, a global
+   block in global.css, and the markup itself. Twelve rule groups came with
+   the global copy that no markup has rendered since the December 2024
+   variant and asset removal — `__variants`, `__files*`, `__includes*`,
+   `__meta` — and are not carried over. */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition:
+    transform var(--duration-normal) var(--ease-in-out),
+    box-shadow var(--duration-normal) var(--ease-in-out);
+}
+
+.product-card:hover {
+  transform: var(--product-card-hover-lift);
+  box-shadow: var(--shadow-lg);
+}
+
+.product-card:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-lg);
+}
+
+.product-card__image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--product-card-image-aspect);
+  overflow: hidden;
+  background-color: var(--muted);
+}
+
+.product-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s var(--ease-in-out);
+}
+
+.product-card:hover .product-card__image img {
+  transform: var(--product-card-image-scale-hover);
+}
+
+.product-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+}
+
+.product-card__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-snug);
+  color: var(--foreground);
+}
+
+.product-card__creator {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.product-card__description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-md);
+  border-top: var(--border-width-default) solid var(--border);
+  margin-top: auto;
+}
+
+.product-card__price {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+}

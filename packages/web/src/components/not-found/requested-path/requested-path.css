@@ -1,0 +1,15 @@
+.requested-path {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--foreground);
+}
+
+.requested-path code {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width-default) solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--background);
+  font-family: var(--font-family-mono);
+  font-size: var(--text-sm);
+  color: var(--destructive);
+}

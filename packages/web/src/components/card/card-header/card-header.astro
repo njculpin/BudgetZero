@@ -1,16 +1,13 @@
 ---
-const { className = '' } = Astro.props;
+import type { HTMLAttributes } from 'astro/types';
+
+// Props are the element's own attributes, spelled `class` like everywhere else.
+type Props = HTMLAttributes<'div'>;
+
+const { class: className, ...rest } = Astro.props;
+import './card-header.css';
 ---
 
-<div class={`card__header ${className}`}>
+<div class:list={['card__header', className]} {...rest}>
   <slot />
 </div>
-
-<style>
-  .card__header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-xxs);
-    padding: var(--spacing-3xl);
-  }
-</style>

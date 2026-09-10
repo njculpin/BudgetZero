@@ -1,0 +1,40 @@
+---
+/**
+ * A tag in the tag directory: the name, how many things carry it, and the
+ * split between kinds.
+ */
+interface Props {
+  value: string;
+  count: number;
+  productCount: number;
+  assetCount: number;
+}
+
+const { value, count, productCount, assetCount } = Astro.props;
+import './tag-card.css';
+---
+
+<a href={`/tags/${encodeURIComponent(value)}`} class="tag-card">
+  <p class="tag-card__name">
+    <span class="tag-card__hash" aria-hidden="true">
+      #
+    </span>
+    {value}
+  </p>
+  <p class="tag-card__count">
+    <span class="tag-card__count-value">{count}</span>
+    <span class="tag-card__count-label">total items</span>
+  </p>
+  <p class="tag-card__breakdown">
+    {productCount > 0 && (
+      <span class="tag-card__breakdown-item">
+        {productCount} product{productCount !== 1 ? 's' : ''}
+      </span>
+    )}
+    {assetCount > 0 && (
+      <span class="tag-card__breakdown-item">
+        {assetCount} asset{assetCount !== 1 ? 's' : ''}
+      </span>
+    )}
+  </p>
+</a>

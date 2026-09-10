@@ -1,0 +1,13 @@
+.purchase-line__description {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.purchase-line__price {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}

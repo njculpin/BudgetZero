@@ -212,44 +212,107 @@ Import types: `import type { User, Product } from '@gameloopers/core/types'`
 
 **Never use `any` types.** All functions and components must be fully typed.
 
-## BEM CSS Pattern
+## CSS
 
-Components use BEM (Block Element Modifier) naming convention. Reference examples in `/src/components/`:
+### No `<style>` blocks
+
+Styles live in a `.css` file beside the component and are imported from the
+frontmatter. There are no `<style>` blocks anywhere in the codebase, and no
+`<style>@import './x.css';</style>` wrappers either — one way of doing it.
 
 ```astro
-<!-- Button.astro example -->
-<button class="button button--primary button--md">
-  <span class="button__icon">...</span>
-  <span class="button__text">Click</span>
-</button>
+---
+interface Props {
+  variant?: 'primary' | 'secondary';
+}
 
-<style>
-  .button {
-    /* Block */
-  }
-  .button__icon {
-    /* Element */
-  }
-  .button__text {
-    /* Element */
-  }
-  .button--primary {
-    /* Modifier */
-  }
-  .button--secondary {
-    /* Modifier */
-  }
-  .button--md {
-    /* Modifier */
-  }
-</style>
+const { variant = 'primary' } = Astro.props;
+import './button.css';
+---
+
+<button class:list={['button', `button--${variant}`]}>
+  <span class="button__icon">
+    <slot name="icon" />
+  </span>
+  <span class="button__text">
+    <slot name="text" />
+  </span>
+</button>
 ```
+
+```css
+/* button.css */
+.button {
+  /* Block */
+}
+.button__icon {
+  /* Element */
+}
+.button--primary {
+  /* Modifier */
+}
+```
+
+**A page has no stylesheet of its own.** Every rule belongs to a component, so
+`pages/` holds `.astro` files and nothing else. If a page needs a style, the
+markup it styles is a component that has not been extracted yet — extract it.
+That rule is what turned a 200-line `notifications.css` into a
+`notification-card` and a `notification-list`, and a 214-line `payouts/index.css`
+into an island that renders its own markup instead of writing it with
+`innerHTML`.
+
+**A frontmatter CSS import is global, not scoped.** That is the point — the same
+block can be worn by an Astro component and by the SolidJS island that replaces
+it — but it means class names are a single shared namespace:
+
+- **A block name belongs to exactly one stylesheet.** Two files defining
+  `.purchase-item` differently is a bug whose outcome depends on load order. If a
+  page needs its own variant of something, give it a page-specific block
+  (`.purchase-detail__price`); do not redefine the component's.
+- **`@keyframes` live in `packages/web/src/styles/global.css`.** Animation names
+  are global whichever file declares them. `fadeIn` was once declared twice as a
+  pure opacity fade and once as a fade-and-slide, and which one you got depended
+  on stylesheet order.
+- Grep for a block name before adding it. The check is cheap and the failure is
+  silent.
+
+### BEM
 
 - Block: `.button`, `.card`, `.breadcrumb`
 - Element: `.button__icon`, `.card__header`, `.breadcrumb__item`
 - Modifier: `.button--primary`, `.card--elevated`, `.breadcrumb--compact`
 
-Use CSS custom properties for theming: `var(--color-primary, #0070f3)`
+Theme through CSS custom properties: `var(--color-primary, #0070f3)`. Tokens are
+declared once in `global.css`; a component needing a new one adds it there rather
+than hard-coding a value. Three stylesheets referenced `--font-family-mono` that
+nothing declared, and every identifier on those pages quietly rendered in the
+sans stack — CSS fails silently, so a token is only real once it is in
+`global.css`.
+
+## Icons
+
+Icons are `.svg` files in `packages/web/src/assets/svgs/`, exported by name from
+its `index.ts`:
+
+```astro
+---
+import { BellIcon, SearchIcon } from '@/assets/svgs';
+---
+
+<BellIcon width={20} height={20} aria-hidden="true" />
+```
+
+Astro compiles an imported `.svg` into a component, so the icon inlines into the
+page and inherits `currentColor` and any attribute passed to it. Size and stroke
+width belong at the call site; the file carries the shape.
+
+- **Never paste an `<svg>` into a component.** There were forty inline copies,
+  and the same bell appeared at three different stroke widths.
+- An icon that repeats an adjacent label is decorative: `aria-hidden="true"`.
+  An icon that _is_ the control needs an accessible name on the control.
+- These are Astro components and do not work inside a `.tsx` island. A Solid
+  component still writes its own markup — that is the one exception, and the
+  reason `spinner.svg` carries its part classes in the file.
 
 ## Component Organization
 
@@ -297,8 +360,9 @@ only filenames are kebab-case.
 **Import Examples:**
 
 ```tsx
-// Generic components (root)
-import Button from '@/components/Button.astro';
+// Generic components — full path; the folder and the file share a name
+import Button from '@/components/button/button.astro';
+import Section from '@/components/section/section.astro';
 import { FormField, Input } from '@/components/base';
 import { LoadingButton, TagInput } from '@/components/interactive';
 
@@ -313,6 +377,99 @@ import { NotificationCenter } from '@/components/notifications';
 - **Generic components in root** - Button, Card, Breadcrumb, etc. used everywhere
 - **Co-located CSS** - CSS files next to component files
 - **Barrel exports** - index.ts in each directory for clean imports
+
+### Filenames are case-sensitive in CI
+
+Windows resolves `card.astro` to a file named `Card.astro`; Linux does not, and
+Vercel is Linux. `astro check` catches a mismatch inside a package
+(`differs only in casing`), but a rename that leaves the old casing in git is
+invisible locally. After renaming, confirm with
+`git ls-files | grep -E "/[A-Z]"` — component and page files are kebab-case, so
+anything capitalised there is either a document or a mistake.
+
+### Props are spelled `class`, never `className`
+
+A component that forwards attributes extends the element's own type and
+destructures `class`:
+
+```astro
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'div'>;
+
+const { class: className, ...rest } = Astro.props;
+import './card.css';
+---
+
+<div class:list={['card', className]} {...rest}>
+  <slot />
+</div>
+```
+
+Extending `HTMLAttributes` rather than listing a handful of props is what stops
+the next caller who needs `step` or `min` from hand-rolling a second `<input>`
+and a duplicate `.form-field` block beside it.
+
+### A component picks its own element
+
+`Button` renders `<a class="button">` when given `href` and `<button>` otherwise;
+`Tag` chooses between `<a>`, `<button>` and `<span>` the same way. Twenty-four
+call sites used to write `<a href="..."><Button>…</Button></a>`, which nests
+interactive content inside a link — invalid HTML, and two tab stops for one
+action. Never wrap a control to make it navigate; pass `href`.
+
+## Composing Pages
+
+**A raw `<div>` in a page is almost always a mistake.** A page should say what it
+contains, not restate the frame it sits in. Twenty-five of twenty-seven pages
+contain none; the exceptions are `payouts` (a hand-rolled dialog, plus markup
+built by a client script) and three wrappers in `notifications`.
+
+Before writing markup in a page, check whether one of these already does it:
+
+| Component                                                        | What it is                                                                                      |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `page`                                                           | The page shell. `variant="auth"` narrows it to a centred card.                                  |
+| `page-header`                                                    | The `<h1>` block. Slots `actions`, `meta`, `media`; `titleHidden` keeps it in the outline only. |
+| `page-columns`                                                   | Main content beside a sidebar. Named slots `main` / `aside`.                                    |
+| `section`                                                        | A titled block. Slot `actions`; props `align`, `titleHidden`.                                   |
+| `card-grid`                                                      | Responsive grid of cards. `size` xs / sm / md / lg.                                             |
+| `detail-list`                                                    | Label/value rows (`detail-row`, with `mono` for identifiers).                                   |
+| `meta-row`                                                       | A row of small facts. Separators are drawn in CSS, not marked up.                               |
+| `status-panel`                                                   | The page that _is_ an outcome: confirmed, failed, not found.                                    |
+| `alert`                                                          | A status banner. `role="alert"` only for the error tone.                                        |
+| `empty-state`                                                    | Icon, `<h2>`, description, optional action.                                                     |
+| `button-group`                                                   | A standalone row of buttons. Blocks that own their actions have an `__actions` element instead. |
+| `toolbar`                                                        | The controls between a page header and its results.                                             |
+| `search-field`                                                   | A search input, with or without a submit button.                                                |
+| `tag-filter`                                                     | Labelled row of `tag` chips.                                                                    |
+| `action-link`                                                    | A link as a row: icon, title, destination.                                                      |
+| `loading-block`                                                  | A `role="status"` placeholder that a client script replaces.                                    |
+| `result-count`                                                   | "12 Creators", with an `id` a filter script can rewrite.                                        |
+| `support-link`, `error-code`                                     | The two halves of "something went wrong; here is what to quote".                                |
+| `download-link`                                                  | A downloadable file: icon, name, optional badge, size.                                          |
+| `product-card`, `tag-card`, `document-card`, `notification-card` | The list-item cards.                                                                            |
+
+Two rules keep this from rotting:
+
+1. **Never write a second implementation under a different name.** `.browse-grid`
+   and `.product-grid` were the same grid; `.cta-section` and `.cta-content` were
+   the same call to action with different padding. When a component almost fits,
+   add the prop or the slot — that is what `PageHeader`'s `actions` slot is, and
+   why three pages had stopped using the component before it existed.
+2. **Prefer real elements.** A list of things is a `<ul>`, a label/value pair is
+   `<dt>`/`<dd>`, a byline separator is `::before` content. Reaching for a `<div>`
+   and a class usually means the markup has lost information the browser had.
+
+A page that fetches on the client is an island, not a `<script>` that writes
+`innerHTML`. The payouts page used to template-string its balance, its history
+and its status badges into strings, which meant those class names could not live
+with a component and nothing type-checked the shape being rendered.
+
+Headings follow from composition: `PageHeader` is the `<h1>`, `Section` an
+`<h2>`, a card title an `<h3>`. A page with no visible title still needs the
+`<h1>` — pass `titleHidden` rather than skipping a level.
 
 ## Routing & Pages
 

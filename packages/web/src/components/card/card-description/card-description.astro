@@ -1,14 +1,13 @@
 ---
-const { className = '' } = Astro.props;
+import type { HTMLAttributes } from 'astro/types';
+
+// Props are the element's own attributes, spelled `class` like everywhere else.
+type Props = HTMLAttributes<'p'>;
+
+const { class: className, ...rest } = Astro.props;
+import './card-description.css';
 ---
 
-<p class={`card__description ${className}`}>
+<p class:list={['card__description', className]} {...rest}>
   <slot />
 </p>
-
-<style>
-  .card__description {
-    font-size: var(--text-sm);
-    color: var(--muted-foreground);
-  }
-</style>

@@ -2,342 +2,123 @@
 import Layout from '@/layouts/layout.astro';
 import { getPageUser } from '@/lib/page-auth';
 import Page from '@/components/page/page.astro';
+import PageHeader from '@/components/page-header/page-header.astro';
+import Section from '@/components/section/section.astro';
+import CardGrid from '@/components/card-grid/card-grid.astro';
 import Button from '@/components/button/button.astro';
 import Card from '@/components/card/card.astro';
 import CardContent from '@/components/card/card-content/card-content.astro';
+import WorkflowStep from '@/components/workflow-step/workflow-step.astro';
+import FeatureItem from '@/components/feature-item/feature-item.astro';
+import CtaBanner from '@/components/cta-banner/cta-banner.astro';
 
 const isAuthenticated = (await getPageUser(Astro.cookies)) !== null;
+
+const WORKFLOW = [
+  {
+    title: 'Create Assets',
+    body: 'Upload 3D models, illustrations, rulebooks, or documents. Set royalty rates so you earn whenever your work is used.',
+  },
+  {
+    title: 'Build Products',
+    body: "Combine your assets (and others') into complete game packages. Set pricing and bundles.",
+  },
+  {
+    title: 'Publish & Earn',
+    body: 'Launch your product to the marketplace. Sales automatically split among all contributors based on royalty agreements.',
+  },
+];
+
+const FEATURES = [
+  {
+    icon: '💰',
+    title: 'Transparent Royalties',
+    body: 'Automatic royalty splitting means every contributor gets paid fairly when a product sells.',
+  },
+  {
+    icon: '🤝',
+    title: 'Easy Collaboration',
+    body: 'Work with designers, artists, and modelers. Build games together with shared ownership.',
+  },
+  {
+    icon: '🛍️',
+    title: 'Built-in Storefront',
+    body: 'Your products get a beautiful storefront. No need for external payment processors or hosting.',
+  },
+  {
+    icon: '📄',
+    title: 'Collaborative Documents',
+    body: 'Write rulebooks and reference cards together in real-time. Export as PDFs when ready.',
+  },
+  {
+    icon: '🔒',
+    title: 'License Protection',
+    body: 'Define usage terms for your assets. Protect your work while enabling collaboration.',
+  },
+];
 ---
 
 <Layout title="Start Creating - Game Loopers">
   <Page>
-    <!-- Page Header -->
-    <header class="page-header">
-      <div class="page-header__content">
-        <h1 class="page-header__title">Bring Your Tabletop Game to Life</h1>
-        <p class="page-header__subtitle">
-          Join a community of creators who design, collaborate, and sell tabletop games on
-          Game Loopers.
-        </p>
-        <div class="page-header__actions">
-          {isAuthenticated ? (
-            <a href="/products">
-              <Button variant="primary" size="lg">
-                <span slot="text">Go to My Products</span>
-              </Button>
-            </a>
-          ) : (
-            <>
-              <a href="/sign-up">
-                <Button variant="primary" size="lg">
-                  <span slot="text">Sign Up Free</span>
-                </Button>
-              </a>
-              <a href="/sign-in">
-                <Button variant="outline" size="lg">
-                  <span slot="text">Sign In</span>
-                </Button>
-              </a>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
+    <PageHeader
+      title="Bring Your Tabletop Game to Life"
+      description="Join a community of creators who design, collaborate, and sell tabletop games on Game Loopers."
+    >
+      <Fragment slot="actions">
+        {isAuthenticated ? (
+          <Button href="/products" variant="primary" size="lg">
+            <span slot="text">Go to My Products</span>
+          </Button>
+        ) : (
+          <>
+            <Button href="/sign-up" variant="primary" size="lg">
+              <span slot="text">Sign Up Free</span>
+            </Button>
+            <Button href="/sign-in" variant="outline" size="lg">
+              <span slot="text">Sign In</span>
+            </Button>
+          </>
+        )}
+      </Fragment>
+    </PageHeader>
 
-    <!-- How It Works Section -->
-    <section class="create-section">
-      <h2 class="create-section__title">How It Works</h2>
-      <div class="create-workflow">
-        <Card>
-          <CardContent>
-            <div class="workflow-step">
-              <div class="workflow-step__number">1</div>
-              <h3 class="workflow-step__title">Create Assets</h3>
-              <p class="workflow-step__description">
-                Upload 3D models, illustrations, rulebooks, or documents. Set royalty
-                rates so you earn whenever your work is used.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+    <Section title="How It Works" align="center">
+      <CardGrid>
+        {WORKFLOW.map((step, index) => (
+          <Card>
+            <CardContent>
+              <WorkflowStep step={index + 1} title={step.title}>
+                {step.body}
+              </WorkflowStep>
+            </CardContent>
+          </Card>
+        ))}
+      </CardGrid>
+    </Section>
 
-        <Card>
-          <CardContent>
-            <div class="workflow-step">
-              <div class="workflow-step__number">2</div>
-              <h3 class="workflow-step__title">Build Products</h3>
-              <p class="workflow-step__description">
-                Combine your assets (and others') into complete game packages. Set
-                pricing, variants, and bundles.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+    <Section title="Why Game Loopers?" align="center">
+      <CardGrid>
+        {FEATURES.map((feature) => (
+          <FeatureItem icon={feature.icon} title={feature.title}>
+            {feature.body}
+          </FeatureItem>
+        ))}
+      </CardGrid>
+    </Section>
 
-        <Card>
-          <CardContent>
-            <div class="workflow-step">
-              <div class="workflow-step__number">3</div>
-              <h3 class="workflow-step__title">Publish & Earn</h3>
-              <p class="workflow-step__description">
-                Launch your product to the marketplace. Sales automatically split among
-                all contributors based on royalty agreements.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="create-section">
-      <h2 class="create-section__title">Why Game Loopers?</h2>
-      <div class="create-features">
-        <div class="feature">
-          <div class="feature__icon">💰</div>
-          <h3 class="feature__title">Transparent Royalties</h3>
-          <p class="feature__description">
-            Automatic royalty splitting means every contributor gets paid fairly when a
-            product sells.
-          </p>
-        </div>
-
-        <div class="feature">
-          <div class="feature__icon">🤝</div>
-          <h3 class="feature__title">Easy Collaboration</h3>
-          <p class="feature__description">
-            Work with designers, artists, and modelers. Build games together with shared
-            ownership.
-          </p>
-        </div>
-
-        <div class="feature">
-          <div class="feature__icon">🛍️</div>
-          <h3 class="feature__title">Built-in Storefront</h3>
-          <p class="feature__description">
-            Your products get a beautiful storefront. No need for external payment
-            processors or hosting.
-          </p>
-        </div>
-
-        <div class="feature">
-          <div class="feature__icon">📄</div>
-          <h3 class="feature__title">Collaborative Documents</h3>
-          <p class="feature__description">
-            Write rulebooks and reference cards together in real-time. Export as PDFs when
-            ready.
-          </p>
-        </div>
-
-        <div class="feature">
-          <div class="feature__icon">🔒</div>
-          <h3 class="feature__title">License Protection</h3>
-          <p class="feature__description">
-            Define usage terms for your assets. Protect your work while enabling
-            collaboration.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="create-cta">
-      <Card>
-        <CardContent>
-          <div class="cta-content">
-            <h2 class="cta-content__title">Ready to Start Creating?</h2>
-            <p class="cta-content__description">
-              Join thousands of tabletop game creators building the future of
-              collaborative game design.
-            </p>
-            {isAuthenticated ? (
-              <a href="/products">
-                <Button variant="primary" size="lg">
-                  <span slot="text">Browse Products</span>
-                </Button>
-              </a>
-            ) : (
-              <a href="/sign-up">
-                <Button variant="primary" size="lg">
-                  <span slot="text">Get Started Free</span>
-                </Button>
-              </a>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </section>
+    <CtaBanner
+      title="Ready to Start Creating?"
+      description="Join thousands of tabletop game creators building the future of collaborative game design."
+    >
+      {isAuthenticated ? (
+        <Button href="/products" variant="primary" size="lg">
+          <span slot="text">Browse Products</span>
+        </Button>
+      ) : (
+        <Button href="/sign-up" variant="primary" size="lg">
+          <span slot="text">Get Started Free</span>
+        </Button>
+      )}
+    </CtaBanner>
   </Page>
 </Layout>
-
-<style>
-  /* Page Header */
-  .page-header {
-    text-align: center;
-    padding: var(--spacing-4xl) 0 var(--spacing-3xl);
-    border-bottom: var(--border-width-default) solid var(--border);
-    margin-bottom: var(--spacing-4xl);
-  }
-
-  .page-header__content {
-    max-width: 800px;
-    margin: 0 auto;
-  }
-
-  .page-header__title {
-    font-size: var(--text-4xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--foreground);
-    margin: 0 0 var(--spacing-lg) 0;
-    line-height: var(--leading-tight);
-  }
-
-  .page-header__subtitle {
-    font-size: var(--text-lg);
-    color: var(--muted-foreground);
-    margin: 0 0 var(--spacing-2xl) 0;
-    line-height: var(--leading-relaxed);
-  }
-
-  .page-header__actions {
-    display: flex;
-    gap: var(--gap-lg);
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  /* Section Styles */
-  .create-section {
-    margin: var(--spacing-6xl) 0;
-  }
-
-  .create-section__title {
-    font-size: var(--text-4xl);
-    font-weight: var(--font-weight-bold);
-    text-align: center;
-    margin: 0 0 var(--spacing-4xl) 0;
-    color: var(--foreground);
-  }
-
-  /* Workflow Steps */
-  .create-workflow {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--gap-2xl);
-  }
-
-  .workflow-step {
-    text-align: center;
-    padding: var(--spacing-xl);
-  }
-
-  .workflow-step__number {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto var(--spacing-xl);
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-bold);
-  }
-
-  .workflow-step__title {
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-bold);
-    margin: 0 0 var(--spacing-md) 0;
-    color: var(--foreground);
-  }
-
-  .workflow-step__description {
-    font-size: var(--text-base);
-    color: var(--muted-foreground);
-    line-height: 1.6;
-    margin: 0;
-  }
-
-  /* Features Grid */
-  .create-features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--gap-3xl);
-  }
-
-  .feature {
-    text-align: center;
-  }
-
-  .feature__icon {
-    font-size: 3rem;
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .feature__title {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-bold);
-    margin: 0 0 var(--spacing-sm) 0;
-    color: var(--foreground);
-  }
-
-  .feature__description {
-    font-size: var(--text-base);
-    color: var(--muted-foreground);
-    line-height: 1.6;
-    margin: 0;
-  }
-
-  /* CTA Section */
-  .create-cta {
-    margin: var(--spacing-6xl) 0;
-  }
-
-  .cta-content {
-    text-align: center;
-    padding: var(--spacing-4xl) var(--spacing-2xl);
-  }
-
-  .cta-content__title {
-    font-size: var(--text-3xl);
-    font-weight: var(--font-weight-bold);
-    margin: 0 0 var(--spacing-lg) 0;
-    color: var(--foreground);
-  }
-
-  .cta-content__description {
-    font-size: var(--text-lg);
-    color: var(--muted-foreground);
-    margin: 0 0 var(--spacing-2xl) 0;
-    line-height: 1.6;
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .page-header {
-      padding: var(--spacing-3xl) 0 var(--spacing-2xl);
-    }
-
-    .page-header__title {
-      font-size: var(--text-3xl);
-    }
-
-    .page-header__subtitle {
-      font-size: var(--text-base);
-    }
-
-    .create-section__title {
-      font-size: var(--text-3xl);
-    }
-
-    .create-workflow {
-      grid-template-columns: 1fr;
-    }
-
-    .create-features {
-      grid-template-columns: 1fr;
-      gap: var(--gap-2xl);
-    }
-  }
-</style>

@@ -1,3 +1,4 @@
+import { formatFileSize } from '@gameloopers/core/utils/file-size';
 import { createSignal, Show, For, createEffect } from 'solid-js';
 import { ErrorMessage, SuccessMessage } from '@/components/interactive';
 import './document-attachments-form.css';
@@ -22,13 +23,6 @@ export interface DocumentAttachmentsFormProps {
 }
 
 // Helper to format bytes to human-readable size
-const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-};
-
 export default function DocumentAttachmentsForm(props: DocumentAttachmentsFormProps) {
   const [attachments, setAttachments] = createSignal<DocumentAttachment[]>(
     props.existingAttachments

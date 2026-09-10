@@ -1,0 +1,56 @@
+---
+import DownloadLink from '@/components/purchases/download-link/download-link.astro';
+import './order-downloads.css';
+
+/**
+ * The files a completed order entitles you to, grouped by the product they
+ * came with. A bundle's components appear under the bundle, labelled with
+ * where they came from.
+ */
+export interface OrderDownloadFile {
+  title: string;
+  file_url: string;
+  file_size_bytes: number;
+  /** A generated PDF rather than an uploaded file; it has no size on disk. */
+  is_document?: boolean;
+  /** Set when the file came from a product embedded in the one purchased. */
+  source_product_title?: string | null;
+}
+
+export interface OrderDownloadProduct {
+  title: string;
+  files: OrderDownloadFile[];
+}
+
+interface Props {
+  products: OrderDownloadProduct[];
+}
+
+const { products } = Astro.props;
+const withFiles = products.filter((p) => p.files.length > 0);
+---
+
+<ul class="order-downloads">
+  {withFiles.map((product) => (
+    <li class="order-downloads__product">
+      <h3 class="order-downloads__title">{product.title}</h3>
+      <ul class="order-downloads__files">
+        {product.files.map((file) => (
+          <li>
+            <DownloadLink
+              href={file.file_url}
+              title={file.title}
+              badge={file.is_document ? 'PDF' : undefined}
+              source={
+                file.source_product_title !== product.title
+                  ? file.source_product_title
+                  : null
+              }
+              sizeBytes={file.is_document ? null : file.file_size_bytes}
+            />
+          </li>
+        ))}
+      </ul>
+    </li>
+  ))}
+</ul>

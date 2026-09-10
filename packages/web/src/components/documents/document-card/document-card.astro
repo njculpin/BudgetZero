@@ -1,0 +1,47 @@
+---
+import MetaRow from '@/components/meta-row/meta-row.astro';
+import { FileTextIcon } from '@/assets/svgs';
+
+/**
+ * A document in the documents grid.
+ *
+ * The byline used a literal `<span>•</span>` between the author and the date,
+ * which a screen reader announces; MetaRow draws the separator instead.
+ */
+interface Props {
+  handle: string;
+  title: string;
+  description?: string | null;
+  /** Already resolved: "You" for the current user. */
+  authorName: string;
+  updatedAt: string;
+}
+
+const { handle, title, description, authorName, updatedAt } = Astro.props;
+
+const summary =
+  description && description.length > 100
+    ? `${description.substring(0, 100)}...`
+    : description;
+
+const updated = new Date(updatedAt).toLocaleDateString('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+});
+import './document-card.css';
+---
+
+<a href={`/documents/${handle}`} class="document-card">
+  <span class="document-card__icon" aria-hidden="true">
+    <FileTextIcon width={24} height={24} />
+  </span>
+  <span class="document-card__content">
+    <span class="document-card__title">{title}</span>
+    {summary && <span class="document-card__description">{summary}</span>}
+    <MetaRow>
+      <span>{authorName}</span>
+      <span>Updated {updated}</span>
+    </MetaRow>
+  </span>
+</a>

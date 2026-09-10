@@ -1,0 +1,8 @@
+.product-tags {
+  list-style: none;
+  padding: 0;
+  margin: var(--spacing-md) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}

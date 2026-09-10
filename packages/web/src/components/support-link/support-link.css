@@ -1,0 +1,10 @@
+.support-link {
+  margin: 0 0 var(--spacing-2xl);
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.support-link a {
+  color: var(--primary);
+  font-weight: var(--font-weight-medium);
+}

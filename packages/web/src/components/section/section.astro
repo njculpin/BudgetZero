@@ -1,0 +1,47 @@
+---
+/**
+ * A titled block of page content.
+ *
+ * Pages were writing `<section class="...">` with a hand-rolled heading each
+ * time, which meant the spacing between a section title and its content was set
+ * in as many places as there were sections.
+ *
+ * The `actions` slot exists for the same reason it does on PageHeader: the home
+ * page needed a "See more" link beside the title and had no way to say so, so
+ * it kept its own copy of the markup instead of using this.
+ */
+interface Props {
+  title?: string;
+  /** A lead-in line under the heading, before the content. */
+  description?: string;
+  align?: 'left' | 'center';
+  /**
+   * Keep the heading in the document outline but out of the design. The browse
+   * page wants no visible section title, and dropping the h2 entirely left the
+   * page jumping from h1 straight to the h3 on each product card.
+   */
+  titleHidden?: boolean;
+}
+
+const { title, description, align = 'left', titleHidden = false } = Astro.props;
+const hasActions = Astro.slots.has('actions');
+import './section.css';
+---
+
+<section class="section">
+  {title && titleHidden && <h2 class="sr-only">{title}</h2>}
+  {((title && !titleHidden) || hasActions) && (
+    <div class:list={['section__header', `section__header--${align}`]}>
+      {title && !titleHidden && (
+        <h2 class:list={['section__title', `section__title--${align}`]}>{title}</h2>
+      )}
+      {hasActions && (
+        <div class="section__actions">
+          <slot name="actions" />
+        </div>
+      )}
+    </div>
+  )}
+  {description && <p class="section__description">{description}</p>}
+  <slot />
+</section>

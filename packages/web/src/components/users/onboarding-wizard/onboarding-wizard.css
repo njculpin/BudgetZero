@@ -19,7 +19,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: oklch(0 0 0 / 0.6);
+  background-color: var(--overlay-backdrop);
   backdrop-filter: blur(4px);
 }
 
@@ -31,7 +31,7 @@
   border: var(--border-width-default) solid var(--border);
   border-radius: var(--radius-xl);
   padding: var(--spacing-3xl);
-  box-shadow: 0 20px 40px oklch(0 0 0 / 0.3);
+  box-shadow: 0 20px 40px var(--overlay-soft);
   animation: onboarding-slide-up 0.3s var(--ease-out);
 }
 
@@ -155,7 +155,7 @@
 }
 
 .onboarding__btn--primary:hover {
-  background-color: oklch(from var(--primary) calc(l * 0.9) c h);
+  background-color: var(--primary-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px oklch(from var(--primary) l c h / 0.3);
 }

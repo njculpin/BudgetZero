@@ -1,0 +1,36 @@
+---
+import './route-suggestion.css';
+
+/**
+ * A route the 404 page thinks you meant.
+ *
+ * `pattern` is an exact segment match — `/products/nonexistent` suggesting
+ * `/products` — and `fuzzy` is a Levenshtein match on the whole path. They are
+ * different kinds of guess, so they are labelled differently.
+ */
+interface Props {
+  kind: 'pattern' | 'fuzzy';
+  path: string;
+  /** Shown for a fuzzy match: how close it was. */
+  confidence: string;
+  label?: string;
+  description: string;
+}
+
+const { kind, path, confidence, label, description } = Astro.props;
+const badge = kind === 'pattern' ? 'Pattern Match' : 'Fuzzy Match';
+---
+
+<li class="route-suggestion">
+  <p class="route-suggestion__header">
+    <span class:list={['route-suggestion__badge', `route-suggestion__badge--${kind}`]}>
+      {badge}
+    </span>
+    <span class="route-suggestion__confidence">{confidence}</span>
+  </p>
+  <a href={path} class="route-suggestion__link">
+    <strong class="route-suggestion__path">{path}</strong>
+    {label && <span class="route-suggestion__label">{label}</span>}
+    <span class="route-suggestion__description">{description}</span>
+  </a>
+</li>
